@@ -13,6 +13,13 @@ import math
 ESCAPE = '\033'
 SPACE =  '\040'
 
+colors = {
+	0 : 'RED',
+	1 : 'GREEN',
+	2 : 'BLUE'
+}
+
+
 # Number of the glut window.
 window = 0
 
@@ -20,12 +27,6 @@ delta = 0.0
 environment = Model.Environment()
 controller =  Control.Controller(environment)
 controller.startClock()
-'''
-environment.addAgent(.1,.1)
-environment.addAgent(.5,-.4)
-environment.addAgent(.5,-.4)
-environment.addAgent(.5,-.4)
-'''
 
 # A general OpenGL initialization function.  Sets all of the initial parameters.
 def InitGL(Width, Height):				# We call this right after our OpenGL window is created.
@@ -61,28 +62,28 @@ def DrawGLTriangle():
         glVertex3f(.5+delta, -.5+delta, 0.0)          # Bottom Right
         glVertex3f(-.5+delta, -.5+delta, 0.0)         # Bottom Left
         glEnd()
+
+
+def glSetColor(color):
+	if(color == "RED"):
+		glColor3d(1.0, 0.0, 0.0)
+	elif(color == "GREEN"):
+		glColor3d(0.0, 1.0, 0.0)
+	elif(color == "BLUE"):
+		glColor3d(0.0, 0.0, 1.0)
+	else:
+		glColor3d(.333, .333, 0.0)
+
 '''
 careful with glTranslate, Rotate and pop push operations. Thanks to DarthDarth Binks for help with rotation code.
 '''
-def DrawTriangle(x,y,b,h, angle):
+def DrawTriangle(x,y,b,h, angle, color):
 	glPushMatrix()
 	#print(angle)
 	glTranslate(x,y,0)
 	glRotatef( angle - 90, 0, 0, 1)
 	glBegin(GL_POLYGON)
-	glColor3d(.333,.333,.0)
-	'''
-	glVertex3f( x + 0*math.cos(angle) - (h)*math.sin(angle), y + 0*math.sin(angle) + (h)*math.cos(angle), 0.0)
-	glVertex3f(x + (b)*math.cos(angle) - (0)*math.sin(angle) ,   y +   (b)*math.sin(angle) + (0)*math.cos(angle), 0.0)
-	glVertex3f(x + (-1*b)*math.cos(angle) - (0)*math.sin(angle) ,y +     (-1*b)*math.sin(angle) + (0)*math.cos(angle), 0.0)
-	'''
-
-	'''
-	glVertex3f(x,     y + h, 0.0)
-	glVertex3f(x + b, y,     0.0)
-	glVertex3f(x - b, y,     0.0)
-	'''
-	
+	glSetColor(color)
 	glVertex3f(   0, h, 0.0)
 	glVertex3f(   b, 0, 0.0)
 	glVertex3f(-1*b, 0, 0.0)
@@ -90,7 +91,7 @@ def DrawTriangle(x,y,b,h, angle):
 	glPopMatrix()
 
 def DrawAgent(agent):
-	DrawTriangle(agent.x, agent.y, .025,.05, agent.orientation)
+	DrawTriangle(agent.x, agent.y, .025,.05, agent.orientation, colors[agent.state])
 
 def DrawAgents():
 	global environment

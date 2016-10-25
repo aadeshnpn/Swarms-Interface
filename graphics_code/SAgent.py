@@ -8,6 +8,7 @@ class Agent:
 		self.y = y
 		self.orientation = 0.0
 		self.i = 0
+		self.state = 0
 	def getXY(self):
 		return self.x, self.y
 
@@ -32,6 +33,8 @@ class Agent:
 		self.move()
 		#self.move(np.random.randint(0,4))
 
-		#if(self.i % 10 == 0):
-		#	print(self.x, self.y, self.orientation)
-		#self.i += 1
+		if(self.i % 10 == 0):
+			if np.random.uniform(0, 1.0, 1) > .999:
+				self.state = (self.state + 1) % 3
+			#print(self.x, self.y, self.orientation)
+		self.i += 1
