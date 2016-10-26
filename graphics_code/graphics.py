@@ -19,6 +19,7 @@ colors = {
 	2 : 'BLUE'
 }
 
+lastLeftClick = None
 
 # Number of the glut window.
 window = 0
@@ -111,7 +112,49 @@ def DrawGLScene():
 	DrawAgents()
 	glutSwapBuffers()
 
+def getRelativeCoordinates(x,y):
+	#print(x,y)
+	return 2*((float(x))/640.0-.5), -2*((float(y))/480.0-.5)
 
+def isWithinRect(x, y, x1, y1, x2, y2):
+	
+	x1, y1 = getRelativeCoordinates(x1,y1)
+	x2, y2 = getRelativeCoordinates(x2,y2)
+	
+	print(x,y)
+	print(x1,y1)
+	print(x2,y2)
+	if(((x1 < x and x < x2) or (x1 > x and x >x2)) is not True):
+		print("fail 1")
+		return False  
+	if(((y1 < y and y < y2) or (y1 > y and y >y2)) is not True):
+		print("fail 2")
+		return False
+	return True
+
+def mouseClicked(button, state, x, y):
+	global lastLeftClick
+	#print(button, state, x,y)
+	if(button == 0 and state == 0):
+		lastLeftClick = [x, y]
+		return
+
+	print(x,y)
+	print(lastLeftClick)
+	for agent in environment.getAgents():
+		#agent.state = (agent.state + 1) % 3
+		if(isWithinRect(agent.x, agent.y, x, y, lastLeftClick[0], lastLeftClick[1])):
+			#print("in box")
+			agent.state = (agent.state + 1) % 3
+		#else:
+			#print("not in box")
+	#print(getRelativeCoordinates(lastLeftClick[0], lastLeftClick[1]))
+	#print(getRelativeCoordinates(x,y))
+	'''
+	if(state == 1 and lastLeftClick is not None):
+		for agent in environment.getAgents():
+			if(agent.x*640 		
+	'''
 # The function called whenever a key is pressed. Note the use of Python tuples to pass in: (key, x, y)
 def keyPressed(*args):
 	# If escape is pressed, kill everything.
@@ -128,11 +171,12 @@ def main():
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH)
 	glutInitWindowSize(640, 480)
 	glutInitWindowPosition(0, 0)
-	window = glutCreateWindow("Jeff Molofee's GL Code Tutorial ... NeHe '99")
+	window = glutCreateWindow("BYU Swarm Simulator")
 	glutDisplayFunc(DrawGLScene)
 	#glutFullScreen()
 	glutIdleFunc(DrawGLScene)
 	glutReshapeFunc(ReSizeGLScene)
+	glutMouseFunc(mouseClicked)
 	glutKeyboardFunc(keyPressed)
 	InitGL(640, 480)
 	glutMainLoop()
