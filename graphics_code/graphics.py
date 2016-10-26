@@ -8,6 +8,7 @@ import Control
 import sys
 import math
 
+import numpy as np
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
 ESCAPE = '\033'
@@ -96,8 +97,10 @@ def DrawAgent(agent):
 
 def DrawAgents():
 	global environment
+	DrawStateHistogram()
 	for agent in environment.getAgents():
 		DrawAgent(agent)
+
 
 def updateAgents():
 	global environment
@@ -111,6 +114,25 @@ def DrawGLScene():
 	glLoadIdentity()					# Reset The View
 	DrawAgents()
 	glutSwapBuffers()
+
+def DrawRectangle(x1, y1, x2, y2, x3, y3, x4, y4, color = ""):
+	glBegin(GL_POLYGON)
+	glSetColor(color)
+	glVertex3f(   x1, y1, 0.0)
+	glVertex3f(   x2, y2, 0.0)
+	glVertex3f(   x4, y4, 0.0)
+	glVertex3f(   x3, y3, 0.0)
+	glEnd()
+
+def DrawStateHistogram(): #hackish
+	states = [0,0,0]
+	for agent in environment.getAgents():
+		states[agent.state] += 1
+
+	DrawRectangle(.97, -.99, .99, -.99, .97, -.99+.2*states[0]/np.sum(states), .99, -.99+.2*states[0]/np.sum(states), color = "RED")
+	DrawRectangle(.94, -.99, .96, -.99, .94, -.99+.2*states[1]/np.sum(states), .96, -.99+.2*states[1]/np.sum(states), color = "GREEN")
+	DrawRectangle(.91, -.99, .93, -.99, .91, -.99+.2*states[2]/np.sum(states), .93, -.99+.2*states[2]/np.sum(states), color = "BLUE")
+	
 
 def getRelativeCoordinates(x,y):
 	#print(x,y)
