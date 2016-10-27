@@ -6,7 +6,7 @@ class Environment:
 
 	def reInitTestAgents(self):
 		self.agents = []
-		for i in xrange(0, 1000):
+		for i in xrange(0, 10):
 			self.addAgent(.1,.1)
 		#self.addAgent(.2,.2)
 		#self.addAgent(.3,.3)

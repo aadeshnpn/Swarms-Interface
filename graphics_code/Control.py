@@ -1,5 +1,6 @@
 import threading
 import math
+import random
 INTERVAL = .025
 WIN_X = 1.0
 WIN_Y = 1.0
@@ -9,7 +10,13 @@ class Controller:
 	def __init__(self, environment):
 		self.environment = environment
 		self.updating    = False
-	def keyPressed(self, *args):
+	def keyPressed(self, args):
+		if(args == '\162'):
+			self.redistributeAgentState(0)
+		elif(args == '\147'):
+			self.redistributeAgentState(1)
+		elif(args == '\142'):
+			self.redistributeAgentState(2)
 		print(args)
 
 	def isWithinWindow(self, agent):
@@ -38,4 +45,13 @@ class Controller:
 			threading.Timer(INTERVAL, self.updateAgents).start()
 		
 	def stopClock(self):
-		self.updating = False	
+		self.updating = False
+
+	def redistributeAgentState(self, state):
+		for agent in self.environment.getAgents():
+			if(agent.state == state):
+				if(random.random() > 0.5):
+					agent.incrementState()
+				else:
+					agent.decrementState()
+				return	

@@ -56,16 +56,6 @@ def ReSizeGLScene(Width, Height):
     #gluPerspective(45.0, float(Width)/float(Height), 0.1, 100.0)
     glMatrixMode(GL_MODELVIEW)
 
-def DrawGLTriangle():
-	global delta
-        glBegin(GL_POLYGON)                 # Start drawing a polygon
-        glColor3d(.5, .5, 0.0)
-        glVertex3f(0.0, .5+delta, 0.0)           # Top
-        glVertex3f(.5+delta, -.5+delta, 0.0)          # Bottom Right
-        glVertex3f(-.5+delta, -.5+delta, 0.0)         # Bottom Left
-        glEnd()
-
-
 def glSetColor(color):
 	if(color == "RED"):
 		glColor3d(1.0, 0.0, 0.0)
@@ -81,7 +71,6 @@ careful with glTranslate, Rotate and pop push operations. Thanks to DarthDarth B
 '''
 def DrawTriangle(x,y,b,h, angle, color):
 	glPushMatrix()
-	#print(angle)
 	glTranslate(x,y,0)
 	glRotatef( angle - 90, 0, 0, 1)
 	glBegin(GL_POLYGON)
@@ -101,11 +90,11 @@ def DrawAgents():
 	for agent in environment.getAgents():
 		DrawAgent(agent)
 
-
 def updateAgents():
 	global environment
 	for agent in environment.getAgents():
 		agent.moveSelf()
+
 # The main drawing function.
 def DrawGLScene():
 	global delta, environment
@@ -143,9 +132,6 @@ def isWithinRect(x, y, x1, y1, x2, y2):
 	x1, y1 = getRelativeCoordinates(x1,y1)
 	x2, y2 = getRelativeCoordinates(x2,y2)
 	
-	print(x,y)
-	print(x1,y1)
-	print(x2,y2)
 	if(((x1 < x and x < x2) or (x1 > x and x >x2)) is not True):
 		print("fail 1")
 		return False  
@@ -156,36 +142,19 @@ def isWithinRect(x, y, x1, y1, x2, y2):
 
 def mouseClicked(button, state, x, y):
 	global lastLeftClick
-	#print(button, state, x,y)
 	if(button == 0 and state == 0):
 		lastLeftClick = [x, y]
 		return
-
-	print(x,y)
-	print(lastLeftClick)
 	for agent in environment.getAgents():
-		#agent.state = (agent.state + 1) % 3
 		if(isWithinRect(agent.x, agent.y, x, y, lastLeftClick[0], lastLeftClick[1])):
-			#print("in box")
 			agent.state = (agent.state + 1) % 3
-		#else:
-			#print("not in box")
-	#print(getRelativeCoordinates(lastLeftClick[0], lastLeftClick[1]))
-	#print(getRelativeCoordinates(x,y))
-	'''
-	if(state == 1 and lastLeftClick is not None):
-		for agent in environment.getAgents():
-			if(agent.x*640 		
-	'''
 # The function called whenever a key is pressed. Note the use of Python tuples to pass in: (key, x, y)
 def keyPressed(*args):
 	# If escape is pressed, kill everything.
 	if args[0] == ESCAPE:
 		controller.stopClock()
 		sys.exit()
-	if args[0] == SPACE:
-		environment.getAgents()[0].x += .01
-	controller.keyPressed(args)
+	controller.keyPressed(args[0])
 
 def main():
 	global window

@@ -38,3 +38,9 @@ class Agent:
 				self.state = (self.state + 1) % 3
 			#print(self.x, self.y, self.orientation)
 		self.i += 1
+
+	def incrementState(self):
+		self.state = (self.state + 1) % 3
+	
+	def decrementState(self):
+		self.state = (self.state - 1) % 3
