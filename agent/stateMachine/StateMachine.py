@@ -7,17 +7,19 @@ class StateMachine:
         self.transitionTable = tranTable
 
     def nextState(self, input):
-        currState = self.transitionTable[self.state]
+        if input is None:
+            return
+        currState = self.transitionTable[(self.state.__class__, input)]
 #currState: input, condition,  nextState
-        for k, v in currState.items():
-            if ((input == k) | (input.getClass() == k)):
-                if currState[1] is not None:
-                    c = Condition(v[0])  # not sure if this is correct... typecsting
-                    if c.condition(input) == False:
-                        continue #exits because condituion not true
+        #for k, v in currState.items():
+         #   if ((input == k) | (input.getClass() == k)):
+        if currState[0] is not None:
+            c = Condition(currState[0])  # not sure if this is correct... typecsting
+            if c.condition(input) == False:
+                return #exits because condituion not true
                         #some way to break out of loop
-                self.state = v[1]
-                return
+        self.state = currState[1]
+        return
         RuntimeError("Input not supported for current state")
 
 

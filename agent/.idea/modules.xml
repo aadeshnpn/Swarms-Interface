@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$USER_HOME$/PycharmProjects/agent/.idea/agent.iml" filepath="$USER_HOME$/PycharmProjects/agent/.idea/agent.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/agent.iml" filepath="$PROJECT_DIR$/.idea/agent.iml" />
     </modules>
   </component>
 </project>
