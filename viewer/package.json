@@ -1,0 +1,18 @@
+{
+  "name": "hive-client",
+  "version": "1.0.0",
+  "description": "Honeybee simulation client",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.14.0",
+    "node-ipc": "8.9.2",
+    "socket.io": "^1.5.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "Jonah Henderson",
+  "license": "ISC"
+}

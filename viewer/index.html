@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+   <meta charset="utf-8">
+   <title>Viewer</title>
+
+   <!-- This is what enables socket communication with the server. -->
+   <script src="/socket.io/socket.io.js"></script>
+
+   <style media="screen">
+      body
+      {
+         background-color: #EEEEEE;
+         font-family: sans-serif;
+      }
+
+      .canvas
+      {
+         border: 1px solid #CCCCCC;
+         padding: 2px;
+      }
+   </style>
+
+</head>
+
+<body>
+
+   <div id="canvasDiv" class="canvas">
+      <canvas id="canvas"></canvas>
+   </div>
+
+   <hr/>
+
+   <h4>Controls</h4>
+   <button onclick="pauseAll()">Pause All</button>
+   <button onclick="resumeAll()">Resume All</button>
+   <button onclick="pauseSelected()">Pause Selected</button>
+   <button onclick="resumeSelected()">Resume Selected</button>
+   <h4>Information</h4>
+   <table id="infoTable">
+   </table>
+</body>
+
+<script>
+   // get a socket object from the socket.io script included above
+   var socket = io();
+
+   var world = null;
+
+   // get a reference to the canvas element
+   var canvas = document.getElementById("canvas");
+
+   // initalise selectionRectangle as an object
+   var selectionRectangle =
+   {
+      active: false
+   };
+
+   // This is where the magic happens. When we emit an "update" event from the
+   // server, it'll come through here.
+   socket.on('update', function(worldUpdate)
+   {
+      // First update
+      if (world === null)
+      {
+         canvas.setAttribute("width", worldUpdate.width);
+         canvas.setAttribute("height", worldUpdate.height);
+         document.getElementById("canvasDiv").style.width = worldUpdate.width + "px";
+         world = worldUpdate;
+
+         window.requestAnimationFrame(draw);
+      }
+
+      world = worldUpdate;
+
+      for (var i = 0; i < world.agents.length; i++)
+      {
+         var agent = world.agents[i];
+
+         if (agent.selected)
+         {
+            // Find an update all the information elements we created in the
+            // selection process
+            document.getElementById(`x${agent.id}`).innerHTML = agent.x;
+            document.getElementById(`y${agent.id}`).innerHTML = agent.y;
+            document.getElementById(`vx${agent.id}`).innerHTML = agent.vX;
+            document.getElementById(`vy${agent.id}`).innerHTML = agent.vY;
+            document.getElementById(`state${agent.id}`).innerHTML = agent.state;
+         }
+      }
+
+      // This will instructs the browser to call the 'draw' function whenever
+      // it's ready for a new animation frame
+
+   });
+
+   function draw()
+   {
+      // we draw to the 2d context, not the canvas directly
+      var ctx = canvas.getContext("2d");
+
+      // clear everything
+      ctx.clearRect(0, 0, world.width, world.height);
+
+      for (var i = 0; i < world.agents.length; i++)
+      {
+         // translating/rotating/etc. actually modifies the drawing context,
+         // not any particular object, so we need to save it before and
+         // restore it afterwards to get back to the baseline
+         ctx.save();
+         renderAgent(world.agents[i], ctx);
+         ctx.restore();
+      }
+
+      if (selectionRectangle.active)
+      {
+         ctx.save();
+         renderSelectionRectangle(ctx);
+         ctx.restore();
+      }
+
+      window.requestAnimationFrame(draw);
+   }
+
+   function renderAgent(agent, ctx)
+   {
+      // move the drawing context to the agent's x and y coords
+      ctx.translate(agent.x, agent.y);
+
+      // Draw a circle of radius 5 at the context's current origin (0, 0)
+      // which will now be the agent's x and y coords
+      ctx.beginPath();
+      ctx.arc(0, 0, 5, 0, Math.PI * 2, false);
+      ctx.fill();
+
+      // also draw a neat little selection box around the agent if it's selected
+      if (agent.selected)
+      {
+         // move 7px up and left from agent's centre
+         ctx.translate(-7, -7);
+         ctx.strokeStyle = "rgb(24, 85, 157)";
+
+         // draw a rectangle from origin (agent centre - (7px, 7px), to agent
+         // centre + (7px, 7px) )
+         ctx.strokeRect(0, 0, 14, 14);
+      }
+   }
+
+   function renderSelectionRectangle(ctx)
+   {
+      ctx.fillStyle = "rgba(60, 181, 249, 0.2)";
+      ctx.strokeStyle = "rgb(60, 181, 249)";
+      ctx.lineWidth = 1;
+
+      // Don't translate the context like we did for agents because we have
+      // canvas-relative coordinates already
+      ctx.fillRect(selectionRectangle.x, selectionRectangle.y, selectionRectangle.width, selectionRectangle.height);
+      ctx.strokeRect(selectionRectangle.x, selectionRectangle.y, selectionRectangle.width, selectionRectangle.height);
+   }
+
+   // when the canvas is clicked
+   canvas.addEventListener("mousedown", function(e)
+   {
+      // unselect everything
+      clearSelectedAgents();
+
+      // initialise the selection rectangle
+      selectionRectangle.active = true;
+      selectionRectangle.x = e.clientX; // these coords are relative to the canvas
+      selectionRectangle.y = e.clientY;
+
+      // default height and width
+      selectionRectangle.width = 1;
+      selectionRectangle.height = 1;
+   });
+
+   // when the mouse is moved over the canvas
+   canvas.addEventListener("mousemove", function(e)
+   {
+      if (selectionRectangle.active)
+      {
+         selectionRectangle.width = e.clientX - selectionRectangle.x;
+         selectionRectangle.height = e.clientY - selectionRectangle.y;
+      }
+   });
+
+   // when the mouse click is released over the canvas
+   // TODO: change this to the whole document? would avoid funny behaviour
+   // when mouse is released off of the canvas
+   canvas.addEventListener("mouseup", function(e)
+   {
+      console.log("mouseup");
+      computeSelectedAgents();
+      selectionRectangle.active = false;
+
+      // Create the information table elements for selected agents
+      // This is all a bit hacky, probably ought to pull in JQuery for a nicer
+      // interface for all this
+      var infoTableInnerHtml = "";
+
+      var tableHeader = "<tr><th>ID</th><th>X</th><th>Y</th><th>Vx</th><th>Vy</th><th>State</th>\n";
+
+      infoTableInnerHtml += tableHeader;
+
+      for (var i = 0; i < world.agents.length; i++)
+      {
+         var agent = world.agents[i];
+
+         if (agent.selected)
+         {
+            var agentInfo = `<tr>
+               <td id='id${agent.id}'   >${agent.id}</td>
+               <td id='x${agent.id}'    >${agent.x}</td>
+               <td id='y${agent.id}'    >${agent.y}</td>
+               <td id='vx${agent.id}'   >${agent.vX}</td>
+               <td id='vy${agent.id}'   >${agent.vY}</td>
+               <td id='state${agent.id}'>${agent.state}</td>
+               </tr>`;
+
+            console.log(agentInfo);
+
+            infoTableInnerHtml += agentInfo;
+         }
+      }
+
+      // replace the infoTable element's innerHTML with what we constructed above
+      document.getElementById("infoTable").innerHTML = infoTableInnerHtml;
+   });
+
+   function clearSelectedAgents()
+   {
+      for (var i = 0; i < world.agents.length; i++)
+      {
+         world.agents[i].selected = false;
+      }
+      socket.emit("deselect");
+   }
+
+   function computeSelectedAgents()
+   {
+      var selectBounds = {};
+
+      selectBounds.left   = (selectionRectangle.width  > 0) ? selectionRectangle.x                             : selectionRectangle.x + selectionRectangle.width;
+      selectBounds.right  = (selectionRectangle.width  > 0) ? selectionRectangle.x + selectionRectangle.width  : selectionRectangle.x;
+      selectBounds.top    = (selectionRectangle.height > 0) ? selectionRectangle.y                             : selectionRectangle.y + selectionRectangle.height;
+      selectBounds.bottom = (selectionRectangle.height > 0) ? selectionRectangle.y + selectionRectangle.height : selectionRectangle.y;
+
+      var selectedAgents = [];
+
+      for (var i = 0; i < world.agents.length; i++)
+      {
+         var agent = world.agents[i];
+
+         var agentBounds =
+         {
+            left: agent.x - 5,
+            right: agent.x + 5,
+            top: agent.y - 5,
+            bottom: agent.y + 5
+         };
+
+         if (rectIntersect(agentBounds, selectBounds))
+         {
+            agent.selected = true;
+            selectedAgents[agents.id] = true;
+         }
+      }
+
+      socket.emit("select", selectedAgents);
+   }
+
+   function rectIntersect(a, b)
+   {
+      return !(b.left > a.right || b.right < a.left || b.top > a.bottom || b.bottom < a.top);
+   }
+
+   function pauseAll()
+   {
+      //socket.emit("pause", -1);
+   }
+
+   function resumeAll()
+   {
+      //socket.emit("resume", -1);
+   }
+
+   function pauseSelected()
+   {
+      /*var agentIds = [];
+
+      for (var i = 0; i < world.agents.length; i++)
+      {
+         var agent = world.agents[i];
+         if (agent.selected)
+         {
+            agentIds.push(agent.id);
+         }
+      }
+
+      socket.emit("pause", agentIds);*/
+   }
+
+   function resumeSelected()
+   {
+      /*var agentIds = [];
+
+      for (var i = 0; i < world.agents.length; i++)
+      {
+         var agent = world.agents[i];
+         if (agent.selected)
+         {
+            agentIds.push(agent.id);
+         }
+      }
+
+      socket.emit("resume", agentIds);*/
+   }
+</script>
+
+</html>
