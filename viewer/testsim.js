@@ -6,12 +6,16 @@ for (var i = 0; i < 100; i++)
 {
    world.agents[i] =
    {
+      id: i,
        x: Math.round( Math.random() * world.width ),
        y: Math.round( Math.random() * world.height),
       vx: Math.round((Math.random() * 9) + 1      ),
       vy: Math.round((Math.random() * 9) + 1      )
    };
 }
+
+
+var SIMULATION_THROTTLE_MS = 20;
 
 ipc.config.socketRoot = '/tmp/';
 ipc.config.appspace   = 'honeybee-sim.';
@@ -23,8 +27,9 @@ ipc.connectTo('viewerServer');
 ipc.of.viewerServer.on('connect', function()
 {
    ipc.log('connected to server');
-   ipc.of.viewerServer.on('received', update);
-   ipc.of.viewerServer.emit('update', world);
+   //ipc.of.viewerServer.on('received', update);
+   //ipc.of.viewerServer.emit('update', world);
+   setInterval(update, SIMULATION_THROTTLE_MS);
 });
 
 function simulate()
