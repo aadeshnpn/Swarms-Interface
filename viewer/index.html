@@ -32,11 +32,6 @@
 
    <hr/>
 
-   <h4>Controls</h4>
-   <button onclick="pauseAll()">Pause All</button>
-   <button onclick="resumeAll()">Resume All</button>
-   <button onclick="pauseSelected()">Pause Selected</button>
-   <button onclick="resumeSelected()">Resume Selected</button>
    <h4>Information</h4>
    <table id="infoTable">
    </table>
@@ -56,6 +51,9 @@
    {
       active: false
    };
+
+   // use this as a hash of ids -> booleans telling us which agents are selected
+   var selectedAgents = {};
 
    // This is where the magic happens. When we emit an "update" event from the
    // server, it'll come through here.
@@ -78,21 +76,19 @@
       {
          var agent = world.agents[i];
 
-         if (agent.selected)
+         if (selectedAgents[agent.id])
          {
             // Find an update all the information elements we created in the
             // selection process
             document.getElementById(`x${agent.id}`).innerHTML = agent.x;
             document.getElementById(`y${agent.id}`).innerHTML = agent.y;
-            document.getElementById(`vx${agent.id}`).innerHTML = agent.vX;
-            document.getElementById(`vy${agent.id}`).innerHTML = agent.vY;
-            document.getElementById(`state${agent.id}`).innerHTML = agent.state;
+            document.getElementById(`vx${agent.id}`).innerHTML = agent.vx;
+            document.getElementById(`vy${agent.id}`).innerHTML = agent.vy;
          }
       }
 
       // This will instructs the browser to call the 'draw' function whenever
       // it's ready for a new animation frame
-
    });
 
    function draw()
@@ -135,7 +131,7 @@
       ctx.fill();
 
       // also draw a neat little selection box around the agent if it's selected
-      if (agent.selected)
+      if (selectedAgents[agent.id])
       {
          // move 7px up and left from agent's centre
          ctx.translate(-7, -7);
@@ -167,8 +163,8 @@
 
       // initialise the selection rectangle
       selectionRectangle.active = true;
-      selectionRectangle.x = e.clientX; // these coords are relative to the canvas
-      selectionRectangle.y = e.clientY;
+      selectionRectangle.x = e.clientX + window.pageXOffset; // these coords are relative to the canvas
+      selectionRectangle.y = e.clientY + window.pageYOffset; // pageOffset in case the page has been scrolled
 
       // default height and width
       selectionRectangle.width = 1;
@@ -180,8 +176,8 @@
    {
       if (selectionRectangle.active)
       {
-         selectionRectangle.width = e.clientX - selectionRectangle.x;
-         selectionRectangle.height = e.clientY - selectionRectangle.y;
+         selectionRectangle.width = (e.clientX + window.pageXOffset) - selectionRectangle.x;
+         selectionRectangle.height = (e.clientY + window.pageYOffset) - selectionRectangle.y;
       }
    });
 
@@ -190,7 +186,6 @@
    // when mouse is released off of the canvas
    canvas.addEventListener("mouseup", function(e)
    {
-      console.log("mouseup");
       computeSelectedAgents();
       selectionRectangle.active = false;
 
@@ -199,7 +194,7 @@
       // interface for all this
       var infoTableInnerHtml = "";
 
-      var tableHeader = "<tr><th>ID</th><th>X</th><th>Y</th><th>Vx</th><th>Vy</th><th>State</th>\n";
+      var tableHeader = "<tr><th>ID</th><th>X</th><th>Y</th><th>Vx</th><th>Vy</th>\n";
 
       infoTableInnerHtml += tableHeader;
 
@@ -207,18 +202,15 @@
       {
          var agent = world.agents[i];
 
-         if (agent.selected)
+         if (selectedAgents[agent.id])
          {
             var agentInfo = `<tr>
                <td id='id${agent.id}'   >${agent.id}</td>
                <td id='x${agent.id}'    >${agent.x}</td>
                <td id='y${agent.id}'    >${agent.y}</td>
-               <td id='vx${agent.id}'   >${agent.vX}</td>
-               <td id='vy${agent.id}'   >${agent.vY}</td>
-               <td id='state${agent.id}'>${agent.state}</td>
+               <td id='vx${agent.id}'   >${agent.vx}</td>
+               <td id='vy${agent.id}'   >${agent.vy}</td>
                </tr>`;
-
-            console.log(agentInfo);
 
             infoTableInnerHtml += agentInfo;
          }
@@ -230,11 +222,7 @@
 
    function clearSelectedAgents()
    {
-      for (var i = 0; i < world.agents.length; i++)
-      {
-         world.agents[i].selected = false;
-      }
-      socket.emit("deselect");
+      selectedAgents = {};
    }
 
    function computeSelectedAgents()
@@ -245,8 +233,6 @@
       selectBounds.right  = (selectionRectangle.width  > 0) ? selectionRectangle.x + selectionRectangle.width  : selectionRectangle.x;
       selectBounds.top    = (selectionRectangle.height > 0) ? selectionRectangle.y                             : selectionRectangle.y + selectionRectangle.height;
       selectBounds.bottom = (selectionRectangle.height > 0) ? selectionRectangle.y + selectionRectangle.height : selectionRectangle.y;
-
-      var selectedAgents = [];
 
       for (var i = 0; i < world.agents.length; i++)
       {
@@ -262,59 +248,14 @@
 
          if (rectIntersect(agentBounds, selectBounds))
          {
-            agent.selected = true;
-            selectedAgents[agents.id] = true;
+            selectedAgents[agent.id] = true;
          }
       }
-
-      socket.emit("select", selectedAgents);
    }
 
    function rectIntersect(a, b)
    {
       return !(b.left > a.right || b.right < a.left || b.top > a.bottom || b.bottom < a.top);
-   }
-
-   function pauseAll()
-   {
-      //socket.emit("pause", -1);
-   }
-
-   function resumeAll()
-   {
-      //socket.emit("resume", -1);
-   }
-
-   function pauseSelected()
-   {
-      /*var agentIds = [];
-
-      for (var i = 0; i < world.agents.length; i++)
-      {
-         var agent = world.agents[i];
-         if (agent.selected)
-         {
-            agentIds.push(agent.id);
-         }
-      }
-
-      socket.emit("pause", agentIds);*/
-   }
-
-   function resumeSelected()
-   {
-      /*var agentIds = [];
-
-      for (var i = 0; i < world.agents.length; i++)
-      {
-         var agent = world.agents[i];
-         if (agent.selected)
-         {
-            agentIds.push(agent.id);
-         }
-      }
-
-      socket.emit("resume", agentIds);*/
    }
 </script>
 
