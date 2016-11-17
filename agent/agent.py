@@ -1,74 +1,217 @@
 from stateMachine.StateMachine import StateMachine
 from stateMachine.state import State
 from enum import Enum
+import numpy as np
+
+# reset velocity of agent at begining of each state transition?
 
 input = Enum('input', 'nestFound exploreTime observeTime dancerFound siteFound tiredDance notTiredDance restingTime')
+
+
 class Agent(StateMachine):
-
-    def __init__(self, initialstate):
+    def __init__(self, agent_id, initialstate):
         self.state = initialstate
-        #create table here.
-        dict ={(Exploring().__class__, input.nestFound) : [None, Assessing()],
-               (Exploring().__class__, input.exploreTime) : [None, Observing()],
-               (Observing().__class__, input.observeTime) : [None, Exploring()],
-               (Observing().__class__, input.dancerFound) : [None, Assessing()],
-               (Assessing().__class__, input.siteFound) : [None, Dancing()],
-               (Dancing().__class__,   input.tiredDance) : [None, Resting()],
-               (Dancing().__class__,   input.notTiredDance) : [None, Assessing()],
-               (Resting().__class__,   input.restingTime)  : [None, Observing()]
-               }
+
+        # bee agent variables
+        self.agent_id = agent_id  # for communication with environment
+        self.location = [0, 0]  # should be initialized?
+        self.direction = 0  # should be initilaized? potentially random?
+        self.velocity = 1  # should be initilaized?
+        self.hub = [0, 0]  # should be initialized?
+        self.potential_site = None  # array [x,y]
+        self.q_value = 0
+        self.assessments = 0
+
+        # create table here.
+        dict = {(Exploring().__class__, input.nestFound): [None, Assessing()],
+                (Exploring().__class__, input.exploreTime): [None, Observing()],
+                (Observing().__class__, input.observeTime): [None, Exploring()],
+                (Observing().__class__, input.dancerFound): [None, Assessing()],
+                (Assessing().__class__, input.siteFound): [None, Dancing()],
+                (Dancing().__class__, input.tiredDance): [None, Resting()],
+                (Dancing().__class__, input.notTiredDance): [None, Assessing()],
+                (Resting().__class__, input.restingTime): [None, Observing()]
+                }
         self.transitionTable = dict
-    def update(self):
-        self.nextState(self.state.update())
+
+    def sense(self, environment):
+        self.state.sense(self, environment)
+
+    def act(self, environment):
+        self.state.act(self, environment)
+
+    def update(self, environment):
+        self.nextState(self.state.update(self, environment))
 
 
-#so, the exploring part needs to give the input..
+# so, the exploring part needs to give the input..
 class Exploring(State):
     def __init__(self):
         self.name = "exploring"
-        self.nest = 0
-        self.exploretime=2
+        self.exploretime = 2
 
-    def update(self):
-        self.exploretime = self.exploretime-1
-        if ((self.nest > 0)):
+    def sense(self, agent, environment):
+        new_q = environment.get_q(agent.location[0], agent.location[1])
+        agent.q_value = new_q
+
+    def act(self, agent, environment):
+        self.move(agent)
+
+    def update(self, agent, environment):
+        self.exploretime = self.exploretime - 1
+        if ((agent.q_value > 0)):
             return input.nestFound
         elif (self.exploretime < 1):
             return input.exploreTime
         else:
             return None
 
+    def move(self,agent):
+        delta_d = np.random.normal(0, .3)
+        agent.direction = (agent.direction + delta_d) % (2 * np.pi)
+        # if (abs(agent.x) >= 100 or abs(agent.y) >= 100):  # turns the bee around
+        #     agent.direction -= np.pi
+        #new_x = agent.location[0] + (agent.velocity * np.cos(agent.direction))
+        #new_y = agent.location[1] + (agent.velocity * np.sin(agent.direction))
+        return
+
 
 class Assessing(State):
     def __init__(self):
         self.name = "assessing"
+        self.goingToSite = True
 
-    def update(self):
-        return input.siteFound
+    def sense(self, agent, environment):
+        pass
+
+    def act(self, agent, environment):
+        self.move(agent)
+
+    def update(self, agent, environment):
+        agent.location = environment.get_location(agent.agent_id)  # may need an ID of some sort to get my info from environment
+
+        # if agent is less than distance=1 unit away from potential site, go back to hub
+        if ((agent.potential_site[0] - agent.location[0]) ** 2 +
+                    (agent.potential_site[1] - agent.location[1]) ** 2 < 1):
+            self.goingToSite = False
+
+        # if agent is less than distance=1 unit away from hub, switch to dancing
+        if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2 < 1):
+            return input.siteFound
+
+    def move(self, agent):
+        if (self.goingToSite):
+            dx = agent.potential_site[0] - agent.location[0]
+            dy = agent.potential_site[1] - agent.location[1]
+            agent.direction = np.arctan2(dy, dx)
+        else:
+            dx = agent.location[0] - agent.potential_site[0]
+            dy = agent.location[1] - agent.potential_site[1]
+            agent.direction = np.arctan2(dy, dx)
+        return
 
 
 class Resting(State):
     def __init__(self):
         self.name = "resting"
+        self.atHub = False
         self.restCountdown = 2
-    def update(self):
+
+    def sense(self, agent, environment):  # probably not needed for now, but can be considered a place holder
+        pass
+
+    def act(self, agent, environment):
+        if (self.atHub):
+            self.restCountdown -= 1
+        else:
+            # if not at hub, more towards it
+            self.move(agent)
+            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2 <= 1):
+                agent.velocity=0
+                self.atHub = True
+
+    def update(self, agent, environment):
+        if (not self.atHub):
+            agent.location = environment.get_location(agent.agent_id)  # may need an ID of some sort to get my
+            # info from environment
         if self.restCountdown < 1:
+            agent.velocity =1
             return input.restingTime
+
+    def move(self, agent):
+        dx = agent.location[0] - agent.hub[0]
+        dy = agent.location[1] - agent.hub[1]
+        agent.direction = np.arctan2(dy, dx)
+        #new_x = agent.location[0] + (agent.velocity * np.cos(agent.direction))
+        #new_y = agent.location[1] + (agent.velocity * np.sin(agent.direction))
+        return
+
 
 class Dancing(State):
     def __init__(self):
         self.name = "dancing"
-    def update(self):
-        return input.tiredDance
+        self.dance_counter = 15
+
+    def sense(self, agent, environment):
+        pass
+
+    def act(self, agent, environment):
+        self.move(agent)
+
+    def update(self, agent, environment):
+        agent.location = environment.get_location(agent.agent_id)  # may need an ID of some sort to get my
+        # info from environment
+        if (self.dance_counter == 0):
+            if (agent.assessments < 3):
+                agent.assessments += 1
+                return input.notTiredDance
+            else:
+                agent.assessments=0
+                return input.tiredDance
+        else:
+            self.dance_counter -= 1
+
+    def move(self, agent):
+        agent.direction += 2 * np.pi / 8
+        return
 
 
 class Observing(State):
     def __init__(self):
         self.name = "observing"
-        self.explorerTimer = 2
+        self.observerTimer = 2
         self.seesDancer = False
-    def update(self):
-        if(self.explorerTimer < 1):
-            return input.observeTime
-        elif self.seesDancer is True:
+
+    def sense(self, agent, environment):
+        # get nearby bees from environment and check for dancers
+        bees = environment.get_nearby_agents(agent.agent_id)
+        for bee in bees:
+            if (bee.isDancing == True):
+                self.seesDancer = True;
+                agent.potential_site = bee.potential_site
+                agent.q_value = bee.q_value
+                break
+
+    def act(self, agent, environment):
+        if (self.seesDancer == True):  # if a dancer is found, wait for transition
+            pass
+        else:  # else move a little bit
+            self.move(agent)
+
+    def update(self, agent, environment):
+        if self.seesDancer is True:
             return input.dancerFound
+        elif (self.observerTimer == 0):
+            return input.observeTime
+        else:
+            self.observerTimer -= 1
+
+    def move(self, agent):
+        agent.direction += 2 * np.pi / 8
+        #new_x = agent.location[0] + (agent.velocity * np.cos(agent.direction))
+        #new_y = agent.location[1] + (agent.velocity * np.sin(agent.direction))
+
+        return
+
+
+    # return just direction and velocity

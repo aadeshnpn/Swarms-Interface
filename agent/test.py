@@ -1,9 +1,5 @@
-from agent import *
-t = Agent(Exploring())
-t.update()
-print(t.state)
-t.state.exploretime=1
-t.update()
-print(t.state)
-t.update()
-print(t.state)
+from environment import *
+envr = environment()
+for i in range(10):
+    envr.run()
+
