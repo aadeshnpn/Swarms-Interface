@@ -30,6 +30,8 @@ environment = Model.Environment()
 controller =  Control.Controller(environment)
 controller.startClock()
 
+
+quadric = None
 # A general OpenGL initialization function.  Sets all of the initial parameters.
 def InitGL(Width, Height):				# We call this right after our OpenGL window is created.
     glClearColor(0.0, 0.0, 0.0, 0.0)	# This Will Clear The Background Color To Black
@@ -86,10 +88,15 @@ def DrawAgent(agent):
 
 def DrawAgents():
 	global environment
+	
 	DrawStateHistogram()
 	for agent in environment.getAgents():
 		DrawAgent(agent)
-
+	DrawMosquitoNet(environment.mosquitoNet)
+	
+	DrawHive(environment.Hive[0], environment.Hive[1])
+	for site in environment.sites:
+		DrawSite(site)	
 def updateAgents():
 	global environment
 	for agent in environment.getAgents():
@@ -112,6 +119,50 @@ def DrawRectangle(x1, y1, x2, y2, x3, y3, x4, y4, color = ""):
 	glVertex3f(   x4, y4, 0.0)
 	glVertex3f(   x3, y3, 0.0)
 	glEnd()
+
+def DrawSquare(x, y, s_l, color = ""):
+	DrawRectangle(x,y, x+s_l, y, x, y+s_l, x+s_l, y+s_l, color = color)
+
+def DrawHive(x,y):
+
+	'''
+	global quadric
+	#DrawCircle(x,y,.05, color = "")
+	if(quadric is None):
+		quadric = gluNewQuadric()
+	glBegin(
+	gluQuadricDrawStyle(quadric,GLU_SILHOUETTE)
+	gluDisk(quadric, 0.01, .1, 1, 1)
+	'''
+
+	radius = 30
+
+	glEnable(GL_POINT_SMOOTH)
+	glHint(GL_POINT_SMOOTH_HINT, GL_NICEST)
+	glPointSize(radius)
+	glColor3d(1.0, 1.0, 0)
+	glBegin(GL_POINTS)
+	glVertex2d(0.0, 0.0)
+	glEnd()
+
+def DrawMosquitoNet(mosquitoNet):
+	glLineWidth(2.5)
+	glColor3f(1.0, .4, .6)
+	glBegin(GL_LINES)
+	glVertex2f(mosquitoNet[0][0], mosquitoNet[0][1])
+	glVertex2f(mosquitoNet[1][0], mosquitoNet[1][1])
+	glEnd()
+def DrawCircle(x,y, radius, color = ""):
+	glBegin(GL_LINE_LOOP)
+	for i in xrange(0,360):
+		degInRad = i*math.pi/180
+		glVertex2f(math.cos(degInRad)*radius,math.sin(degInRad)*radius)
+	glEnd()
+
+
+def DrawSite(site):
+	DrawSquare(site[0],site[1],.05, color = "RED")
+	
 
 def DrawStateHistogram(): #hackish
 	states = [0,0,0]
@@ -147,7 +198,7 @@ def mouseClicked(button, state, x, y):
 		return
 	for agent in environment.getAgents():
 		if(isWithinRect(agent.x, agent.y, x, y, lastLeftClick[0], lastLeftClick[1])):
-			agent.state = (agent.state + 1) % 3
+			agent.incrementState()
 # The function called whenever a key is pressed. Note the use of Python tuples to pass in: (key, x, y)
 def keyPressed(*args):
 	# If escape is pressed, kill everything.

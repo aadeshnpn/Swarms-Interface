@@ -1,8 +1,14 @@
 import SAgent
+import random
 class Environment:
 
 	def __init__(self):
 		self.reInitTestAgents()
+		self.Hive = (0.0,0.0)
+		self.sites = []
+		for i in xrange(0,3):
+			self.sites.append((random.random()*2-1, random.random()*2-1))
+		self.mosquitoNet = ( (random.random()*2-1, random.random()*2-1), (random.random()*2-1,random.random()*2-1))
 
 	def reInitTestAgents(self):
 		self.agents = []
