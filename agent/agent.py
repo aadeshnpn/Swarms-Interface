@@ -114,7 +114,7 @@ class Assessing(State):
 class Resting(State):
     def __init__(self):
         self.name = "resting"
-        self.atHub = False
+        self.atHub = True  #we may not need this code at all... to turn it on make it default false.
         self.restCountdown = 2
 
     def sense(self, agent, environment):  # probably not needed for now, but can be considered a place holder
@@ -149,8 +149,9 @@ class Resting(State):
 
 class Dancing(State):
     def __init__(self):
-        self.name = "dancing"
-        self.dance_counter = 15
+        self.name = "dancing"  #IMPORTANT!!!!!!!!!!11
+        self.dance_counter = 15 #this dance counter should be determined by the q value and the distance,
+                                #we can consider implementing that in the transition.
 
     def sense(self, agent, environment):
         pass
@@ -181,32 +182,41 @@ class Observing(State):
         self.name = "observing"
         self.observerTimer = 2
         self.seesDancer = False
+        self.atHub = False
 
     def sense(self, agent, environment):
         # get nearby bees from environment and check for dancers
-        bees = environment.get_nearby_agents(agent.agent_id)
-        for bee in bees:
-            if (bee.isDancing == True):
-                self.seesDancer = True;
-                agent.potential_site = bee.potential_site
-                agent.q_value = bee.q_value
-                break
+        if(self.atHub):
+            bees = environment.get_nearby_agents(agent.agent_id) #we may need to reformat this so the agent knows what is
+            for bee in bees:
+                if (bee.isDancing == True):
+                    self.seesDancer = True;
+                    agent.potential_site = bee.potential_site
+                    agent.q_value = bee.q_value
+                    break
 
     def act(self, agent, environment):
-        if (self.seesDancer == True):  # if a dancer is found, wait for transition
-            pass
-        else:  # else move a little bit
-            self.move(agent)
+        if (self.atHub):
+            self.observerTimer -= 1
+            self.wander(agent)
+        else:
+            # if not at hub, more towards it
+            self.movehome(agent)
+            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2 <= 1):
+                self.atHub = True
 
     def update(self, agent, environment):
         if self.seesDancer is True:
             return input.dancerFound
         elif (self.observerTimer == 0):
             return input.observeTime
-        else:
-            self.observerTimer -= 1
 
-    def move(self, agent):
+    def movehome(self, agent):
+        dx = agent.location[0] - agent.hub[0]
+        dy = agent.location[1] - agent.hub[1]
+        agent.direction = np.arctan2(dy, dx)
+    def wander(self, agent):
+
         agent.direction += 2 * np.pi / 8
         #new_x = agent.location[0] + (agent.velocity * np.cos(agent.direction))
         #new_y = agent.location[1] + (agent.velocity * np.sin(agent.direction))
@@ -214,4 +224,5 @@ class Observing(State):
         return
 
 
-    # return just direction and velocity
+#thoughts: we could implement transitions that when each state is implemented the state is passed in the needed values for it's
+#operation.  advantage:no need to pass in agent, states hold the values. con: copying values every state transition
