@@ -1,5 +1,3 @@
-from stateMachine.Condition import Condition
-
 
 class StateMachine:
     def __init__(self, initialState, tranTable):

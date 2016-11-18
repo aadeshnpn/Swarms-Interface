@@ -124,7 +124,7 @@ class Environment:
 
     # Method to add an agent to the hub
     def add_agent(self, agent_id):
-        agent = Agent([self.hub[0], self.hub[1]], agent_id, "Explorer")
+        agent = Agent(agent_id, Exploring())
         self.agents[agent_id] = agent
 
     # Function to return the Q-value for given coordinates. Returns 0 if nothing is there, -1 if it hits an obstacle,

@@ -1,5 +1,5 @@
-from stateMachine.StateMachine import StateMachine
-from stateMachine.state import State
+from agent.stateMachine.StateMachine import StateMachine
+from agent.stateMachine.state import State
 from enum import Enum
 import numpy as np
 
@@ -13,7 +13,7 @@ class Agent(StateMachine):
         self.state = initialstate
 
         # bee agent variables
-        self.agent.live = True
+        self.live = True
         self.agent_id = agentId  # for communication with environment
         self.location = [0, 0]  # should be initialized?
         self.direction = 2*np.pi*np.random.random()  # should be initilaized? potentially random?
