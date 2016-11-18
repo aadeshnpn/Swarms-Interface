@@ -213,7 +213,7 @@ class Environment:
     def run(self):
         dead_count = 0
         high_q = 0
-        for x in range(300):
+        while True:
             world.to_json()
             for agent_id in self.agents:
                 agent = self.agents[agent_id]
@@ -244,43 +244,7 @@ class Environment:
         print("COUNT DEAD:", dead_count)
         print("High Q score:", high_q)
 
-    def hub_to_string(self):
-        return "Hub: " + "(" + str(self.hub[0]) + "," + str(self.hub[1]) + "," + str(self.hub[2]) + ")"
-
-    def agents_to_string(self):
-        ag_string = ""
-        for agent_id in sorted(self.agents):
-            agent = self.agents[agent_id]
-            if agent.live is True:
-                ag_string += "Agent: " + "(" + agent_id + "," + str(agent.location[0]) + "," +\
-                         str(agent.location[1]) + "," + str(agent.state) + "," + str(agent.direction) + ")\n"
-        return ag_string
-
-    def sites_to_string(self):
-        st_string = ""
-        for site in self.sites:
-            st_string += "Site: " + "(" + str(site[0]) + "," + str(site[1]) + "," + str(site[2]) + "," + str(site[3]) + ")\n"
-        return st_string
-
-    def obstacles_to_string(self):
-        ob_string = ""
-        for obstacle in self.obstacles:
-            ob_string += "Obstacle: " + "(" + str(obstacle[0]) + "," + str(obstacle[1]) + "," + str(obstacle[2]) + ")\n"
-        return ob_string
-
-    def traps_to_string(self):
-        tr_string = ""
-        for trap in self.traps:
-            tr_string += "Trap: " + "(" + str(trap[0]) + "," + str(trap[1]) + "," + str(trap[2]) + ")\n"
-        return tr_string
-
-    def rough_to_string(self):
-        ro_string = ""
-        for spot in self.rough:
-            ro_string += "Rough Spot: " + "(" + str(spot[0]) + "," + str(spot[1]) + "," + str(spot[2]) + ")\n"
-        return ro_string
-
-    def change_state(self,agent_id,new_state):
+    def change_state(self, agent_id, new_state):
         self.agents[agent_id].state = new_state
 
     def to_json(self):
