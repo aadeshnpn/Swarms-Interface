@@ -31,6 +31,7 @@ ipc.config.socketRoot = '/tmp/';
 ipc.config.appspace   = 'honeybee-sim.';
 ipc.config.id         = 'viewerServer';
 ipc.config.silent     = true;
+ipc.config.rawBuffer  = true;
 //ipc.config.retry = 1500;
 
 ipc.serve();
@@ -40,11 +41,21 @@ ipc.server.on('start', function()
    // We expect data in JSON according to the following format:
    // '{ type: "update", data: <world object> }'
 
-   ipc.server.on('update', function(world, client)
+   ipc.server.on('data', function(buffer, client)
    {
-      io.sockets.emit("update", world);
+      var msg = buffer.toString();
+      var msgJson = JSON.parse(msg);
+
+      io.sockets.emit("update", msgJson.data);
       ipc.server.emit(client, 'received');
    });
+
+   /*ipc.server.on('update', function(world, client)
+   {
+      //console.log(world);
+      io.sockets.emit("update", world);
+      ipc.server.emit(client, 'received');
+   });*/
 });
 
 ipc.server.start();

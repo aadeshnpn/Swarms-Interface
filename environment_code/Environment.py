@@ -1,6 +1,10 @@
 import agent1
 import numpy as np
 import json
+import os
+import socket
+import sys
+import time
 
 __author__ = "Nathan Anderson"
 
@@ -18,8 +22,14 @@ class Environment:
         self.rough = []
         self.agents = {}
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
-        for x in range(1000):
+        for x in range(100):
             self.add_agent(str(x))
+
+        if os.path.exists("/tmp/honeybee-sim.viewerServer"):
+            self.client = socket.socket( socket.AF_UNIX, socket.SOCK_STREAM )
+            self.client.connect("/tmp/honeybee-sim.viewerServer")
+        else:
+            print("Couldn't Connect!")
 
     # Function to initialize data on the environment from a .txt file
     def build_environment(self):
@@ -223,6 +233,10 @@ class Environment:
                         self.smooth_move(agent, .5, False)
                     else:
                         self.smooth_move(agent, 1, False)
+            t_end = time.time() + 1/60
+            while time.time() < t_end:
+                pass
+
         print("COUNT DEAD:", dead_count)
         print("High Q score:", high_q)
 
@@ -266,10 +280,9 @@ class Environment:
         self.agents[agent_id].state = new_state
 
     def to_json(self):
-        fp = open("/tmp/honeybee-sim.viewerServer", "w+")
-        json.dump({"type": "update", "data": {"x_limit": self.x_limit, "y_limit": self.y_limit, "hub": self.hub, "sites":
+        self.client.send( json.dumps({"type": "update", "data": {"x_limit": self.x_limit, "y_limit": self.y_limit, "hub": self.hub, "sites":
             self.sites, "obstacles": self.obstacles, "traps": self.traps, "rough": self.rough, "agents":
-            self.agents_to_json()}}, fp)
+            self.agents_to_json()}}).encode() )
 
     def agents_to_json(self):
         agents = []
