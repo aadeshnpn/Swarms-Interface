@@ -1,7 +1,8 @@
 // Express is the web server frameworke. It handles all the low level http
 // stuff. It initialises an 'app' object which we use to define what we'll
 // do with particular requests
-var app = require( 'express' )();
+var express = require( 'express' );
+var app = express();
 
 // Express returns a Server object. The only thing we really care about with
 // this is to have it start listening for incoming connections
@@ -63,6 +64,8 @@ ipc.server.start();
 /*******************************************************************************
  * Route definition
  ******************************************************************************/
+
+app.use(express.static("public"));
 
 // On an http GET /, serve index.html
 app.get( '/', function( req, res )
