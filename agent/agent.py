@@ -9,13 +9,13 @@ input = Enum('input', 'nestFound exploreTime observeTime dancerFound siteFound t
 
 
 class Agent(StateMachine):
-    def __init__(self, agent_id, initialstate):
+    def __init__(self, agentId, initialstate):
         self.state = initialstate
 
         # bee agent variables
-        self.agent_id = agent_id  # for communication with environment
+        self.agent_id = agentId  # for communication with environment
         self.location = [0, 0]  # should be initialized?
-        self.direction = 0  # should be initilaized? potentially random?
+        self.direction = 2*np.pi*np.random.random()  # should be initilaized? potentially random?
         self.velocity = 1  # should be initilaized?
         self.hub = [0, 0]  # should be initialized?
         self.potential_site = None  # array [x,y]
@@ -27,7 +27,7 @@ class Agent(StateMachine):
                 (Exploring().__class__, input.exploreTime): [None, Observing()],
                 (Observing().__class__, input.observeTime): [None, Exploring()],
                 (Observing().__class__, input.dancerFound): [None, Assessing()],
-                (Assessing().__class__, input.siteFound): [None, Dancing()],
+                (Assessing().__class__, input.siteFound): [None, Dancing()], # self.danceTransition()
                 (Dancing().__class__, input.tiredDance): [None, Resting()],
                 (Dancing().__class__, input.notTiredDance): [None, Assessing()],
                 (Resting().__class__, input.restingTime): [None, Observing()]
@@ -42,17 +42,21 @@ class Agent(StateMachine):
 
     def update(self, environment):
         self.nextState(self.state.update(self, environment))
+    def danceTransition(self,environment):
+        pass
 
 
 # so, the exploring part needs to give the input..
 class Exploring(State):
     def __init__(self):
         self.name = "exploring"
-        self.exploretime = 2
+        self.exploretime = 5
 
     def sense(self, agent, environment):
         new_q = environment.get_q(agent.location[0], agent.location[1])
         agent.q_value = new_q
+        #agent.potential_site = [agent.location[0],agent.location[1]]
+        agent.potential_site = agent.location
 
     def act(self, agent, environment):
         self.move(agent)
@@ -88,7 +92,7 @@ class Assessing(State):
         self.move(agent)
 
     def update(self, agent, environment):
-        agent.location = environment.get_location(agent.agent_id)  # may need an ID of some sort to get my info from environment
+          # may need an ID of some sort to get my info from environment
 
         # if agent is less than distance=1 unit away from potential site, go back to hub
         if ((agent.potential_site[0] - agent.location[0]) ** 2 +
@@ -96,7 +100,7 @@ class Assessing(State):
             self.goingToSite = False
 
         # if agent is less than distance=1 unit away from hub, switch to dancing
-        if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2 < 1):
+        if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) < 1:
             return input.siteFound
 
     def move(self, agent):
@@ -105,8 +109,8 @@ class Assessing(State):
             dy = agent.potential_site[1] - agent.location[1]
             agent.direction = np.arctan2(dy, dx)
         else:
-            dx = agent.location[0] - agent.potential_site[0]
-            dy = agent.location[1] - agent.potential_site[1]
+            dx = agent.hub[0] - agent.location[0]
+            dy = agent.hub[1] - agent.location[1]
             agent.direction = np.arctan2(dy, dx)
         return
 
@@ -122,6 +126,7 @@ class Resting(State):
 
     def act(self, agent, environment):
         if (self.atHub):
+            agent.velocity = 0
             self.restCountdown -= 1
         else:
             # if not at hub, more towards it
@@ -131,9 +136,6 @@ class Resting(State):
                 self.atHub = True
 
     def update(self, agent, environment):
-        if (not self.atHub):
-            agent.location = environment.get_location(agent.agent_id)  # may need an ID of some sort to get my
-            # info from environment
         if self.restCountdown < 1:
             agent.velocity =1
             return input.restingTime
@@ -160,7 +162,6 @@ class Dancing(State):
         self.move(agent)
 
     def update(self, agent, environment):
-        agent.location = environment.get_location(agent.agent_id)  # may need an ID of some sort to get my
         # info from environment
         if (self.dance_counter == 0):
             if (agent.assessments < 3):
@@ -180,7 +181,7 @@ class Dancing(State):
 class Observing(State):
     def __init__(self):
         self.name = "observing"
-        self.observerTimer = 2
+        self.observerTimer = 20
         self.seesDancer = False
         self.atHub = False
 
@@ -189,10 +190,9 @@ class Observing(State):
         if(self.atHub):
             bees = environment.get_nearby_agents(agent.agent_id) #we may need to reformat this so the agent knows what is
             for bee in bees:
-                if (bee.isDancing == True):
+                if (isinstance(bee.state, Dancing().__class__)):
                     self.seesDancer = True;
                     agent.potential_site = bee.potential_site
-                    agent.q_value = bee.q_value
                     break
 
     def act(self, agent, environment):
@@ -202,7 +202,7 @@ class Observing(State):
         else:
             # if not at hub, more towards it
             self.movehome(agent)
-            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2 <= 1):
+            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2 <= .5):
                 self.atHub = True
 
     def update(self, agent, environment):
@@ -212,12 +212,12 @@ class Observing(State):
             return input.observeTime
 
     def movehome(self, agent):
-        dx = agent.location[0] - agent.hub[0]
-        dy = agent.location[1] - agent.hub[1]
+        dx =  agent.hub[0] -agent.location[0]
+        dy = agent.hub[1]- agent.location[1]
         agent.direction = np.arctan2(dy, dx)
     def wander(self, agent):
 
-        agent.direction += 2 * np.pi / 8
+        agent.direction += 2 * np.pi / 4
         #new_x = agent.location[0] + (agent.velocity * np.cos(agent.direction))
         #new_y = agent.location[1] + (agent.velocity * np.sin(agent.direction))
 
