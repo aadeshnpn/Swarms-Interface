@@ -56,7 +56,7 @@ class Exploring(State):
     def sense(self, agent, environment):
         new_q = environment.get_q(agent.location[0], agent.location[1])
         agent.q_value = new_q
-        #agent.potential_site = [agent.location[0],agent.location[1]]
+        #
         #
 
     def act(self, agent):
@@ -65,7 +65,7 @@ class Exploring(State):
     def update(self, agent, environment):
         self.exploretime = self.exploretime - 1
         if ((agent.q_value > 0)):
-            agent.potential_site = agent.location
+            agent.potential_site = [agent.location[0], agent.location[1]]
             return input.nestFound
         elif (self.exploretime < 1):
             return input.exploreTime
