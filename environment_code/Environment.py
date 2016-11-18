@@ -234,8 +234,8 @@ class Environment:
                     else:
                         self.smooth_move(agent, 1, False)"""
                     agent.sense(self)
-                    agent.act(self)
-                    self.suggest_new_direction(id)
+                    agent.act()
+                    self.suggest_new_direction(agent.id)
                     agent.update(self)
             t_end = time.time() + 1/60
             while time.time() < t_end:
@@ -295,10 +295,9 @@ class Environment:
             agent_dict["x"] = self.agents[agent_id].location[0]
             agent_dict["y"] = self.agents[agent_id].location[1]
             agent_dict["id"] = self.agents[agent_id].id
-            agent_dict["state"] = self.agents[agent_id].state
+            agent_dict["state"] = self.agents[agent_id].state.name
             agent_dict["direction"] = self.agents[agent_id].direction
-            agent_dict["q_found"] = self.agents[agent_id].q_found
-            agent_dict["site_location"] = self.agents[agent_id].site_location
+            agent_dict["potential_site"] = self.agents[agent_id].potential_site
             agent_dict["live"] = self.agents[agent_id].live
             agents.append(agent_dict)
         return agents

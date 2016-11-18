@@ -14,7 +14,7 @@ class Agent(StateMachine):
 
         # bee agent variables
         self.live = True
-        self.agent_id = agentId  # for communication with environment
+        self.id = agentId  # for communication with environment
         self.location = [0, 0]  # should be initialized?
         self.direction = 2*np.pi*np.random.random()  # should be initilaized? potentially random?
         self.velocity = 1  # should be initilaized?
@@ -51,7 +51,7 @@ class Agent(StateMachine):
 class Exploring(State):
     def __init__(self):
         self.name = "exploring"
-        self.exploretime = 5
+        self.exploretime = 3600
 
     def sense(self, agent, environment):
         new_q = environment.get_q(agent.location[0], agent.location[1])
@@ -121,7 +121,7 @@ class Resting(State):
     def __init__(self):
         self.name = "resting"
         self.atHub = True  #we may not need this code at all... to turn it on make it default false.
-        self.restCountdown = 2
+        self.restCountdown = 1000
 
     def sense(self, agent, environment):  # probably not needed for now, but can be considered a place holder
         pass
@@ -154,7 +154,7 @@ class Resting(State):
 class Dancing(State):
     def __init__(self):
         self.name = "dancing"  #IMPORTANT!!!!!!!!!!11
-        self.dance_counter = 15 #this dance counter should be determined by the q value and the distance,
+        self.dance_counter = 1800 #this dance counter should be determined by the q value and the distance,
                                 #we can consider implementing that in the transition.
 
     def sense(self, agent, environment):
@@ -183,14 +183,14 @@ class Dancing(State):
 class Observing(State):
     def __init__(self):
         self.name = "observing"
-        self.observerTimer = 20
+        self.observerTimer = 2000
         self.seesDancer = False
         self.atHub = False
 
     def sense(self, agent, environment):
         # get nearby bees from environment and check for dancers
         if(self.atHub):
-            bees = environment.get_nearby_agents(agent.agent_id) #we may need to reformat this so the agent knows what is
+            bees = environment.get_nearby_agents(agent.id) #we may need to reformat this so the agent knows what is
             for bee in bees:
                 if (isinstance(bee.state, Dancing().__class__)):
                     self.seesDancer = True;
