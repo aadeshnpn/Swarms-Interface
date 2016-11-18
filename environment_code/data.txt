@@ -1,6 +1,6 @@
 World Limits
 X   Y
-800 500
+800 400
 
 Hub
 X   Y   Rad
