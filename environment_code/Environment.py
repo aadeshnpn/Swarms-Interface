@@ -1,4 +1,4 @@
-import agent1
+from agent.agent import *
 import numpy as np
 import json
 import os
@@ -124,7 +124,7 @@ class Environment:
 
     # Method to add an agent to the hub
     def add_agent(self, agent_id):
-        agent = agent1.Point([self.hub[0], self.hub[1]], agent_id, "Explorer")
+        agent = Agent([self.hub[0], self.hub[1]], agent_id, "Explorer")
         self.agents[agent_id] = agent
 
     # Function to return the Q-value for given coordinates. Returns 0 if nothing is there, -1 if it hits an obstacle,
@@ -193,12 +193,12 @@ class Environment:
             agent.location[1] += 2 * self.y_limit
 
     # agent asks to go in a direction at a certain velocity, use vector addition, updates location
-    def suggest_new_direction(self, agent_id, direction, velocity):
+    #unnecessary function???
+    def suggest_new_direction(self, agent_id):
         agent = self.agents[agent_id]
-        agent.direction = direction
 
-        agent.location[0] += np.cos(agent.direction) * velocity
-        agent.location[1] += np.sin(agent.direction) * velocity
+        agent.location[0] += np.cos(agent.direction) * agent.velocity
+        agent.location[1] += np.sin(agent.direction) * agent.velocity
 
         if agent.location[0] > self.x_limit:
             agent.location[0] -= 2 * self.x_limit
@@ -218,8 +218,8 @@ class Environment:
             for agent_id in self.agents:
                 agent = self.agents[agent_id]
                 if agent.live is True:
-                    q = self.get_q(self.agents[agent_id].location[0], self.agents[agent_id].location[1])
-                    if q > agent.q_found:
+                    #q = self.get_q(self.agents[agent_id].location[0], self.agents[agent_id].location[1])
+                    """if q > agent.q_found:
                         agent.q_found = q
                         agent.site_location = [agent.location[0], agent.location[1]]
                     if q > high_q:
@@ -232,7 +232,11 @@ class Environment:
                     elif q == -3:
                         self.smooth_move(agent, .5, False)
                     else:
-                        self.smooth_move(agent, 1, False)
+                        self.smooth_move(agent, 1, False)"""
+                    agent.sense(self)
+                    agent.act(self)
+                    self.suggest_new_direction(id)
+                    agent.update(self)
             t_end = time.time() + 1/60
             while time.time() < t_end:
                 pass

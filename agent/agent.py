@@ -13,6 +13,7 @@ class Agent(StateMachine):
         self.state = initialstate
 
         # bee agent variables
+        self.agent.live = True
         self.agent_id = agentId  # for communication with environment
         self.location = [0, 0]  # should be initialized?
         self.direction = 2*np.pi*np.random.random()  # should be initilaized? potentially random?
@@ -37,8 +38,8 @@ class Agent(StateMachine):
     def sense(self, environment):
         self.state.sense(self, environment)
 
-    def act(self, environment):
-        self.state.act(self, environment)
+    def act(self):
+        self.state.act(self)
 
     def update(self, environment):
         self.nextState(self.state.update(self, environment))
@@ -56,14 +57,15 @@ class Exploring(State):
         new_q = environment.get_q(agent.location[0], agent.location[1])
         agent.q_value = new_q
         #agent.potential_site = [agent.location[0],agent.location[1]]
-        agent.potential_site = agent.location
+        #
 
-    def act(self, agent, environment):
+    def act(self, agent):
         self.move(agent)
 
     def update(self, agent, environment):
         self.exploretime = self.exploretime - 1
         if ((agent.q_value > 0)):
+            agent.potential_site = agent.location
             return input.nestFound
         elif (self.exploretime < 1):
             return input.exploreTime
@@ -88,7 +90,7 @@ class Assessing(State):
     def sense(self, agent, environment):
         pass
 
-    def act(self, agent, environment):
+    def act(self, agent):
         self.move(agent)
 
     def update(self, agent, environment):
@@ -96,7 +98,7 @@ class Assessing(State):
 
         # if agent is less than distance=1 unit away from potential site, go back to hub
         if ((agent.potential_site[0] - agent.location[0]) ** 2 +
-                    (agent.potential_site[1] - agent.location[1]) ** 2 < 1):
+                    (agent.potential_site[1] - agent.location[1]) ** 2 )< 1:
             self.goingToSite = False
 
         # if agent is less than distance=1 unit away from hub, switch to dancing
@@ -124,7 +126,7 @@ class Resting(State):
     def sense(self, agent, environment):  # probably not needed for now, but can be considered a place holder
         pass
 
-    def act(self, agent, environment):
+    def act(self, agent):
         if (self.atHub):
             agent.velocity = 0
             self.restCountdown -= 1
@@ -158,7 +160,7 @@ class Dancing(State):
     def sense(self, agent, environment):
         pass
 
-    def act(self, agent, environment):
+    def act(self, agent):
         self.move(agent)
 
     def update(self, agent, environment):
@@ -195,7 +197,7 @@ class Observing(State):
                     agent.potential_site = bee.potential_site
                     break
 
-    def act(self, agent, environment):
+    def act(self, agent):
         if (self.atHub):
             self.observerTimer -= 1
             self.wander(agent)
