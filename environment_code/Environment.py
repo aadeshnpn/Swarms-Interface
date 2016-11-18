@@ -1,5 +1,6 @@
 import agent1
 import numpy as np
+import json
 
 __author__ = "Nathan Anderson"
 
@@ -17,7 +18,7 @@ class Environment:
         self.rough = []
         self.agents = {}
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
-        for x in range(0, 100):
+        for x in range(1000):
             self.add_agent(str(x))
 
     # Function to initialize data on the environment from a .txt file
@@ -113,8 +114,8 @@ class Environment:
 
     # Method to add an agent to the hub
     def add_agent(self, agent_id):
-        agent = agent1.Point(agent_id, "E")
-        self.agents[agent_id] = [agent, self.hub[0],self.hub[1]]
+        agent = agent1.Point([self.hub[0], self.hub[1]], agent_id, "Explorer")
+        self.agents[agent_id] = agent
 
     # Function to return the Q-value for given coordinates. Returns 0 if nothing is there, -1 if it hits an obstacle,
     # -2 if it gets caught in a trap, -3 if it's moving through rough terrain, and a value between 0 and 1 if it finds
@@ -146,10 +147,19 @@ class Environment:
             y_dif = y - site[1]
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
             if tot_dif <= site[2]:
-                return site[3] / site[2] ** (tot_dif / site[2])  # Uses an inverse-power function to oompute q_value
-                                                                 # based on distance from center of site
-
+                return (site[3] / site[2] ** (tot_dif / site[2])) * site[4] # Uses an inverse-power function to compute
+                                                                    # q_value based on distance from center of site,
+                                                                    # multiplied by the site's ease of detection
         return 0
+
+    def get_nearby_agents(self, agent_id):
+        nearby = []
+        for other_id in self.agents:
+            if other_id != agent_id:
+                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0])**2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1])**2)**.5 < 5:
+                    #nearby.append([self.agents[other_id].site_location, self.agents[other_id].q_found])
+                    nearby.append(self.agents[other_id])
+        return nearby
 
     # Move a single agent.
     def smooth_move(self, agent, velocity, bounce):
@@ -159,28 +169,49 @@ class Environment:
             delta_d = np.random.normal(0, .3)
             agent.direction = (agent.direction + delta_d) % (2 * np.pi)
 
-        self.agents[agent.id][1] += np.cos(agent.direction) * velocity
-        self.agents[agent.id][2] += np.sin(agent.direction) * velocity
+        agent.location[0] += np.cos(agent.direction) * velocity
+        agent.location[1] += np.sin(agent.direction) * velocity
 
         # If the agent goes outside of the limits, it re-enters on the opposite side.
-        if self.agents[agent.id][1] > self.x_limit:
-            self.agents[agent.id][1] -= 2*self.x_limit
-        elif self.agents[agent.id][1] < self.x_limit * -1:
-            self.agents[agent.id][1] += 2 * self.x_limit
-        if self.agents[agent.id][2] > self.y_limit:
-            self.agents[agent.id][2] -= 2 * self.y_limit
-        elif self.agents[agent.id][2] < self.y_limit * -1:
-            self.agents[agent.id][2] += 2 * self.y_limit
+        if agent.location[0] > self.x_limit:
+            agent.location[0] -= 2 * self.x_limit
+        elif agent.location[0] < self.x_limit * -1:
+            agent.location[0] += 2 * self.x_limit
+        if agent.location[1] > self.y_limit:
+            agent.location[1] -= 2 * self.y_limit
+        elif agent.location[1] < self.y_limit * -1:
+            agent.location[1] += 2 * self.y_limit
+
+    # agent asks to go in a direction at a certain velocity, use vector addition, updates location
+    def suggest_new_direction(self, agent_id, direction, velocity):
+        agent = self.agents[agent_id]
+        agent.direction = direction
+
+        agent.location[0] += np.cos(agent.direction) * velocity
+        agent.location[1] += np.sin(agent.direction) * velocity
+
+        if agent.location[0] > self.x_limit:
+            agent.location[0] -= 2 * self.x_limit
+        elif agent.location[0] < self.x_limit * -1:
+            agent.location[0] += 2 * self.x_limit
+        if agent.location[1] > self.y_limit:
+            agent.location[1] -= 2 * self.y_limit
+        elif agent.location[1] < self.y_limit * -1:
+            agent.location[1] += 2 * self.y_limit
 
     # Move all of the agents
     def run(self):
         dead_count = 0
         high_q = 0
         for x in range(300):
+            world.to_json()
             for agent_id in self.agents:
-                agent = self.agents[agent_id][0]
+                agent = self.agents[agent_id]
                 if agent.live is True:
-                    q = self.get_q(self.agents[agent_id][1], self.agents[agent_id][2])
+                    q = self.get_q(self.agents[agent_id].location[0], self.agents[agent_id].location[1])
+                    if q > agent.q_found:
+                        agent.q_found = q
+                        agent.site_location = [agent.location[0], agent.location[1]]
                     if q > high_q:
                         high_q = q
                     elif q == -1:
@@ -201,10 +232,10 @@ class Environment:
     def agents_to_string(self):
         ag_string = ""
         for agent_id in sorted(self.agents):
-            agent = self.agents[agent_id][0]
+            agent = self.agents[agent_id]
             if agent.live is True:
-                ag_string += "Agent: " + "(" + agent_id + "," + str(self.agents[agent_id][1]) + "," +\
-                         str(self.agents[agent_id][2]) + "," + str(agent.state) + "," + str(agent.direction) + ")\n"
+                ag_string += "Agent: " + "(" + agent_id + "," + str(agent.location[0]) + "," +\
+                         str(agent.location[1]) + "," + str(agent.state) + "," + str(agent.direction) + ")\n"
         return ag_string
 
     def sites_to_string(self):
@@ -232,16 +263,29 @@ class Environment:
         return ro_string
 
     def change_state(self,agent_id,new_state):
-        self.agents[agent_id][0].state = new_state
+        self.agents[agent_id].state = new_state
 
-'''
+    def to_json(self):
+        fp = open("/tmp/honeybee-sim.viewerServer", "w+")
+        json.dump({"type": "update", "data": {"x_limit": self.x_limit, "y_limit": self.y_limit, "hub": self.hub, "sites":
+            self.sites, "obstacles": self.obstacles, "traps": self.traps, "rough": self.rough, "agents":
+            self.agents_to_json()}}, fp)
+
+    def agents_to_json(self):
+        agents = []
+        for agent_id in self.agents:
+            agent_dict = {}
+            agent_dict["x"] = self.agents[agent_id].location[0]
+            agent_dict["y"] = self.agents[agent_id].location[1]
+            agent_dict["id"] = self.agents[agent_id].id
+            agent_dict["state"] = self.agents[agent_id].state
+            agent_dict["direction"] = self.agents[agent_id].direction
+            agent_dict["q_found"] = self.agents[agent_id].q_found
+            agent_dict["site_location"] = self.agents[agent_id].site_location
+            agent_dict["live"] = self.agents[agent_id].live
+            agents.append(agent_dict)
+        return agents
+
+
 world = Environment("data.txt")
 world.run()
-world.change_state("1","D")
-print(world.hub_to_string() + "\n")
-print(world.agents_to_string())
-print(world.sites_to_string())
-print(world.obstacles_to_string())
-print(world.traps_to_string())
-print(world.rough_to_string())
-'''
