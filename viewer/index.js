@@ -16,7 +16,10 @@ var io = require( 'socket.io' )( http );
 // The server's job should be essentially to grab world info from the simulation
 // engine and pass it on to the client, nothing else.
 
+var fs = require('fs');
+
 var numClients = 0;
+var socketIpcPair = {};
 
 /*******************************************************************************
  * IPC setup
@@ -48,7 +51,7 @@ ipc.server.on('start', function()
       var msgJson = JSON.parse(msg);
 
       io.sockets.emit("update", msgJson.data);
-      ipc.server.emit(client, 'received');
+      //ipc.server.emit(client, 'received');
    });
 
    /*ipc.server.on('update', function(world, client)
@@ -65,7 +68,7 @@ ipc.server.start();
  * Route definition
  ******************************************************************************/
 
-app.use(express.static("public"));
+app.use(express.static(__dirname + "public"));
 
 // On an http GET /, serve index.html
 app.get( '/', function( req, res )
@@ -106,3 +109,14 @@ io.on( 'connection', function( socket )
       console.log("Client " + socket.id + " disconnected. (" + numClients + " total)");
    } );
 } );
+
+function cleanup()
+{
+   //console.log("Cleaning up...");
+   ipc.server.stop();
+   process.exit();
+}
+
+//process.on('exit', cleanup);
+process.on('SIGTERM', cleanup);
+process.on('SIGINT', cleanup);

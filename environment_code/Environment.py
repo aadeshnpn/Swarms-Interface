@@ -8,6 +8,7 @@ import time
 
 __author__ = "Nathan Anderson"
 
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class Environment:
 
@@ -277,5 +278,5 @@ class Environment:
         return agents
 
 
-world = Environment("data.txt")
+world = Environment(os.path.join(ROOT_DIR, "data.txt"))
 world.run()
