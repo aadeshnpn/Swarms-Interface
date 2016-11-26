@@ -9,6 +9,18 @@ input = Enum('input', 'nestFound exploreTime observeTime dancerFound siteFound t
 
 
 class Agent(StateMachine):
+
+    def sense(self, environment):
+        self.state.sense(self, environment)
+
+    def act(self):
+        self.state.act(self)
+
+    def update(self, environment):
+        self.nextState(self.state.update(self, environment))
+    def danceTransition(self):
+        self.state.dance_counter = self.q_value*1000
+
     def __init__(self, agentId, initialstate):
         self.state = initialstate
 
@@ -28,35 +40,25 @@ class Agent(StateMachine):
                 (Exploring().__class__, input.exploreTime): [None, Observing()],
                 (Observing().__class__, input.observeTime): [None, Exploring()],
                 (Observing().__class__, input.dancerFound): [None, Assessing()],
-                (Assessing().__class__, input.siteFound): [None, Dancing()], # self.danceTransition()
+                (Assessing().__class__, input.siteFound): [self.danceTransition, Dancing()], # self.danceTransition()
                 (Dancing().__class__, input.tiredDance): [None, Resting()],
                 (Dancing().__class__, input.notTiredDance): [None, Assessing()],
                 (Resting().__class__, input.restingTime): [None, Observing()]
                 }
         self.transitionTable = dict
 
-    def sense(self, environment):
-        self.state.sense(self, environment)
-
-    def act(self):
-        self.state.act(self)
-
-    def update(self, environment):
-        self.nextState(self.state.update(self, environment))
-    def danceTransition(self,environment):
-        pass
-
-
 # so, the exploring part needs to give the input..
 class Exploring(State):
     def __init__(self):
         self.name = "exploring"
-        self.exploretime = 3600
+        exp = np.random.normal(1, .3, 1)
+        while(exp  < 0):
+            exp = np.random.normal(1, .3, 1)
+        self.exploretime = exp*3600 #this will stay constant for the bee the whole time, so constant
 
     def sense(self, agent, environment):
         new_q = environment.get_q(agent.location[0], agent.location[1])
         agent.q_value = new_q
-        #
         #
 
     def act(self, agent):
@@ -102,7 +104,7 @@ class Assessing(State):
             self.goingToSite = False
 
         # if agent is less than distance=1 unit away from hub, switch to dancing
-        if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) < 1:
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) < 30) and (self.goingToSite is False):
             return input.siteFound
 
     def move(self, agent):
@@ -121,7 +123,7 @@ class Resting(State):
     def __init__(self):
         self.name = "resting"
         self.atHub = True  #we may not need this code at all... to turn it on make it default false.
-        self.restCountdown = 1000
+        self.restCountdown = 210
 
     def sense(self, agent, environment):  # probably not needed for now, but can be considered a place holder
         pass
@@ -133,7 +135,7 @@ class Resting(State):
         else:
             # if not at hub, more towards it
             self.move(agent)
-            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2 <= 1):
+            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) <= 1:
                 agent.velocity=0
                 self.atHub = True
 
@@ -154,7 +156,7 @@ class Resting(State):
 class Dancing(State):
     def __init__(self):
         self.name = "dancing"  #IMPORTANT!!!!!!!!!!11
-        self.dance_counter = 1800 #this dance counter should be determined by the q value and the distance,
+        self.dance_counter = 700 #this dance counter should be determined by the q value and the distance,
                                 #we can consider implementing that in the transition.
 
     def sense(self, agent, environment):
@@ -176,7 +178,7 @@ class Dancing(State):
             self.dance_counter -= 1
 
     def move(self, agent):
-        agent.direction += 2 * np.pi / 8
+        agent.direction += 2 * np.pi / 32
         return
 
 
