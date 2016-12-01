@@ -103,7 +103,7 @@ class Assessing(State):
                     (agent.potential_site[1] - agent.location[1]) ** 2 )< 1:
             self.goingToSite = False
 
-        # if agent is less than distance=1 unit away from hub, switch to dancing
+        # if agent is less than distance=30 unit away from hub, switch to dancing
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) < 30) and (self.goingToSite is False):
             return input.siteFound
 
@@ -155,7 +155,7 @@ class Resting(State):
 
 class Dancing(State):
     def __init__(self):
-        self.name = "dancing"  #IMPORTANT!!!!!!!!!!11
+        self.name = "dancing"
         self.dance_counter = 700 #this dance counter should be determined by the q value and the distance,
                                 #we can consider implementing that in the transition.
 
@@ -173,6 +173,7 @@ class Dancing(State):
                 return input.notTiredDance
             else:
                 agent.assessments=0
+                agent.potential_site = None
                 return input.tiredDance
         else:
             self.dance_counter -= 1
@@ -206,7 +207,7 @@ class Observing(State):
         else:
             # if not at hub, more towards it
             self.movehome(agent)
-            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2 <= .5):
+            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) <= 30:
                 self.atHub = True
 
     def update(self, agent, environment):

@@ -8,7 +8,7 @@ X   Y   Rad
 
 Sites
 X   Y   Rad Q-value Ease_of_detection
-150  150  5  1      1
+50  50  5  1      1
 -50 50  5   .75      1
 50  -50 5  .5      1
 -50 -50 5   .25     1

@@ -22,8 +22,12 @@ class Environment:
         self.rough = []
         self.agents = {}
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
-        for x in range(100):
+        for x in range(50):
             self.add_agent(str(x))
+        for y in range(1):
+            agent = Agent(str(y), Assessing())
+            agent.potential_site = [-50, -50]
+            self.agents[str(y)] = agent
 
         if os.path.exists("/tmp/honeybee-sim.viewerServer"):
             self.client = socket.socket( socket.AF_UNIX, socket.SOCK_STREAM )
@@ -172,7 +176,7 @@ class Environment:
                     nearby.append(self.agents[other_id])
         return nearby
 
-    # Move a single agent.
+    # Move a single agent. I THINK THIS MAY BE unnecessary now...
     def smooth_move(self, agent, velocity, bounce):
         if bounce is True:
             agent.direction -= np.pi  # Rotate the direction by 180 degrees if the object encountered an obstacle
@@ -183,7 +187,7 @@ class Environment:
         agent.location[0] += np.cos(agent.direction) * velocity
         agent.location[1] += np.sin(agent.direction) * velocity
 
-        # If the agent goes outside of the limits, it re-enters on the opposite side.
+            # If the agent goes outside of the limits, it re-enters on the opposite side.
         if agent.location[0] > self.x_limit:
             agent.location[0] -= 2 * self.x_limit
         elif agent.location[0] < self.x_limit * -1:
@@ -195,11 +199,16 @@ class Environment:
 
     # agent asks to go in a direction at a certain velocity, use vector addition, updates location
     #unnecessary function???
-    def suggest_new_direction(self, agent_id):
-        agent = self.agents[agent_id]
-
+    def suggest_new_direction(self, agentId):
+        agent = self.agents[agentId]
+        #add collision checking for other bees
         agent.location[0] += np.cos(agent.direction) * agent.velocity
         agent.location[1] += np.sin(agent.direction) * agent.velocity
+        for agent_id in self.agents:
+            if (self.agents[agent_id].location[:] == agent.location[:]) and (agentId != agent_id):
+                agent.location[0] -= np.cos(agent.direction) * agent.velocity
+                agent.location[1] -= np.sin(agent.direction) * agent.velocity
+                break
 
         if agent.location[0] > self.x_limit:
             agent.location[0] -= 2 * self.x_limit
