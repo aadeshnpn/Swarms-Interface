@@ -198,18 +198,23 @@ class Observing(State):
             for bee in bees:
                 if (isinstance(bee.state, Dancing().__class__)):
                     self.seesDancer = True;
+                    agent.velocity = 0.5 + 0.5*np.random.random()
                     agent.potential_site = bee.potential_site
                     break
 
     def act(self, agent):
         if (self.atHub):
             self.observerTimer -= 1
+            if(self.observerTimer == 0):
+                agent.velocity = 0.5 + 0.5*np.random.random()
             self.wander(agent)
         else:
             # if not at hub, more towards it
             self.movehome(agent)
             if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <= agent.hubRadius:
                 self.atHub = True
+                agent.direction = agent.direction + (-89 + 179*np.random.random())
+                agent.velocity = agent.hubRadius/20.0 
 
     def update(self, agent):
         if self.seesDancer is True:
@@ -223,9 +228,14 @@ class Observing(State):
         agent.direction = np.arctan2(dy, dx)
     def wander(self, agent):
 
-        agent.direction += 2 * np.pi / 8
-        #new_x = agent.location[0] + (agent.velocity * np.cos(agent.direction))
-        #new_y = agent.location[1] + (agent.velocity * np.sin(agent.direction))
+        #agent.direction += 2 * np.pi / 8
+        if (agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 >= agent.hubRadius):
+            dx =  agent.hub[0] -agent.location[0]
+            dy = agent.hub[1]- agent.location[1]
+            agent.direction = np.arctan2(dy, dx)
+        else:
+            delta_d = np.random.normal(0, .3)
+            agent.direction = (agent.direction + delta_d) % (2 * np.pi)
 
         return
 
