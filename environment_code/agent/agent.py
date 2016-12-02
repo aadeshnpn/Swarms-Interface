@@ -29,7 +29,7 @@ class Agent(StateMachine):
         self.id = agentId  # for communication with environment
         self.location = [0, 0]  # should be initialized?
         self.direction = 2*np.pi*np.random.random()  # should be initilaized? potentially random?
-        self.velocity = 1  # should be initilaized?
+        self.velocity = .5*np.random.random() + .5  # should be initilaized?
         self.hub = [0, 0]  # should be initialized?
         self.potential_site = None  # array [x,y]
         self.q_value = 0
