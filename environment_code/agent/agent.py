@@ -16,8 +16,8 @@ class Agent(StateMachine):
     def act(self):
         self.state.act(self)
 
-    def update(self, environment):
-        self.nextState(self.state.update(self, environment))
+    def update(self):
+        self.nextState(self.state.update(self))
     def danceTransition(self):
         self.state.dance_counter = self.q_value*1000
 
@@ -34,6 +34,7 @@ class Agent(StateMachine):
         self.potential_site = None  # array [x,y]
         self.q_value = 0
         self.assessments = 0
+        self.hubRadius = 5
 
         # create table here.
         dict = {(Exploring().__class__, input.nestFound): [None, Assessing()],
@@ -64,7 +65,7 @@ class Exploring(State):
     def act(self, agent):
         self.move(agent)
 
-    def update(self, agent, environment):
+    def update(self, agent):
         self.exploretime = self.exploretime - 1
         if ((agent.q_value > 0)):
             agent.potential_site = [agent.location[0], agent.location[1]]
@@ -95,7 +96,7 @@ class Assessing(State):
     def act(self, agent):
         self.move(agent)
 
-    def update(self, agent, environment):
+    def update(self, agent):
           # may need an ID of some sort to get my info from environment
 
         # if agent is less than distance=1 unit away from potential site, go back to hub
@@ -104,7 +105,7 @@ class Assessing(State):
             self.goingToSite = False
 
         # if agent is less than distance=30 unit away from hub, switch to dancing
-        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) < 30) and (self.goingToSite is False):
+        if ((((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2))**.5 <agent.hubRadius) and (self.goingToSite is False):
             return input.siteFound
 
     def move(self, agent):
@@ -135,11 +136,11 @@ class Resting(State):
         else:
             # if not at hub, more towards it
             self.move(agent)
-            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) <= 1:
+            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <= 1:
                 agent.velocity=0
                 self.atHub = True
 
-    def update(self, agent, environment):
+    def update(self, agent):
         if self.restCountdown < 1:
             agent.velocity =1
             return input.restingTime
@@ -165,7 +166,7 @@ class Dancing(State):
     def act(self, agent):
         self.move(agent)
 
-    def update(self, agent, environment):
+    def update(self, agent):
         # info from environment
         if (self.dance_counter == 0):
             if (agent.assessments < 3):
@@ -179,7 +180,7 @@ class Dancing(State):
             self.dance_counter -= 1
 
     def move(self, agent):
-        agent.direction += 2 * np.pi / 32
+        agent.direction += 2 * np.pi / 50
         return
 
 
@@ -207,13 +208,13 @@ class Observing(State):
         else:
             # if not at hub, more towards it
             self.movehome(agent)
-            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) <= 30:
+            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <= agent.hubRadius:
                 self.atHub = True
 
-    def update(self, agent, environment):
+    def update(self, agent):
         if self.seesDancer is True:
             return input.dancerFound
-        elif (self.observerTimer == 0):
+        elif (self.observerTimer <1):
             return input.observeTime
 
     def movehome(self, agent):
@@ -222,7 +223,7 @@ class Observing(State):
         agent.direction = np.arctan2(dy, dx)
     def wander(self, agent):
 
-        agent.direction += 2 * np.pi / 4
+        agent.direction += 2 * np.pi / 8
         #new_x = agent.location[0] + (agent.velocity * np.cos(agent.direction))
         #new_y = agent.location[1] + (agent.velocity * np.sin(agent.direction))
 

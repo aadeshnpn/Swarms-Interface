@@ -3,9 +3,9 @@ class State:
         pass
     def sense(self, agent, environment):
         pass
-    def act(self, agent, environment):
+    def act(self):
         pass
-    def update(self, agent, environment):
+    def update(self, agent):
         pass
     def __str__(self):
         return self.name

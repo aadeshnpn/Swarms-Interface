@@ -22,7 +22,7 @@ class Environment:
         self.rough = []
         self.agents = {}
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
-        for x in range(50):
+        for x in range(59):
             self.add_agent(str(x))
         for y in range(1):
             agent = Agent(str(y), Assessing())
@@ -246,7 +246,7 @@ class Environment:
                     agent.sense(self)
                     agent.act()
                     self.suggest_new_direction(agent.id)
-                    agent.update(self)
+                    agent.update()
             t_end = time.time() + 1/60
             while time.time() < t_end:
                 pass
