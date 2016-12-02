@@ -180,7 +180,14 @@ class Dancing(State):
             self.dance_counter -= 1
 
     def move(self, agent):
-        agent.direction += 2 * np.pi / 50
+        #agent.direction += 2 * np.pi / 50
+        if (agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 >= agent.hubRadius):
+            dx =  agent.hub[0] -agent.location[0]
+            dy = agent.hub[1]- agent.location[1]
+            agent.direction = np.arctan2(dy, dx)
+        else:
+            delta_d = np.random.normal(0, .3)
+            agent.direction = (agent.direction + delta_d) % (2 * np.pi)
         return
 
 
