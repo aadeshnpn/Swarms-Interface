@@ -171,7 +171,7 @@ class Environment:
         nearby = []
         for other_id in self.agents:
             if other_id != agent_id:
-                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0])**2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1])**2)**.5 < 5:
+                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0])**2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1])**2)**.5 <= 1:
                     #nearby.append([self.agents[other_id].site_location, self.agents[other_id].q_found])
                     nearby.append(self.agents[other_id])
         return nearby
@@ -247,7 +247,7 @@ class Environment:
                     agent.act()
                     self.suggest_new_direction(agent.id)
                     agent.update()
-            t_end = time.time() + 1/60
+            t_end = time.time() + 1/300
             while time.time() < t_end:
                 pass
 

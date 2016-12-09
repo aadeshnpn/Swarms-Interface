@@ -8,10 +8,10 @@ X   Y   Rad
 
 Sites
 X   Y   Rad Q-value Ease_of_detection
-50  50  5  1      1
--50 50  5   .75      1
-50  -50 5  .5      1
--50 -50 5   .25     1
+100 100 10  1      1
+-80 80  10   .75      1
+60  -60 10  .5      1
+-40 -40 10   .25     1
 
 Obstacles
 X   Y   Rad

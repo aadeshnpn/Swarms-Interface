@@ -29,7 +29,7 @@ class Agent(StateMachine):
         self.id = agentId  # for communication with environment
         self.location = [0, 0]  # should be initialized?
         self.direction = 2*np.pi*np.random.random()  # should be initilaized? potentially random?
-        self.velocity = .5*np.random.random() + .5  # should be initilaized?
+        self.velocity = .5*np.random.random() + .75  # should be initilaized?
         self.hub = [0, 0]  # should be initialized?
         self.potential_site = None  # array [x,y]
         self.q_value = 0
@@ -53,9 +53,9 @@ class Exploring(State):
     def __init__(self):
         self.name = "exploring"
         exp = np.random.normal(1, .3, 1)
-        while(exp  < 0):
+        while exp  < 0:
             exp = np.random.normal(1, .3, 1)
-        self.exploretime = exp*3600 #this will stay constant for the bee the whole time, so constant
+        self.exploretime = exp*3600
 
     def sense(self, agent, environment):
         new_q = environment.get_q(agent.location[0], agent.location[1])
@@ -67,10 +67,10 @@ class Exploring(State):
 
     def update(self, agent):
         self.exploretime = self.exploretime - 1
-        if ((agent.q_value > 0)):
+        if agent.q_value > 0:
             agent.potential_site = [agent.location[0], agent.location[1]]
             return input.nestFound
-        elif (self.exploretime < 1):
+        elif self.exploretime < 1:
             return input.exploreTime
         else:
             return None
@@ -105,11 +105,11 @@ class Assessing(State):
             self.goingToSite = False
 
         # if agent is less than distance=30 unit away from hub, switch to dancing
-        if ((((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2))**.5 <agent.hubRadius) and (self.goingToSite is False):
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <agent.hubRadius) and (self.goingToSite is False):
             return input.siteFound
 
     def move(self, agent):
-        if (self.goingToSite):
+        if self.goingToSite:
             dx = agent.potential_site[0] - agent.location[0]
             dy = agent.potential_site[1] - agent.location[1]
             agent.direction = np.arctan2(dy, dx)
@@ -130,7 +130,7 @@ class Resting(State):
         pass
 
     def act(self, agent):
-        if (self.atHub):
+        if self.atHub:
             agent.velocity = 0
             self.restCountdown -= 1
         else:
@@ -168,8 +168,8 @@ class Dancing(State):
 
     def update(self, agent):
         # info from environment
-        if (self.dance_counter == 0):
-            if (agent.assessments < 3):
+        if self.dance_counter == 0:
+            if agent.assessments < 3:
                 agent.assessments += 1
                 return input.notTiredDance
             else:
@@ -200,45 +200,46 @@ class Observing(State):
 
     def sense(self, agent, environment):
         # get nearby bees from environment and check for dancers
-        if(self.atHub):
-            bees = environment.get_nearby_agents(agent.id) #we may need to reformat this so the agent knows what is
+        if self.atHub:
+            bees = environment.get_nearby_agents(agent.id)  # we may need to reformat this so the agent knows what is
             for bee in bees:
-                if (isinstance(bee.state, Dancing().__class__)):
+                if isinstance(bee.state, Dancing().__class__):
                     self.seesDancer = True;
-                    agent.velocity = 0.5 + 0.5*np.random.random()
+                    agent.velocity = 0.5 + 0.5 * np.random.random()
                     agent.potential_site = bee.potential_site
                     break
 
     def act(self, agent):
-        if (self.atHub):
+        if self.atHub:
             self.observerTimer -= 1
-            if(self.observerTimer == 0):
-                agent.velocity = 0.5 + 0.5*np.random.random()
+            if self.observerTimer == 0:
+                agent.velocity = 0.5 + 0.5 * np.random.random()
             self.wander(agent)
         else:
             # if not at hub, more towards it
             self.movehome(agent)
-            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <= agent.hubRadius:
+            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 <= .5:
                 self.atHub = True
-                agent.direction = agent.direction + (-89 + 179*np.random.random())
-                agent.velocity = agent.hubRadius/20.0 
+                agent.direction += -89 + 179 * np.random.random()
+                agent.velocity = agent.hubRadius / 20.0
 
     def update(self, agent):
         if self.seesDancer is True:
             return input.dancerFound
-        elif (self.observerTimer <1):
+        elif self.observerTimer < 1:
             return input.observeTime
 
     def movehome(self, agent):
-        dx =  agent.hub[0] -agent.location[0]
-        dy = agent.hub[1]- agent.location[1]
+        dx = agent.hub[0] - agent.location[0]
+        dy = agent.hub[1] - agent.location[1]
         agent.direction = np.arctan2(dy, dx)
+
     def wander(self, agent):
 
-        #agent.direction += 2 * np.pi / 8
-        if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 >= agent.hubRadius:
-            dx =  agent.hub[0] -agent.location[0]
-            dy = agent.hub[1]- agent.location[1]
+        # agent.direction += 2 * np.pi / 8
+        if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 >= agent.hubRadius:
+            dx = agent.hub[0] - agent.location[0]
+            dy = agent.hub[1] - agent.location[1]
             agent.direction = np.arctan2(dy, dx)
         else:
             delta_d = np.random.normal(0, .3)
