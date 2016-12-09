@@ -34,7 +34,7 @@ class Agent(StateMachine):
         self.potential_site = None  # array [x,y]
         self.q_value = 0
         self.assessments = 0
-        self.hubRadius = 5
+        self.hubRadius = 20
 
         # create table here.
         dict = {(Exploring().__class__, input.nestFound): [None, Assessing()],
@@ -181,7 +181,7 @@ class Dancing(State):
 
     def move(self, agent):
         #agent.direction += 2 * np.pi / 50
-        if (agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 >= agent.hubRadius):
+        if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 >= agent.hubRadius:
             dx =  agent.hub[0] -agent.location[0]
             dy = agent.hub[1]- agent.location[1]
             agent.direction = np.arctan2(dy, dx)
@@ -236,7 +236,7 @@ class Observing(State):
     def wander(self, agent):
 
         #agent.direction += 2 * np.pi / 8
-        if (agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 >= agent.hubRadius):
+        if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 >= agent.hubRadius:
             dx =  agent.hub[0] -agent.location[0]
             dy = agent.hub[1]- agent.location[1]
             agent.direction = np.arctan2(dy, dx)
