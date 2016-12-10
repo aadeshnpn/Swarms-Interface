@@ -4,9 +4,12 @@
   "description": "Honeybee simulation client",
   "main": "index.js",
   "dependencies": {
+    "JSONStream": "1.2.1",
     "express": "^4.14.0",
     "node-ipc": "8.9.2",
-    "socket.io": "^1.5.1"
+    "shortid": "2.2.6",
+    "socket.io": "^1.5.1",
+    "sticky-session": "1.1.2"
   },
   "devDependencies": {},
   "scripts": {

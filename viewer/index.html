@@ -66,6 +66,22 @@
    // use this as a hash of ids -> booleans telling us which agents are selected
    var selectedAgents = {};
 
+   socket.on('connect', function()
+   {
+      var clientId;
+      var idx = document.cookie.indexOf("clientId");
+      var endIdx = document.cookie.indexOf(";", idx);
+
+      if (endIdx == -1)
+      {
+         endIdx = undefined;
+      }
+
+      clientId = document.cookie.slice(idx, endIdx).split("=").pop();
+
+      socket.emit('clientId', clientId);
+   });
+
    // This is where the magic happens. When we emit an "update" event from the
    // server, it'll come through here.
    socket.on('update', function(worldUpdate)
@@ -113,7 +129,7 @@
       // clear everything
       ctx.clearRect(-world.x_limit, -world.y_limit, world.width, world.height);
       ctx.save();
-      ctx.fillStyle = "rgb(62, 188, 98)";
+      ctx.fillStyle = "rgb(229, 229, 229)";
       ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
       ctx.restore();
 
@@ -157,7 +173,7 @@
          ctx.restore();
       }
 
-      window.requestAnimationFrame(draw);
+      window.setTimeout(() => { window.requestAnimationFrame(draw)}, 1000 / 60);
    }
 
    function renderAgent(agent, ctx)
