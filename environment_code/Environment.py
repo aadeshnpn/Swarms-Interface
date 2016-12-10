@@ -10,6 +10,9 @@ __author__ = "Nathan Anderson"
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
 class Environment:
 
     def __init__(self, file_name):
@@ -29,12 +32,6 @@ class Environment:
             agent = Agent(str(y), Assessing())
             agent.potential_site = [-50, -50]
             self.agents[str(y)] = agent
-
-        if os.path.exists("/tmp/honeybee-sim.viewerServer"):
-            self.client = socket.socket( socket.AF_UNIX, socket.SOCK_STREAM )
-            self.client.connect("/tmp/honeybee-sim.viewerServer")
-        else:
-            print("Couldn't Connect!")
 
     # Function to initialize data on the environment from a .txt file
     def build_environment(self):
@@ -252,16 +249,16 @@ class Environment:
             while time.time() < t_end:
                 pass
 
-        print("COUNT DEAD:", dead_count)
-        print("High Q score:", high_q)
+        eprint("[Engine] COUNT DEAD:", dead_count)
+        eprint("[Engine] High Q score:", high_q)
 
     def change_state(self, agent_id, new_state):
         self.agents[agent_id].state = new_state
 
     def to_json(self):
-        self.client.send( json.dumps({"type": "update", "data": {"x_limit": self.x_limit, "y_limit": self.y_limit, "hub": self.hub, "sites":
+        print(json.dumps({"type": "update", "data": {"x_limit": self.x_limit, "y_limit": self.y_limit, "hub": self.hub, "sites":
             self.sites, "obstacles": self.obstacles, "traps": self.traps, "rough": self.rough, "agents":
-            self.agents_to_json()}}).encode() )
+            self.agents_to_json()}}))
 
     def agents_to_json(self):
         agents = []
