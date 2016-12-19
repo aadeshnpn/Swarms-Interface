@@ -26,11 +26,11 @@ class Environment:
         self.rough = []
         self.agents = {}
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
-        for x in range(59):
+        for x in range(50):
             self.add_agent(str(x))
         for y in range(1):
             agent = Agent(str(y), Assessing())
-            agent.potential_site = [-50, -50]
+            agent.potential_site = [100, 100]
             self.agents[str(y)] = agent
 
     # Function to initialize data on the environment from a .txt file
@@ -159,7 +159,7 @@ class Environment:
             y_dif = y - site[1]
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
             if tot_dif <= site[2]:
-                return site[3]  # for testing purposes I'm just returning the q value.
+                return site[3]*np.random.normal(1, .2, 1)  # for testing purposes I'm just returning the q value.
                 #return (site[3] / site[2] ** (tot_dif / site[2])) * site[4] # Uses an inverse-power function to compute
                                                                     # q_value based on distance from center of site,
                                                                     # multiplied by the site's ease of detection
@@ -241,11 +241,11 @@ class Environment:
                         self.smooth_move(agent, .5, False)
                     else:
                         self.smooth_move(agent, 1, False)"""
-                    agent.sense(self)
                     agent.act()
+                    agent.sense(self)
                     self.suggest_new_direction(agent.id)
                     agent.update()
-            t_end = time.time() + 1/300
+            t_end = time.time() + 1/60
             while time.time() < t_end:
                 pass
 

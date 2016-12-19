@@ -19,7 +19,13 @@ class Agent(StateMachine):
     def update(self):
         self.nextState(self.state.update(self))
     def danceTransition(self):
-        self.state.dance_counter = self.q_value*1000
+        dance = int(self.q_value*1000-(200*self.assessments))
+        if dance < 15 :
+            self.assessments = 1
+            self.potential_site = None
+            self.nextState(input.tiredDance)
+        else:
+            self.state.dance_counter = dance
 
     def __init__(self, agentId, initialstate):
         self.state = initialstate
@@ -33,7 +39,7 @@ class Agent(StateMachine):
         self.hub = [0, 0]  # should be initialized?
         self.potential_site = None  # array [x,y]
         self.q_value = 0
-        self.assessments = 0
+        self.assessments = 1
         self.hubRadius = 20
 
         # create table here.
@@ -91,7 +97,12 @@ class Assessing(State):
         self.goingToSite = True
 
     def sense(self, agent, environment):
-        pass
+        if ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2 )< 1:
+            q = environment.get_q(agent.location[0],agent.location[1])
+            if(q > 0):
+                self.goingToSite = False
+                agent.q_value =q;
+
 
     def act(self, agent):
         self.move(agent)
@@ -100,9 +111,9 @@ class Assessing(State):
           # may need an ID of some sort to get my info from environment
 
         # if agent is less than distance=1 unit away from potential site, go back to hub
-        if ((agent.potential_site[0] - agent.location[0]) ** 2 +
-                    (agent.potential_site[1] - agent.location[1]) ** 2 )< 1:
-            self.goingToSite = False
+       # if ((agent.potential_site[0] - agent.location[0]) ** 2 +
+                  #  (agent.potential_site[1] - agent.location[1]) ** 2 )< 1:
+           # self.goingToSite = False
 
         # if agent is less than distance=30 unit away from hub, switch to dancing
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <agent.hubRadius) and (self.goingToSite is False):
@@ -168,14 +179,10 @@ class Dancing(State):
 
     def update(self, agent):
         # info from environment
-        if self.dance_counter == 0:
-            if agent.assessments < 3:
-                agent.assessments += 1
-                return input.notTiredDance
-            else:
-                agent.assessments=0
-                agent.potential_site = None
-                return input.tiredDance
+        if self.dance_counter  <1:
+            agent.assessments += 1
+            return input.notTiredDance
+
         else:
             self.dance_counter -= 1
 
