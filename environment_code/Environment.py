@@ -7,8 +7,6 @@ import sys
 import time
 #from hubController import *
 
-__author__ = "Nathan Anderson"
-
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def eprint(*args, **kwargs):
@@ -76,8 +74,7 @@ class Environment:
                         trap.append(float(entry))
                     new_traps.append(trap)
 
-                    assert abs(trap[0]) + trap[2] < self.x_limit and abs(
-                        trap[1]) + trap[2] < self.y_limit, "Not all traps are inside Environment boundaries"
+                    assert abs(trap[0]) + trap[2] < self.x_limit and abs(trap[1]) + trap[2] < self.y_limit, "Not all traps are inside Environment boundaries"
 
                 elif obstacle_flag is True:
                     obstacle = []
@@ -131,8 +128,7 @@ class Environment:
         self.agents[agent_id] = agent
 
     # Function to return the Q-value for given coordinates. Returns 0 if nothing is there, -1 if it hits an obstacle,
-    # -2 if it gets caught in a trap, -3 if it's moving through rough terrain, and a value between 0 and 1 if it finds
-    # a site.
+    # -2 if it gets caught in a trap, and a value between 0 and 1 if it finds a site.
     def get_q(self, x, y):
 
         # Calculate the distance between the coordinates and the center of each site, then compare that distance with
@@ -150,11 +146,6 @@ class Environment:
             if x_dif**2 + y_dif**2 <= trap[2]**2:
                 return -2
 
-        for spot in self.rough:
-            x_dif = x - spot[0]
-            y_dif = y - spot[1]
-            if x_dif ** 2 + y_dif ** 2 <= spot[2] ** 2:
-                return -3
         for site in self.sites:
             x_dif = x - site[0]
             y_dif = y - site[1]
@@ -166,6 +157,18 @@ class Environment:
                                                                     # multiplied by the site's ease of detection
         return 0
 
+    # Returns True if terrain is clear, False if it is rough (slows velocity of agent to half-speed)
+    def check_terrain(self, x, y):
+        for spot in self.rough:
+            x_dif = x - spot[0]
+            y_dif = y - spot[1]
+            if x_dif ** 2 + y_dif ** 2 <= spot[2] ** 2:
+                return False
+        return True
+
+    #def wind(self):
+
+
     def get_nearby_agents(self, agent_id):
         nearby = []
         for other_id in self.agents:
@@ -175,29 +178,7 @@ class Environment:
                     nearby.append(self.agents[other_id])
         return nearby
 
-    # Move a single agent. I THINK THIS MAY BE unnecessary now...
-    def smooth_move(self, agent, velocity, bounce):
-        if bounce is True:
-            agent.direction -= np.pi  # Rotate the direction by 180 degrees if the object encountered an obstacle
-        else:
-            delta_d = np.random.normal(0, .3)
-            agent.direction = (agent.direction + delta_d) % (2 * np.pi)
-
-        agent.location[0] += np.cos(agent.direction) * velocity
-        agent.location[1] += np.sin(agent.direction) * velocity
-
-            # If the agent goes outside of the limits, it re-enters on the opposite side.
-        if agent.location[0] > self.x_limit:
-            agent.location[0] -= 2 * self.x_limit
-        elif agent.location[0] < self.x_limit * -1:
-            agent.location[0] += 2 * self.x_limit
-        if agent.location[1] > self.y_limit:
-            agent.location[1] -= 2 * self.y_limit
-        elif agent.location[1] < self.y_limit * -1:
-            agent.location[1] += 2 * self.y_limit
-
     # agent asks to go in a direction at a certain velocity, use vector addition, updates location
-    #unnecessary function???
     def suggest_new_direction(self, agentId):
         agent = self.agents[agentId]
         #add collision checking for other bees
@@ -209,6 +190,7 @@ class Environment:
                 agent.location[1] -= np.sin(agent.direction) * agent.velocity
                 break
 
+        # If the agent goes outside of the limits, it re-enters on the opposite side.
         if agent.location[0] > self.x_limit:
             agent.location[0] -= 2 * self.x_limit
         elif agent.location[0] < self.x_limit * -1:
@@ -227,28 +209,12 @@ class Environment:
             for agent_id in self.agents:
                 agent = self.agents[agent_id]
                 if agent.live is True:
-                    #q = self.get_q(self.agents[agent_id].location[0], self.agents[agent_id].location[1])
-                    """if q > agent.q_found:
-                        agent.q_found = q
-                        agent.site_location = [agent.location[0], agent.location[1]]
-                    if q > high_q:
-                        high_q = q
-                    elif q == -1:
-                        self.smooth_move(agent, 1, True)
-                    elif q == -2:
-                        agent.live = False
-                        dead_count += 1
-                    elif q == -3:
-                        self.smooth_move(agent, .5, False)
-                    else:
-                        self.smooth_move(agent, 1, False)"""
                     agent.act()
                     agent.sense(self)
                     self.suggest_new_direction(agent.id)
                     agent.update()
-            t_end = time.time() + 1/300
-            while time.time() < t_end:
-                pass
+
+            time.sleep(1/60)
 
         eprint("[Engine] COUNT DEAD:", dead_count)
         eprint("[Engine] High Q score:", high_q)
