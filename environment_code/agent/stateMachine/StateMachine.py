@@ -1,3 +1,4 @@
+import copy
 
 class StateMachine:
     def __init__(self, initialState, tranTable):
@@ -11,12 +12,11 @@ class StateMachine:
 #currState: input, condition,  nextState
         #for k, v in currState.items():
          #   if ((input == k) | (input.getClass() == k)):
-        if currState[0] is not None:
-            c = Condition(currState[0])  # not sure if this is correct... typecsting
-            if c.condition(input) == False:
-                return #exits because condituion not true
+        #exits because condituion not true
                         #some way to break out of loop
-        self.state = currState[1]
+        self.state = copy.copy(currState[1])
+        if currState[0] is not None:
+            currState[0]()
         return
         RuntimeError("Input not supported for current state")
 

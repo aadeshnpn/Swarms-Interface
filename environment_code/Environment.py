@@ -26,8 +26,12 @@ class Environment:
         self.rough = []
         self.agents = {}
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
-        for x in range(100):
+        for x in range(59):
             self.add_agent(str(x))
+        for y in range(1):
+            agent = Agent(str(y), Assessing())
+            agent.potential_site = [-50, -50]
+            self.agents[str(y)] = agent
 
     # Function to initialize data on the environment from a .txt file
     def build_environment(self):
@@ -155,7 +159,8 @@ class Environment:
             y_dif = y - site[1]
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
             if tot_dif <= site[2]:
-                return (site[3] / site[2] ** (tot_dif / site[2])) * site[4] # Uses an inverse-power function to compute
+                return site[3]  # for testing purposes I'm just returning the q value.
+                #return (site[3] / site[2] ** (tot_dif / site[2])) * site[4] # Uses an inverse-power function to compute
                                                                     # q_value based on distance from center of site,
                                                                     # multiplied by the site's ease of detection
         return 0
@@ -164,12 +169,12 @@ class Environment:
         nearby = []
         for other_id in self.agents:
             if other_id != agent_id:
-                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0])**2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1])**2)**.5 < 5:
+                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0])**2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1])**2)**.5 <= 1:
                     #nearby.append([self.agents[other_id].site_location, self.agents[other_id].q_found])
                     nearby.append(self.agents[other_id])
         return nearby
 
-    # Move a single agent.
+    # Move a single agent. I THINK THIS MAY BE unnecessary now...
     def smooth_move(self, agent, velocity, bounce):
         if bounce is True:
             agent.direction -= np.pi  # Rotate the direction by 180 degrees if the object encountered an obstacle
@@ -180,7 +185,7 @@ class Environment:
         agent.location[0] += np.cos(agent.direction) * velocity
         agent.location[1] += np.sin(agent.direction) * velocity
 
-        # If the agent goes outside of the limits, it re-enters on the opposite side.
+            # If the agent goes outside of the limits, it re-enters on the opposite side.
         if agent.location[0] > self.x_limit:
             agent.location[0] -= 2 * self.x_limit
         elif agent.location[0] < self.x_limit * -1:
@@ -192,11 +197,16 @@ class Environment:
 
     # agent asks to go in a direction at a certain velocity, use vector addition, updates location
     #unnecessary function???
-    def suggest_new_direction(self, agent_id):
-        agent = self.agents[agent_id]
-
+    def suggest_new_direction(self, agentId):
+        agent = self.agents[agentId]
+        #add collision checking for other bees
         agent.location[0] += np.cos(agent.direction) * agent.velocity
         agent.location[1] += np.sin(agent.direction) * agent.velocity
+        for agent_id in self.agents:
+            if (self.agents[agent_id].location[:] == agent.location[:]) and (agentId != agent_id):
+                agent.location[0] -= np.cos(agent.direction) * agent.velocity
+                agent.location[1] -= np.sin(agent.direction) * agent.velocity
+                break
 
         if agent.location[0] > self.x_limit:
             agent.location[0] -= 2 * self.x_limit
@@ -234,8 +244,8 @@ class Environment:
                     agent.sense(self)
                     agent.act()
                     self.suggest_new_direction(agent.id)
-                    agent.update(self)
-            t_end = time.time() + 1/60
+                    agent.update()
+            t_end = time.time() + 1/300
             while time.time() < t_end:
                 pass
 
