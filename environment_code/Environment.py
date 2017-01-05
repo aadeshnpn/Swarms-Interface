@@ -27,8 +27,9 @@ class Environment:
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
         for x in range(50):
             self.add_agent(str(x))
-        for y in range(1):
+        for y in range(0):
             agent = Agent(str(y), Assessing())
+
             agent.potential_site = [100, 100]
             self.agents[str(y)] = agent
 
@@ -214,7 +215,7 @@ class Environment:
                     self.suggest_new_direction(agent.id)
                     agent.update()
 
-            time.sleep(1/60)
+            time.sleep(1/20)
 
         eprint("[Engine] COUNT DEAD:", dead_count)
         eprint("[Engine] High Q score:", high_q)

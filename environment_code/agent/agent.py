@@ -34,7 +34,8 @@ class Agent(StateMachine):
         self.live = True
         self.id = agentId  # for communication with environment
         self.location = [0, 0]  # should be initialized?
-        self.direction = 2*np.pi*np.random.random()  # should be initilaized? potentially random?
+        #self.direction = 2*np.pi*np.random.random()  # should be initilaized? potentially random?
+        self.direction = np.pi/2
         self.velocity = .5*np.random.random() + .75  # should be initilaized?
         self.hub = [0, 0]  # should be initialized?
         self.potential_site = None  # array [x,y]
@@ -82,12 +83,10 @@ class Exploring(State):
             return None
 
     def move(self,agent):
-        delta_d = np.random.normal(0, .3)
+        #delta_d = np.random.normal(0, .22)
+        delta_d = np.random.normal(0, .015)
         agent.direction = (agent.direction + delta_d) % (2 * np.pi)
-        # if (abs(agent.x) >= 100 or abs(agent.y) >= 100):  # turns the bee around
-        #     agent.direction -= np.pi
-        #new_x = agent.location[0] + (agent.velocity * np.cos(agent.direction))
-        #new_y = agent.location[1] + (agent.velocity * np.sin(agent.direction))
+
         return
 
 
@@ -99,7 +98,7 @@ class Assessing(State):
     def sense(self, agent, environment):
         if ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2 )< 1:
             q = environment.get_q(agent.location[0],agent.location[1])
-            if(q > 0):
+            if(q >= 0): #CHECK THIS, IT MAY BE A PROBLEM...
                 self.goingToSite = False
                 agent.q_value =q;
 
