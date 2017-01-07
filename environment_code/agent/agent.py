@@ -2,11 +2,21 @@ from agent.stateMachine.StateMachine import StateMachine
 from agent.stateMachine.state import State
 from enum import Enum
 import numpy as np
-
 # reset velocity of agent at begining of each state transition?
 
 input = Enum('input', 'nestFound exploreTime observeTime dancerFound siteFound tiredDance notTiredDance restingTime')
 
+#safe_angle returns the angle needed to be added to a to get b
+def safe_angle(a, b):
+    angle = np.arctan2(b[1], b[0]) - np.arctan2(a[1], a[0])
+    while angle > np.pi:
+        angle -= 2 * np.pi
+    while angle < -np.pi:
+        angle += 2 * np.pi
+    return angle
+
+def distance(a,b):
+	return np.sqrt((b[0]-a[0])**2 + (b[1]-a[1])**2)
 
 class Agent(StateMachine):
 
@@ -48,6 +58,12 @@ class Agent(StateMachine):
                 }
         self.transitionTable = dict
 
+        self.attractor = None
+        self.attracted = False
+
+        self.repulsor = None
+        self.ignore_repulsor = False
+
 # so, the exploring part needs to give the input..
 class Exploring(State):
     def __init__(self):
@@ -60,7 +76,23 @@ class Exploring(State):
     def sense(self, agent, environment):
         new_q = environment.get_q(agent.location[0], agent.location[1])
         agent.q_value = new_q
-        #
+
+        a = environment.getAttractor()
+        if(agent.attractor is None or (agent.attractor[0] != a[0] or agent.attractor[1] != a[1])):
+            agent.attractor = a
+            if(np.random.random () > .2):
+                agent.attracted = True
+            else:
+                agent.attracted = False
+
+        r = environment.getRepulsor()
+        if(agent.repulsor is None or (agent.repulsor[0] != r[0] or agent.repulsor[1] != r[1])):
+            agent.repulsor = r
+            if(np.random.random() >.9):
+                 agent.ignore_repulsor = True
+            else:
+                 agent.ignore_repulsor = False
+
 
     def act(self, agent):
         self.move(agent)
@@ -76,14 +108,25 @@ class Exploring(State):
             return None
 
     def move(self,agent):
-        delta_d = np.random.normal(0, .3)
-        agent.direction = (agent.direction + delta_d) % (2 * np.pi)
-        # if (abs(agent.x) >= 100 or abs(agent.y) >= 100):  # turns the bee around
-        #     agent.direction -= np.pi
-        #new_x = agent.location[0] + (agent.velocity * np.cos(agent.direction))
-        #new_y = agent.location[1] + (agent.velocity * np.sin(agent.direction))
-        return
 
+        if(agent.attractor is not None and distance(agent.attractor, agent.location) < 40 and agent.attracted is True):
+                angle = safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.attractor[0]-agent.location[0],agent.attractor[1]-agent.location[1]))
+                angle = np.clip(angle, -np.pi/16, np.pi/16)
+                error = np.random.normal(0, .3)
+                agent.direction += angle + error
+                agent.direction = agent.direction % (2 *np.pi)
+        elif(agent.repulsor is not None and distance(agent.repulsor, agent.location) < 40 and agent.ignore_repulsor is False):
+                 angle = - safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.repulsor[0]-agent.location[0],agent.repulsor[1]-agent.location[1]))
+                 angle = np.clip(angle, -np.pi/16, np.pi/16)
+                 if(angle >= 0):
+                          agent.direction += .3
+                 else:
+                          agent.direction -= .3
+                 
+                 agent.direction %= 2 * np.pi
+        else:
+                 delta_d = np.random.normal(0, .3)
+                 agent.direction = (agent.direction + delta_d) % (2 * np.pi)
 
 class Assessing(State):
     def __init__(self):

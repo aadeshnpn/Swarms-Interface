@@ -32,6 +32,13 @@ class Environment:
             agent = Agent(str(y), Assessing())
             agent.potential_site = [-50, -50]
             self.agents[str(y)] = agent
+        self.attractor = (150, 150 )
+        self.repulsor = (0,-150)
+
+    def getAttractor(self):
+        return self.attractor
+    def getRepulsor(self):
+        return self.repulsor
 
     # Function to initialize data on the environment from a .txt file
     def build_environment(self):
@@ -169,10 +176,18 @@ class Environment:
         nearby = []
         for other_id in self.agents:
             if other_id != agent_id:
-                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0])**2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1])**2)**.5 <= 1:
+                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0])**2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1])**2)**.5 <= 30:
                     #nearby.append([self.agents[other_id].site_location, self.agents[other_id].q_found])
                     nearby.append(self.agents[other_id])
         return nearby
+
+    def get_nearby_attracted_agents(self, agent_id):
+        attracted = []
+        nearby = self.get_nearby_agents(agent_id)
+        for agent in nearby:
+            if(agent.attracted is True):
+                attracted.append(agent)
+        return attracted
 
     # Move a single agent. I THINK THIS MAY BE unnecessary now...
     def smooth_move(self, agent, velocity, bounce):
