@@ -34,8 +34,8 @@ class Agent(StateMachine):
         self.live = True
         self.id = agentId  # for communication with environment
         self.location = [0, 0]  # should be initialized?
-        #self.direction = 2*np.pi*np.random.random()  # should be initilaized? potentially random?
-        self.direction = np.pi/2
+        self.direction = 2*np.pi*np.random.random()  # should be initilaized? potentially random?
+        #self.direction = np.pi/2
         self.velocity = .5*np.random.random() + .75  # should be initilaized?
         self.hub = [0, 0]  # should be initialized?
         self.potential_site = None  # array [x,y]
@@ -59,6 +59,7 @@ class Agent(StateMachine):
 class Exploring(State):
     def __init__(self):
         self.name = "exploring"
+        self.inputExplore = False
         exp = np.random.normal(1, .3, 1)
         while exp  < 0:
             exp = np.random.normal(1, .3, 1)
@@ -83,8 +84,10 @@ class Exploring(State):
             return None
 
     def move(self,agent):
-        #delta_d = np.random.normal(0, .22)
-        delta_d = np.random.normal(0, .015)
+        if self.inputExplore: #this is for when the user has requested more bees
+            delta_d = np.random.normal(0, .013) # this will assure that the bee moves less erratically, it can be decreased a little as well
+        else:
+            delta_d = np.random.normal(0, .22)
         agent.direction = (agent.direction + delta_d) % (2 * np.pi)
 
         return

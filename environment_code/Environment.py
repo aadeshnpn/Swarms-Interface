@@ -215,7 +215,7 @@ class Environment:
                     self.suggest_new_direction(agent.id)
                     agent.update()
 
-            time.sleep(1/20)
+            time.sleep(1/100)
 
         eprint("[Engine] COUNT DEAD:", dead_count)
         eprint("[Engine] High Q score:", high_q)

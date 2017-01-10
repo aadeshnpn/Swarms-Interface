@@ -9,11 +9,7 @@ class StateMachine:
         if input is None:
             return
         currState = self.transitionTable[(self.state.__class__, input)]
-#currState: input, condition,  nextState
-        #for k, v in currState.items():
-         #   if ((input == k) | (input.getClass() == k)):
-        #exits because condituion not true
-                        #some way to break out of loop
+
         self.state = copy.copy(currState[1])
         if currState[0] is not None:
             currState[0]()
