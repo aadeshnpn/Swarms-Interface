@@ -78,7 +78,7 @@ class Exploring(State):
         agent.q_value = new_q
 
         a = environment.getAttractor()
-        if(agent.attractor is None or (agent.attractor[0] != a[0] or agent.attractor[1] != a[1])):
+        if(a is not None and (agent.attractor is None or (agent.attractor[0] != a[0] or agent.attractor[1] != a[1]))):
             agent.attractor = a
             if(np.random.random () > .2):
                 agent.attracted = True
@@ -86,7 +86,7 @@ class Exploring(State):
                 agent.attracted = False
 
         r = environment.getRepulsor()
-        if(agent.repulsor is None or (agent.repulsor[0] != r[0] or agent.repulsor[1] != r[1])):
+        if(r is not None and (agent.repulsor is None or (agent.repulsor[0] != r[0] or agent.repulsor[1] != r[1]))):
             agent.repulsor = r
             if(np.random.random() >.9):
                  agent.ignore_repulsor = True

@@ -1,10 +1,13 @@
 from agent.agent import *
+import flowController
 import numpy as np
 import json
 import os
 import socket
 import sys
 import time
+
+import geomUtil
 
 __author__ = "Nathan Anderson"
 
@@ -32,13 +35,33 @@ class Environment:
             agent = Agent(str(y), Assessing())
             agent.potential_site = [-50, -50]
             self.agents[str(y)] = agent
-        self.attractor = (150, 150 )
-        self.repulsor = (0,-150)
+        self.attractor = flowController.Attractor((150, 150))
+        self.repulsor = flowController.Repulsor((60,-60))
 
     def getAttractor(self):
-        return self.attractor
+        if(self.attractor is not None):
+            return self.attractor.point
+        else:
+            return None
+
     def getRepulsor(self):
-        return self.repulsor
+        if(self.repulsor is not None):
+            return self.repulsor.point
+        else:
+            return None
+
+    def updateFlowControllers(self):
+        if(self.attractor is not None and self.attractor.time_ticks > 0):
+            self.attractor.time_ticks -= 1
+        else:
+            self.attractor = None
+
+        if(self.repulsor is not None and self.repulsor.time_ticks > 0):
+            self.repulsor.time_ticks -= 1
+        else:
+            self.repulsor = None
+
+
 
     # Function to initialize data on the environment from a .txt file
     def build_environment(self):
@@ -260,8 +283,9 @@ class Environment:
                     agent.act()
                     self.suggest_new_direction(agent.id)
                     agent.update()
-            t_end = time.time() + 1/300
-            while time.time() < t_end:
+            self.updateFlowControllers()
+            t_end = time.time() + 1/300 
+            while time.time() < t_end: # always resolves to true -> 1/300 in python equals 0
                 pass
 
         eprint("[Engine] COUNT DEAD:", dead_count)
