@@ -5,7 +5,7 @@ class State:
     def sense(self, agent, environment):
         pass
 
-    def act(self):
+    def act(self, agent):
         pass
 
     def update(self, agent):

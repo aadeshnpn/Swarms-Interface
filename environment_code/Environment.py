@@ -170,11 +170,11 @@ class Environment:
     #def wind(self):
 
 
-    def get_nearby_agents(self, agent_id):
+    def get_nearby_agents(self, agent_id, radius):
         nearby = []
         for other_id in self.agents:
             if other_id != agent_id:
-                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0])**2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1])**2)**.5 <= 1:
+                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0])**2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1])**2)**.5 <= radius:
                     #nearby.append([self.agents[other_id].site_location, self.agents[other_id].q_found])
                     nearby.append(self.agents[other_id])
         return nearby
