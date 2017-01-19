@@ -42,6 +42,7 @@ class Agent(StateMachine):
         self.q_value = 0
         self.assessments = 1
         self.hubRadius = 20
+        self.inHub = True
 
         # create table here.
         dict = {(Exploring().__class__, input.nestFound): [None, Assessing()],
@@ -61,11 +62,17 @@ class Exploring(State):
         self.name = "exploring"
         self.inputExplore = False
         exp = np.random.normal(1, .3, 1)
-        while exp  < 0:
+        while exp < 0:
             exp = np.random.normal(1, .3, 1)
         self.exploretime = exp*3600
 
     def sense(self, agent, environment):
+        if agent.hubRadius-1< ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5< agent.hubRadius+1:
+            if agent.inHub==True:
+                if environment.hubController.beeCheckOut(agent)==0:
+                    agent.inHub = False
+                    return
+
         new_q = environment.get_q(agent.location[0], agent.location[1])
         agent.q_value = new_q
         #
@@ -99,6 +106,15 @@ class Assessing(State):
         self.goingToSite = True
 
     def sense(self, agent, environment):
+        if agent.hubRadius-1< ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5< agent.hubRadius+1:
+            if self.goingToSite ==True and agent.inHub==True:
+                if environment.hubController.beeCheckOut(agent)==0:
+                    agent.inHub = False
+                    return
+            elif self.goingToSite == False and agent.inHub ==False:
+                environment.hubController.beeCheckIn(agent.id, agent.direction)
+                agent.inHub = True
+
         if ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2 )< 1:
             q = environment.get_q(agent.location[0],agent.location[1])
             if(q >= 0): #CHECK THIS, IT MAY BE A PROBLEM...
@@ -217,6 +233,11 @@ class Observing(State):
                     agent.velocity = 0.5 + 0.5 * np.random.random()
                     agent.potential_site = bee.potential_site
                     break
+        if agent.hubRadius-1< ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5< agent.hubRadius+1:
+            if agent.inHub==False:
+                environment.hubController.beeCheckIn(agent.id, agent.direction)
+                agent.inHub = True
+
 
     def act(self, agent):
         if self.atHub:

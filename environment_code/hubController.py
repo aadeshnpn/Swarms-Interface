@@ -18,32 +18,35 @@ class hubController:
         self.directionParams = {} # #desired user values
         # counter * (np.pi / 72)
         self.agentList= {}
-        for counter in range(0, 71):
-            self.directions[counter*5] = 0
+        for counter in range(0, 72):
+            self.directions[counter*5] = 4
             self.directionParams[counter*5] = -1
 
-        for bee in agents:
+        for id, bee in agents.items():
             info = beeInfo(int(bee.direction*(180/np.pi)), bee.velocity, bee.state, 1)
             self.agentList[bee.id] = info
 
-    def beeCheckout(self, bee):
+    def beeCheckOut(self, bee):
         angle = bee.direction % (2*np.pi)
         angle = int(int(angle*(180/np.pi))/5)*5 #converting to fit in the array
         agent = self.agentList[bee.id]
-        if (self.directionParams[angle] == -1) and (agent.atHub):      #No user input, all is well
+        beeleaves =1
+        if (self.directionParams[angle] == -1):      #No user input, all is well
             self.directions[angle] = self.directions[angle] + 1
             agent.atHub = 0
         elif self.directionParams[angle] < self.directions[angle]: #too many bees, stop it!
             bee.state = Observing()
-        elif (self.directionParams[angle] > self.directions[angle]) and (agent.atHub): #there needs to be more bees in that direction anyways
+            beeleaves=0
+        elif (self.directionParams[angle] > self.directions[angle]): #there needs to be more bees in that direction anyways
             self.directions[angle] = self.directions[angle] + 1
             agent.atHub = 0
         elif self.directionParams[angle] == self.directions[angle]: #perfect amount of bees, stop it
             bee.state = Observing()
-
+            beeleaves=0
 
         agent.direction = angle
         agent.state = bee.state
+        return beeleaves
          #******if explorer set a timer for it, if assessor calculate projected time
         #so upon check out state is used to gauge stuff for right now it can just be used as the array
 
@@ -56,6 +59,7 @@ class hubController:
         self.directions[angle] = self.directions[angle] - 1
 
         self.agentList[id].atHub = 1
+
 
 
     def directionInput(self, direction, newValue): #user inhibits or excites the amount of bees in each direction
@@ -76,7 +80,7 @@ class hubController:
                 pass
             elif self.directionParams[angle] > self.directions[angle]:  # not enough bees send out more! from observers
                 for bee in bees:
-                    if bee.state.__class__ == Observing().__class__:
+                    if bee.state.__class__ == Observing().__class__: #to speed up keep a list of the observers..
                         bee.state = Exploring()
                         bee.state.inputExplore=True
                         bee.state.exploretime *= 0.5 #since the bees are going out in an almost straight line.
@@ -84,7 +88,7 @@ class hubController:
                         #TODO: have the hub remember this bee and include it in its count
                         agent = self.agentList[bee.id]
                         agent.direction = angle
-                        agent.atHub = 0
+                        agent.inHub = False
                         break # only execute this once per iteration, that way it's a 'slow' change
             elif self.directionParams[angle] == self.directions[angle]:  #meaning it has reached the user's requirements
                 self.directionParams[angle] = -1

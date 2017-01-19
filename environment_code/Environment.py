@@ -5,6 +5,7 @@ import os
 import socket
 import sys
 import time
+from hubController import hubController
 #from hubController import *
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -19,6 +20,7 @@ class Environment:
         self.x_limit = 0
         self.y_limit = 0
         self.hub = [0, 0, 1]
+        self.hubController = None
         self.sites = []
         self.obstacles = []
         self.traps = []
@@ -32,6 +34,7 @@ class Environment:
 
             agent.potential_site = [100, 100]
             self.agents[str(y)] = agent
+        self.hubController = hubController(self.hub[0:2], self.agents)
 
     # Function to initialize data on the environment from a .txt file
     def build_environment(self):
@@ -122,6 +125,9 @@ class Environment:
             self.obstacles = new_obstacles
             self.traps = new_traps
             self.rough = new_rough
+
+
+
 
     # Method to add an agent to the hub
     def add_agent(self, agent_id):
@@ -214,6 +220,7 @@ class Environment:
                     agent.sense(self)
                     self.suggest_new_direction(agent.id)
                     agent.update()
+            self.hubController.hiveAdjust(self.agents)
 
             time.sleep(1/100)
 
