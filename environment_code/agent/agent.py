@@ -77,7 +77,7 @@ class Exploring(State):
         new_q = environment.get_q(agent.location[0], agent.location[1])
         agent.q_value = new_q
 
-        agent.attractor = environment.getAttractor()
+        agent.attractor = environment.getAttractor(agent.location)
         if(agent.attractor is not None and agent.attracted is None):
             if(np.random.random () > .2):
                 agent.attracted = True
@@ -85,13 +85,13 @@ class Exploring(State):
                 agent.attracted = False
 
 
-        agent.repulsor = environment.getRepulsor()
+        agent.repulsor = environment.getRepulsor(agent.location)
         if(agent.repulsor is not None and agent.ignore_repulsor is None):
             if(np.random.random() >.9):
                  agent.ignore_repulsor = True
             else:
                  agent.ignore_repulsor = False
-            
+
 
 
     def act(self, agent):

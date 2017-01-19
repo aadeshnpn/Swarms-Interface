@@ -35,31 +35,40 @@ class Environment:
             agent = Agent(str(y), Assessing())
             agent.potential_site = [-50, -50]
             self.agents[str(y)] = agent
-        self.attractor = flowController.Attractor((0, 100))
-        self.repulsor = flowController.Repulsor((60, -60))
+        self.attractors = []#[flowController.Attractor((0, 100)), flowController.Attractor((-100, 0))]
+        self.repulsors = [flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
 
-    def getAttractor(self):
-        if(self.attractor is not None):
-            return self.attractor.point
+    def getClosestFlowController(self, flowControllers, agent_location):
+        if(len(flowControllers) == 0):
+            raise ValueError('flowControllers list must not be empty.')
+        closest = flowControllers[0]
+        for flowController in flowControllers:
+            if(geomUtil.point_distance(agent_location, flowController.point) < geomUtil.point_distance(agent_location, closest.point)):
+                closest = flowController
+        return closest
+
+    def getAttractor(self, agent_location):
+        if(len(self.attractors)>0):
+            return self.getClosestFlowController(self.attractors, agent_location).point
         else:
             return None
 
-    def getRepulsor(self):
-        if(self.repulsor is not None):
-            return self.repulsor.point
+    def getRepulsor(self, agent_location):
+        if(len(self.repulsors) > 0):
+            return self.getClosestFlowController(self.repulsors, agent_location).point
         else:
             return None
 
     def updateFlowControllers(self):
-        if(self.attractor is not None and self.attractor.time_ticks > 0):
-            self.attractor.time_ticks -= 1
+        if(len(self.attractors) > 0 and self.attractors[0].time_ticks > 0):
+            self.attractors[0].time_ticks -= 1
         else:
-            self.attractor = None
+            self.attractors = []
 
-        if(self.repulsor is not None and self.repulsor.time_ticks > 0):
-            self.repulsor.time_ticks -= 1
+        if(len(self.repulsors) > 0 and self.repulsors[0].time_ticks > 0):
+            self.repulsors[0].time_ticks -= 1
         else:
-            self.repulsor = None
+            self.repulsors = []
 
 
 
