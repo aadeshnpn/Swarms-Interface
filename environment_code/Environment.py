@@ -24,14 +24,26 @@ class Environment:
         self.traps = []
         self.rough = []
         self.agents = {}
+        self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
-        for x in range(50):
+        for x in range(500):
             self.add_agent(str(x))
-        for y in range(0):
-            agent = Agent(str(y), Assessing())
 
-            agent.potential_site = [100, 100]
-            self.agents[str(y)] = agent
+    # Converts a cartesian coordinate to the matrix location
+    def coord_to_matrix(self, location):
+        return [int((location[0] + 800) / 2), int((location[1] + 400) / 2)]
+
+    # Sorts the agents into their respective quadrants
+    def sort_by_quad(self):
+        for y in range(400):
+            for x in range(800):
+                if len(self.quadrants[y][x]) != 0:
+                    self.quadrants[y][x] = set()
+        # self.quadrants = [[set() for x in range(800)] for y in range(400)]  # reset quadrants
+        for agent in self.agents:
+            matrix_address = self.coord_to_matrix(self.agents[agent].location)
+            self.quadrants[matrix_address[1]][matrix_address[0]].add(agent)
+            self.agents[agent].quadrant = matrix_address
 
     # Function to initialize data on the environment from a .txt file
     def build_environment(self):
@@ -217,8 +229,8 @@ class Environment:
 
             time.sleep(1/100)
 
-        eprint("[Engine] COUNT DEAD:", dead_count)
-        eprint("[Engine] High Q score:", high_q)
+        # eprint("[Engine] COUNT DEAD:", dead_count)
+        # eprint("[Engine] High Q score:", high_q)
 
     def change_state(self, agent_id, new_state):
         self.agents[agent_id].state = new_state

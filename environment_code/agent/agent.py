@@ -44,6 +44,7 @@ class Agent(StateMachine):
         self.hubRadius = 20
         self.goingToSite = True
         self.pipingThreshold = 10
+        self.quadrant = []
 
         # create table here.
         dict = {(Exploring().__class__, input.nestFound): [None, Assessing()],
