@@ -35,8 +35,8 @@ class Environment:
             agent = Agent(str(y), Assessing())
             agent.potential_site = [-50, -50]
             self.agents[str(y)] = agent
-        self.attractor = flowController.Attractor((150, 150))
-        self.repulsor = flowController.Repulsor((60,-60))
+        self.attractor = flowController.Attractor((0, 100))
+        self.repulsor = flowController.Repulsor((60, -60))
 
     def getAttractor(self):
         if(self.attractor is not None):
@@ -284,7 +284,7 @@ class Environment:
                     self.suggest_new_direction(agent.id)
                     agent.update()
             self.updateFlowControllers()
-            t_end = time.time() + 1/300 
+            t_end = time.time() + 1/300
             while time.time() < t_end: # always resolves to true -> 1/300 in python equals 0
                 pass
 

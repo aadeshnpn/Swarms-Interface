@@ -59,10 +59,10 @@ class Agent(StateMachine):
         self.transitionTable = dict
 
         self.attractor = None
-        self.attracted = False
+        self.attracted = None
 
         self.repulsor = None
-        self.ignore_repulsor = False
+        self.ignore_repulsor = None
 
 # so, the exploring part needs to give the input..
 class Exploring(State):
@@ -77,21 +77,21 @@ class Exploring(State):
         new_q = environment.get_q(agent.location[0], agent.location[1])
         agent.q_value = new_q
 
-        a = environment.getAttractor()
-        if(a is not None and (agent.attractor is None or (agent.attractor[0] != a[0] or agent.attractor[1] != a[1]))):
-            agent.attractor = a
+        agent.attractor = environment.getAttractor()
+        if(agent.attractor is not None and agent.attracted is None):
             if(np.random.random () > .2):
                 agent.attracted = True
             else:
                 agent.attracted = False
 
-        r = environment.getRepulsor()
-        if(r is not None and (agent.repulsor is None or (agent.repulsor[0] != r[0] or agent.repulsor[1] != r[1]))):
-            agent.repulsor = r
+
+        agent.repulsor = environment.getRepulsor()
+        if(agent.repulsor is not None and agent.ignore_repulsor is None):
             if(np.random.random() >.9):
                  agent.ignore_repulsor = True
             else:
                  agent.ignore_repulsor = False
+            
 
 
     def act(self, agent):
@@ -122,7 +122,7 @@ class Exploring(State):
                           agent.direction += .3
                  else:
                           agent.direction -= .3
-                 
+
                  agent.direction %= 2 * np.pi
         else:
                  delta_d = np.random.normal(0, .3)
