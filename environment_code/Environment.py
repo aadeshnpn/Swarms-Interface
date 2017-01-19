@@ -35,8 +35,11 @@ class Environment:
             agent = Agent(str(y), Assessing())
             agent.potential_site = [-50, -50]
             self.agents[str(y)] = agent
-        self.attractors = []#[flowController.Attractor((0, 100)), flowController.Attractor((-100, 0))]
+        self.attractors = [flowController.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
         self.repulsors = [flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
+        #self.repulsors[0].time_ticks = 600
+        #self.repulsors[1].time_ticks = 1800
+
 
     def getClosestFlowController(self, flowControllers, agent_location):
         if(len(flowControllers) == 0):
@@ -60,15 +63,22 @@ class Environment:
             return None
 
     def updateFlowControllers(self):
-        if(len(self.attractors) > 0 and self.attractors[0].time_ticks > 0):
-            self.attractors[0].time_ticks -= 1
-        else:
-            self.attractors = []
 
-        if(len(self.repulsors) > 0 and self.repulsors[0].time_ticks > 0):
-            self.repulsors[0].time_ticks -= 1
-        else:
-            self.repulsors = []
+        new_attractor_list = []
+
+        for attractor in self.attractors:
+            attractor.time_ticks -= 1
+            if(attractor.time_ticks > 0):
+                new_attractor_list.append(attractor)
+        self.attractors = new_attractor_list
+
+        new_repulsor_list = []
+
+        for repulsor in self.repulsors:
+            repulsor.time_ticks -= 1
+            if(repulsor.time_ticks > 0):
+                new_repulsor_list.append(repulsor)
+        self.repulsors = new_repulsor_list
 
 
 

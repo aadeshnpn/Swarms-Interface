@@ -93,7 +93,6 @@ class Exploring(State):
                  agent.ignore_repulsor = False
 
 
-
     def act(self, agent):
         self.move(agent)
 
