@@ -44,6 +44,7 @@ class Environment:
         self.isPaused = False
         self.attractors = []  # [flowController.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
         self.repulsors = [flowController.Repulsor((60, -60)), flowController.Repulsor((-40, -40))]
+        self.hubController = hubController(self.hub[0:2], self.agents)
         # self.repulsors[0].time_ticks = 600
         # self.repulsors[1].time_ticks = 1800
 
