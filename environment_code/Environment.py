@@ -319,15 +319,6 @@ class Environment:
 
     # Move all of the agents
     def run(self):
-        while True:
-            world.to_json()
-            for agent_id in self.agents:
-                agent = self.agents[agent_id]
-                if agent.live is True:
-                    agent.act()
-                    agent.sense(self)
-                    self.suggest_new_direction(agent.id)
-                    agent.update(self)
 
         self.inputEventManager.start()
         self.inputEventManager.subscribe('pause', self.pause)
@@ -342,11 +333,11 @@ class Environment:
                         agent.act()
                         agent.sense(self)
                         self.suggest_new_direction(agent.id)
-                        agent.update()
+                        agent.update(self)
 
             self.updateFlowControllers()
             self.hubController.hiveAdjust(self.agents)
-            time.sleep(1/100)
+            time.sleep(1/24)
 
     def change_state(self, agent_id, new_state):
         self.agents[agent_id].state = new_state
