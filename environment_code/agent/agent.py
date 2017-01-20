@@ -4,7 +4,7 @@ from enum import Enum
 import numpy as np
 # reset velocity of agent at begining of each state transition?
 
-input = Enum('input', 'nestFound exploreTime observeTime dancerFound siteFound tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum')
+input = Enum('input', 'nestFound exploreTime observeTime dancerFound siteFound tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
 
 #safe_angle returns the angle needed to be added to a to get b
 def safe_angle(a, b):
@@ -65,8 +65,10 @@ class Agent(StateMachine):
                 (Observing().__class__, input.observeTime): [None, Exploring()],
                 (Observing().__class__, input.dancerFound): [None, Assessing()],
                 (Observing().__class__, input.startPipe): [None, Piping()],
+                (Observing().__class__, input.quit): [None, Resting()],
                 (Assessing().__class__, input.siteFound): [self.danceTransition, Dancing()], # self.danceTransition()
                 (Assessing().__class__, input.siteAssess): [None, SiteAssess()],
+                (Assessing().__class__, input.quit): [None, Observing()],
                 (SiteAssess().__class__, input.finAssess): [None, Assessing()],
                 (SiteAssess().__class__, input.startPipe): [None, Piping()],
                 (Dancing().__class__, input.tiredDance): [None, Resting()],
@@ -170,11 +172,11 @@ class Assessing(State):
                 environment.hubController.beeCheckIn(agent.id, agent.direction)
                 agent.inHub = True
 
-        if ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2 )< 1:
+        if ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2 ) < 1:
             q = environment.get_q(agent.location[0],agent.location[1])
             if(q >= 0): #CHECK THIS, IT MAY BE A PROBLEM...
                 agent.goingToSite = False
-                agent.q_value =q;
+                agent.q_value = q
 
     def act(self, agent):
         self.move(agent)
@@ -187,6 +189,8 @@ class Assessing(State):
         elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (
                 agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
             agent.goingToSite = False
+            if(np.random.uniform(0,1) < 1 - agent.q_value): # (1-q)% chance of going to observer state instead of dancing
+                return input.quit
             return input.siteAssess
 
     def move(self, agent):
@@ -315,6 +319,8 @@ class Observing(State):
         if self.seesDancer is True:
             return input.dancerFound
         elif self.observerTimer < 1:
+            if np.random.uniform(0, 1) < 0.1:  # 10% chance a bee goes back to rest after observing
+                return input.quit
             return input.observeTime
 
     def movehome(self, agent):
@@ -355,10 +361,11 @@ class SiteAssess(State):
             return False
 
     def sense(self, agent, environment):
-        new_q = environment.get_q(agent.location[0], agent.location[1])
-        if new_q > agent.q_value:
-            agent.potential_site = agent.location
-            agent.q_value = new_q
+        ## Code to help the bees find the center of the site
+        # new_q = environment.get_q(agent.location[0], agent.location[1])
+        # if new_q > agent.q_value:
+        #     agent.potential_site = agent.location
+        #     agent.q_value = new_q
         if self.check_num_close_assessors(agent, environment):
             self.thresholdPassed = True
 
@@ -442,13 +449,7 @@ class Commit(State):
         self.atHub = False  # we may not need this code at all... to turn it on make it default false.
 
     def sense(self, agent, environment):  # probably not needed for now, but can be considered a place holder
-        if self.atHub:   # Code for consensus --------------------------------------------------
-            bees = environment.get_nearby_agents(agent.id, 12)
-            for bee in bees:
-                if isinstance(bee.state, Commit.__class__) and bee.hub != agent.hub:
-                    agent.hub = bee.hub
-                    self.atHub = False
-                    break
+        pass
 
     def act(self, agent):
         if self.atHub:
