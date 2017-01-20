@@ -16,8 +16,9 @@ class Agent(StateMachine):
     def act(self):
         self.state.act(self)
 
-    def update(self):
-        self.nextState(self.state.update(self))
+    def update(self, environment):
+        self.nextState(self.state.update(self), environment)
+
     def danceTransition(self):
         dance = int(self.q_value*1000-(200*self.assessments))
         if dance < 15 :
@@ -69,7 +70,7 @@ class Exploring(State):
         self.name = "exploring"
         self.inputExplore = False
         exp = np.random.normal(1, .3, 1)
-        while exp  < 0:
+        while exp < 0:
             exp = np.random.normal(1, .3, 1)
         self.exploretime = exp*3600
 

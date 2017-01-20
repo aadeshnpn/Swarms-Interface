@@ -1,16 +1,18 @@
 import copy
 
 class StateMachine:
-    def __init__(self, initialState, tranTable):
+    def __init__(self, initialState, tranTable, id):
         self.state = initialState
         self.transitionTable = tranTable
+        self.id = id
 
-    def nextState(self, input):
+    def nextState(self, input, environment):
         if input is None:
             return
         currState = self.transitionTable[(self.state.__class__, input)]
-
+        environment.sort_by_state(self.id, self.state.__class__, currState[1].__class__)
         self.state = copy.copy(currState[1])
+
         if currState[0] is not None:
             currState[0]()
         return

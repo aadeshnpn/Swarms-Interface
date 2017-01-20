@@ -1,4 +1,5 @@
 from agent.agent import *
+import kd_tree as kd
 import numpy as np
 import json
 import os
@@ -24,10 +25,20 @@ class Environment:
         self.traps = []
         self.rough = []
         self.agents = {}
-        self.quadrants = [[set() for x in range(800)] for y in range(400)]
+        self.states = {Exploring().__class__:[],
+                       Assessing().__class__: [],
+                       Dancing().__class__:[],
+                       Resting().__class__:[],
+                       Observing().__class__:[]}
+
+        #self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
-        for x in range(500):
+        for x in range(100):
             self.add_agent(str(x))
+
+    def sort_by_state(self, agent_id, prev_state, cur_state):
+        self.states[prev_state].remove(agent_id)
+        self.states[cur_state].append(agent_id)
 
     # Converts a cartesian coordinate to the matrix location
     def coord_to_matrix(self, location):
@@ -44,6 +55,14 @@ class Environment:
             matrix_address = self.coord_to_matrix(self.agents[agent].location)
             self.quadrants[matrix_address[1]][matrix_address[0]].add(agent)
             self.agents[agent].quadrant = matrix_address
+
+    def nearest_10_neighbors(self, bee):
+        point_list = []
+        for agent in self.agents:
+            if agent != bee:
+                point_list.append((self.agents[agent].x, self.agents[agent].y))
+        tree = kd.kdtree(point_list)
+        print(tree)
 
     # Function to initialize data on the environment from a .txt file
     def build_environment(self):
@@ -139,25 +158,14 @@ class Environment:
     def add_agent(self, agent_id):
         agent = Agent(agent_id, Exploring())
         self.agents[agent_id] = agent
+        self.states[Exploring().__class__].append(agent_id)
 
-    # Function to return the Q-value for given coordinates. Returns 0 if nothing is there, -1 if it hits an obstacle,
-    # -2 if it gets caught in a trap, and a value between 0 and 1 if it finds a site.
+    # Function to return the Q-value for given coordinates. Returns 0 if nothing is there and a value between 0 and 1
+    # if it finds a site.
     def get_q(self, x, y):
 
         # Calculate the distance between the coordinates and the center of each site, then compare that distance with
         # the radius of the obstacles, traps, rough spots, and sites
-
-        for obstacle in self.obstacles:
-            x_dif = x - obstacle[0]
-            y_dif = y - obstacle[1]
-            if x_dif ** 2 + y_dif ** 2 <= obstacle[2] ** 2:
-                return -1
-
-        for trap in self.traps:
-            x_dif = x - trap[0]
-            y_dif = y - trap[1]
-            if x_dif**2 + y_dif**2 <= trap[2]**2:
-                return -2
 
         for site in self.sites:
             x_dif = x - site[0]
@@ -170,14 +178,28 @@ class Environment:
                                                                     # multiplied by the site's ease of detection
         return 0
 
-    # Returns True if terrain is clear, False if it is rough (slows velocity of agent to half-speed)
+    # Returns 0 if terrain is clear, -1 if it is rough (slows velocity of agent to half-speed), -2 if there is an obstacle,
+    # and -3 if there is a trap
     def check_terrain(self, x, y):
+        for trap in self.traps:
+            x_dif = x - trap[0]
+            y_dif = y - trap[1]
+            if x_dif**2 + y_dif**2 <= trap[2]**2:
+                return -3
+
+        for obstacle in self.obstacles:
+            x_dif = x - obstacle[0]
+            y_dif = y - obstacle[1]
+            if x_dif ** 2 + y_dif ** 2 <= obstacle[2] ** 2:
+                return -2
+
         for spot in self.rough:
             x_dif = x - spot[0]
             y_dif = y - spot[1]
             if x_dif ** 2 + y_dif ** 2 <= spot[2] ** 2:
-                return False
-        return True
+                return -1
+
+        return 0
 
     #def wind(self):
 
@@ -194,9 +216,25 @@ class Environment:
     # agent asks to go in a direction at a certain velocity, use vector addition, updates location
     def suggest_new_direction(self, agentId):
         agent = self.agents[agentId]
-        #add collision checking for other bees
-        agent.location[0] += np.cos(agent.direction) * agent.velocity
-        agent.location[1] += np.sin(agent.direction) * agent.velocity
+
+        # Check the effects of moving in the suggested direction
+        proposed_x = agent.location[0] + np.cos(agent.direction) * agent.velocity
+        proposed_y = agent.location[1] + np.sin(agent.direction) * agent.velocity
+
+        terrain_value = self.check_terrain(proposed_x, proposed_y)
+
+        if terrain_value == 0:
+            agent.location[0] = proposed_x
+            agent.location[1] = proposed_y
+        elif terrain_value == -3:
+            self.agents[agent_id].live = False
+            return
+        elif terrain_value == -2:
+            pass
+        elif terrain_value == -1:
+            pass
+
+        # add collision checking for other bees
         for agent_id in self.agents:
             if (self.agents[agent_id].location[:] == agent.location[:]) and (agentId != agent_id):
                 agent.location[0] -= np.cos(agent.direction) * agent.velocity
@@ -215,8 +253,6 @@ class Environment:
 
     # Move all of the agents
     def run(self):
-        dead_count = 0
-        high_q = 0
         while True:
             world.to_json()
             for agent_id in self.agents:
@@ -225,7 +261,7 @@ class Environment:
                     agent.act()
                     agent.sense(self)
                     self.suggest_new_direction(agent.id)
-                    agent.update()
+                    agent.update(self)
 
             time.sleep(1/100)
 
@@ -234,6 +270,7 @@ class Environment:
 
     def change_state(self, agent_id, new_state):
         self.agents[agent_id].state = new_state
+
 
     def to_json(self):
         print(json.dumps({"type": "update", "data": {"x_limit": self.x_limit, "y_limit": self.y_limit, "hub": self.hub, "sites":
