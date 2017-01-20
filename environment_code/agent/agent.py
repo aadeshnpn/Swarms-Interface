@@ -29,12 +29,12 @@ class Agent(StateMachine):
     def update(self, environment):
         self.nextState(self.state.update(self), environment)
 
-    def danceTransition(self):  #this runs after the agent has changed state
+    def danceTransition(self, environment):  #this runs after the agent has changed state
         dance = int(self.q_value*1000-(200*self.assessments))
         if dance < 15 :
             self.assessments = 1
             self.potential_site = None
-            self.nextState(input.tiredDance)
+            self.nextState(input.tiredDance, environment)
         else:
             self.state.dance_counter = dance
 
@@ -57,6 +57,7 @@ class Agent(StateMachine):
         self.goingToSite = True
         self.pipingThreshold = 10
         self.quadrant = []
+
 
         # create table here.
         dict = {(Exploring().__class__, input.nestFound): [None, Assessing()],

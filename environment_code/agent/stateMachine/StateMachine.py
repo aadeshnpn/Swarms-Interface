@@ -14,7 +14,7 @@ class StateMachine:
         self.state = copy.copy(currState[1])
 
         if currState[0] is not None:
-            currState[0]()
+            currState[0](environment)
         return
         RuntimeError("Input not supported for current state")
 

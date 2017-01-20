@@ -34,7 +34,10 @@ class Environment:
                        Assessing().__class__: [],
                        Dancing().__class__:[],
                        Resting().__class__:[],
-                       Observing().__class__:[]}
+                       Observing().__class__:[],
+                       SiteAssess().__class__:[],
+                       Piping().__class__:[],
+                       Commit().__class__:[]}
 
         #self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
@@ -44,6 +47,7 @@ class Environment:
         self.isPaused = False
         self.attractors = []  # [flowController.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
         self.repulsors = [flowController.Repulsor((60, -60)), flowController.Repulsor((-40, -40))]
+        self.hubController = hubController(self.hub[0:2], self.agents)
         # self.repulsors[0].time_ticks = 600
         # self.repulsors[1].time_ticks = 1800
 
@@ -278,7 +282,7 @@ class Environment:
             agent.location[0] = proposed_x
             agent.location[1] = proposed_y
         elif terrain_value == -3:
-            self.agents[agent_id].live = False
+            agent.live = False
             return
         elif terrain_value == -2:
             pass
