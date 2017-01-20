@@ -28,7 +28,7 @@ class Environment:
         self.agents = {}
         self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
-        for x in range(500):
+        for x in range(50):
             self.add_agent(str(x))
         self.hubController = hubController(self.hub[0:2], self.agents)
 
@@ -170,7 +170,7 @@ class Environment:
             y_dif = y - site[1]
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
             if tot_dif <= site[2]:
-                return int(site[3]*np.random.normal(1, .2, 1))  # for testing purposes I'm just returning the q value.
+                return site[3]*np.random.normal(1, .2, 1)  # for testing purposes I'm just returning the q value.
                 #return (site[3] / site[2] ** (tot_dif / site[2])) * site[4] # Uses an inverse-power function to compute
                                                                     # q_value based on distance from center of site,
                                                                     # multiplied by the site's ease of detection

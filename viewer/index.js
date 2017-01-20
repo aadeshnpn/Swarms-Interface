@@ -70,7 +70,7 @@ class Client
       }
       else
       {
-         const engine = spawn('python', [path.join(__dirname, '../environment_code/Environment.py')], {stdio: ['pipe', 'pipe', process.stderr]});
+         const engine = spawn('python3.5', [path.join(__dirname, '../environment_code/Environment.py')], {stdio: ['pipe', 'pipe', process.stderr]});
          engine.on('error', (err) => { console.error("[!] Unable to start engine process: " + err)});
 
          this.world = {engine: engine, clientsAttached: 0};
