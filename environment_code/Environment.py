@@ -286,8 +286,10 @@ class Environment:
             return
         elif terrain_value == -2:
             pass
-        elif terrain_value == -1:
-            pass
+        elif terrain_value == -1:  # If the agent is in rough terrain, it will move at half speed
+            slow_down = .5
+            agent.location[0] += np.cos(agent.direction) * agent.velocity * slow_down
+            agent.location[1] += np.sin(agent.direction) * agent.velocity * slow_down
 
         # add collision checking for other bees
         for agent_id in self.agents:
