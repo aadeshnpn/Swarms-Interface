@@ -86,7 +86,7 @@ class Client
    // Data should be any arbitrary JSON object
    input(data)
    {
-      this.world.engine.write(JSON.stringify(data));
+      this.world.engine.stdin.write(JSON.stringify(data) + "\n"); // python's readline requires a newline or it blocks
    }
 
    // creates a listener for the JSON stream parser's updates

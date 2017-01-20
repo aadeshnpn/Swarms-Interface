@@ -1,4 +1,5 @@
 from agent.agent import *
+from InputEventManager import InputEventManager
 import flowController
 import numpy as np
 import json
@@ -30,6 +31,9 @@ class Environment:
         self.agents = {}
         self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
+        self.inputEventManager = InputEventManager()
+        self.isPaused = False
+
         for x in range(50):
             self.add_agent(str(x))
 
@@ -184,9 +188,6 @@ class Environment:
             self.traps = new_traps
             self.rough = new_rough
 
-
-
-
     # Method to add an agent to the hub
     def add_agent(self, agent_id):
         agent = Agent(agent_id, Exploring())
@@ -265,19 +266,31 @@ class Environment:
         elif agent.location[1] < self.y_limit * -1:
             agent.location[1] += 2 * self.y_limit
 
+    def pause(self, json):
+        self.isPaused = True
+
+    def play(self, json):
+        self.isPaused = False
+
     # Move all of the agents
     def run(self):
         dead_count = 0
         high_q = 0
+
+        self.inputEventManager.start()
+        self.inputEventManager.subscribe('pause', self.pause)
+        self.inputEventManager.subscribe('play', self.play)
+
         while True:
-            world.to_json()
-            for agent_id in self.agents:
-                agent = self.agents[agent_id]
-                if agent.live is True:
-                    agent.act()
-                    agent.sense(self)
-                    self.suggest_new_direction(agent.id)
-                    agent.update()
+            if not self.isPaused:
+                world.to_json()
+                for agent_id in self.agents:
+                    agent = self.agents[agent_id]
+                    if agent.live is True:
+                        agent.act()
+                        agent.sense(self)
+                        self.suggest_new_direction(agent.id)
+                        agent.update()
 
             self.updateFlowControllers()
             self.hubController.hiveAdjust(self.agents)
