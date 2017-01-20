@@ -354,6 +354,10 @@ class SiteAssess(State):
             return False
 
     def sense(self, agent, environment):
+        new_q = environment.get_q(agent.location[0], agent.location[1])
+        if new_q > agent.q_value:
+            agent.potential_site = agent.location
+            agent.q_value = new_q
         if self.check_num_close_assessors(agent, environment):
             self.thresholdPassed = True
 
@@ -437,7 +441,13 @@ class Commit(State):
         self.atHub = False  # we may not need this code at all... to turn it on make it default false.
 
     def sense(self, agent, environment):  # probably not needed for now, but can be considered a place holder
-        pass
+        if self.atHub:   # Code for consensus --------------------------------------------------
+            bees = environment.get_nearby_agents(agent.id, 12)
+            for bee in bees:
+                if isinstance(bee.state, Commit.__class__) and bee.hub != agent.hub:
+                    agent.hub = bee.hub
+                    self.atHub = False
+                    break
 
     def act(self, agent):
         if self.atHub:
