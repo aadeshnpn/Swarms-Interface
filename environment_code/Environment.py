@@ -1,12 +1,16 @@
 from agent.agent import *
 import kd_tree as kd
+from InputEventManager import InputEventManager
+import flowController
 import numpy as np
 import json
 import os
 import socket
 import sys
 import time
-#from hubController import *
+import geomUtil
+
+from hubController import hubController
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -20,6 +24,7 @@ class Environment:
         self.x_limit = 0
         self.y_limit = 0
         self.hub = [0, 0, 1]
+        self.hubController = None
         self.sites = []
         self.obstacles = []
         self.traps = []
@@ -33,12 +38,58 @@ class Environment:
 
         #self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
-        for x in range(100):
+        for x in range(50):
             self.add_agent(str(x))
+        self.inputEventManager = InputEventManager()
+        self.isPaused = False
+        self.attractors = []  # [flowController.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
+        self.repulsors = [flowController.Repulsor((60, -60)), flowController.Repulsor((-40, -40))]
+        # self.repulsors[0].time_ticks = 600
+        # self.repulsors[1].time_ticks = 1800
 
     def sort_by_state(self, agent_id, prev_state, cur_state):
         self.states[prev_state].remove(agent_id)
         self.states[cur_state].append(agent_id)
+
+    def getClosestFlowController(self, flowControllers, agent_location):
+        if(len(flowControllers) == 0):
+            raise ValueError('flowControllers list must not be empty.')
+        closest = flowControllers[0]
+        for flowController in flowControllers:
+            if(geomUtil.point_distance(agent_location, flowController.point) < geomUtil.point_distance(agent_location, closest.point)):
+                closest = flowController
+        return closest
+
+    def getAttractor(self, agent_location):
+        if(len(self.attractors)>0):
+            return self.getClosestFlowController(self.attractors, agent_location).point
+        else:
+            return None
+
+    def getRepulsor(self, agent_location):
+        if(len(self.repulsors) > 0):
+            return self.getClosestFlowController(self.repulsors, agent_location).point
+        else:
+            return None
+
+    def updateFlowControllers(self):
+
+        new_attractor_list = []
+
+        for attractor in self.attractors:
+            attractor.time_ticks -= 1
+            if(attractor.time_ticks > 0):
+                new_attractor_list.append(attractor)
+        self.attractors = new_attractor_list
+
+        new_repulsor_list = []
+
+        for repulsor in self.repulsors:
+            repulsor.time_ticks -= 1
+            if(repulsor.time_ticks > 0):
+                new_repulsor_list.append(repulsor)
+        self.repulsors = new_repulsor_list
+        self.hubController = hubController(self.hub[0:2], self.agents)
 
     # Converts a cartesian coordinate to the matrix location
     def coord_to_matrix(self, location):
@@ -172,7 +223,7 @@ class Environment:
             y_dif = y - site[1]
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
             if tot_dif <= site[2]:
-                return int(site[3]*np.random.normal(1, .2, 1))  # for testing purposes I'm just returning the q value.
+                return site[3]*np.random.normal(1, .2, 1)  # for testing purposes I'm just returning the q value.
                 #return (site[3] / site[2] ** (tot_dif / site[2])) * site[4] # Uses an inverse-power function to compute
                                                                     # q_value based on distance from center of site,
                                                                     # multiplied by the site's ease of detection
@@ -251,6 +302,12 @@ class Environment:
         elif agent.location[1] < self.y_limit * -1:
             agent.location[1] += 2 * self.y_limit
 
+    def pause(self, json):
+        self.isPaused = True
+
+    def play(self, json):
+        self.isPaused = False
+
     # Move all of the agents
     def run(self):
         while True:
@@ -263,14 +320,27 @@ class Environment:
                     self.suggest_new_direction(agent.id)
                     agent.update(self)
 
-            time.sleep(1/100)
+        self.inputEventManager.start()
+        self.inputEventManager.subscribe('pause', self.pause)
+        self.inputEventManager.subscribe('play', self.play)
 
-        # eprint("[Engine] COUNT DEAD:", dead_count)
-        # eprint("[Engine] High Q score:", high_q)
+        while True:
+            if not self.isPaused:
+                world.to_json()
+                for agent_id in self.agents:
+                    agent = self.agents[agent_id]
+                    if agent.live is True:
+                        agent.act()
+                        agent.sense(self)
+                        self.suggest_new_direction(agent.id)
+                        agent.update()
+
+            self.updateFlowControllers()
+            self.hubController.hiveAdjust(self.agents)
+            time.sleep(1/100)
 
     def change_state(self, agent_id, new_state):
         self.agents[agent_id].state = new_state
-
 
     def to_json(self):
         print(json.dumps({"type": "update", "data": {"x_limit": self.x_limit, "y_limit": self.y_limit, "hub": self.hub, "sites":
@@ -290,7 +360,6 @@ class Environment:
             agent_dict["live"] = self.agents[agent_id].live
             agents.append(agent_dict)
         return agents
-
 
 world = Environment(os.path.join(ROOT_DIR, "data.txt"))
 world.run()

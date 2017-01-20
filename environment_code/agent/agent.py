@@ -2,11 +2,21 @@ from agent.stateMachine.StateMachine import StateMachine
 from agent.stateMachine.state import State
 from enum import Enum
 import numpy as np
-
 # reset velocity of agent at begining of each state transition?
 
 input = Enum('input', 'nestFound exploreTime observeTime dancerFound siteFound tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum')
 
+#safe_angle returns the angle needed to be added to a to get b
+def safe_angle(a, b):
+    angle = np.arctan2(b[1], b[0]) - np.arctan2(a[1], a[0])
+    while angle > np.pi:
+        angle -= 2 * np.pi
+    while angle < -np.pi:
+        angle += 2 * np.pi
+    return angle
+
+def distance(a,b):
+	return np.sqrt((b[0]-a[0])**2 + (b[1]-a[1])**2)
 
 class Agent(StateMachine):
 
@@ -19,7 +29,7 @@ class Agent(StateMachine):
     def update(self, environment):
         self.nextState(self.state.update(self), environment)
 
-    def danceTransition(self):
+    def danceTransition(self):  #this runs after the agent has changed state
         dance = int(self.q_value*1000-(200*self.assessments))
         if dance < 15 :
             self.assessments = 1
@@ -36,13 +46,14 @@ class Agent(StateMachine):
         self.id = agentId  # for communication with environment
         self.location = [0, 0]  # should be initialized?
         self.direction = 2*np.pi*np.random.random()  # should be initilaized? potentially random?
-        # self.direction = np.pi/2
+        #self.direction = 5*np.pi/4
         self.velocity = .5*np.random.random() + .75  # should be initilaized?
         self.hub = [0, 0]  # should be initialized?
         self.potential_site = None  # array [x,y]
         self.q_value = 0
         self.assessments = 1
         self.hubRadius = 20
+        self.inHub = True
         self.goingToSite = True
         self.pipingThreshold = 10
         self.quadrant = []
@@ -64,6 +75,12 @@ class Agent(StateMachine):
                 }
         self.transitionTable = dict
 
+        self.attractor = None
+        self.attracted = None
+
+        self.repulsor = None
+        self.ignore_repulsor = None
+
 # so, the exploring part needs to give the input..
 class Exploring(State):
     def __init__(self):
@@ -75,9 +92,28 @@ class Exploring(State):
         self.exploretime = exp*3600
 
     def sense(self, agent, environment):
+        if agent.hubRadius-1< ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5< agent.hubRadius+1:
+            if agent.inHub==True:
+                if environment.hubController.beeCheckOut(agent)==0:
+                    agent.inHub = False
+                    return
+
         new_q = environment.get_q(agent.location[0], agent.location[1])
         agent.q_value = new_q
-        #
+        agent.attractor = environment.getAttractor(agent.location)
+        if(agent.attractor is not None and agent.attracted is None):
+            if(np.random.random () > .2):
+                agent.attracted = True
+            else:
+                agent.attracted = False
+
+
+        agent.repulsor = environment.getRepulsor(agent.location)
+        if(agent.repulsor is not None and agent.ignore_repulsor is None):
+            if(np.random.random() >.9):
+                 agent.ignore_repulsor = True
+            else:
+                 agent.ignore_repulsor = False
 
     def act(self, agent):
         self.move(agent)
@@ -93,11 +129,28 @@ class Exploring(State):
             return None
 
     def move(self,agent):
-        if self.inputExplore: #this is for when the user has requested more bees
+        if(agent.attractor is not None and distance(agent.attractor, agent.location) < 40 and agent.attracted is True):
+                angle = safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.attractor[0]-agent.location[0],agent.attractor[1]-agent.location[1]))
+                angle = np.clip(angle, -np.pi/16, np.pi/16)
+                error = np.random.normal(0, .3)
+                agent.direction += angle + error
+                agent.direction = agent.direction % (2 *np.pi)
+
+        elif(agent.repulsor is not None and distance(agent.repulsor, agent.location) < 40 and agent.ignore_repulsor is False):
+                 angle = - safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.repulsor[0]-agent.location[0],agent.repulsor[1]-agent.location[1]))
+                 angle = np.clip(angle, -np.pi/16, np.pi/16)
+                 if(angle >= 0):
+                          agent.direction += .3
+                 else:
+                          agent.direction -= .3
+
+                 agent.direction %= 2 * np.pi
+
+        elif self.inputExplore: #this is for when the user has requested more bees
             delta_d = np.random.normal(0, .013) # this will assure that the bee moves less erratically, it can be decreased a little as well
         else:
             delta_d = np.random.normal(0, .22)
-        agent.direction = (agent.direction + delta_d) % (2 * np.pi)
+            agent.direction = (agent.direction + delta_d) % (2 * np.pi)
 
         return
 
@@ -107,7 +160,20 @@ class Assessing(State):
         self.name = "assessing"
 
     def sense(self, agent, environment):
-        pass
+        if agent.hubRadius-1< ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5< agent.hubRadius+1:
+            if agent.goingToSite ==True and agent.inHub==True:
+                if environment.hubController.beeCheckOut(agent)==0:
+                    agent.inHub = False
+                    return
+            elif agent.goingToSite == False and agent.inHub ==False:
+                environment.hubController.beeCheckIn(agent.id, agent.direction)
+                agent.inHub = True
+
+        if ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2 )< 1:
+            q = environment.get_q(agent.location[0],agent.location[1])
+            if(q >= 0): #CHECK THIS, IT MAY BE A PROBLEM...
+                agent.goingToSite = False
+                agent.q_value =q;
 
     def act(self, agent):
         self.move(agent)
@@ -221,6 +287,11 @@ class Observing(State):
                     agent.velocity = 0.5 + 0.5 * np.random.random()
                     agent.potential_site = bee.potential_site
                     break
+        if agent.hubRadius-1< ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5< agent.hubRadius+1:
+            if agent.inHub==False:
+                environment.hubController.beeCheckIn(agent.id, agent.direction)
+                agent.inHub = True
+
 
     def act(self, agent):
         if self.atHub:

@@ -38,6 +38,8 @@
    </div>
 
    <label>Show directional overlay: <input type="checkbox" id="directionOverlay" checked="true"></label>
+   <button onclick="pause()">Pause</button>
+   <button onclick="play()">Play</button>
 
    <h4>Information</h4>
    <table id="infoTable">
@@ -51,6 +53,7 @@
    var world = null;
    var height = 0;
    var width = 0;
+   var showDebug = true;
 
    // get a reference to the canvas element
    var canvas = document.getElementById("canvas");
@@ -70,6 +73,16 @@
 
    // agent direction lookup table
    var agentRotations = {};
+
+   function pause()
+   {
+     socket.emit('input', {type: 'pause'});
+   }
+
+   function play()
+   {
+     socket.emit('input', {type: 'play'});
+   }
 
    socket.on('connect', function()
    {
@@ -240,6 +253,13 @@
       ctx.arc(0, 0, site[2], 0, Math.PI * 2, false);
       ctx.fill();
       ctx.stroke();
+
+      if (showDebug)
+      {
+        ctx.font = "10px sans-serif";
+        ctx.fillStyle = "rgb(0, 0, 0)";
+        ctx.fillText(`Q: ${qVal}`, -10, 20);
+      }
    }
 
    function renderTrap(trap, ctx)
