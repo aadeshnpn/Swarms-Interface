@@ -34,7 +34,10 @@ class Environment:
                        Assessing().__class__: [],
                        Dancing().__class__:[],
                        Resting().__class__:[],
-                       Observing().__class__:[]}
+                       Observing().__class__:[],
+                       SiteAssess().__class__:[],
+                       Piping().__class__:[],
+                       Commit().__class__:[]}
 
         #self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
@@ -279,7 +282,7 @@ class Environment:
             agent.location[0] = proposed_x
             agent.location[1] = proposed_y
         elif terrain_value == -3:
-            self.agents[agent_id].live = False
+            agent.live = False
             return
         elif terrain_value == -2:
             pass
