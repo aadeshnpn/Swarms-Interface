@@ -6,10 +6,9 @@ import os
 import socket
 import sys
 import time
-
 import geomUtil
 
-__author__ = "Nathan Anderson"
+from hubController import hubController
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -23,23 +22,21 @@ class Environment:
         self.x_limit = 0
         self.y_limit = 0
         self.hub = [0, 0, 1]
+        self.hubController = None
         self.sites = []
         self.obstacles = []
         self.traps = []
         self.rough = []
         self.agents = {}
+        self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
-        for x in range(59):
+        for x in range(50):
             self.add_agent(str(x))
-        for y in range(1):
-            agent = Agent(str(y), Assessing())
-            agent.potential_site = [-50, -50]
-            self.agents[str(y)] = agent
-        self.attractors = [flowController.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
+
+        self.attractors = [] #[flowController.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
         self.repulsors = [flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
         #self.repulsors[0].time_ticks = 600
         #self.repulsors[1].time_ticks = 1800
-
 
     def getClosestFlowController(self, flowControllers, agent_location):
         if(len(flowControllers) == 0):
@@ -79,8 +76,23 @@ class Environment:
             if(repulsor.time_ticks > 0):
                 new_repulsor_list.append(repulsor)
         self.repulsors = new_repulsor_list
+        self.hubController = hubController(self.hub[0:2], self.agents)
 
+    # Converts a cartesian coordinate to the matrix location
+    def coord_to_matrix(self, location):
+        return [int((location[0] + 800) / 2), int((location[1] + 400) / 2)]
 
+    # Sorts the agents into their respective quadrants
+    def sort_by_quad(self):
+        for y in range(400):
+            for x in range(800):
+                if len(self.quadrants[y][x]) != 0:
+                    self.quadrants[y][x] = set()
+        # self.quadrants = [[set() for x in range(800)] for y in range(400)]  # reset quadrants
+        for agent in self.agents:
+            matrix_address = self.coord_to_matrix(self.agents[agent].location)
+            self.quadrants[matrix_address[1]][matrix_address[0]].add(agent)
+            self.agents[agent].quadrant = matrix_address
 
     # Function to initialize data on the environment from a .txt file
     def build_environment(self):
@@ -124,8 +136,7 @@ class Environment:
                         trap.append(float(entry))
                     new_traps.append(trap)
 
-                    assert abs(trap[0]) + trap[2] < self.x_limit and abs(
-                        trap[1]) + trap[2] < self.y_limit, "Not all traps are inside Environment boundaries"
+                    assert abs(trap[0]) + trap[2] < self.x_limit and abs(trap[1]) + trap[2] < self.y_limit, "Not all traps are inside Environment boundaries"
 
                 elif obstacle_flag is True:
                     obstacle = []
@@ -173,14 +184,16 @@ class Environment:
             self.traps = new_traps
             self.rough = new_rough
 
+
+
+
     # Method to add an agent to the hub
     def add_agent(self, agent_id):
         agent = Agent(agent_id, Exploring())
         self.agents[agent_id] = agent
 
     # Function to return the Q-value for given coordinates. Returns 0 if nothing is there, -1 if it hits an obstacle,
-    # -2 if it gets caught in a trap, -3 if it's moving through rough terrain, and a value between 0 and 1 if it finds
-    # a site.
+    # -2 if it gets caught in a trap, and a value between 0 and 1 if it finds a site.
     def get_q(self, x, y):
 
         # Calculate the distance between the coordinates and the center of each site, then compare that distance with
@@ -198,62 +211,39 @@ class Environment:
             if x_dif**2 + y_dif**2 <= trap[2]**2:
                 return -2
 
-        for spot in self.rough:
-            x_dif = x - spot[0]
-            y_dif = y - spot[1]
-            if x_dif ** 2 + y_dif ** 2 <= spot[2] ** 2:
-                return -3
         for site in self.sites:
             x_dif = x - site[0]
             y_dif = y - site[1]
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
             if tot_dif <= site[2]:
-                return site[3]  # for testing purposes I'm just returning the q value.
+                return site[3]*np.random.normal(1, .2, 1)  # for testing purposes I'm just returning the q value.
                 #return (site[3] / site[2] ** (tot_dif / site[2])) * site[4] # Uses an inverse-power function to compute
                                                                     # q_value based on distance from center of site,
                                                                     # multiplied by the site's ease of detection
         return 0
 
-    def get_nearby_agents(self, agent_id):
+    # Returns True if terrain is clear, False if it is rough (slows velocity of agent to half-speed)
+    def check_terrain(self, x, y):
+        for spot in self.rough:
+            x_dif = x - spot[0]
+            y_dif = y - spot[1]
+            if x_dif ** 2 + y_dif ** 2 <= spot[2] ** 2:
+                return False
+        return True
+
+    #def wind(self):
+
+
+    def get_nearby_agents(self, agent_id, radius):
         nearby = []
         for other_id in self.agents:
             if other_id != agent_id:
-                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0])**2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1])**2)**.5 <= 30:
+                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0])**2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1])**2)**.5 <= radius:
                     #nearby.append([self.agents[other_id].site_location, self.agents[other_id].q_found])
                     nearby.append(self.agents[other_id])
         return nearby
 
-    def get_nearby_attracted_agents(self, agent_id):
-        attracted = []
-        nearby = self.get_nearby_agents(agent_id)
-        for agent in nearby:
-            if(agent.attracted is True):
-                attracted.append(agent)
-        return attracted
-
-    # Move a single agent. I THINK THIS MAY BE unnecessary now...
-    def smooth_move(self, agent, velocity, bounce):
-        if bounce is True:
-            agent.direction -= np.pi  # Rotate the direction by 180 degrees if the object encountered an obstacle
-        else:
-            delta_d = np.random.normal(0, .3)
-            agent.direction = (agent.direction + delta_d) % (2 * np.pi)
-
-        agent.location[0] += np.cos(agent.direction) * velocity
-        agent.location[1] += np.sin(agent.direction) * velocity
-
-            # If the agent goes outside of the limits, it re-enters on the opposite side.
-        if agent.location[0] > self.x_limit:
-            agent.location[0] -= 2 * self.x_limit
-        elif agent.location[0] < self.x_limit * -1:
-            agent.location[0] += 2 * self.x_limit
-        if agent.location[1] > self.y_limit:
-            agent.location[1] -= 2 * self.y_limit
-        elif agent.location[1] < self.y_limit * -1:
-            agent.location[1] += 2 * self.y_limit
-
     # agent asks to go in a direction at a certain velocity, use vector addition, updates location
-    #unnecessary function???
     def suggest_new_direction(self, agentId):
         agent = self.agents[agentId]
         #add collision checking for other bees
@@ -265,6 +255,7 @@ class Environment:
                 agent.location[1] -= np.sin(agent.direction) * agent.velocity
                 break
 
+        # If the agent goes outside of the limits, it re-enters on the opposite side.
         if agent.location[0] > self.x_limit:
             agent.location[0] -= 2 * self.x_limit
         elif agent.location[0] < self.x_limit * -1:
@@ -283,32 +274,17 @@ class Environment:
             for agent_id in self.agents:
                 agent = self.agents[agent_id]
                 if agent.live is True:
-                    #q = self.get_q(self.agents[agent_id].location[0], self.agents[agent_id].location[1])
-                    """if q > agent.q_found:
-                        agent.q_found = q
-                        agent.site_location = [agent.location[0], agent.location[1]]
-                    if q > high_q:
-                        high_q = q
-                    elif q == -1:
-                        self.smooth_move(agent, 1, True)
-                    elif q == -2:
-                        agent.live = False
-                        dead_count += 1
-                    elif q == -3:
-                        self.smooth_move(agent, .5, False)
-                    else:
-                        self.smooth_move(agent, 1, False)"""
-                    agent.sense(self)
                     agent.act()
+                    agent.sense(self)
                     self.suggest_new_direction(agent.id)
                     agent.update()
-            self.updateFlowControllers()
-            t_end = time.time() + 1/300
-            while time.time() < t_end: # always resolves to true -> 1/300 in python equals 0
-                pass
 
-        eprint("[Engine] COUNT DEAD:", dead_count)
-        eprint("[Engine] High Q score:", high_q)
+            self.updateFlowControllers()
+            self.hubController.hiveAdjust(self.agents)
+            time.sleep(1/100)
+
+        # eprint("[Engine] COUNT DEAD:", dead_count)
+        # eprint("[Engine] High Q score:", high_q)
 
     def change_state(self, agent_id, new_state):
         self.agents[agent_id].state = new_state
