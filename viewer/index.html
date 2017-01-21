@@ -37,15 +37,20 @@
       <img id="obstacle" src="img/boulder.png">
    </div>
 
-   <label>Show directional overlay: <input type="checkbox" id="directionOverlay" checked="true"></label>
+   <label>Show directional overlay: <input type="checkbox" id="directionOverlay"></label>
    <button onclick="pause()">Pause</button>
    <button onclick="play()">Play</button>
+   <button onclick="bait()">Bug Bait</button>
+   <button onclick="bomb()">Bug Bomb</button>
 
    <h4>Information</h4>
    <table id="infoTable">
    </table>
 </body>
 
+<script src="client.js">
+</script>
+<!--
 <script>
    // get a socket object from the socket.io script included above
    var socket = io();
@@ -54,6 +59,8 @@
    var height = 0;
    var width = 0;
    var showDebug = true;
+   const cursorModes = {SELECT: 0, BAIT: 1, BOMB: 2};
+   var cursorMode = cursorModes.SELECT;
 
    // get a reference to the canvas element
    var canvas = document.getElementById("canvas");
@@ -82,6 +89,16 @@
    function play()
    {
      socket.emit('input', {type: 'play'});
+   }
+
+   function bait()
+   {
+      cursorMode = cursorModes.BAIT;
+   }
+
+   function bomb()
+   {
+     cursorMode = cursorModes.BOMB;
    }
 
    socket.on('connect', function()
@@ -345,17 +362,31 @@
    // when the canvas is clicked
    canvas.addEventListener("mousedown", function(e)
    {
-      // unselect everything
-      clearSelectedAgents();
+       switch (cursorMode)
+       {
+         case cursorModes.SELECT:
+          // unselect everything
+          clearSelectedAgents();
 
-      // initialise the selection rectangle
-      selectionRectangle.active = true;
-      selectionRectangle.x = e.clientX + window.pageXOffset; // these coords are relative to the canvas
-      selectionRectangle.y = e.clientY + window.pageYOffset; // pageOffset in case the page has been scrolled
+          // initialise the selection rectangle
+          selectionRectangle.active = true;
+          selectionRectangle.x = e.clientX + window.pageXOffset; // these coords are relative to the canvas
+          selectionRectangle.y = e.clientY + window.pageYOffset; // pageOffset in case the page has been scrolled
 
-      // default height and width
-      selectionRectangle.width = 1;
-      selectionRectangle.height = 1;
+          // default height and width
+          selectionRectangle.width = 1;
+          selectionRectangle.height = 1;
+
+        case cursorModes.BAIT:
+          cursorMode = cursorModes.SELECT;
+          socket.emit('input', {type: 'attractor', x: e.clientX, y: e.clientY});
+          break;
+
+        case cursorModes.BOMB:
+          cursorMode = cursorModes.SELECT
+          socket.emit('input', {type: 'repulsor', x: e.clientX, y: e.clientY});
+          break;
+      }
    });
 
    // when the mouse is moved over the canvas
@@ -449,5 +480,5 @@
       return !(b.left > a.right || b.right < a.left || b.top > a.bottom || b.bottom < a.top);
    }
 </script>
-
+-->
 </html>

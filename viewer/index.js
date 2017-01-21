@@ -34,6 +34,9 @@ const JSONStream = require('JSONStream');
 // manage child processes
 const spawn = require('child_process').spawn;
 
+// minify and concatenate js files
+const minifier = require('node-minify');
+
 // The server's job should be essentially to grab world info from the simulation
 // engine and pass it on to the client, nothing else.
 
@@ -140,6 +143,36 @@ app.get( '/', function( req, res )
    {
       root: __dirname
    } );
+} );
+
+// On a request for 'client.js', minify and concat all the relevant scripts, then
+// serve it
+
+app.get('/client.js', function( req, res )
+{
+  minifier.minify(
+    {
+      //compressor: 'babili',    //production
+      compressor: 'no-compress', //debug
+      input:      'js/**/*.js',
+      output:     'client.js'
+    }
+  )
+  // ASK ME TO EXPLAIN PROMISES IF YOU DON'T KNOW THIS
+  .then(function(minified)
+  {
+    //console.log(minified);
+    res.sendFile( 'client.js',
+      {
+        root: __dirname
+      });
+  })
+  .catch(function(err)
+  {
+    console.log(err);
+    cleanup();
+  });
+
 } );
 
 /*******************************************************************************

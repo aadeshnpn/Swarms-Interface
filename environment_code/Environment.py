@@ -45,11 +45,10 @@ class Environment:
             self.add_agent(str(x))
         self.inputEventManager = InputEventManager()
         self.isPaused = False
-        self.attractors = []  # [flowController.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
-        self.repulsors = [flowController.Repulsor((60, -60)), flowController.Repulsor((-40, -40))]
-        self.hubController = hubController(self.hub[0:2], self.agents)
-        # self.repulsors[0].time_ticks = 600
-        # self.repulsors[1].time_ticks = 1800
+        self.attractors = [] #[flowController.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
+        self.repulsors = [] #[flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
+        #self.repulsors[0].time_ticks = 600
+        #self.repulsors[1].time_ticks = 1800
 
     def sort_by_state(self, agent_id, prev_state, cur_state):
         self.states[prev_state].remove(agent_id)
@@ -317,12 +316,20 @@ class Environment:
     def play(self, json):
         self.isPaused = False
 
+    def newAttractor(self, json):
+        self.attractors.append(flowController.Attractor((json['x'], json['y'])))
+
+    def newRepulsor(self, json):
+        self.repulsors.append(flowController.Repulsor((json['x'], json['y'])))
+
     # Move all of the agents
     def run(self):
 
         self.inputEventManager.start()
         self.inputEventManager.subscribe('pause', self.pause)
         self.inputEventManager.subscribe('play', self.play)
+        self.inputEventManager.subscribe('attractor', self.newAttractor)
+        self.inputEventManager.subscribe('repulsor', self.newRepulsor)
 
         while True:
             if not self.isPaused:
@@ -337,15 +344,33 @@ class Environment:
 
             self.updateFlowControllers()
             self.hubController.hiveAdjust(self.agents)
+
             time.sleep(1/24)
+
 
     def change_state(self, agent_id, new_state):
         self.agents[agent_id].state = new_state
 
     def to_json(self):
-        print(json.dumps({"type": "update", "data": {"x_limit": self.x_limit, "y_limit": self.y_limit, "hub": self.hub, "sites":
-            self.sites, "obstacles": self.obstacles, "traps": self.traps, "rough": self.rough, "agents":
-            self.agents_to_json()}}))
+        print(
+            json.dumps(
+            {
+                "type": "update",
+                "data":
+                {
+                    "x_limit"   : self.x_limit,
+                    "y_limit"   : self.y_limit,
+                    "hub"       : self.hub,
+                    "sites"     : self.sites,
+                    "obstacles" : self.obstacles,
+                    "traps"     : self.traps,
+                    "rough"     : self.rough,
+                    "attractors": list(map(lambda a: a.toJson(), self.attractors)),
+                    "repulsors" : list(map(lambda r: r.toJson(), self.repulsors )), #self.repulsors,
+                    "agents"    : self.agents_to_json()
+                }
+            })
+        )
 
     def agents_to_json(self):
         agents = []
