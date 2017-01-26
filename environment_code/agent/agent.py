@@ -362,10 +362,10 @@ class SiteAssess(State):
 
     def sense(self, agent, environment):
         ## Code to help the bees find the center of the site
-        # new_q = environment.get_q(agent.location[0], agent.location[1])
-        # if new_q > agent.q_value:
-        #     agent.potential_site = agent.location
-        #     agent.q_value = new_q
+        new_q = environment.get_q(agent.location[0], agent.location[1])
+        if new_q > agent.q_value:
+            agent.potential_site = [agent.location[0], agent.location[1]]
+            agent.q_value = new_q
         if self.check_num_close_assessors(agent, environment):
             self.thresholdPassed = True
 
