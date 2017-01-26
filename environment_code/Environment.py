@@ -1,11 +1,9 @@
 from agent.agent import *
-#import kd_tree as kd
 from InputEventManager import InputEventManager
 import flowController
 import numpy as np
 import json
 import os
-import socket
 import sys
 import time
 import geomUtil
@@ -39,20 +37,21 @@ class Environment:
                        Piping().__class__:[],
                        Commit().__class__:[]}
 
-        #self.quadrants = [[set() for x in range(800)] for y in range(400)]
+        self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
-        for x in range(50):
-            self.add_agent(str(x))
+        number_of_agents = 50
+        for x in range(number_of_agents):
+            agent_id = str(x)
+            agent = Agent(agent_id, Exploring())
+            self.agents[agent_id] = agent
+            self.states[Exploring().__class__].append(agent_id)
+
         self.inputEventManager = InputEventManager()
         self.isPaused = False
         self.attractors = [] #[flowController.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
         self.repulsors = [] #[flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
         #self.repulsors[0].time_ticks = 600
         #self.repulsors[1].time_ticks = 1800
-
-    def sort_by_state(self, agent_id, prev_state, cur_state):
-        self.states[prev_state].remove(agent_id)
-        self.states[cur_state].append(agent_id)
 
     def getClosestFlowController(self, flowControllers, agent_location):
         if(len(flowControllers) == 0):
@@ -94,17 +93,29 @@ class Environment:
         self.repulsors = new_repulsor_list
         self.hubController = hubController(self.hub[0:2], self.agents)
 
+    def sort_by_state(self, agent_id, prev_state, cur_state):
+        self.states[prev_state].remove(agent_id)
+        self.states[cur_state].append(agent_id)
+
     # Converts a cartesian coordinate to the matrix location
     def coord_to_matrix(self, location):
         return [int((location[0] + 800) / 2), int((location[1] + 400) / 2)]
 
-    # Sorts the agents into their respective quadrants
-    def sort_by_quad(self):
+    # reset all quadrants
+    def reset_quads(self):
+        self.quadrants = [[set() for x in range(800)] for y in range(400)]
+
+    # only reset the quadrants that have agents in them
+    def selective_reset_quads(self):
         for y in range(400):
             for x in range(800):
                 if len(self.quadrants[y][x]) != 0:
                     self.quadrants[y][x] = set()
-        # self.quadrants = [[set() for x in range(800)] for y in range(400)]  # reset quadrants
+
+    # Sorts the agents into their respective quadrants
+    def sort_by_quad(self):
+        self.reset_quads()
+
         for agent in self.agents:
             matrix_address = self.coord_to_matrix(self.agents[agent].location)
             self.quadrants[matrix_address[1]][matrix_address[0]].add(agent)
@@ -208,11 +219,6 @@ class Environment:
             self.traps = new_traps
             self.rough = new_rough
 
-    # Method to add an agent to the hub
-    def add_agent(self, agent_id):
-        agent = Agent(agent_id, Exploring())
-        self.agents[agent_id] = agent
-        self.states[Exploring().__class__].append(agent_id)
 
     # Function to return the Q-value for given coordinates. Returns 0 if nothing is there and a value between 0 and 1
     # if it finds a site.
@@ -300,8 +306,7 @@ class Environment:
                 nearby.append(self.agents[other_id])
         return nearby
 
-
-    def get_nearby_piper(self, agent_id, radius):
+    def get_nearby_pipers(self, agent_id, radius):
         nearby = []
         for other_id in self.states[Piping().__class__]:
             if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0]) ** 2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1]) ** 2) ** .5 <= radius:
@@ -397,13 +402,17 @@ class Environment:
                         agent.act()
                         agent.sense(self)
                         self.suggest_new_direction(agent.id)
-                        self.wind(0, .01)
+                        wind_direction = 1  # in radians
+                        wind_velocity = .02
+                        # uncomment the next line to add wind to the environment
+                        # self.wind(wind_direction, wind_velocity)
                         agent.update(self)
 
             self.updateFlowControllers()
             self.hubController.hiveAdjust(self.agents)
 
-            time.sleep(1/100)
+            frames_per_sec = 64
+            time.sleep(1/frames_per_sec)
 
 
     def change_state(self, agent_id, new_state):
