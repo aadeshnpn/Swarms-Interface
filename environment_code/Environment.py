@@ -39,7 +39,7 @@ class Environment:
 
         self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
-        number_of_agents = 50
+        number_of_agents = 100
         for x in range(number_of_agents):
             agent_id = str(x)
             agent = Agent(agent_id, Exploring())
@@ -120,14 +120,6 @@ class Environment:
             matrix_address = self.coord_to_matrix(self.agents[agent].location)
             self.quadrants[matrix_address[1]][matrix_address[0]].add(agent)
             self.agents[agent].quadrant = matrix_address
-
-    def nearest_10_neighbors(self, bee):
-        point_list = []
-        for agent in self.agents:
-            if agent != bee:
-                point_list.append((self.agents[agent].x, self.agents[agent].y))
-        tree = kd.kdtree(point_list)
-        print(tree)
 
     # Function to initialize data on the environment from a .txt file
     def build_environment(self):
@@ -403,9 +395,9 @@ class Environment:
                         agent.sense(self)
                         self.suggest_new_direction(agent.id)
                         wind_direction = 1  # in radians
-                        wind_velocity = .02
+                        wind_velocity = .01
                         # uncomment the next line to add wind to the environment
-                        # self.wind(wind_direction, wind_velocity)
+                        #self.wind(wind_direction, wind_velocity)
                         agent.update(self)
 
             self.updateFlowControllers()
@@ -453,5 +445,6 @@ class Environment:
             agents.append(agent_dict)
         return agents
 
-world = Environment(os.path.join(ROOT_DIR, "data.txt"))
+file = "updated_environment.txt"
+world = Environment(os.path.join(ROOT_DIR, file))
 world.run()
