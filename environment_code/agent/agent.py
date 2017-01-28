@@ -1,5 +1,5 @@
-from agent.stateMachine.StateMachine import StateMachine
-from agent.stateMachine.state import State
+from .stateMachine.StateMachine import StateMachine
+from .stateMachine.state import State
 from enum import Enum
 import numpy as np
 # reset velocity of agent at begining of each state transition?
@@ -89,59 +89,10 @@ class Exploring(State):
     def __init__(self):
         self.name = "exploring"
         self.inputExplore = False
-        self.site = None
-        self.maneuver = False
-        self.maneuver_direction = 0
-        self.site_spotted = False
         exp = np.random.normal(1, .3, 1)
         while exp < 0:
             exp = np.random.normal(1, .3, 1)
         self.exploretime = exp*3600
-
-    def look(self, agent, environment):
-        r_inc_rate = 1
-        num_r_increases = 30
-        r0 = 1
-        theta = np.pi / 24
-        for i in range(num_r_increases):
-            r = int(r0 + i * r_inc_rate)
-            for j in range(1 + (r // 5 + 1)):  # plus 1 because range doesn't include the last value
-                phi = theta * j / (r // 5 + 1)  # trying to keep the number of points checked low
-                q_right = environment.get_q(agent.location[0] + r * np.sin(agent.direction + phi),
-                                            agent.location[1] + r * np.cos(agent.direction + phi))
-                q_left = environment.get_q(agent.location[0] + r * np.sin(agent.direction - phi),
-                                           agent.location[1] + r * np.cos(agent.direction - phi))
-
-                # first check for obstacles
-                if phi < 5*np.pi/360 and (q_right < 0 or q_left < 0):
-                    d_phi = np.pi/360
-                    iters = 181
-                    while iters < 181:
-                        if environment.get_q(agent.location[0] + r * np.sin(agent.direction + phi + d_phi),
-                                             agent.location[1] + r * np.cos(agent.direction + phi + d_phi)) >= 0:
-                            self.maneuver = True
-                            self.maneuver_direction = np.pi/360  # maneuver right
-                            return
-                        elif environment.get_q(agent.location[0] + r * np.sin(agent.direction - phi - d_phi),
-                                               agent.location[1] + r * np.cos(agent.direction - phi - d_phi)) >= 0:
-                            self.maneuver = True
-                            self.maneuver_direction = -np.pi/360  # maneuver left
-                            return
-                        else:
-                            d_phi += np.pi/360
-                            # if the bee reaches this point, it is stuck (kill it?)
-
-                # check for potential sites
-                elif not self.site_spotted and q_right > 0:
-                    self.site = [agent.location[0] + r * np.sin(agent.direction + phi),
-                                 agent.location[1] + r * np.cos(agent.direction + phi)]
-                    self.site_spotted = True
-                    return
-                elif not self.site_spotted and q_left > 0:
-                    self.site = [agent.location[0] + r * np.sin(agent.direction - phi),
-                                 agent.location[1] + r * np.cos(agent.direction - phi)]
-                    self.site_spotted = True
-                    return
 
     def sense(self, agent, environment):
         '''if agent.hubRadius-1< ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius+1:
@@ -166,8 +117,6 @@ class Exploring(State):
                  agent.ignore_repulsor = True
             else:
                  agent.ignore_repulsor = False
-
-        self.look(agent, environment)
 
     def act(self, agent):
         self.move(agent)
@@ -202,14 +151,6 @@ class Exploring(State):
 
         elif self.inputExplore: #this is for when the user has requested more bees
             delta_d = np.random.normal(0, .013) # this will assure that the bee moves less erratically, it can be decreased a little as well
-
-        elif self.maneuver:
-            agent.direction += self.maneuver_direction
-            self.maneuver = False
-        elif self.site_spotted:
-            dx = self.site[0] - agent.location[0]
-            dy = self.site[1] - agent.location[1]
-            agent.direction = np.arctan2(dy, dx)
         else:
             delta_d = np.random.normal(0, .22)
             agent.direction = (agent.direction + delta_d) % (2 * np.pi)
