@@ -1,5 +1,5 @@
 class State:
-    def __init__(self):
+    def __init__(self, agent = None):
         pass
 
     def sense(self, agent, environment):
