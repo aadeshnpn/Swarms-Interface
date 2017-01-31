@@ -2,6 +2,7 @@ from .stateMachine.StateMachine import StateMachine
 from .stateMachine.state import State
 from enum import Enum
 import numpy as np
+import warnings
 # reset velocity of agent at begining of each state transition?
 
 input = Enum('input', 'nestFound exploreTime observeTime dancerFound siteFound tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
@@ -96,16 +97,19 @@ class Agent(StateMachine):
 
 # so, the exploring part needs to give the input..
 class Exploring(State):
-    def __init__(self, agent=None):
+    def __init__(self, agent=None, ExploreTimeMultiplier=None):
         self.name = "exploring"
         self.inputExplore = False
         exp = np.random.normal(1, .3, 1)
         while exp < 0:
             exp = np.random.normal(1, .3, 1)
-        if agent is None:
-            self.exploretime = exp * 3600
-        else:
+        if agent is not None:
             self.exploretime = exp*agent.ExploreTimeMultiplier
+        elif ExploreTimeMultiplier is not None:
+            self.exploretime = exp*ExploreTimeMultiplier
+        else:
+            warnings.warn("No agent or initial condition given! Using default...")
+            self.exploretime = exp*3600
 
     def sense(self, agent, environment):
         '''if agent.hubRadius-1< ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius+1:
