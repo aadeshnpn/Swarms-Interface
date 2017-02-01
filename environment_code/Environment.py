@@ -42,7 +42,7 @@ class Environment:
         number_of_agents = 100
         for x in range(number_of_agents):
             agent_id = str(x)
-            agent = Agent(agent_id, Exploring())
+            agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=3600))
             self.agents[agent_id] = agent
             self.states[Exploring().__class__].append(agent_id)
 
