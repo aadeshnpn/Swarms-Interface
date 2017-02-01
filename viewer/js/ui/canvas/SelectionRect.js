@@ -37,8 +37,8 @@ class SelectionRect
    {
       // initialise the selection rectangle
       this.active = true;
-      this.x = e.clientX + window.pageXOffset; // these coords are relative to the canvas
-      this.y = e.clientY + window.pageYOffset; // pageOffset in case the page has been scrolled
+      this.x = e.offsetX; // these coords are relative to the canvas
+      this.y = e.offsetY;
 
       // default height and width
       this.width = 1;
@@ -49,8 +49,8 @@ class SelectionRect
 
    onMouseMove(e)
    {
-      this.width  = (e.clientX + window.pageXOffset) - this.x;
-      this.height = (e.clientY + window.pageYOffset) - this.y;
+      this.width  = e.offsetX - this.x;
+      this.height = e.offsetY - this.y;
    }
 
    onMouseUp(e)
