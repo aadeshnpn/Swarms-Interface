@@ -37,6 +37,12 @@ const spawn = require('child_process').spawn;
 // minify and concatenate js files
 const minifier = require('node-minify');
 
+// operating system info module
+const os = require('os');
+
+// config file module
+const config = require('config');
+
 // The server's job should be essentially to grab world info from the simulation
 // engine and pass it on to the client, nothing else.
 
@@ -73,7 +79,9 @@ class Client
       }
       else
       {
-         const engine = spawn('python', [path.join(__dirname, '../environment_code/Environment.py')], {stdio: ['pipe', 'pipe', process.stderr]});
+         var executable = config.has(`pythonExecutable.${os.platform}`) ? config.get(`pythonExecutable.${os.platform}`) : config.get("pythonExecutable.default");
+
+         const engine = spawn(executable, [path.join(__dirname, '../environment_code/Environment.py')], {stdio: ['pipe', 'pipe', process.stderr]});
          engine.on('error', (err) => { console.error("[!] Unable to start engine process: " + err)});
 
          this.world = {engine: engine, clientsAttached: 0};

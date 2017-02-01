@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "JSONStream": "1.2.1",
+    "config": "1.25.0",
     "express": "^4.14.0",
     "node-ipc": "8.9.2",
     "node-minify": "^2.0.2",
