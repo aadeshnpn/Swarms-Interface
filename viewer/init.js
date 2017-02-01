@@ -67,7 +67,7 @@ socket.on('update', function(worldUpdate)
    }
    else if (finishedDrawing)
    {
-         world = new World(worldUpdate);
+      world = new World(worldUpdate);
    }
 
    // TODO: work this in to the rest of the UI refactor

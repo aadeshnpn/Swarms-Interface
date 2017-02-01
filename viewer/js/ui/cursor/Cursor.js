@@ -5,6 +5,7 @@ class Cursor
       this.active = false;
       this.events = {};
       this.display = null;
+      this.type = null;
    }
 
    addEventListener(event, listener)

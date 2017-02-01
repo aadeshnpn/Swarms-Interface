@@ -31,8 +31,10 @@ class UI
 
    requestActiveCursor(cursor)
    {
-      if (this.activeCursor === this.CursorDefault)
-         setActiveCursor(cursor);
+      if (this.activeCursor.type == "default")
+      {
+         this.setActiveCursor(cursor);
+      }
    }
 
    agentsSelected()

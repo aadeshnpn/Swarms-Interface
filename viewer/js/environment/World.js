@@ -27,7 +27,7 @@ class World
 
   canvasToWorldCoords(x, y)
   {
-    return {x: (x - this.x_limit), y: (y - this.y_limit)};
+     return {x: (x - this.x_limit), y: -(y - this.y_limit)};
   }
 
   // Draw the whole world recursively. Takes a 2dRenderingContext obj from
