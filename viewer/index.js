@@ -162,11 +162,19 @@ app.get('/client.js', function( req, res )
     {
       //compressor: 'babili',    //production
       compressor: 'no-compress', //debug
-      input:      'js/**/*.js',
+      input:      ['js/**/*.js'],
       output:     'client.js'
     }
   )
-  // ASK ME TO EXPLAIN PROMISES IF YOU DON'T KNOW THIS
+  .then(function()
+  {
+    return minifier.minify(
+      {
+         compressor: 'no-compress',
+         input: ['client.js', 'init.js'],
+         output: 'client.js'
+      });
+  })
   .then(function(minified)
   {
     //console.log(minified);

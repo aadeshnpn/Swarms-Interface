@@ -1,0 +1,57 @@
+body
+{
+   background-color: #EEEEEE;
+   font-family: sans-serif;
+}
+
+.canvas
+{
+   border: 1px solid #CCCCCC;
+   padding: 2px;
+}
+
+.debug
+{
+
+}
+
+.debugPane
+{
+   overflow-y: scroll;
+}
+
+#debugArea
+{
+   width: 100%;
+}
+
+#debugTools
+{
+   float: left;
+   width: 50%;
+   height: 100%;
+}
+
+#debugSelectionInfo
+{
+   float: right;
+   width: 50%;
+   height: 100%;
+}
+
+#debugParams input
+{
+   float: right;
+   width: 45px;
+}
+
+#debugParams label
+{
+   display: inline-block;
+   width: 200px;
+}
+
+#debugParams button
+{
+   display: block;
+}
