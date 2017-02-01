@@ -50,6 +50,7 @@ var numClients = 0;
 var socketIpcPair = {};
 
 var clients = {};
+var clientRefs = []; // useful for cleaning up
 var clientForSocket = {};
 
 // Client class basically bundles everything we need to interact simultaneously
@@ -143,6 +144,7 @@ app.get( '/', function( req, res )
    const client = new Client(worldId);
 
    clients[client.id] = client;
+   clientRefs.push(client);
    client.start();
 
    res.cookie("clientId", client.id);
@@ -236,6 +238,11 @@ io.on( 'connection', function( socket )
 
 function cleanup()
 {
+   for (let c of clientRefs)
+   {
+      c.stop();
+   }
+
    process.exit();
 }
 
