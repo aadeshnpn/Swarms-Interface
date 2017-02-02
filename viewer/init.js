@@ -14,7 +14,8 @@ const cursors =
 {
    default: new CursorDefault(),
    selecting: new CursorSelecting(),
-   radialDrag: new CursorRadialDrag()
+   radialDrag: new CursorRadialDrag(),
+   placeBaitBomb: new CursorPlaceBaitBomb()
 };
 
 const ui = new UI();
