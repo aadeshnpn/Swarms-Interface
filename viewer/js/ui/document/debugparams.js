@@ -1,6 +1,6 @@
-var button = document.getElementById("buttonUpdateDebugParams");
+var buttonDebugParams = document.getElementById("buttonUpdateDebugParams");
 
-button.addEventListener("click", function(e)
+buttonDebugParams.addEventListener("click", function(e)
 {
    var paramObj = {};
 
