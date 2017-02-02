@@ -66,7 +66,7 @@ class Client
       // because of weirdness with how JS handles 'this', we have to play some
       // closure games and create a listener function that captures a reference
       // to this client object
-      this.jsonStreamParser.on('data', this.makeUpdateFunc(this));
+      this.jsonStreamParser.on('data', this.sendUpdate.bind(this));
       this.webSocket = null;
    }
 
@@ -101,18 +101,11 @@ class Client
       this.world.engine.stdin.write(JSON.stringify(data) + "\n"); // python's readline requires a newline or it blocks
    }
 
-   // creates a listener for the JSON stream parser's updates
-   // takes a reference to the creating class
-   makeUpdateFunc(self)
+   sendUpdate(data)
    {
-      // return a new anonymous function
-      return function(data)
+      if (this.webSocket !== null)
       {
-         // use 'self' instead of 'this'
-         if (self.webSocket !== null)
-         {
-            self.webSocket.emit("update", data);
-         }
+         this.webSocket.emit("update", data);
       }
    }
 
@@ -120,7 +113,7 @@ class Client
    {
       const world = Client.worlds[this.worldId];
 
-      if (--world.clientsAttached == 0)
+      if (world !== undefined && --world.clientsAttached == 0)
       {
          world.engine.kill();
          Client.worlds[this.worldId] = undefined;
@@ -137,7 +130,7 @@ Client.worlds = {};
 
 app.use(express.static(path.join(__dirname, "public")));
 
-// On an http GET /, serve index.html
+// On an http GET /, serve client.html
 app.get( '/', function( req, res )
 {
    const worldId = (req.query.id !== null) ? req.query.id : shortid.generate();
@@ -149,7 +142,7 @@ app.get( '/', function( req, res )
 
    res.cookie("clientId", client.id);
 
-   res.sendFile( 'index.html',
+   res.sendFile( 'client.html',
    {
       root: __dirname
    } );
@@ -164,8 +157,8 @@ app.get('/client.js', function( req, res )
     {
       //compressor: 'babili',    //production
       compressor: 'no-compress', //debug
-      input:      ['js/**/*.js'],
-      output:     'client.js'
+      input:      ['js/ui/**/*.js', 'js/environment/**/*.js'],
+      output:     'generated/client.js'
     }
   )
   .then(function()
@@ -173,14 +166,14 @@ app.get('/client.js', function( req, res )
     return minifier.minify(
       {
          compressor: 'no-compress',
-         input: ['client.js', 'init.js'],
-         output: 'client.js'
+         input: ['generated/client.js', 'js/init.js'],
+         output: 'generated/client.js'
       });
   })
   .then(function(minified)
   {
     //console.log(minified);
-    res.sendFile( 'client.js',
+    res.sendFile( 'js/client.js',
       {
         root: __dirname
       });

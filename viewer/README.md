@@ -1,60 +1,102 @@
 # Swarm Viewer #
 
-This is a nodejs app capable of visualising simulated swarm data. It has a client
-and a server component, found in `index.js` and `index.html`, respectively.
-`testsim.js` is a throwaway script to test IPC and develop with until we have the
-proper simulation working.
+Server - server.js. Built on expressjs and socket.io. Responsible for monitoring
+incoming connections, spawning new engine processes, serving the client scripts,
+and passing along information between the engine and client
 
-## Server ##
+Engine - environment_code. Python simulation of honeybees, outputs information
+about the whole simulated world in JSON, accepts input events in JSON
 
-The server is built on [Express][http://expressjs.com] and [socket.io][http://socket.io].
-It's only purpose in life is to forward data from the simulation to all connected
-clients. It handles IPC with [node-ipc][https://www.npmjs.com/package/node-ipc].
-When adding more functionality, basic stuff ought to go in the sim and gui
-client-specific data (selections, etc.) should stick to the client. This will help
-us avoid performance issues.
+Client - js/. HTML5 based renderer for the engine's JSON. The basic layout is in
+index.html, everything to be rendered is split into different classes under js/.
+The server concatenates all that together into one massive (optionally minified)
+js script and sends it to the client with index.html
 
-### Server Todo ###
+## Execution Flow Overview ##
 
-- We need to lock down our JSON format. The server currently expects output from
-  the sim to be wrapped in JSON like so:
+# Server #
+The entry point is server.js. Run it with `node server.js`. If it complains
+about missing dependencies, run `npm install`.
 
-    {
-      type: 'update',
-      data: <world obj>     
-    }
+From there, execution proceeds line by line from the top, mostly just getting
+references to dependencies, setting up some necessary variables, and defining
+the auxiliary Client class.
 
-  where `<world obj>` is something along these lines:
+Quick note if expressjs is unfamiliar, the way it works is by defining "routes".
+Each route gets assigned middleware, which can come from a variety of libraries
+or can be customised. We do the latter. Middleware gets run when an HTTP request
+matches a route. So `app.get('/', function (req, res) { ... } );` translates to
+'run the given function when we receive a request for the server's root directory.
+In our case, we serve `index.html`, but we could conceivably do anything we wanted
+with expressjs' request and response objects.
 
-    {
-      width: ...,
-      height: ...,
-      agents: [ {id: ..., x: ..., y: ...}, ... ]
-      obstacles: [ {x: ..., y: ..., width: ..., height: ...}, ... ]
-    }
+The socket.io works very similarly, defining functions to be used on specific
+socket events.
 
-  We also need to decide how much and which info about all the entities the client
-  is going to receive since it will have to be responsible for displaying it all
-  to the user (i.e. having to query the sim for extra information we may want is
-  a Bad Idea)
+After all this is defined and configured, the server actually starts running when
+`sticky.listen()` is called. Sticky is a module that abstracts away a lot of the
+mess of making websockets work across multiple cores, and as a bonus automatically
+forks the server until there's at least one instance for each core.
 
-- We may want to shift the architecture here a bit so that the server spawns a sim
-  sub-process instead of listening on a socket. We probably will want to have
-  concurrent simulations and that will be an easier way to do it. And we wouldn't
-  have to give up a global, persistent instance either.
+# First Connection #
 
-## Client ##
+The server technically doesn't do anything else until it receives a connection
+request. Then, it sends `index.html` with a unique generated client id as a cookie.
+Here, it creates a new instance of the Client class, and starts it, which does a
+couple of things:
 
-The client takes the JSON sent by the server and renders it to an html5 canvas.
-It should be up to the client to keep track of anything instance-specific. The
-main work that needs to be done here is going to depend largely on our sim functionality,
-but eventually aside from selection and detail views of agents, we're probably going to
-want state changes, maybe obstacle drawing, agent spawning, deleting, etc.
+   - generates a unique client id
+   - checks if the given world id already has an engine process running
+   - if there is, attaches to it
+   - if there isn't, spawns a new python engine process and pipes its stdin
+     to the server's stdout, and vice versa
+   - pipes the engine's output to the json parser
+   - hooks up the json parser to send parsed json to the client via the websocket
+     (`sendUpdate()`)
 
-### Client Todo ###
+This will quickly result in the first json output from the engine being sent to
+the client in an `update` socket event, after the client sends back its id (below)
 
-- make it look beautiful
-- Stuff that stays completely client side, like the selections, is pretty easy
-  to do right now, but we need to start thinking about how we're going to send
-  commands back up to the server and the simulation. That's right, we need to
-  Define More Protocol.
+# Client #
+
+The client has run through all the concatenated json which mostly defines globals
+and the classes to be used for rendering, until finally it gets to `init.js`.
+Here it defines a few more globals and instantiates the UI class.
+It takes a moment to send back its unique client id through the websocket so
+that the server can associate that particular socket connection to the Client
+representation it just instantiated. Then, it waits for an `update` event.
+
+On that first update (`socket.on('update', ... )`) the client does some
+housekeeping like resizing the canvas element to the size of the received world
+and getting the canvas' 2d drawing context. The it uses the json to instantiate
+a World object, which also instantiates the rest of the environment js classes
+as necessary. Then, it calls `window.requestAnimationFrame()` with the `draw()`
+function as an argument. This says, whenever the browser is ready for a graphics
+redraw, call the provided function.
+
+`draw()` does exactly that: it clears the canvas, then calls the `draw()`
+function of both the world and the ui, which cascade down through their sub
+object calling their `draw()` function along the way.
+
+Finally, `draw()` sets a timeout to call `window.setAnimationFrame()` again in
+1/60th second with itself as an argument, ensuring the canvas is continually
+updated.
+
+As more socket `update` events are received, the world is re-instantiated with 
+the new data, so when it's drawn next time, we essentially get a new frame of
+animation
+
+# Events #
+
+The previous sections summarises the main execution flow, but some other paths
+come from user interaction. The `Cursor` class and subclasses provide functions
+for attaching listeners to HTML DOM cursor events, like onclick, onmousemove,
+onmousedown, etc. These `Cursor` subclasses represent different states of cursor
+so UI elements only have to attach to cursor events for those particular states,
+ensuring there isn't any kind of problematic overlapping.
+
+Some events come from HTML buttons or other elements, which are defined in the
+`document` directory under `js`. These scripts usually just attach an `onclick`
+or on `onchange` listener before updating some state of the `UI` class
+(e.g., setting the active cursor), or sending an `input` event back to the
+server

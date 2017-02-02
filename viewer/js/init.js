@@ -6,6 +6,7 @@
 var socket = io();
 var debug = true;
 var world = null;
+var clientId;
 
 // get a reference to the canvas element
 var canvas = document.getElementById("canvas");
@@ -31,7 +32,6 @@ var finishedDrawing = true;
 // established a connection
 socket.on('connect', function()
 {
-   var clientId;
    var idx = document.cookie.indexOf("clientId");
    var endIdx = document.cookie.indexOf(";", idx);
 

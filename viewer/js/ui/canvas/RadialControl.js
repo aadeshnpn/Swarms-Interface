@@ -111,7 +111,7 @@ class RadialControl
          this.drag.handle.x = component * Math.cos(this.drag.handle.r);
          this.drag.handle.y = component * Math.sin(this.drag.handle.r);
 
-         socket.emit('input', {type:'radialControl', angle: this.drag.handle.r, amount: this.drag.handle.val});
+         socket.emit('input', {type:'radialControl', state: this.directions, id: clientId});
       }
    }
 
