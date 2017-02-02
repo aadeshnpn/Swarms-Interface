@@ -1,18 +1,18 @@
-var button = document.getElementById('buttonPausePlay');
+var buttonPausePlay = document.getElementById('buttonPausePlay');
 var isPaused = false;
 
-button.addEventListener('click', function(e)
+buttonPausePlay.addEventListener('click', function(e)
 {
    if (isPaused)
    {
       socket.emit('input', {type: 'play'});
-      button.innerHTML = "Pause";
+      buttonPausePlay.innerHTML = "Pause";
       isPaused = false;
    }
    else
    {
       socket.emit('input', {type: 'pause'});
-      button.innerHTML = "Play";
+      buttonPausePlay.innerHTML = "Play";
       isPaused = true;
    }
 });
