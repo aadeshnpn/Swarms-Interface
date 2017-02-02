@@ -32,7 +32,7 @@ class Agent(StateMachine):
 
     def danceTransition(self, environment):  #this runs after the agent has changed state
         dance = int(self.q_value*1000-(200*self.assessments))
-        if dance < 15 :
+        if dance < 15:
             self.assessments = 1
             self.potential_site = None
             self.nextState(input.tiredDance, environment)

@@ -2,7 +2,7 @@
    "debug": "true",
    "pythonExecutable":
    {
-      "default": "python3.5",
+      "default": "python",
       "win32"  : "python"
    }
 }
