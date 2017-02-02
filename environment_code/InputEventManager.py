@@ -21,5 +21,6 @@ class InputEventManager:
         self.subscriptions[eventType].remove(callbackFunction)
 
     def inputEvent(self, jsonDict):
-        for callback in self.subscriptions[jsonDict['type']]:
-            callback(jsonDict)
+        if jsonDict['type'] in self.subscriptions:
+            for callback in self.subscriptions[jsonDict['type']]:
+                callback(jsonDict)
