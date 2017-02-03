@@ -13,16 +13,13 @@ class hubController:
     def __init__(self, radius, agents):
         self.radius = radius   #needs an array of direction parameters
         self.directions = {} # #bees that have left the hub in each direction
-        #this will be added into by dividing by pi/36 (or 5 degrees) and rounding to get index
-        # at each direction there will be a count of the bees in that direction (or a list of pointers to the bee infos
         self.directionParams = {} # #desired user values
         # counter * (np.pi / 72)
         self.agentList= {}
         for counter in range(0, 72):
             self.directions[counter*5] = 0
-            self.directionParams[counter*5] = 0
-        self.directionParams[120] = 75
-        self.directionParams[210] = 75
+            self.directionParams[counter*5] = -1
+
 
         for id, bee in agents.items():
             info = beeInfo(int(bee.direction*(180/np.pi)), bee.velocity, bee.state, 1)
