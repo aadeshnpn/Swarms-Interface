@@ -1,3 +1,6 @@
+# Custom
+generated/**
+
 # Logs
 logs
 *.log

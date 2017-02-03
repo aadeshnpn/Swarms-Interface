@@ -37,6 +37,12 @@ const spawn = require('child_process').spawn;
 // minify and concatenate js files
 const minifier = require('node-minify');
 
+// operating system info module
+const os = require('os');
+
+// config file module
+const config = require('config');
+
 // The server's job should be essentially to grab world info from the simulation
 // engine and pass it on to the client, nothing else.
 
@@ -44,6 +50,7 @@ var numClients = 0;
 var socketIpcPair = {};
 
 var clients = {};
+var clientRefs = []; // useful for cleaning up
 var clientForSocket = {};
 
 // Client class basically bundles everything we need to interact simultaneously
@@ -59,7 +66,7 @@ class Client
       // because of weirdness with how JS handles 'this', we have to play some
       // closure games and create a listener function that captures a reference
       // to this client object
-      this.jsonStreamParser.on('data', this.makeUpdateFunc(this));
+      this.jsonStreamParser.on('data', this.sendUpdate.bind(this));
       this.webSocket = null;
    }
 
@@ -73,7 +80,9 @@ class Client
       }
       else
       {
-         const engine = spawn('python3.5', [path.join(__dirname, '../environment_code/Environment.py')], {stdio: ['pipe', 'pipe', process.stderr]});
+         var executable = config.has(`pythonExecutable.${os.platform}`) ? config.get(`pythonExecutable.${os.platform}`) : config.get("pythonExecutable.default");
+
+         const engine = spawn(executable, [path.join(__dirname, '../environment_code/Environment.py')], {stdio: ['pipe', 'pipe', process.stderr]});
          engine.on('error', (err) => { console.error("[!] Unable to start engine process: " + err)});
 
          this.world = {engine: engine, clientsAttached: 0};
@@ -92,18 +101,11 @@ class Client
       this.world.engine.stdin.write(JSON.stringify(data) + "\n"); // python's readline requires a newline or it blocks
    }
 
-   // creates a listener for the JSON stream parser's updates
-   // takes a reference to the creating class
-   makeUpdateFunc(self)
+   sendUpdate(data)
    {
-      // return a new anonymous function
-      return function(data)
+      if (this.webSocket !== null)
       {
-         // use 'self' instead of 'this'
-         if (self.webSocket !== null)
-         {
-            self.webSocket.emit("update", data);
-         }
+         this.webSocket.emit("update", data);
       }
    }
 
@@ -111,7 +113,7 @@ class Client
    {
       const world = Client.worlds[this.worldId];
 
-      if (--world.clientsAttached == 0)
+      if (world !== undefined && --world.clientsAttached == 0)
       {
          world.engine.kill();
          Client.worlds[this.worldId] = undefined;
@@ -128,18 +130,19 @@ Client.worlds = {};
 
 app.use(express.static(path.join(__dirname, "public")));
 
-// On an http GET /, serve index.html
+// On an http GET /, serve client.html
 app.get( '/', function( req, res )
 {
    const worldId = (req.query.id !== null) ? req.query.id : shortid.generate();
    const client = new Client(worldId);
 
    clients[client.id] = client;
+   clientRefs.push(client);
    client.start();
 
    res.cookie("clientId", client.id);
 
-   res.sendFile( 'index.html',
+   res.sendFile( 'client.html',
    {
       root: __dirname
    } );
@@ -154,15 +157,23 @@ app.get('/client.js', function( req, res )
     {
       //compressor: 'babili',    //production
       compressor: 'no-compress', //debug
-      input:      'js/**/*.js',
-      output:     'client.js'
+      input:      ['js/ui/**/*.js', 'js/environment/**/*.js'],
+      output:     'generated/client.js'
     }
   )
-  // ASK ME TO EXPLAIN PROMISES IF YOU DON'T KNOW THIS
+  .then(function()
+  {
+    return minifier.minify(
+      {
+         compressor: 'no-compress',
+         input: ['generated/client.js', 'js/init.js'],
+         output: 'generated/client.js'
+      });
+  })
   .then(function(minified)
   {
     //console.log(minified);
-    res.sendFile( 'client.js',
+    res.sendFile( 'js/client.js',
       {
         root: __dirname
       });
@@ -220,6 +231,11 @@ io.on( 'connection', function( socket )
 
 function cleanup()
 {
+   for (let c of clientRefs)
+   {
+      c.stop();
+   }
+
    process.exit();
 }
 

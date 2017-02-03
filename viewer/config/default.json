@@ -1,0 +1,8 @@
+{
+   "debug": "true",
+   "pythonExecutable":
+   {
+      "default": "python3.5",
+      "win32"  : "python"
+   }
+}

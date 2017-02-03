@@ -36,13 +36,14 @@ class Environment:
                        SiteAssess().__class__:[],
                        Piping().__class__:[],
                        Commit().__class__:[]}
+        self.dead_agents = []
 
         self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
         number_of_agents = 75
         for x in range(number_of_agents):
             agent_id = str(x)
-            agent = Agent(agent_id, Exploring())
+            agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=3600))
             self.agents[agent_id] = agent
             self.states[Exploring().__class__].append(agent_id)
 
@@ -274,6 +275,7 @@ class Environment:
                     agent.location[0] = proposed_x
                     agent.location[1] = proposed_y
                     agent.live = False
+                    self.dead_agents.append(agent)
                     return
                 elif terrain_value == -2:
                     pass
@@ -340,6 +342,7 @@ class Environment:
             agent.location[0] = proposed_x
             agent.location[1] = proposed_y
             agent.live = False
+            self.dead_agents.append(agent)
             return
         elif terrain_value == -2:
             pass

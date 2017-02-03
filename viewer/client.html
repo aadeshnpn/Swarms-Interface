@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+   <head>
+      <meta charset="utf-8">
+      <title>Viewer</title>
+
+      <!-- This is what enables socket communication with the server. -->
+      <script src="/socket.io/socket.io.js"></script>
+
+      <link rel="stylesheet" type="text/css" href="css/default.css" />
+   </head>
+
+   <body>
+
+      <div id="canvasDiv" class="canvas">
+         <canvas id="canvas"></canvas>
+      </div>
+
+      <button id="buttonBugBait">Bug Bait</button>
+      <button id="buttonBugBomb">Bug Bomb</button>
+
+      <hr/>
+
+      <label>Debug mode<input id="checkboxDebug" type="checkbox" checked></label>
+
+
+      <div id="debugArea" class="debug">
+         <div id="debugTools" class="debugPane">
+            <button id="buttonPausePlay">Pause</button>
+            <button id="buttonRestart">Restart</button>
+            <!-- TODO: make this all look nice -->
+            <div id="debugParams">
+               <label>Piping Threshold  <input name="pipingThreshold"       type="number" value="10"  ></label>
+               <label>Velocity          <input name="globalVelocity"        type="number" value="1"   ></label>
+               <label>Explore Time      <input name="exploreTimeMultiplier" type="number" value="3600"></label>
+               <label>Rest Time         <input name="restTime"              type="number" value="300" ></label>
+               <label>Dance Time        <input name="danceTime"             type="number" value="700" ></label>
+               <label>Observe Time      <input name="observeTime"           type="number" value="2000"></label>
+               <label>Site Access Time  <input name="siteAccessTime"        type="number" value="300" ></label>
+               <label>Site Access Radius<input name="siteAccessRadius"      type="number" value="10"  ></label>
+               <label>Piping Timer      <input name="pipingTimer"           type="number" value="1000"></label>
+               <label>Number of Agents  <input name="agentNumber"           type="number" value="100" ></label>
+               <label>FPS cap           <input name="fps"                   type="number" value="60"  ></label>
+               <button id="buttonUpdateDebugParams">Update</button>
+            </div>
+         </div>
+
+         <div id="debugSelectionInfo" class="debugPane">
+            <h4>Information</h4>
+            <table id="infoTable">
+            </table>
+         </div>
+      </div>
+
+      <div style="display: none">
+         <img id="bee" src="img/bee-transparent-small.png">
+         <img id="obstacle" src="img/boulder.png">
+      </div>
+
+   </body>
+
+   <script
+     src="https://code.jquery.com/jquery-3.1.1.min.js"
+     integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+     crossorigin="anonymous">
+     </script>
+   <script src="client.js">
+   </script>
+
+</html>
