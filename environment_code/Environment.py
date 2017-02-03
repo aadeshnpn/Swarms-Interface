@@ -350,8 +350,13 @@ class Environment:
 
         # Check the effects of moving in the suggested direction
         potential_field_effect = self.potential_field_sum(agent.location)
-        proposed_x = agent.location[0] + np.cos(agent.direction) * agent.velocity + potential_field_effect[0]
-        proposed_y = agent.location[1] + np.sin(agent.direction) * agent.velocity + potential_field_effect[1]
+        potential_field_v = np.sqrt(potential_field_effect[0]**2 + potential_field_effect[1]**2)
+        potential_field_d = np.arctan2(potential_field_effect[1], potential_field_effect[0])
+
+        proposed_x = agent.location[0] + np.cos(agent.direction) * agent.velocity \
+                                        + np.cos(potential_field_d) * potential_field_v
+        proposed_y = agent.location[1] + np.sin(agent.direction) * agent.velocity \
+                                        + np.sin(potential_field_d) * potential_field_v
 
         terrain_value = self.check_terrain(proposed_x, proposed_y)
 
@@ -365,11 +370,15 @@ class Environment:
             self.dead_agents.append(agent)
             return
         elif terrain_value == -2:
-            pass
+            #  pass
+            agent.location[0] += np.cos(potential_field_d) * potential_field_v  # potential field should push away from obstacles
+            agent.location[1] += np.sin(potential_field_d) * potential_field_v
         elif terrain_value == -1:  # If the agent is in rough terrain, it will move at half speed
             slow_down = .5
-            agent.location[0] += np.cos(agent.direction) * agent.velocity * slow_down
-            agent.location[1] += np.sin(agent.direction) * agent.velocity * slow_down
+            agent.location[0] += np.cos(agent.direction) * agent.velocity * slow_down \
+                                    + np.cos(potential_field_d) * potential_field_v
+            agent.location[1] += np.sin(agent.direction) * agent.velocity * slow_down \
+                                    + np.sin(potential_field_d) * potential_field_v
 
         # add collision checking for other bees
         for agent_id in self.agents:
@@ -493,9 +502,9 @@ class Environment:
     def create_potential_fields(self):
         for obstacle in self.obstacles:
             location = [obstacle[0], obstacle[1]]
-            spread = 40 #  What should this be?
-            strength = 1 #  Dictates the strength of the field
-            self.potential_fields.append(PotentialField(location, obstacle[2], spread, strength, type='tangent'))
+            spread = 30  #  What should this be?
+            strength = .035  #  Dictates the strength of the field
+            self.potential_fields.append(PotentialField(location, obstacle[2], spread, strength, type='repulsor'))
 
     def potential_field_sum(self, location):
         dx = 0
@@ -504,8 +513,8 @@ class Environment:
             delta = field.effect(location)
             dx += delta[0]
             dy += delta[1]
-        return [0, 0]
-        #return [dx, dy]
+        #  return [0, 0]
+        return [dx, dy]
 
     def change_state(self, agent_id, new_state):
         self.agents[agent_id].state = new_state
