@@ -56,7 +56,7 @@ class Environment:
         self.beePipingTimer = None  # long enough to allow all bees to make it back before commit?
 
         #  environment parameters
-        self.number_of_agents = 100
+        self.number_of_agents = 101
         self.frames_per_sec = 64
 
         self.useDefaultParams = True
@@ -485,6 +485,7 @@ class Environment:
     def reset_sim(self):
         self.clear_for_reset()
         self.add_agents()
+        self.hubController = hubController(self.hub[0:2], self.agents)
 
     def create_potential_fields(self):
         for obstacle in self.obstacles:
