@@ -13,7 +13,8 @@ class RadialControl
             val: 1,
             x: RadialControl.RADIUS_SCALE * Math.cos(rad),
             y: RadialControl.RADIUS_SCALE * Math.sin(rad), // drawing to world coords
-            r: rad
+            r: rad,
+            deg: i
          };
       }
 
@@ -107,11 +108,11 @@ class RadialControl
             component = 3.0 * RadialControl.RADIUS_SCALE;
          }
 
-         this.drag.handle.val = component / RadialControl.RADIUS_SCALE;
+         this.drag.handle.val = (component / RadialControl.RADIUS_SCALE) * 10;
          this.drag.handle.x = component * Math.cos(this.drag.handle.r);
          this.drag.handle.y = component * Math.sin(this.drag.handle.r);
 
-         socket.emit('input', {type:'radialControl', state: this.directions, id: clientId});
+         socket.emit('input', {type:'radialControl', state: this.drag.handle, id: clientId});
       }
    }
 
