@@ -60,7 +60,7 @@ class Agent(StateMachine):
         self.id = agentId  # for communication with environment
         self.location = [0, 0]  # should be initialized?
         self.direction = 2*np.pi*np.random.random()  # should be initialized? potentially random?
-        #self.direction = 5*np.pi/4
+        #self.direction = np.pi/2
         self.velocity = self.GlobalVelocity
         self.hub = [0, 0]  # should be initialized?
         self.potential_site = None  # array [x,y]
@@ -112,6 +112,7 @@ class Exploring(State):
         else:
             warnings.warn("No agent or initial condition given! Using default...")
             self.exploretime = exp*3600
+        #self.exploretime = 200
 
     def sense(self, agent, environment):
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius) \

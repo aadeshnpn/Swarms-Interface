@@ -1,11 +1,12 @@
 from agent.agent import *
 from InputEventManager import InputEventManager
 from potentialField import PotentialField
+from debug import *
 import flowController
 import numpy as np
 import json
 import os
-import sys
+
 import time
 import geomUtil
 
@@ -13,8 +14,7 @@ from hubController import hubController
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+
 
 class Environment:
 
@@ -402,6 +402,7 @@ class Environment:
 
     def updateParameters(self, json):
         params = json['params']
+
         self.beePipingThreshold = int(params['pipingThreshold'])
         self.beeGlobalVelocity = int(params['globalVelocity'])
         self.beeExploreTimeMultiplier = float(params['exploreTimeMultiplier'])
@@ -430,7 +431,8 @@ class Environment:
         self.inputEventManager.subscribe('repulsor', self.newRepulsor)
         self.inputEventManager.subscribe('parameterUpdate', self.updateParameters)
         self.inputEventManager.subscribe('restart', self.restart_sim)
-
+        self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
+        world.to_json()
         while True:
             if not self.isPaused:
                 world.to_json()
@@ -445,9 +447,10 @@ class Environment:
                         # uncomment the next line to add wind to the environment
                         #self.wind(wind_direction, wind_velocity)
                         agent.update(self)
+                self.hubController.hiveAdjust(self.agents)
 
             self.updateFlowControllers()
-            self.hubController.hiveAdjust(self.agents)
+
 
             if self.restart_simulation:
                 self.reset_sim()

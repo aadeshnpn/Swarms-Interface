@@ -1,5 +1,6 @@
 from agent.agent import *
 import numpy as np
+from debug import *
 import operator
 class beeInfo:
     def __init__(self, direction, velocity, state, AtHub):
@@ -19,6 +20,7 @@ class hubController:
         for counter in range(0, 72):
             self.directions[counter*5] = 0
             self.directionParams[counter*5] = -1
+        #self.directionParams[10] = 10
 
 
         for id, bee in agents.items():
@@ -56,13 +58,19 @@ class hubController:
 
         self.agentList[id].atHub = 1
 
-
+    def handleRadialControl(self, jsonInput):
+        #eprint(jsonInput)
+        jsonDict = jsonInput['state'] # id, dictionary(r:radian, deg: degrees, val: 1-30)
+        self.directionInput(jsonDict['deg'],jsonDict['val'])
 
     def directionInput(self, direction, newValue): #user inhibits or excites the amount of bees in each direction
                                                     #direction is given in degrees
+
         angle = int(int(direction % 360) / 5) * 5  # converting to fit in the array
 
-        self.directionParams[angle] = newValue
+        self.directionParams[angle] = int(newValue)
+        eprint(angle)
+        eprint(int(newValue))
 
     def hiveAdjust(self, bees):
         #sortedParams = sorted(self.directionParams, operator.getitem(1), Reverse=True)
@@ -75,12 +83,17 @@ class hubController:
             elif self.directionParams[angle] < self.directions[angle]:  # too many bees, just keep stopping them from leaving
                 pass
             elif self.directionParams[angle] > self.directions[angle]:  # not enough bees send out more! from observers
+                eprint("hiveadjust: ")
+                eprint(angle)
                 for id,bee in bees.items():
                     if bee.state.__class__ == Observing().__class__: #to speed up keep a list of the observers..
+                        eprint("hiveadjust: ")
+                        eprint(angle)
                         bee.state = Exploring()
+                        eprint(bee.state)
                         bee.state.inputExplore=True
                         bee.state.exploretime *= 0.5 #since the bees are going out in an almost straight line.
-                        bee.direction = angle
+                        bee.direction = (angle/180)*np.pi
                         self.directions[angle] += 1
                         #TODO: have the hub remember this bee and include it in its count
                         agent = self.agentList[bee.id]
@@ -90,6 +103,5 @@ class hubController:
                         break # only execute this once per iteration, that way it's a 'slow' change
             elif self.directionParams[angle] == self.directions[angle]:  #meaning it has reached the user's requirements
                 self.directionParams[angle] = -1
-        pass
 
 
