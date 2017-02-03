@@ -1,5 +1,6 @@
 from agent.agent import *
 from InputEventManager import InputEventManager
+from potentialField import PotentialField
 import flowController
 import numpy as np
 import json
@@ -25,6 +26,7 @@ class Environment:
         self.hubController = None
         self.sites = []
         self.obstacles = []
+        self.potential_fields = []
         self.traps = []
         self.rough = []
         self.agents = {}
@@ -40,12 +42,26 @@ class Environment:
 
         self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
-        number_of_agents = 100
-        for x in range(number_of_agents):
-            agent_id = str(x)
-            agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=3600))
-            self.agents[agent_id] = agent
-            self.states[Exploring().__class__].append(agent_id)
+
+        #  bee parameters
+        self.beePipingThreshold = None
+        self.beeGlobalVelocity = None
+        self.beeExploreTimeMultiplier = None
+        self.beeRestTime = None
+        self.beeDanceTime = None
+        self.beeObserveTime = None
+        self.beeSiteAccessTime = None
+        self.beeSiteAccessRadius = None
+        self.beePipingTimer = None  # long enough to allow all bees to make it back before commit?
+
+        #  environment parameters
+        self.number_of_agents = 100
+        self.frames_per_sec = 64
+
+        self.useDefaultParams = True
+        self.restart_simulation = False
+
+        self.add_agents()
 
         self.inputEventManager = InputEventManager()
         self.isPaused = False
@@ -211,6 +227,7 @@ class Environment:
             self.obstacles = new_obstacles
             self.traps = new_traps
             self.rough = new_rough
+            self.create_potential_fields()
 
 
     # Function to return the Q-value for given coordinates. Returns 0 if nothing is there and a value between 0 and 1
@@ -329,8 +346,11 @@ class Environment:
         agent = self.agents[agentId]
 
         # Check the effects of moving in the suggested direction
-        proposed_x = agent.location[0] + np.cos(agent.direction) * agent.velocity
-        proposed_y = agent.location[1] + np.sin(agent.direction) * agent.velocity
+        potential_field_effect = self.potential_field_sum(agent.location)
+        if potential_field_effect[0] > 0 or potential_field_effect[1] > 0:
+            potential_field_effect = self.potential_field_sum(agent.location)
+        proposed_x = agent.location[0] + np.cos(agent.direction) * agent.velocity + potential_field_effect[0]
+        proposed_y = agent.location[1] + np.sin(agent.direction) * agent.velocity + potential_field_effect[1]
 
         terrain_value = self.check_terrain(proposed_x, proposed_y)
 
@@ -379,6 +399,26 @@ class Environment:
     def newRepulsor(self, json):
         self.repulsors.append(flowController.Repulsor((json['x'], json['y'])))
 
+    def updateParameters(self, json):
+        params = json['params']
+        self.beePipingThreshold = int(params['pipingThreshold'])
+        self.beeGlobalVelocity = int(params['globalVelocity'])
+        self.beeExploreTimeMultiplier = float(params['exploreTimeMultiplier'])
+        self.beeRestTime = int(params['restTime'])
+        self.beeDanceTime = int(params['danceTime'])
+        self.beeObserveTime = int(params['observeTime'])
+        self.beeSiteAccessTime = int(params['siteAccessTime'])
+        self.beeSiteAccessRadius = int(params['siteAccessRadius'])
+        self.beePipingTimer = int(params['pipingTimer'])
+        self.number_of_agents = int(params['agentNumber'])
+        self.frames_per_sec = int(params['fps'])
+
+        self.useDefaultParams = False
+        self.restart_simulation = True
+
+    def restart_sim(self, json):
+        self.restart_simulation = True
+
     # Move all of the agents
     def run(self):
 
@@ -387,6 +427,8 @@ class Environment:
         self.inputEventManager.subscribe('play', self.play)
         self.inputEventManager.subscribe('attractor', self.newAttractor)
         self.inputEventManager.subscribe('repulsor', self.newRepulsor)
+        self.inputEventManager.subscribe('parameterUpdate', self.updateParameters)
+        self.inputEventManager.subscribe('restart', self.restart_sim)
 
         while True:
             if not self.isPaused:
@@ -406,9 +448,59 @@ class Environment:
             self.updateFlowControllers()
             self.hubController.hiveAdjust(self.agents)
 
-            frames_per_sec = 64
-            time.sleep(1/frames_per_sec)
+            if self.restart_simulation:
+                self.reset_sim()
+                self.restart_simulation = False
 
+            time.sleep(1/self.frames_per_sec)
+
+    def clear_for_reset(self):
+        self.agents.clear()
+        self.attractors.clear()
+        self.repulsors.clear()
+        for state in self.states:
+            self.states[state].clear()
+        self.dead_agents.clear()
+
+    def add_agents(self):
+        for x in range(self.number_of_agents):
+            agent_id = str(x)
+            if self.useDefaultParams:
+                agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier))
+            else:
+                agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier),
+                              piping_threshold=self.beePipingThreshold,
+                              piping_time=self.beePipingTimer,
+                              global_velocity=self.beeGlobalVelocity,
+                              explore_time_multiplier=self.beeExploreTimeMultiplier,
+                              rest_time=self.beeRestTime,
+                              dance_time=self.beeDanceTime,
+                              observe_time=self.beeDanceTime,
+                              site_assess_time=self.beeSiteAccessTime,
+                              site_assess_radius=self.beeSiteAccessRadius)
+            self.agents[agent_id] = agent
+            self.states[Exploring().__class__].append(agent_id)
+
+    def reset_sim(self):
+        self.clear_for_reset()
+        self.add_agents()
+
+    def create_potential_fields(self):
+        for obstacle in self.obstacles:
+            location = [obstacle[0], obstacle[1]]
+            spread = 40 #  What should this be?
+            strength = 1 #  Dictates the strength of the field
+            self.potential_fields.append(PotentialField(location, obstacle[2], spread, strength, type='tangent'))
+
+    def potential_field_sum(self, location):
+        dx = 0
+        dy = 0
+        for field in self.potential_fields:
+            delta = field.effect(location)
+            dx += delta[0]
+            dy += delta[1]
+        return [0, 0]
+        #return [dx, dy]
 
     def change_state(self, agent_id, new_state):
         self.agents[agent_id].state = new_state
