@@ -48,13 +48,30 @@ class UI
       this.selectedNumber += ids.length;
 
       for (var id of ids)
+      {
          this.selectedAgents[id] = true;
+         var row = $(document.createElement('tr'));
+         for (let [prop, val] of Object.entries(world.agents[0]))
+         {
+           // KLUDGE CODE TEMPORARY PUT IN A PROPER SPOT SOMETIME
+           if (!$(`#infoTableHeaders #${prop}`).length)
+           {
+             $(`#infoTableHeaders`).append(`<th id='${prop}'>${prop}</th>`);
+           }
+           row.append(`<td id='${prop}${id}'></td>`);
+         }
+         console.log(row);
+         $('#infoTable').append(row);
+      }
+
    }
 
    clearSelectedAgents()
    {
       this.selectedAgents = {};
       this.selectedNumber = 0;
+      $('#infoTable').html("");
+      $('#infoTable').append('<tr id="infoTableHeaders"></tr>');
    }
 
    isAgentSelected(id)

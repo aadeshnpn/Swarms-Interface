@@ -14,7 +14,7 @@ class RadialControl
             x: RadialControl.RADIUS_SCALE * Math.cos(rad),
             y: RadialControl.RADIUS_SCALE * Math.sin(rad), // drawing to world coords
             r: rad,
-            deg: i
+            deg: (i * 5)
          };
       }
 

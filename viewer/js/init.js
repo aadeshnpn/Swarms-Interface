@@ -72,17 +72,21 @@ socket.on('update', function(worldUpdate)
    }
 
    // TODO: work this in to the rest of the UI refactor
-   /*for (var agent of world.agents)
+   for (var agent of world.agents)
    {
-      if (selectedAgents[agent.id])
+      if (ui.isAgentSelected(agent.id))
       {
          // Find an update all the information elements we created in the
          // selection process
-         document.getElementById(`x${agent.id}`).innerHTML = Math.round(agent.x);
-         document.getElementById(`y${agent.id}`).innerHTML = Math.round(agent.y);
-         document.getElementById(`state${agent.id}`).innerHTML = agent.state;
+         for (var [prop, val] of Object.entries(agent))
+         {
+           $(`#${prop}${agent.id}`).html(val);
+         }
+         //document.getElementById(`x${agent.id}`).innerHTML = Math.round(agent.x);
+         //document.getElementById(`y${agent.id}`).innerHTML = Math.round(agent.y);
+         //document.getElementById(`state${agent.id}`).innerHTML = agent.state;
       }
-   }*/
+   }
 });
 
 function draw()
