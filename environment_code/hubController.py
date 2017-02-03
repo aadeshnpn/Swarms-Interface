@@ -18,9 +18,8 @@ class hubController:
         self.agentList= {}
         for counter in range(0, 72):
             self.directions[counter*5] = 0
-            self.directionParams[counter*5] = 0
-        self.directionParams[120] = 75
-        self.directionParams[210] = 75
+            self.directionParams[counter*5] = -1
+
 
         for id, bee in agents.items():
             info = beeInfo(int(bee.direction*(180/np.pi)), bee.velocity, bee.state, 1)
