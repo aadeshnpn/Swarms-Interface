@@ -92,14 +92,4 @@ class hubController:
                 self.directionParams[angle] = -1
         pass
 
-#the user wants be a dotted line, and a solid line be the actual extention of that direction
-# each bee as it leaves will check/tell the controller what it is doing (angle and velocity)
-# if it is not supposed to leave it will immediately become a resting bee
 
-# Hub functionality:
-# keep track of where each bee leaves
-#    maybe keep track of when they should return (if they are an assessor
-#   have bees check in check out (sensor model)
-# send array of epileptic blob maybe?
-# create possible mission goal blobs
-# take input from the environment class and adjust how many are allowed to leave based on that
