@@ -79,7 +79,7 @@ class Agent(StateMachine):
                 (Observing().__class__, input.quit): [None, Resting(self)],
                 (Assessing().__class__, input.siteFound): [self.danceTransition, Dancing(self)], # self.danceTransition()
                 (Assessing().__class__, input.siteAssess): [None, SiteAssess(self)],
-                (Assessing().__class__, input.quit): [None, Observing(self)],
+                #(Assessing().__class__, input.quit): [None, Observing(self)],
                 (SiteAssess().__class__, input.finAssess): [None, Assessing(self)],
                 (SiteAssess().__class__, input.startPipe): [None, Piping(self)],
                 (Dancing().__class__, input.tiredDance): [None, Resting(self)],
@@ -112,11 +112,11 @@ class Exploring(State):
             self.exploretime = exp*3600
 
     def sense(self, agent, environment):
-        '''if agent.hubRadius-1< ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius+1:
-            if agent.inHub is True:
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius) \
+                and agent.inHub is True:
                 if environment.hubController.beeCheckOut(agent) == 0:
                     agent.inHub = False
-                    return'''
+                    return
 
         new_q = environment.get_q(agent.location[0], agent.location[1])
         agent.q_value = new_q
@@ -168,6 +168,7 @@ class Exploring(State):
 
         elif self.inputExplore: #this is for when the user has requested more bees
             delta_d = np.random.normal(0, .013) # this will assure that the bee moves less erratically, it can be decreased a little as well
+            agent.direction = (agent.direction + delta_d) % (2 * np.pi)
         else:
             delta_d = np.random.normal(0, .22)
             agent.direction = (agent.direction + delta_d) % (2 * np.pi)
@@ -180,14 +181,14 @@ class Assessing(State):
         self.name = "assessing"
 
     def sense(self, agent, environment):
-        '''if agent.hubRadius-1< ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5< agent.hubRadius+1:
+        if agent.hubRadius-1< ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5< agent.hubRadius+1:
             if agent.goingToSite ==True and agent.inHub==True:
                 if environment.hubController.beeCheckOut(agent)==0:
                     agent.inHub = False
                     return
             elif agent.goingToSite == False and agent.inHub ==False:
                 environment.hubController.beeCheckIn(agent.id, agent.direction)
-                agent.inHub = True'''
+                agent.inHub = True
 
         if ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2 ) < 1:
             q = environment.get_q(agent.location[0],agent.location[1])
