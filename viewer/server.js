@@ -81,6 +81,7 @@ class Client
       else
       {
          var executable = config.has(`pythonExecutable.${os.platform()}`) ? config.get(`pythonExecutable.${os.platform()}`) : config.get("pythonExecutable.default");
+
          const engine = spawn(executable, [path.join(__dirname, '../environment_code/Environment.py')], {stdio: ['pipe', 'pipe', process.stderr]});
          engine.on('error', (err) => { console.error("[!] Unable to start engine process: " + err)});
 
