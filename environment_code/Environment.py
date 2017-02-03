@@ -39,7 +39,7 @@ class Environment:
 
         self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
-        number_of_agents = 100
+        number_of_agents = 75
         for x in range(number_of_agents):
             agent_id = str(x)
             agent = Agent(agent_id, Exploring())
@@ -47,6 +47,7 @@ class Environment:
             self.states[Exploring().__class__].append(agent_id)
 
         self.inputEventManager = InputEventManager()
+        self.hubController = hubController(self.hub[0:2], self.agents)
         self.isPaused = False
         self.attractors = [] #[flowController.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
         self.repulsors = [] #[flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
@@ -91,11 +92,11 @@ class Environment:
             if(repulsor.time_ticks > 0):
                 new_repulsor_list.append(repulsor)
         self.repulsors = new_repulsor_list
-        self.hubController = hubController(self.hub[0:2], self.agents)
 
     def sort_by_state(self, agent_id, prev_state, cur_state):
-        self.states[prev_state].remove(agent_id)
-        self.states[cur_state].append(agent_id)
+        #self.states[prev_state].remove(agent_id)
+        #self.states[cur_state].append(agent_id)
+        pass
 
     # Converts a cartesian coordinate to the matrix location
     def coord_to_matrix(self, location):
@@ -401,9 +402,9 @@ class Environment:
                         agent.update(self)
 
             self.updateFlowControllers()
-            self.hubController.hiveAdjust(self.agents)
+            #self.hubController.hiveAdjust(self.agents)
 
-            frames_per_sec = 64
+            frames_per_sec = 65
             time.sleep(1/frames_per_sec)
 
 
