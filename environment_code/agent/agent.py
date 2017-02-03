@@ -296,12 +296,15 @@ class Dancing(State):
 
 
 class Observing(State):
-    def __init__(self, agent=None):
+    def __init__(self, agent=None, observerTimer=None):
         self.name = "observing"
-        if agent is None:
-            self.observerTimer = 2000
-        else:
+        if agent is not None:
             self.observerTimer = agent.ObserveTime
+        elif observerTimer is not None:
+            self.observerTimer = observerTimer
+        else:
+            warnings.warn("No agent or initial condition given! Using default...")
+            self.observerTimer = 2000
         self.seesDancer = False
         self.atHub = False
         self.seesPiper = False
