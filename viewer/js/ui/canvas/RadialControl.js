@@ -121,7 +121,7 @@ class RadialControl
       if (this.drag.active)
       {
          this.drag.active = false;
-         this.drag.point = null;
+         this.drag.handle = null;
       }
    }
 

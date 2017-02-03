@@ -173,7 +173,7 @@ app.get('/client.js', function( req, res )
   .then(function(minified)
   {
     //console.log(minified);
-    res.sendFile( 'js/client.js',
+    res.sendFile( 'generated/client.js',
       {
         root: __dirname
       });
