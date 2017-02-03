@@ -43,6 +43,7 @@ class Environment:
         self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
 
+
         #  bee parameters
         self.beePipingThreshold = None
         self.beeGlobalVelocity = None
@@ -62,6 +63,7 @@ class Environment:
         self.restart_simulation = False
 
         self.add_agents()
+
 
         self.inputEventManager = InputEventManager()
         self.hubController = hubController(self.hub[0:2], self.agents)
@@ -445,7 +447,7 @@ class Environment:
                         agent.update(self)
 
             self.updateFlowControllers()
-            #self.hubController.hiveAdjust(self.agents)
+            self.hubController.hiveAdjust(self.agents)
 
             if self.restart_simulation:
                 self.reset_sim()
