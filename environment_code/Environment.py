@@ -537,6 +537,10 @@ class Environment:
                     "attractors": list(map(lambda a: a.toJson(), self.attractors)),
                     "repulsors" : list(map(lambda r: r.toJson(), self.repulsors )), #self.repulsors,
                     "agents"    : self.agents_to_json()
+                },
+                "hub":
+                {
+                        "agentDirections" : self.hubController.directions
                 }
             })
         )
