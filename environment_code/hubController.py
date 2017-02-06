@@ -12,20 +12,7 @@ class beeInfo:
 
 class hubController:
     def __init__(self, radius, agents):
-        self.radius = radius   #needs an array of direction parameters
-        self.directions = {} # #bees that have left the hub in each direction
-        self.directionParams = {} # #desired user values
-        # counter * (np.pi / 72)
-        self.agentList= {}
-        for counter in range(0, 72):
-            self.directions[counter*5] = 0
-            self.directionParams[counter*5] = -1
-        #self.directionParams[10] = 10
-
-
-        for id, bee in agents.items():
-            info = beeInfo(int(bee.direction*(180/np.pi)), bee.velocity, bee.state, 1)
-            self.agentList[bee.id] = info
+        self.reset(radius, agents)
 
     def beeCheckOut(self, bee):
         angle = bee.direction % (2*np.pi)
@@ -35,12 +22,12 @@ class hubController:
             self.directions[angle] = self.directions[angle] + 1
             agent.atHub = 0
         elif self.directionParams[angle] < self.directions[angle]: #too many bees, stop it!
-            bee.state = Observing()
+            bee.state = Observing(bee)
         elif (self.directionParams[angle] > self.directions[angle]): #there needs to be more bees in that direction anyways
             self.directions[angle] = self.directions[angle] + 1
             agent.atHub = 0
         elif self.directionParams[angle] == self.directions[angle]: #perfect amount of bees, stop it
-            bee.state = Observing()
+            bee.state = Observing(bee)
 
         agent.direction = angle
         agent.state = bee.state
@@ -69,33 +56,35 @@ class hubController:
         angle = int(int(direction % 360) / 5) * 5  # converting to fit in the array
 
         self.directionParams[angle] = int(newValue)
-        eprint(angle)
-        eprint(int(newValue))
+        #eprint(angle)
+        #eprint(int(newValue))
 
     def hiveAdjust(self, bees):
         #sortedParams = sorted(self.directionParams, operator.getitem(1), Reverse=True)
         # ^^this is so it will adjust the bees based on the biggest difference or the lowest difference first, an option if this is a problem
         for counter in range(0, 71): #the one problem with this is then the lower buckets have priority of sending bees out hence ^^
             angle = counter*5
-
             if self.directionParams[angle] == -1:  # No user input, all is well
+                #eprint("test1")
                 pass
             elif self.directionParams[angle] < self.directions[angle]:  # too many bees, just keep stopping them from leaving
+                #eprint("test2")
                 pass
             elif self.directionParams[angle] > self.directions[angle]:  # not enough bees send out more! from observers
-                eprint("hiveadjust: ")
-                eprint(angle)
+
                 for id,bee in bees.items():
-                    if bee.state.__class__ == Observing().__class__: #to speed up keep a list of the observers..
+                    if bee.state.__class__ == Observing().__class__ and bee.inHub is True: #to speed up keep a list of the observers..
+                        if np.random.random() < 0.5: #this gives a 50% chance of it happening
+                            break
                         eprint("hiveadjust: ")
                         eprint(angle)
-                        bee.state = Exploring()
-                        eprint(bee.state)
+                        bee.state = Exploring(bee)
+                        eprint(bee.id)
+                        eprint(bee.inHub)
                         bee.state.inputExplore=True
                         bee.state.exploretime *= 0.5 #since the bees are going out in an almost straight line.
                         bee.direction = (angle/180)*np.pi
                         self.directions[angle] += 1
-                        #TODO: have the hub remember this bee and include it in its count
                         agent = self.agentList[bee.id]
                         agent.direction = angle
                         agent.atHub = 0
@@ -105,3 +94,16 @@ class hubController:
                 self.directionParams[angle] = -1
 
 
+    def reset(self, radius, agents):
+        self.radius = radius  # needs an array of direction parameters
+        self.directions = {}  # #bees that have left the hub in each direction
+        self.directionParams = {}  # #desired user values
+        # counter * (np.pi / 72)
+        self.agentList = {}
+        for counter in range(0, 72):
+            self.directions[counter * 5] = 0
+            self.directionParams[counter * 5] = -1
+        # self.directionParams[10] = 10
+        for id, bee in agents.items():
+            info = beeInfo(int(bee.direction * (180 / np.pi)), bee.velocity, bee.state, 1)
+            self.agentList[bee.id] = info

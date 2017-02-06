@@ -248,6 +248,7 @@ class Resting(State):
             if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <= 1:
                 agent.velocity = 0
                 self.atHub = True
+                agent.atHub = True
 
     def update(self, agent):
         if self.restCountdown < 1:
@@ -343,6 +344,7 @@ class Observing(State):
             if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 <= 1.1:
                 # 1.1 prevents moving back and forth around origin
                 self.atHub = True
+                agent.inHub = True
                 agent.direction += -89 + 179 * np.random.random()
                 agent.velocity = agent.GlobalVelocity
 
@@ -499,6 +501,7 @@ class Commit(State):
             if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 <= 1:
                 agent.velocity = 0
                 self.atHub = True
+                agent.inHub = True
 
     def update(self, agent):
         pass

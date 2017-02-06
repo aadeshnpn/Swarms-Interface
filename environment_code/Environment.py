@@ -443,7 +443,7 @@ class Environment:
         self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
         world.to_json()
         while True:
-            if not self.isPaused:
+            if  self.isPaused:
                 world.to_json()
                 for agent_id in self.agents:
                     agent = self.agents[agent_id]
@@ -480,6 +480,7 @@ class Environment:
             agent_id = str(x)
             if self.useDefaultParams:
                 agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier))
+                #agent = Agent(agent_id,Observing())
             else:
                 agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier),
                               piping_threshold=self.beePipingThreshold,
@@ -497,7 +498,7 @@ class Environment:
     def reset_sim(self):
         self.clear_for_reset()
         self.add_agents()
-        self.hubController = hubController(self.hub[0:2], self.agents)
+        self.hubController.reset(self.hub[0:2], self.agents)
 
     def create_potential_fields(self):
         for obstacle in self.obstacles:
