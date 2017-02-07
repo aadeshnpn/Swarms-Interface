@@ -39,7 +39,7 @@ class Agent(StateMachine):
         else:
             self.state.dance_counter = dance
 
-    def __init__(self, agentId, initialstate, piping_threshold=10, piping_time=1000, global_velocity=1,
+    def __init__(self, agentId, initialstate, hub, piping_threshold=10, piping_time=1000, global_velocity=1,
                  explore_time_multiplier=3600, rest_time=300, dance_time=700, observe_time=2000,
                  site_assess_time=300, site_assess_radius=10):
         self.state = initialstate
@@ -58,15 +58,15 @@ class Agent(StateMachine):
         # bee agent variables
         self.live = True
         self.id = agentId  # for communication with environment
-        self.location = [0, 0]  # should be initialized?
+        self.location = [hub["x"], hub["y"]]
         self.direction = 2*np.pi*np.random.random()  # should be initialized? potentially random?
         #self.direction = np.pi/2
         self.velocity = self.GlobalVelocity
-        self.hub = [0, 0]  # should be initialized?
+        self.hub = [hub["x"], hub["y"]]  # should be initialized?
         self.potential_site = None  # array [x,y]
         self.q_value = 0
         self.assessments = 1
-        self.hubRadius = 20
+        self.hubRadius = hub["radius"]
         self.inHub = True
         self.goingToSite = True
         self.quadrant = []
@@ -184,12 +184,12 @@ class Assessing(State):
         self.name = "assessing"
 
     def sense(self, agent, environment):
-        if agent.hubRadius-1< ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5< agent.hubRadius+1:
-            if agent.goingToSite ==True and agent.inHub==True:
+        if agent.hubRadius-1 < ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius+1:
+            if agent.goingToSite and agent.inHub:
                 if environment.hubController.beeCheckOut(agent)==0:
                     agent.inHub = False
                     return
-            elif agent.goingToSite == False and agent.inHub ==False:
+            elif not agent.goingToSite and not agent.inHub:
                 environment.hubController.beeCheckIn(agent.id, agent.direction)
                 agent.inHub = True
 

@@ -209,7 +209,8 @@ io.on( 'connection', function( socket )
 
    socket.on('input', function(data)
    {
-      clientForSocket[socket.id].input(data);
+        console.log(data);
+        clientForSocket[socket.id].input(data);
    });
 
    socket.on( 'disconnect', function()

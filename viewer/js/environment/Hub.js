@@ -2,9 +2,9 @@ class Hub
 {
   constructor(hubJson)
   {
-    this.x      =  hubJson[0];
-    this.y      = -hubJson[1];
-    this.radius =  hubJson[2];
+    this.x      =  hubJson["x"];
+    this.y      = -hubJson["y"];
+    this.radius =  hubJson["radius"];
   }
 
   draw(ctx, debug = false)

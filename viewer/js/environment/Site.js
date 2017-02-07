@@ -3,10 +3,10 @@ class Site
   // site json format = [ x, y, radius, quality ]
   constructor(siteJson)
   {
-    this.x      =  siteJson[0];
-    this.y      = -siteJson[1]; // drawing coordinates have down as positive y
-    this.radius =  siteJson[2];
-    this.q      =  siteJson[3];
+    this.x      =  siteJson["x"];
+    this.y      = -siteJson["y"]; // drawing coordinates have down as positive y
+    this.radius =  siteJson["radius"];
+    this.q      =  siteJson["q_value"];
   }
 
   draw(ctx, debug = false)

@@ -1,4 +1,5 @@
 from agent.agent import *
+from worldGenerator import worldGenerator
 from InputEventManager import InputEventManager
 from potentialField import PotentialField
 from debug import *
@@ -14,15 +15,13 @@ from hubController import hubController
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-
-
 class Environment:
 
     def __init__(self, file_name):
         self.file_name = file_name
         self.x_limit = 0
         self.y_limit = 0
-        self.hub = [0, 0, 1]
+        self.hub = {}
         self.hubController = None
         self.sites = []
         self.obstacles = []
@@ -41,7 +40,7 @@ class Environment:
         self.dead_agents = []
 
         self.quadrants = [[set() for x in range(800)] for y in range(400)]
-        self.build_environment()  # Calls the function to read in the initialization data from a file and stores it in a list
+        self.build_json_environment()  # Calls the function to read in the initialization data from a file
 
 
         #  bee parameters
@@ -56,7 +55,7 @@ class Environment:
         self.beePipingTimer = None  # long enough to allow all bees to make it back before commit?
 
         #  environment parameters
-        self.number_of_agents = 101
+        self.number_of_agents = 100
         self.frames_per_sec = 64
 
         self.useDefaultParams = True
@@ -64,14 +63,32 @@ class Environment:
 
         self.add_agents()
 
-
         self.inputEventManager = InputEventManager()
-        self.hubController = hubController(self.hub[0:2], self.agents)
+        self.hubController = hubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents)
         self.isPaused = False
         self.attractors = [] #[flowController.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
         self.repulsors = [] #[flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
         #self.repulsors[0].time_ticks = 600
         #self.repulsors[1].time_ticks = 1800
+
+    # Function to initialize data on the environment from a json file
+    def build_json_environment(self):
+        json_data = open(self.file_name).read()
+
+        data = json.loads(json_data)
+
+        #generator = worldGenerator()
+        #js = generator.to_json()
+        #data = json.loads(js)
+
+        self.x_limit = data["dimensions"]["x_length"] / 2
+        self.y_limit = data["dimensions"]["y_length"] / 2
+        self.hub = data["hub"]
+        self.sites = data["sites"]
+        self.obstacles = data["obstacles"]
+        self.traps = data["traps"]
+        self.rough = data["rough terrain"]
+        self.create_potential_fields()
 
     def getClosestFlowController(self, flowControllers, agent_location):
         if(len(flowControllers) == 0):
@@ -113,125 +130,12 @@ class Environment:
         self.repulsors = new_repulsor_list
 
     def sort_by_state(self, agent_id, prev_state, cur_state):
-        #self.states[prev_state].remove(agent_id)
-        #self.states[cur_state].append(agent_id)
-        pass
-
-    # Converts a cartesian coordinate to the matrix location
-    def coord_to_matrix(self, location):
-        return [int((location[0] + 800) / 2), int((location[1] + 400) / 2)]
-
-    # reset all quadrants
-    def reset_quads(self):
-        self.quadrants = [[set() for x in range(800)] for y in range(400)]
-
-    # only reset the quadrants that have agents in them
-    def selective_reset_quads(self):
-        for y in range(400):
-            for x in range(800):
-                if len(self.quadrants[y][x]) != 0:
-                    self.quadrants[y][x] = set()
-
-    # Sorts the agents into their respective quadrants
-    def sort_by_quad(self):
-        self.reset_quads()
-
-        for agent in self.agents:
-            matrix_address = self.coord_to_matrix(self.agents[agent].location)
-            self.quadrants[matrix_address[1]][matrix_address[0]].add(agent)
-            self.agents[agent].quadrant = matrix_address
-
-    # Function to initialize data on the environment from a .txt file
-    def build_environment(self):
-        new_hub = []
-        new_sites = []
-        new_obstacles = []
-        new_traps = []
-        new_rough = []
-
-        with open(self.file_name, encoding='utf-8', errors='ignore') as file_in:
-            lines = file_in.readlines()
-            limit_flag = False
-            hub_flag = False
-            site_flag = False
-            obstacle_flag = False
-            trap_flag = False
-            rough_flag = False
-
-            for line in lines:
-                if line[0] == "X":
-                    pass
-                elif line == "\n":
-                    limit_flag = False
-                    hub_flag = False
-                    site_flag = False
-                    obstacle_flag = False
-                    trap_flag = False
-
-                elif rough_flag is True:
-                    rough = []
-                    for entry in line.split():
-                        rough.append(float(entry))
-                    new_rough.append(rough)
-
-                    assert abs(rough[0]) + rough[2] < self.x_limit and abs(
-                        rough[1]) + rough[2] < self.y_limit, "Not all rough terrain is inside Environment boundaries"
-
-                elif trap_flag is True:
-                    trap = []
-                    for entry in line.split():
-                        trap.append(float(entry))
-                    new_traps.append(trap)
-
-                    assert abs(trap[0]) + trap[2] < self.x_limit and abs(trap[1]) + trap[2] < self.y_limit, "Not all traps are inside Environment boundaries"
-
-                elif obstacle_flag is True:
-                    obstacle = []
-                    for entry in line.split():
-                        obstacle.append(float(entry))
-                    new_obstacles.append(obstacle)
-
-                    assert abs(obstacle[0]) + obstacle[2] < self.x_limit and abs(obstacle[1]) + obstacle[2] < self.y_limit, "Not all obstacles are inside Environment boundaries"
-
-                elif site_flag is True:
-                    site = []
-                    for entry in line.split():
-                        site.append(float(entry))
-                    new_sites.append(site)
-                    assert abs(site[0]) + site[2] <= self.x_limit and abs(site[1]) + site[2] <= self.y_limit, "Not all sites are inside Environment boundaries"
-
-                elif hub_flag is True:
-                    for entry in line.split():
-                        new_hub.append(float(entry))
-                    hub_flag = False
-
-                elif limit_flag is True:
-                    for x, entry in enumerate(line.split()):
-                        if x == 0:
-                            self.x_limit = float(entry)
-                        elif x == 1:
-                            self.y_limit = float(entry)
-
-                if line == "World Limits\n":
-                    limit_flag = True
-                elif line == "Hub\n":
-                    hub_flag = True
-                elif line == "Sites\n":
-                    site_flag = True
-                elif line == "Obstacles\n":
-                    obstacle_flag = True
-                elif line == "Traps\n":
-                    trap_flag = True
-                elif line == "Rough Terrain\n":
-                    rough_flag = True
-
-            self.hub = new_hub
-            self.sites = new_sites
-            self.obstacles = new_obstacles
-            self.traps = new_traps
-            self.rough = new_rough
-            self.create_potential_fields()
-
+        if self.states[prev_state].count(agent_id) > 0:
+            self.states[prev_state].remove(agent_id)
+            self.states[cur_state].append(agent_id)
+        else:
+            print("Error:", agent_id, "not in", prev_state)
+            print("It wants to change to", cur_state)
 
     # Function to return the Q-value for given coordinates. Returns 0 if nothing is there and a value between 0 and 1
     # if it finds a site.
@@ -241,38 +145,40 @@ class Environment:
         # the radius of the obstacles, traps, rough spots, and sites
 
         for site in self.sites:
-            x_dif = x - site[0]
-            y_dif = y - site[1]
+            x_dif = x - site["x"]
+            y_dif = y - site["y"]
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
-            if tot_dif <= site[2]:
-                return site[3] - tot_dif / site[2] * .25 * site[3]  # the q_value is a linear gradient. The center of the
-                                                                    # site will return 100% of the q_value, the edge will
-                                                                    # return 75% of the q_value
+            if tot_dif <= site["radius"]:
+                return site["q_value"] - tot_dif / site["radius"] * .25 * site[
+                    "q_value"]  # the q_value is a linear gradient. The center of the
+                # site will return 100% of the q_value, the edge will
+                # return 75% of the q_value
                 # return site[3]*np.random.normal(1, .2, 1)  # for testing purposes I'm just returning the q value.
-                #return (site[3] / site[2] ** (tot_dif / site[2])) * site[4] # Uses an inverse-power function to compute
-                                                                    # q_value based on distance from center of site,
-                                                                    # multiplied by the site's ease of detection
+                # return (site[3] / site[2] ** (tot_dif / site[2])) * site[4] # Uses an inverse-power function to compute
+                # q_value based on distance from center of site,
+                # multiplied by the site's ease of detection
         return 0
 
-    # Returns 0 if terrain is clear, -1 if it is rough (slows velocity of agent to half-speed), -2 if there is an obstacle,
-    # and -3 if there is a trap
+        # Returns 0 if terrain is clear, -1 if it is rough (slows velocity of agent to half-speed), -2 if there is an obstacle,
+        # and -3 if there is a trap
+
     def check_terrain(self, x, y):
         for trap in self.traps:
-            x_dif = x - trap[0]
-            y_dif = y - trap[1]
-            if x_dif**2 + y_dif**2 <= trap[2]**2:
+            x_dif = x - trap["x"]
+            y_dif = y - trap["y"]
+            if x_dif ** 2 + y_dif ** 2 <= trap["radius"] ** 2:
                 return -3
 
         for obstacle in self.obstacles:
-            x_dif = x - obstacle[0]
-            y_dif = y - obstacle[1]
-            if x_dif ** 2 + y_dif ** 2 <= obstacle[2] ** 2:
+            x_dif = x - obstacle["x"]
+            y_dif = y - obstacle["y"]
+            if x_dif ** 2 + y_dif ** 2 <= obstacle["radius"] ** 2:
                 return -2
 
         for spot in self.rough:
-            x_dif = x - spot[0]
-            y_dif = y - spot[1]
-            if x_dif ** 2 + y_dif ** 2 <= spot[2] ** 2:
+            x_dif = x - spot["x"]
+            y_dif = y - spot["y"]
+            if x_dif ** 2 + y_dif ** 2 <= spot["radius"] ** 2:
                 return -1
 
         return 0
@@ -281,7 +187,7 @@ class Environment:
     def wind(self, direction, velocity):
         for agent_id in self.agents:
             agent = self.agents[agent_id]
-            if ((agent.location[0] - self.hub[0]) ** 2 + (agent.location[1] - self.hub[1]) ** 2) ** .5 > self.hub[2]:
+            if ((agent.location[0] - self.hub["x"]) ** 2 + (agent.location[1] - self.hub["y"]) ** 2) ** .5 > self.hub["radius"]:
                 proposed_x = agent.location[0] + np.cos(direction) * velocity
                 proposed_y = agent.location[1] + np.sin(direction) * velocity
 
@@ -295,6 +201,7 @@ class Environment:
                     agent.location[1] = proposed_y
                     agent.live = False
                     self.dead_agents.append(agent)
+                    self.states[agent.state].remove(agent_id)
                     return
                 elif terrain_value == -2:
                     pass
@@ -368,6 +275,10 @@ class Environment:
             agent.location[1] = proposed_y
             agent.live = False
             self.dead_agents.append(agent)
+            for state in self.states:
+                if self.states[state].count(agentId) > 0:
+                    self.states[state].remove(agentId)
+                    break
             return
         elif terrain_value == -2:
             #  pass
@@ -443,7 +354,7 @@ class Environment:
         self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
         world.to_json()
         while True:
-            if  self.isPaused:
+            if not self.isPaused:
                 world.to_json()
                 for agent_id in self.agents:
                     agent = self.agents[agent_id]
@@ -459,7 +370,6 @@ class Environment:
                 self.hubController.hiveAdjust(self.agents)
 
             self.updateFlowControllers()
-
 
             if self.restart_simulation:
                 self.reset_sim()
@@ -479,10 +389,10 @@ class Environment:
         for x in range(self.number_of_agents):
             agent_id = str(x)
             if self.useDefaultParams:
-                agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier))
+                agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
                 #agent = Agent(agent_id,Observing())
             else:
-                agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier),
+                agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub,
                               piping_threshold=self.beePipingThreshold,
                               piping_time=self.beePipingTimer,
                               global_velocity=self.beeGlobalVelocity,
@@ -498,14 +408,14 @@ class Environment:
     def reset_sim(self):
         self.clear_for_reset()
         self.add_agents()
-        self.hubController.reset(self.hub[0:2], self.agents)
+        self.hubController.reset([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents)
 
     def create_potential_fields(self):
         for obstacle in self.obstacles:
-            location = [obstacle[0], obstacle[1]]
+            location = [obstacle["x"], obstacle["y"]]
             spread = 30  #  What should this be?
             strength = .035  #  Dictates the strength of the field
-            self.potential_fields.append(PotentialField(location, obstacle[2], spread, strength, type='repulsor'))
+            self.potential_fields.append(PotentialField(location, obstacle["radius"], spread, strength, type='repulsor'))
 
     def potential_field_sum(self, location):
         dx = 0
@@ -559,6 +469,6 @@ class Environment:
             agents.append(agent_dict)
         return agents
 
-file = "updated_environment.txt"
+file = "world.json"
 world = Environment(os.path.join(ROOT_DIR, file))
 world.run()

@@ -75,9 +75,9 @@ class Hub
 {
   constructor(hubJson)
   {
-    this.x      =  hubJson[0];
-    this.y      = -hubJson[1];
-    this.radius =  hubJson[2];
+    this.x      =  hubJson["x"];
+    this.y      = -hubJson["y"];
+    this.radius =  hubJson["radius"];
   }
 
   draw(ctx, debug = false)
@@ -108,9 +108,9 @@ class Obstacle
 {
   constructor(obstacleJson)
   {
-    this.x      =  obstacleJson[0];
-    this.y      = -obstacleJson[1];
-    this.radius =  obstacleJson[2];
+    this.x      =  obstacleJson["x"];
+    this.y      = -obstacleJson["y"];
+    this.radius =  obstacleJson["radius"];
   }
 
   draw(ctx, debug = false)
@@ -158,14 +158,25 @@ class Rough
 {
   constructor(roughJson)
   {
-    this.x      =  roughJson[0];
-    this.y      = -roughJson[1];
-    this.radius =  roughJson[2];
+    this.x      =  roughJson["x"];
+    this.y      = -roughJson["y"];
+    this.radius =  roughJson["radius"];
   }
 
   draw(ctx, debug = false)
   {
-    // TBD
+    ctx.save();
+
+    ctx.fillStyle = "rgba(244, 164, 96, 0.5)";
+    ctx.strokeStyle = "rgb(244, 164, 96)";
+    ctx.translate(this.x, this.y);
+
+    ctx.beginPath();
+    ctx.arc(0, 0, this.radius, 0, Math.PI * 2, false);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
   }
 }
 
@@ -174,10 +185,10 @@ class Site
   // site json format = [ x, y, radius, quality ]
   constructor(siteJson)
   {
-    this.x      =  siteJson[0];
-    this.y      = -siteJson[1]; // drawing coordinates have down as positive y
-    this.radius =  siteJson[2];
-    this.q      =  siteJson[3];
+    this.x      =  siteJson["x"];
+    this.y      = -siteJson["y"]; // drawing coordinates have down as positive y
+    this.radius =  siteJson["radius"];
+    this.q      =  siteJson["q_value"];
   }
 
   draw(ctx, debug = false)
@@ -211,9 +222,9 @@ class Trap
 {
   constructor(trapJson)
   {
-    this.x      =  trapJson[0];
-    this.y      = -trapJson[1];
-    this.radius =  trapJson[2];
+    this.x      =  trapJson["x"];
+    this.y      = -trapJson["y"];
+    this.radius =  trapJson["radius"];
   }
 
   draw(ctx, debug = false)
@@ -460,7 +471,7 @@ function renderAgentDirectionOverview(agents, ctx)
 
    for (var agent of agents)
    {
-      if (Math.sqrt(Math.pow(agent.x, 2) + Math.pow(agent.y, 2)) > (world.hub[2] < 20) ? 20 : world.hub[2])
+      if (Math.sqrt(Math.pow(agent.x, 2) + Math.pow(agent.y, 2)) > (world.hub["radius"] < 20) ? 20 : world.hub["radius"])
       {
          // our view coords are a little different than the world coords
          var dir = Math.atan2(agent.y, agent.x);

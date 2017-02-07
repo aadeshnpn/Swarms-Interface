@@ -2,9 +2,9 @@ class Obstacle
 {
   constructor(obstacleJson)
   {
-    this.x      =  obstacleJson[0];
-    this.y      = -obstacleJson[1];
-    this.radius =  obstacleJson[2];
+    this.x      =  obstacleJson["x"];
+    this.y      = -obstacleJson["y"];
+    this.radius =  obstacleJson["radius"];
   }
 
   draw(ctx, debug = false)

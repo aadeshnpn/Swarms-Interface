@@ -2,9 +2,9 @@ class Trap
 {
   constructor(trapJson)
   {
-    this.x      =  trapJson[0];
-    this.y      = -trapJson[1];
-    this.radius =  trapJson[2];
+    this.x      =  trapJson["x"];
+    this.y      = -trapJson["y"];
+    this.radius =  trapJson["radius"];
   }
 
   draw(ctx, debug = false)
