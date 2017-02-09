@@ -1,3 +1,110 @@
+class Handle
+{
+   constructor(angle)
+   {
+      this.actual = null;
+      this.requested = null;
+      this.r = angle * Math.PI/180;
+      this.deg = angle;
+      this.actualX = null;
+      this.actualY = null;
+      this.requestedX = null;
+      this.requestedY = null;
+      this.prev = null;
+      this.next = null;
+      this.isRequesting = false;
+   }
+
+   setPrev(handle)
+   {
+      this.prev = handle;
+   }
+
+   setNext(handle)
+   {
+      this.next = handle;
+   }
+
+   updateRequested(value)
+   {
+      this.isRequesting = true;
+      this.requested = value;
+   }
+
+   updateActual(value)
+   {
+      this.actual = value;
+
+      if (this.isRequesting && value == this.requested)
+      {
+         this.isRequesting = false;
+      }
+
+      if (!this.isRequesting)
+      {
+         this.requested = this.actual;
+      }
+   }
+
+   draw(ctx, debug = false)
+   {
+      ctx.save()
+
+      ctx.beginPath();
+      ctx.moveTo(prev.x, prev.y);
+      ctx.lineTo(this.actualX, this.actualY);
+      ctx.lineTo(next.x, next.y);
+      ctx.stroke();
+
+      if (this.actual != this.requested)
+      {
+         ctx.beginPath();
+         ctx.moveTo(prev.x, prev.y);
+         ctx.lineTo(this.requestedX, this.requestedY);
+         ctx.lineTo(next.x, next.y);
+         ctx.stroke();
+      }
+
+      ctx.beginPath();
+      ctx.arc(this.requestedX, -this.requestedY, 3, 0, 2 * Math.PI, false);
+      ctx.fill();
+   }
+
+   isHovered(x, y)
+   {
+      var box = {left: this.x - 5, top: this.y - 5, right: this.x + 5, bottom: this.y + 5};
+
+      if (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom)
+         return true;
+      else
+         return false;
+   }
+
+   coordsToValue(x, y)
+   {
+
+   }
+}
+
+class RadialControlDev
+{
+   constructor()
+   {
+      this.handles = [];
+
+      for (let i = 0; i < (360 / 5); i++)
+      {
+         this.handles.push(new Handle(i * 5)); // we're doing it this way so eventually we can paramaterise the 5
+      }
+
+      for (let i = 0; i < this.handles.length; i++)
+      {
+         handles[i].setPrev(handles[(i - 1) % handles.length]);
+         handles[i].setNext(handles[(i + 1) % handles.length]);
+      }
+   }
+}
+
 class RadialControl
 {
    constructor()
@@ -22,6 +129,11 @@ class RadialControl
       cursors.radialDrag.addEventListener('mousemove', this.onMouseMove.bind(this));
       cursors.radialDrag.addEventListener('mousedown', this.onMouseDown.bind(this));
       cursors.radialDrag.addEventListener('mouseup', this.onMouseUp.bind(this));
+   }
+
+   update(jsonActualValues)
+   {
+
    }
 
    draw(ctx, debug = false)
