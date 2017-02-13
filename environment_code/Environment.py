@@ -134,8 +134,8 @@ class Environment:
             self.states[prev_state].remove(agent_id)
             self.states[cur_state].append(agent_id)
         else:
-            print("Error:", agent_id, "not in", prev_state)
-            print("It wants to change to", cur_state)
+            eprint("Error:", agent_id, "not in", prev_state)
+            eprint("It wants to change to", cur_state)
 
     # Function to return the Q-value for given coordinates. Returns 0 if nothing is there and a value between 0 and 1
     # if it finds a site.

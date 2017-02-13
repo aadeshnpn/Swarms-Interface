@@ -77,10 +77,8 @@ class hubController:
                         if np.random.random() < 0.5: #this gives a 50% chance of it happening
                             break
                         eprint("hiveadjust: ")
-                        eprint(angle)
+                        eprint("angle: ",angle, ".. id: ",bee.id, ".. bee in hub?: ", bee.inHub)
                         bee.state = Exploring(bee)
-                        eprint(bee.id)
-                        eprint(bee.inHub)
                         bee.state.inputExplore=True
                         bee.state.exploretime *= 0.5 #since the bees are going out in an almost straight line.
                         bee.direction = (angle/180)*np.pi
