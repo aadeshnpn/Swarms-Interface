@@ -15,10 +15,13 @@ class hubController:
         self.reset(radius, agents)
 
     def beeCheckOut(self, bee):
+        #eprint("BEECHECKOUT: ")
+        #eprint(".. id:", bee.id, "Angle:", np.rad2deg(bee.direction), ".. bee in hub?:", bee.inHub)
         angle = bee.direction % (2*np.pi)
-        angle = int(int(angle*(180/np.pi))/5)*5 #converting to fit in the array
+        angle = int(int(angle*(180/np.pi))/5) #converting to fit in the array
         agent = self.agentList[bee.id]
         if (self.directionParams[angle] == -1):      #No user input, all is well
+            #eprint("bee is checking out!!!")
             self.directions[angle] = self.directions[angle] + 1
             agent.atHub = 0
         elif self.directionParams[angle] < self.directions[angle]: #too many bees, stop it!
@@ -29,7 +32,8 @@ class hubController:
         elif self.directionParams[angle] == self.directions[angle]: #perfect amount of bees, stop it
             bee.state = Observing(bee)
 
-        agent.direction = angle
+        agent.direction = angle*5
+        #eprint("going in:", agent.direction)
         agent.state = bee.state
         return agent.atHub
          #******if explorer set a timer for it, if assessor calculate projected time
@@ -37,12 +41,14 @@ class hubController:
 
     def beeCheckIn(self, id,dir): #technically only explorers or assessors will ever call this (which they do as they enter the hub)
         #check if they are coming in from a weird angle if they're assessors, which can be a 'red flag'
-        angle = self.agentList[id].direction
-
-        angle = angle % (2 * np.pi)
-        angle = int(int(angle * (180 / np.pi)) / 5) * 5  # converting to fit in the array
+        #eprint("coming out:", self.agentList[id].direction)
+        angle = int(self.agentList[id].direction/5)
+        #angle = angle % (2 * np.pi)
+        #angle = int(int(angle * (180 / np.pi)) / 5)   # converting to fit in the array
         self.directions[angle] = self.directions[angle] - 1
-
+        if self.directions[angle] < 0:
+            eprint("IT's negative!!")
+            eprint("id:",id, " directionsValue:",self.directions[angle], " angle:", angle*5)
         self.agentList[id].atHub = 1
 
     def handleRadialControl(self, jsonInput):
@@ -53,7 +59,7 @@ class hubController:
     def directionInput(self, direction, newValue): #user inhibits or excites the amount of bees in each direction
                                                     #direction is given in degrees
 
-        angle = int(int(direction % 360) / 5) * 5  # converting to fit in the array
+        angle = int(int(direction % 360) / 5)   # converting to fit in the array
 
         self.directionParams[angle] = int(newValue)
         #eprint(angle)
@@ -62,8 +68,8 @@ class hubController:
     def hiveAdjust(self, bees):
         #sortedParams = sorted(self.directionParams, operator.getitem(1), Reverse=True)
         # ^^this is so it will adjust the bees based on the biggest difference or the lowest difference first, an option if this is a problem
-        for counter in range(0, 71): #the one problem with this is then the lower buckets have priority of sending bees out hence ^^
-            angle = counter*5
+        for counter in range(0, 72): #the one problem with this is then the lower buckets have priority of sending bees out hence ^^
+            angle = counter
             if self.directionParams[angle] == -1:  # No user input, all is well
                 #eprint("test1")
                 pass
@@ -77,14 +83,14 @@ class hubController:
                         if np.random.random() < 0.5: #this gives a 50% chance of it happening
                             break
                         eprint("hiveadjust: ")
-                        eprint("angle: ",angle, ".. id: ",bee.id, ".. bee in hub?: ", bee.inHub)
+                        eprint("angle:",angle*5, ".. id:",bee.id, ".. bee in hub?:", bee.inHub)
                         bee.state = Exploring(bee)
                         bee.state.inputExplore=True
                         bee.state.exploretime *= 0.5 #since the bees are going out in an almost straight line.
-                        bee.direction = (angle/180)*np.pi
+                        bee.direction = ((angle*5)/180)*np.pi
                         self.directions[angle] += 1
                         agent = self.agentList[bee.id]
-                        agent.direction = angle
+                        agent.direction = angle*5
                         agent.atHub = 0
                         bee.inHub = False
                         break # only execute this once per iteration, that way it's a 'slow' change
@@ -94,14 +100,17 @@ class hubController:
 
     def reset(self, radius, agents):
         self.radius = radius  # needs an array of direction parameters
-        self.directions = {}  # #bees that have left the hub in each direction
-        self.directionParams = {}  # #desired user values
+        self.directions = [None]*72  # #bees that have left the hub in each direction
+        self.directionParams = [None]*72  # #desired user values
         # counter * (np.pi / 72)
         self.agentList = {}
         for counter in range(0, 72):
-            self.directions[counter * 5] = 0
-            self.directionParams[counter * 5] = -1
+            self.directions[counter] = 0
+            self.directionParams[counter] = -1
         # self.directionParams[10] = 10
         for id, bee in agents.items():
             info = beeInfo(int(bee.direction * (180 / np.pi)), bee.velocity, bee.state, 1)
             self.agentList[bee.id] = info
+
+    def convertToIndex(self, degrees):
+        int(int(degrees % 360) / 5)

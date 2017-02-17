@@ -56,7 +56,7 @@ class Environment:
 
         #  environment parameters
         self.number_of_agents = 100
-        self.frames_per_sec = 64
+        self.frames_per_sec = 60
 
         self.useDefaultParams = True
         self.restart_simulation = False
@@ -136,6 +136,7 @@ class Environment:
         else:
             eprint("Error:", agent_id, "not in", prev_state)
             eprint("It wants to change to", cur_state)
+
 
     # Function to return the Q-value for given coordinates. Returns 0 if nothing is there and a value between 0 and 1
     # if it finds a site.
@@ -450,7 +451,7 @@ class Environment:
                 }
             })
         )
-
+        eprint("agentDirections: ", self.hubController.directions)
         print(
             json.dumps(
             {
@@ -460,6 +461,7 @@ class Environment:
                     "controller":
                     {
                         "agentDirections" : self.hubController.directions
+
                     }
                 }
             })

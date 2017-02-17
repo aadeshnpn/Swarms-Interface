@@ -173,7 +173,7 @@ class Exploring(State):
             delta_d = np.random.normal(0, .013) # this will assure that the bee moves less erratically, it can be decreased a little as well
             agent.direction = (agent.direction + delta_d) % (2 * np.pi)
         else:
-            delta_d = np.random.normal(0, .22)
+            delta_d = np.random.normal(0, .1)
             agent.direction = (agent.direction + delta_d) % (2 * np.pi)
 
         return
