@@ -52,7 +52,7 @@ socket.on('update', function(worldUpdate)
    // First update
    if (world === null)
    {
-      world = new World(worldUpdate);
+      world = new World(worldUpdate.data);
       canvas.setAttribute("width", world.width);
       canvas.setAttribute("height", world.height);
 
@@ -68,7 +68,10 @@ socket.on('update', function(worldUpdate)
    }
    else if (finishedDrawing)
    {
-      world = new World(worldUpdate);
+      world = new World(worldUpdate.data);
+
+      // TODO: split this out into a separate update? worldMeta?
+      //ui.RadialControl.updateActual(world.hub.directions);
    }
 
    // TODO: work this in to the rest of the UI refactor
@@ -87,6 +90,11 @@ socket.on('update', function(worldUpdate)
          //document.getElementById(`state${agent.id}`).innerHTML = agent.state;
       }
    }
+});
+
+socket.on('updateMeta', function(update)
+{
+   ui.update(update.data);
 });
 
 function draw()

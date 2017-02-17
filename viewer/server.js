@@ -61,7 +61,7 @@ class Client
    {
       this.id = shortid.generate();
       this.worldId = worldId;
-      this.jsonStreamParser = JSONStream.parse("data");
+      this.jsonStreamParser = JSONStream.parse();
 
       // because of weirdness with how JS handles 'this', we have to play some
       // closure games and create a listener function that captures a reference
@@ -105,7 +105,7 @@ class Client
    {
       if (this.webSocket !== null)
       {
-         this.webSocket.emit("update", data);
+         this.webSocket.emit(data.type, data);
       }
    }
 
