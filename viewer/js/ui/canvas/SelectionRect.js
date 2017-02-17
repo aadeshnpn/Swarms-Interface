@@ -13,6 +13,11 @@ class SelectionRect
       cursors.selecting.addEventListener('mouseup'  , this.onMouseUp  .bind(this));
    }
 
+   update()
+   {
+      // no-op
+   }
+
    draw(ctx, debug = false)
    {
       if (!this.active)

@@ -8,6 +8,11 @@ class BaitBombGhost
     this.active = false;
   }
 
+  update()
+  {
+     // no-op
+  }
+
   draw(ctx, debug = false)
   {
     if (!this.active)

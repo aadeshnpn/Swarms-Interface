@@ -14,6 +14,12 @@ class UI
       this.activeCursor = cursors.default.activate();
    }
 
+   update(data)
+   {
+      for (let element of this.guiElems)
+         element.update(data);
+   }
+
    draw(ctx, debug = false)
    {
      for (let element of this.guiElems)
@@ -60,7 +66,7 @@ class UI
            }
            row.append(`<td id='${prop}${id}'></td>`);
          }
-         console.log(row);
+         //console.log(row);
          $('#infoTable').append(row);
       }
 

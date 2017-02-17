@@ -5,6 +5,11 @@ class SelectionBoxes
       cursors.default.addEventListener('mousedown', function(e) { ui.clearSelectedAgents(); });
    }
 
+   update()
+   {
+      // no-op
+   }
+
    draw(ctx, debug = false)
    {
       if (ui.agentsSelected() == 0)
