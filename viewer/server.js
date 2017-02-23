@@ -209,7 +209,6 @@ io.on( 'connection', function( socket )
 
    socket.on('input', function(data)
    {
-        console.log(data);
         clientForSocket[socket.id].input(data);
    });
 

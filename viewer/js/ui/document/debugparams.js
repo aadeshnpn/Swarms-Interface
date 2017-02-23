@@ -13,3 +13,15 @@ buttonDebugParams.addEventListener("click", function(e)
 
    socket.emit('input', {'type': 'parameterUpdate', params: paramObj});
 })
+
+// interface
+const debugParams =
+{
+   update: function(data)
+   {
+      for (let [param, val] of Object.entries(data.parameters))
+      {
+         $(`#debugParams input[name=${param}]`).val(val);
+      }
+   }
+}

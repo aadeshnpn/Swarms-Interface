@@ -46,9 +46,9 @@ class hubController:
         #angle = angle % (2 * np.pi)
         #angle = int(int(angle * (180 / np.pi)) / 5)   # converting to fit in the array
         self.directions[angle] = self.directions[angle] - 1
-        if self.directions[angle] < 0:
-            eprint("IT's negative!!")
-            eprint("id:",id, " directionsValue:",self.directions[angle], " angle:", angle*5)
+        #if self.directions[angle] < 0:
+            #eprint("IT's negative!!")
+            #eprint("id:",id, " directionsValue:",self.directions[angle], " angle:", angle*5)
         self.agentList[id].atHub = 1
 
     def handleRadialControl(self, jsonInput):
@@ -82,8 +82,8 @@ class hubController:
                     if bee.state.__class__ == Observing().__class__ and bee.inHub is True: #to speed up keep a list of the observers..
                         if np.random.random() < 0.5: #this gives a 50% chance of it happening
                             break
-                        eprint("hiveadjust: ")
-                        eprint("angle:",angle*5, ".. id:",bee.id, ".. bee in hub?:", bee.inHub)
+                        #eprint("hiveadjust: ")
+                        #eprint("angle:",angle*5, ".. id:",bee.id, ".. bee in hub?:", bee.inHub)
                         bee.state = Exploring(bee)
                         bee.state.inputExplore=True
                         bee.state.exploretime *= 0.5 #since the bees are going out in an almost straight line.

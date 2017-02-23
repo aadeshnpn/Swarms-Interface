@@ -4,25 +4,31 @@ class UI
    {
       this.selectedAgents = {};
       this.selectedNumber = 0;
-      this.guiElems = [];
+      this.canvasElems = [];
+      this.documentElems = []
 
-      this.guiElems.push( new SelectionBoxes() );
-      this.guiElems.push( new SelectionRect()  );
-      this.guiElems.push( new RadialControl()  );
-      this.guiElems.push( new BaitBombGhost()  );
+      this.canvasElems.push( new SelectionBoxes() );
+      this.canvasElems.push( new SelectionRect()  );
+      this.canvasElems.push( new RadialControl()  );
+      this.canvasElems.push( new BaitBombGhost()  );
+
+      this.documentElems.push( debugParams );
 
       this.activeCursor = cursors.default.activate();
    }
 
    update(data)
    {
-      for (let element of this.guiElems)
+      for (let element of this.canvasElems)
+         element.update(data);
+
+      for (let element of this.documentElems)
          element.update(data);
    }
 
    draw(ctx, debug = false)
    {
-     for (let element of this.guiElems)
+     for (let element of this.canvasElems)
       element.draw(ctx, debug);
    }
 

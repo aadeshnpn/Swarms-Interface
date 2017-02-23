@@ -7,6 +7,7 @@ import flowController
 import numpy as np
 import json
 import os
+import copy
 
 import time
 import geomUtil
@@ -42,23 +43,22 @@ class Environment:
         self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
 
-
         #  bee parameters
-        self.beePipingThreshold = None
-        self.beeGlobalVelocity = None
-        self.beeExploreTimeMultiplier = None
-        self.beeRestTime = None
-        self.beeDanceTime = None
-        self.beeObserveTime = None
-        self.beeSiteAccessTime = None
-        self.beeSiteAccessRadius = None
-        self.beePipingTimer = None  # long enough to allow all bees to make it back before commit?
+        self.beePipingThreshold       =   10
+        self.beeGlobalVelocity        =    1
+        self.beeExploreTimeMultiplier = 3600
+        self.beeRestTime              =  300
+        self.beeDanceTime             =  700
+        self.beeObserveTime           = 2000
+        self.beeSiteAccessTime        =  300
+        self.beeSiteAccessRadius      =   10
+        self.beePipingTimer           = 1000  # long enough to allow all bees to make it back before commit?
 
         #  environment parameters
         self.number_of_agents = 100
         self.frames_per_sec = 60
 
-        self.useDefaultParams = True
+        #self.useDefaultParams = True
         self.restart_simulation = False
 
         self.add_agents()
@@ -70,6 +70,9 @@ class Environment:
         self.repulsors = [] #[flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
         #self.repulsors[0].time_ticks = 600
         #self.repulsors[1].time_ticks = 1800
+
+        #json aux
+        self.previousMetaJson = None
 
     # Function to initialize data on the environment from a json file
     def build_json_environment(self):
@@ -324,19 +327,19 @@ class Environment:
     def updateParameters(self, json):
         params = json['params']
 
-        self.beePipingThreshold = int(params['pipingThreshold'])
-        self.beeGlobalVelocity = int(params['globalVelocity'])
-        self.beeExploreTimeMultiplier = float(params['exploreTimeMultiplier'])
-        self.beeRestTime = int(params['restTime'])
-        self.beeDanceTime = int(params['danceTime'])
-        self.beeObserveTime = int(params['observeTime'])
-        self.beeSiteAccessTime = int(params['siteAccessTime'])
-        self.beeSiteAccessRadius = int(params['siteAccessRadius'])
-        self.beePipingTimer = int(params['pipingTimer'])
-        self.number_of_agents = int(params['agentNumber'])
-        self.frames_per_sec = int(params['fps'])
+        self.beePipingThreshold       = int  (params['beePipingThreshold'      ])
+        self.beeGlobalVelocity        = int  (params['beeGlobalVelocity'       ])
+        self.beeExploreTimeMultiplier = float(params['beeExploreTimeMultiplier'])
+        self.beeRestTime              = int  (params['beeRestTime'             ])
+        self.beeDanceTime             = int  (params['beeDanceTime'            ])
+        self.beeObserveTime           = int  (params['beeObserveTime'          ])
+        self.beeSiteAccessTime        = int  (params['beeSiteAccessTime'       ])
+        self.beeSiteAccessRadius      = int  (params['beeSiteAccessRadius'     ])
+        self.beePipingTimer           = int  (params['beePipingTimer'          ])
+        self.number_of_agents         = int  (params['numberOfAgents'          ])
+        self.frames_per_sec           = int  (params['fps'                     ])
 
-        self.useDefaultParams = False
+        #self.useDefaultParams = False
         self.restart_simulation = True
 
     def restart_sim(self, json):
@@ -389,20 +392,20 @@ class Environment:
     def add_agents(self):
         for x in range(self.number_of_agents):
             agent_id = str(x)
-            if self.useDefaultParams:
-                agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
+            #if self.useDefaultParams:
+            #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
                 #agent = Agent(agent_id,Observing())
-            else:
-                agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub,
-                              piping_threshold=self.beePipingThreshold,
-                              piping_time=self.beePipingTimer,
-                              global_velocity=self.beeGlobalVelocity,
-                              explore_time_multiplier=self.beeExploreTimeMultiplier,
-                              rest_time=self.beeRestTime,
-                              dance_time=self.beeDanceTime,
-                              observe_time=self.beeDanceTime,
-                              site_assess_time=self.beeSiteAccessTime,
-                              site_assess_radius=self.beeSiteAccessRadius)
+            #else:
+            agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub,
+                          piping_threshold        = self.beePipingThreshold,
+                          piping_time             = self.beePipingTimer,
+                          global_velocity         = self.beeGlobalVelocity,
+                          explore_time_multiplier = self.beeExploreTimeMultiplier,
+                          rest_time               = self.beeRestTime,
+                          dance_time              = self.beeDanceTime,
+                          observe_time            = self.beeDanceTime,
+                          site_assess_time        = self.beeSiteAccessTime,
+                          site_assess_radius      = self.beeSiteAccessRadius)
             self.agents[agent_id] = agent
             self.states[Exploring().__class__].append(agent_id)
 
@@ -451,21 +454,35 @@ class Environment:
                 }
             })
         )
-        eprint("agentDirections: ", self.hubController.directions)
-        print(
-            json.dumps(
-            {
-                "type": "updateMeta",
-                "data":
-                {
-                    "controller":
-                    {
-                        "agentDirections" : self.hubController.directions
 
-                    }
+        newMetaJson = {
+            "type": "updateMeta",
+            "data":
+            {
+                "controller":
+                {
+                    "agentDirections" : self.hubController.directions
+                },
+                "parameters":
+                {
+                    "beePipingThreshold"      : self.beePipingThreshold,
+                    "beeGlobalVelocity"       : self.beeGlobalVelocity,
+                    "beeExploreTimeMultiplier": self.beeExploreTimeMultiplier,
+                    "beeRestTime"             : self.beeRestTime,
+                    "beeDanceTime"            : self.beeDanceTime,
+                    "beeObserveTime"          : self.beeObserveTime,
+                    "beeSiteAccessTime"       : self.beeSiteAccessTime,
+                    "beeSiteAccessRadius"     : self.beeSiteAccessRadius,
+                    "beePipingTimer"          : self.beePipingTimer,
+                    "numberOfAgents"          : self.number_of_agents,
+                    "fps"                     : self.frames_per_sec
                 }
-            })
-        )
+            }
+        }
+
+        if (newMetaJson != self.previousMetaJson):
+            self.previousMetaJson = copy.deepcopy(newMetaJson)
+            print(json.dumps(newMetaJson))
 
     def agents_to_json(self):
         agents = []

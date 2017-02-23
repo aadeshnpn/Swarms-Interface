@@ -83,6 +83,8 @@ socket.on('update', function(worldUpdate)
          // selection process
          for (var [prop, val] of Object.entries(agent))
          {
+            if (typeof val === 'number')
+               val = val.toFixed(2);
            $(`#${prop}${agent.id}`).html(val);
          }
          //document.getElementById(`x${agent.id}`).innerHTML = Math.round(agent.x);
