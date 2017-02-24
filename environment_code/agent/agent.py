@@ -184,7 +184,8 @@ class Assessing(State):
         self.name = "assessing"
 
     def sense(self, agent, environment):
-        if agent.hubRadius-1 < ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius+1:
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius) \
+                and agent.inHub is True:
             if agent.goingToSite and agent.inHub:
                 if environment.hubController.beeCheckOut(agent)==0:
                     agent.inHub = False

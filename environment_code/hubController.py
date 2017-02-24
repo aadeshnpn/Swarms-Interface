@@ -1,6 +1,7 @@
 from agent.agent import *
 import numpy as np
 from debug import *
+import copy
 import operator
 class beeInfo:
     def __init__(self, direction, velocity, state, AtHub):
@@ -11,8 +12,9 @@ class beeInfo:
         #include a variable projecting at what time it left the hub? (add later)
 
 class hubController:
-    def __init__(self, radius, agents):
-        self.reset(radius, agents)
+    def __init__(self, radius, agents, environment):
+        self.reset(radius, agents, environment)
+
 
     def beeCheckOut(self, bee):
         #eprint("BEECHECKOUT: ")
@@ -25,11 +27,17 @@ class hubController:
             self.directions[angle] = self.directions[angle] + 1
             agent.atHub = 0
         elif self.directionParams[angle] < self.directions[angle]: #too many bees, stop it!
+            eprint("INHIBITED!!!!! ")
+            eprint("Angle:", angle, "  Id:", bee.id, "  Bee in hub?:", bee.inHub)
+            self.environment.sort_by_state(bee.id, bee.state.__class__, Observing().__class__)
             bee.state = Observing(bee)
         elif (self.directionParams[angle] > self.directions[angle]): #there needs to be more bees in that direction anyways
             self.directions[angle] = self.directions[angle] + 1
             agent.atHub = 0
         elif self.directionParams[angle] == self.directions[angle]: #perfect amount of bees, stop it
+            eprint("INHIBITED!!!!! ")
+            eprint("Angle:", angle, "  Id:", bee.id, "  Bee in hub?:", bee.inHub)
+            self.environment.sort_by_state(bee.id, bee.state.__class__, Observing().__class__)
             bee.state = Observing(bee)
 
         agent.direction = angle*5
@@ -78,13 +86,15 @@ class hubController:
                 pass
             elif self.directionParams[angle] > self.directions[angle]:  # not enough bees send out more! from observers
 
-                for id,bee in bees.items():
+                for id,bee in bees.items(): #use environment classes soon.
                     if bee.state.__class__ == Observing().__class__ and bee.inHub is True: #to speed up keep a list of the observers..
                         if np.random.random() < 0.5: #this gives a 50% chance of it happening
                             break
                         #eprint("hiveadjust: ")
                         #eprint("angle:",angle*5, ".. id:",bee.id, ".. bee in hub?:", bee.inHub)
+
                         bee.state = Exploring(bee)
+                        self.environment.sort_by_state(bee.id, Observing().__class__, Exploring().__class__)
                         bee.state.inputExplore=True
                         bee.state.exploretime *= 0.5 #since the bees are going out in an almost straight line.
                         bee.direction = ((angle*5)/180)*np.pi
@@ -95,10 +105,12 @@ class hubController:
                         bee.inHub = False
                         break # only execute this once per iteration, that way it's a 'slow' change
             elif self.directionParams[angle] == self.directions[angle]:  #meaning it has reached the user's requirements
+                #pass
                 self.directionParams[angle] = -1
 
 
-    def reset(self, radius, agents):
+    def reset(self, radius, agents, environment):
+        self.environment = environment
         self.radius = radius  # needs an array of direction parameters
         self.directions = [None]*72  # #bees that have left the hub in each direction
         self.directionParams = [None]*72  # #desired user values
@@ -112,5 +124,12 @@ class hubController:
             info = beeInfo(int(bee.direction * (180 / np.pi)), bee.velocity, bee.state, 1)
             self.agentList[bee.id] = info
 
+
     def convertToIndex(self, degrees):
         int(int(degrees % 360) / 5)
+
+
+'''
+Hub controller TODO: add functionality for the mission state
+ fix check ins!!'''
+
