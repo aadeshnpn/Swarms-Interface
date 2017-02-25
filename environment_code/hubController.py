@@ -23,7 +23,7 @@ class hubController:
         angle = int(int(angle*(180/np.pi))/5) #converting to fit in the array
         agent = self.agentList[bee.id]
         if (self.directionParams[angle] == -1):      #No user input, all is well
-            #eprint("bee is checking out!!!")
+            eprint("checking out:", bee.id, "direction:", int(bee.direction*(180/np.pi)))
             self.directions[angle] = self.directions[angle] + 1
             agent.atHub = 0
         elif self.directionParams[angle] < self.directions[angle]: #too many bees, stop it!
@@ -32,6 +32,7 @@ class hubController:
             self.environment.sort_by_state(bee.id, bee.state.__class__, Observing().__class__)
             bee.state = Observing(bee)
         elif (self.directionParams[angle] > self.directions[angle]): #there needs to be more bees in that direction anyways
+            eprint("checking out:", bee.id, "direction:", int(bee.direction*(180/np.pi)))
             self.directions[angle] = self.directions[angle] + 1
             agent.atHub = 0
         elif self.directionParams[angle] == self.directions[angle]: #perfect amount of bees, stop it
@@ -49,7 +50,7 @@ class hubController:
 
     def beeCheckIn(self, id,dir): #technically only explorers or assessors will ever call this (which they do as they enter the hub)
         #check if they are coming in from a weird angle if they're assessors, which can be a 'red flag'
-        #eprint("coming out:", self.agentList[id].direction)
+        eprint("checking in:", id, " Initial direction:", self.agentList[id].direction, " from:", int(dir*(180/np.pi))+180)
         angle = int(self.agentList[id].direction/5)
         #angle = angle % (2 * np.pi)
         #angle = int(int(angle * (180 / np.pi)) / 5)   # converting to fit in the array

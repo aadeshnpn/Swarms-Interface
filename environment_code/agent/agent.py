@@ -3,6 +3,7 @@ from .stateMachine.state import State
 from enum import Enum
 import numpy as np
 import warnings
+from debug import *
 # reset velocity of agent at begining of each state transition?
 
 input = Enum('input', 'nestFound exploreTime observeTime dancerFound siteFound tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
@@ -147,7 +148,9 @@ class Exploring(State):
             agent.potential_site = [agent.location[0], agent.location[1]]
             return input.nestFound
         elif self.exploretime < 1:
+            #eprint("hub:", agent.inHub)
             return input.exploreTime
+
         else:
             return None
 
@@ -184,13 +187,13 @@ class Assessing(State):
         self.name = "assessing"
 
     def sense(self, agent, environment):
-        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius) \
-                and agent.inHub is True:
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius):
             if agent.goingToSite and agent.inHub:
                 if environment.hubController.beeCheckOut(agent)==0:
                     agent.inHub = False
                     return
-            elif not agent.goingToSite and not agent.inHub:
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius+1.251858563765788):
+            if not agent.goingToSite and not agent.inHub:
                 environment.hubController.beeCheckIn(agent.id, agent.direction)
                 agent.inHub = True
 
@@ -312,6 +315,7 @@ class Observing(State):
         self.atHub = False
         self.seesPiper = False
 
+
     def sense(self, agent, environment):
         # get nearby bees from environment and check for dancers
         if self.atHub:
@@ -327,10 +331,11 @@ class Observing(State):
                     agent.velocity = agent.GlobalVelocity
                     agent.potential_site = bee.potential_site
                     break
-        '''if agent.hubRadius-1< ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5< agent.hubRadius+1:
-            if agent.inHub==False:
-                environment.hubController.beeCheckIn(agent.id, agent.direction)
-                agent.inHub = True'''
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
+                and agent.inHub is False:
+                    environment.hubController.beeCheckIn(agent.id, agent.direction)
+                    agent.inHub = True
+                    return
 
 
     def act(self, agent):
@@ -345,7 +350,7 @@ class Observing(State):
             if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 <= 1.1:
                 # 1.1 prevents moving back and forth around origin
                 self.atHub = True
-                agent.inHub = True
+                #agent.inHub = True
                 agent.direction += -89 + 179 * np.random.random()
                 agent.velocity = agent.GlobalVelocity
 
