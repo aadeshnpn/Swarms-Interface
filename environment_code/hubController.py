@@ -11,8 +11,12 @@ class beeInfo:
         #include a variable projecting at what time it left the hub? (add later)
 
 class hubController:
-    def __init__(self, radius, agents):
+    def __init__(self, radius, agents, inputManager):
         self.reset(radius, agents)
+        self.siteDistancePriority = 0
+        self.siteSizePriority     = 0
+
+        inputManager.subscribe('priorityUpdate', self.handlePriorityUpdate)
 
     def beeCheckOut(self, bee):
         #eprint("BEECHECKOUT: ")
@@ -114,3 +118,10 @@ class hubController:
 
     def convertToIndex(self, degrees):
         int(int(degrees % 360) / 5)
+
+    def getSitePriorities(self):
+        return {"distance": self.siteDistancePriority, "size": self.siteSizePriority}
+
+    def handlePriorityUpdate(self, json):
+        self.siteDistancePriority = float( json["sitePriorities"]["distance"] )
+        self.siteSizePriority     = float( json["sitePriorities"]["size"]     )
