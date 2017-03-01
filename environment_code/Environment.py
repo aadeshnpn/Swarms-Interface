@@ -153,15 +153,19 @@ class Environment:
             y_dif = y - site["y"]
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
             if tot_dif <= site["radius"]:
-                return site["q_value"] - tot_dif / site["radius"] * .25 * site[
-                    "q_value"]  # the q_value is a linear gradient. The center of the
+                return {
+                    "radius": site["radius"],
+                    "q"     : site["q_value"] -
+                              (tot_dif / site["radius"] * .25 * site["q_value"])
+                }
+                # the q_value is a linear gradient. The center of the
                 # site will return 100% of the q_value, the edge will
                 # return 75% of the q_value
                 # return site[3]*np.random.normal(1, .2, 1)  # for testing purposes I'm just returning the q value.
                 # return (site[3] / site[2] ** (tot_dif / site[2])) * site[4] # Uses an inverse-power function to compute
                 # q_value based on distance from center of site,
                 # multiplied by the site's ease of detection
-        return 0
+        return {"radius": -1, "q": 0}
 
         # Returns 0 if terrain is clear, -1 if it is rough (slows velocity of agent to half-speed), -2 if there is an obstacle,
         # and -3 if there is a trap
@@ -449,7 +453,7 @@ class Environment:
                     "traps"     : self.traps,
                     "rough"     : self.rough,
                     "attractors": list(map(lambda a: a.toJson(), self.attractors)),
-                    "repulsors" : list(map(lambda r: r.toJson(), self.repulsors )), #self.repulsors,
+                    "repulsors" : list(map(lambda r: r.toJson(), self.repulsors )),
                     "agents"    : self.agents_to_json(),
                 }
             })
@@ -461,7 +465,12 @@ class Environment:
             {
                 "controller":
                 {
-                    "agentDirections" : self.hubController.directions
+                    "agentDirections" : self.hubController.directions,
+                    "sitePriorities" :
+                    {
+                        "distance" : self.hubController.siteDistancePriority,
+                        "size"     : self.hubController.siteSizePriority
+                    }
                 },
                 "parameters":
                 {
@@ -495,6 +504,7 @@ class Environment:
             agent_dict["direction"] = self.agents[agent_id].direction
             agent_dict["potential_site"] = self.agents[agent_id].potential_site
             agent_dict["live"] = self.agents[agent_id].live
+            agent_dict["qVal"] = self.agents[agent_id].q_value
             agents.append(agent_dict)
         return agents
 

@@ -9,6 +9,7 @@ class Agent
     this.state         =  agentJson.state;
     this.potentialSite =  agentJson.potential_site;
     this.isAlive       =  agentJson.live;
+    this.qVal          =  agentJson.qVal;
   }
 
   draw(ctx, debug = false)
@@ -24,7 +25,6 @@ class Agent
     ctx.drawImage(bee, -bee.width/2, -bee.height/2);
 
     ctx.restore();
-    ctx.beginPath();
 
     ctx.restore();
   }

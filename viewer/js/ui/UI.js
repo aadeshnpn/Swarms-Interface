@@ -13,6 +13,7 @@ class UI
       this.canvasElems.push( new BaitBombGhost()  );
 
       this.documentElems.push( debugParams );
+      this.documentElems.push( sitePriorityMetres );
 
       this.activeCursor = cursors.default.activate();
    }
