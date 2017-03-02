@@ -22,7 +22,7 @@ class Agent
     ctx.save();
 
     ctx.rotate(this.rotation);
-    ctx.drawImage(bee, -bee.width/2, -bee.height/2);
+    ctx.drawImage(this.isAlive ? bee : beeDead, -bee.width/2, -bee.height/2);
 
     ctx.restore();
 

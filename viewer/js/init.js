@@ -23,6 +23,7 @@ const ui = new UI();
 
 // get image refs
 var bee      = document.getElementById("bee"     );
+var beeDead  = document.getElementById("bee-dead");
 var obstacle = document.getElementById("obstacle");
 
 var finishedDrawing = true;
