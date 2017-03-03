@@ -195,7 +195,7 @@ class Assessing(State):
                     return
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius+1.251858563765788):
             if not agent.goingToSite and not agent.inHub:
-                environment.hubController.beeCheckIn(agent.id, agent.direction)
+                environment.hubController.beeCheckIn(agent)
                 agent.inHub = True
 
         if ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2 ) < 1:
@@ -357,7 +357,7 @@ class Observing(State):
                     break
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
                 and agent.inHub is False:
-                    environment.hubController.beeCheckIn(agent.id, agent.direction)
+                    environment.hubController.beeCheckIn(agent)
                     agent.inHub = True
                     return
 

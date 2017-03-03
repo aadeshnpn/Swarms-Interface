@@ -27,21 +27,21 @@ class hubController:
         angle = int(int(angle*(180/np.pi))/5) #converting to fit in the array
         agent = self.agentList[bee.id]
         if (self.directionParams[angle] == -1):      #No user input, all is well
-            eprint("checking out:", bee.id, "direction:", int(bee.direction*(180/np.pi)))
+            #eprint("checking out:", bee.id, "direction:", int(bee.direction*(180/np.pi)))
             self.directions[angle] = self.directions[angle] + 1
             agent.atHub = 0
         elif self.directionParams[angle] < self.directions[angle]: #too many bees, stop it!
-            eprint("INHIBITED!!!!! ")
-            eprint("Angle:", angle, "  Id:", bee.id, "  Bee in hub?:", bee.inHub)
+            #eprint("INHIBITED!!!!! ")
+            #eprint("Angle:", angle, "  Id:", bee.id, "  Bee in hub?:", bee.inHub)
             self.environment.sort_by_state(bee.id, bee.state.__class__, Observing().__class__)
             bee.state = Observing(bee)
         elif (self.directionParams[angle] > self.directions[angle]): #there needs to be more bees in that direction anyways
-            eprint("checking out:", bee.id, "direction:", int(bee.direction*(180/np.pi)))
+            #eprint("checking out:", bee.id, "direction:", int(bee.direction*(180/np.pi)))
             self.directions[angle] = self.directions[angle] + 1
             agent.atHub = 0
         elif self.directionParams[angle] == self.directions[angle]: #perfect amount of bees, stop it
-            eprint("INHIBITED!!!!! ")
-            eprint("Angle:", angle, "  Id:", bee.id, "  Bee in hub?:", bee.inHub)
+            #eprint("INHIBITED!!!!! ")
+            #eprint("Angle:", angle, "  Id:", bee.id, "  Bee in hub?:", bee.inHub)
             self.environment.sort_by_state(bee.id, bee.state.__class__, Observing().__class__)
             bee.state = Observing(bee)
 
@@ -52,20 +52,17 @@ class hubController:
          #******if explorer set a timer for it, if assessor calculate projected time
         #so upon check out state is used to gauge stuff for right now it can just be used as the array
 
-    def beeCheckIn(self, id,dir): #technically only explorers or assessors will ever call this (which they do as they enter the hub)
+    def beeCheckIn(self, bee): #technically only explorers or assessors will ever call this (which they do as they enter the hub)
         #check if they are coming in from a weird angle if they're assessors, which can be a 'red flag'
-        eprint("checking in:", id, " Initial direction:", self.agentList[id].direction, " from:", int(dir*(180/np.pi))+180)
-        angle = int(self.agentList[id].direction/5)
-        #angle = angle % (2 * np.pi)
-        #angle = int(int(angle * (180 / np.pi)) / 5)   # converting to fit in the array
+        #eprint("checking in:", id, " Initial direction:", self.agentList[id].direction, " from:", int(dir*(180/np.pi))+180)
+        angle = int(self.agentList[bee.id].direction/5)
+
         self.directions[angle] = self.directions[angle] - 1
-        #if self.directions[angle] < 0:
-            #eprint("IT's negative!!")
-            #eprint("id:",id, " directionsValue:",self.directions[angle], " angle:", angle*5)
-        self.agentList[id].atHub = 1
+        self.agentList[bee.id].atHub = 1
+        if bee.state == Assessing().__class__:
+            print (json.dumps({"type": "missionUpdate", "data": {"x": bee.potential_site[0] , "y": bee.potential_site[1], "q": bee.q_value}}))
 
     def handleRadialControl(self, jsonInput):
-        #eprint(jsonInput)
         jsonDict = jsonInput['state'] # id, dictionary(r:radian, deg: degrees, val: 1-30)
         self.directionInput(jsonDict['deg'],jsonDict['val'])
 
@@ -75,8 +72,6 @@ class hubController:
         angle = int(int(direction % 360) / 5)   # converting to fit in the array
 
         self.directionParams[angle] = int(newValue)
-        #eprint(angle)
-        #eprint(int(newValue))
 
     def hiveAdjust(self, bees):
         #sortedParams = sorted(self.directionParams, operator.getitem(1), Reverse=True)
@@ -84,10 +79,8 @@ class hubController:
         for counter in range(0, 72): #the one problem with this is then the lower buckets have priority of sending bees out hence ^^
             angle = counter
             if self.directionParams[angle] == -1:  # No user input, all is well
-                #eprint("test1")
                 pass
             elif self.directionParams[angle] < self.directions[angle]:  # too many bees, just keep stopping them from leaving
-                #eprint("test2")
                 pass
             elif self.directionParams[angle] > self.directions[angle]:  # not enough bees send out more! from observers
 
