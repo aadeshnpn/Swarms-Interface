@@ -9,6 +9,9 @@ class Trap
 
   draw(ctx, debug = false)
   {
+    if (!debug)
+      return;
+
     ctx.save();
 
     ctx.fillStyle = "rgb(122, 18, 18)";
@@ -31,6 +34,11 @@ class Trap
 
     ctx.fill();
     ctx.stroke();
+
+    ctx.font = "14pt sans-serif";
+    ctx.fillStyle = "rgb(0, 0, 0)";
+    let width = ctx.measureText("Trap").width;
+    ctx.fillText("Trap", -width/2, 20 + this.radius);
 
     ctx.restore();
   }

@@ -14,6 +14,9 @@ class Agent
 
   draw(ctx, debug = false)
   {
+    if (!debug)
+      return;
+      
     ctx.save();
 
     // move the drawing context to the agent's x and y coords

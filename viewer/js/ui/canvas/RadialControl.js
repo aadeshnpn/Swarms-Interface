@@ -111,7 +111,7 @@ class Handle
 
 class RadialControl
 {
-   constructor()
+   constructor(ui)
    {
       this.handles = [];
       this.drag = {active: false, handle: null};
@@ -136,6 +136,8 @@ class RadialControl
       cursors.radialDrag.addEventListener('mousemove', this.onMouseMove.bind(this));
       cursors.radialDrag.addEventListener('mousedown', this.onMouseDown.bind(this));
       cursors.radialDrag.addEventListener('mouseup', this.onMouseUp.bind(this));
+
+      ui.register('updateMeta', this.update.bind(this));
    }
 
    update(data)

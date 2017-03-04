@@ -9,6 +9,9 @@ class Rough
 
   draw(ctx, debug = false)
   {
+    if (!debug)
+      return;
+      
     ctx.save();
 
     ctx.fillStyle = "rgba(244, 164, 96, 0.5)";

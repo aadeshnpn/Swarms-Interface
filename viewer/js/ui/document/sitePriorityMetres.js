@@ -16,6 +16,12 @@ priorityMetres.on('change', function(e)
 
 const sitePriorityMetres =
 {
+   init: function(ui)
+   {
+      ui.register('updateMeta', this.update.bind(this));
+      return this;
+   },
+
    update: function(data)
    {
       for (let [key, val] of Object.entries(data.controller.sitePriorities))

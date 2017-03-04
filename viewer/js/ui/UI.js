@@ -5,27 +5,44 @@ class UI
       this.selectedAgents = {};
       this.selectedNumber = 0;
       this.canvasElems = [];
-      this.documentElems = []
+      this.documentElems = [];
+      this.eventCallbacks = {};
 
-      this.canvasElems.push( new SelectionBoxes() );
-      this.canvasElems.push( new SelectionRect()  );
-      this.canvasElems.push( new RadialControl()  );
-      this.canvasElems.push( new BaitBombGhost()  );
+      this.canvasElems.push( new SelectionBoxes(this) );
+      this.canvasElems.push( new SelectionRect (this) );
+      this.canvasElems.push( new RadialControl (this) );
+      this.canvasElems.push( new BaitBombGhost (this) );
+      this.canvasElems.push( new MissionLayer  (this) );
 
-      this.documentElems.push( debugParams );
-      this.documentElems.push( sitePriorityMetres );
+      this.documentElems.push( debugParams.init(this) );
+      this.documentElems.push( sitePriorityMetres.init(this) );
 
       this.activeCursor = cursors.default.activate();
    }
 
-   update(data)
+   register(event, callback)
+   {
+     if (!this.eventCallbacks[event])
+        this.eventCallbacks[event] = [];
+
+      this.eventCallbacks[event].push(callback);
+   }
+
+   on(msg)
+   {
+     for (let cb of this.eventCallbacks[msg.type])
+        cb(msg.data);
+   }
+
+   // indiviual components now must register for any updates they want
+   /*update(data)
    {
       for (let element of this.canvasElems)
          element.update(data);
 
       for (let element of this.documentElems)
          element.update(data);
-   }
+   }*/
 
    draw(ctx, debug = false)
    {

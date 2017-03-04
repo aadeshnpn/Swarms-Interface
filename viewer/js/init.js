@@ -95,11 +95,6 @@ socket.on('update', function(worldUpdate)
    }
 });
 
-socket.on('updateMeta', function(update)
-{
-   ui.update(update.data);
-});
-
 function draw()
 {
    finishedDrawing = false;
@@ -121,3 +116,13 @@ function draw()
    // maintain a maximum rate of 60fps
    window.setTimeout(() => { window.requestAnimationFrame(draw)}, 1000 / 60);
 }
+
+socket.on('updateMission', function(data)
+{
+  ui.on(data);
+});
+
+socket.on('updateMeta', function(data)
+{
+   ui.on(data);
+});

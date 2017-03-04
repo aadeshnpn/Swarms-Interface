@@ -11,6 +11,9 @@ class Site
 
   draw(ctx, debug = false)
   {
+    if (!debug)
+      return;
+
     var rVal = (this.q > 0.5) ? (1.0 - this.q) * 2 : 1.0;
     var gVal = (this.q > 0.5) ? 1.0 : this.q * 2;
 
@@ -27,9 +30,10 @@ class Site
 
     if (debug == true)
     {
-      ctx.font = "10px sans-serif";
+      ctx.font = "14pt sans-serif";
       ctx.fillStyle = "rgb(0, 0, 0)";
-      ctx.fillText(`Q: ${this.q}`, -10, 20);
+      let width = ctx.measureText(`Site: ${this.q}`).width;
+      ctx.fillText(`Site: ${this.q}`, -width/2, 20 + this.radius);
     }
 
     ctx.restore();

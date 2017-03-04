@@ -14,9 +14,15 @@ buttonDebugParams.addEventListener("click", function(e)
    socket.emit('input', {'type': 'parameterUpdate', params: paramObj});
 })
 
-// interface
+// interface (TODO: just go ahead and convert this whole thing to a class)
 const debugParams =
 {
+   init: function(ui)
+   {
+      ui.register('updateMeta', this.update.bind(this));
+      return this;
+   },
+
    update: function(data)
    {
       for (let [param, val] of Object.entries(data.parameters))

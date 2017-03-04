@@ -3,6 +3,8 @@ import numpy as np
 from debug import *
 import copy
 import operator
+import json
+
 class beeInfo:
     def __init__(self, direction, velocity, state, AtHub):
         self.direction = direction #stored in degrees
@@ -59,8 +61,8 @@ class hubController:
 
         self.directions[angle] = self.directions[angle] - 1
         self.agentList[bee.id].atHub = 1
-        if bee.state == Assessing().__class__:
-            print (json.dumps({"type": "missionUpdate", "data": {"x": bee.potential_site[0] , "y": bee.potential_site[1], "q": bee.q_value}}))
+        if (isinstance(bee.state, Assessing)):
+            print (json.dumps({"type": "updateMission", "data": {"x": bee.potential_site[0] , "y": bee.potential_site[1], "q": bee.q_value}}))
 
     def handleRadialControl(self, jsonInput):
         jsonDict = jsonInput['state'] # id, dictionary(r:radian, deg: degrees, val: 1-30)
