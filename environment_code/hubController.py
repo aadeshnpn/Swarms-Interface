@@ -108,6 +108,19 @@ class hubController:
                 #pass
                 self.directionParams[angle] = -1
 
+        radialJson = {
+            "type": "updateRadial",
+            "data":
+            {
+                "controller":
+                {
+                    "agentDirections" : self.directions
+                }
+            }
+        }
+
+        print(json.dumps(radialJson))
+
 
     def reset(self, radius, agents, environment):
         self.environment = environment
@@ -134,6 +147,23 @@ class hubController:
     def handlePriorityUpdate(self, json):
         self.siteDistancePriority = float( json["sitePriorities"]["distance"] )
         self.siteSizePriority     = float( json["sitePriorities"]["size"]     )
+
+        priorityJson = {
+            "type": "updateSitePriorities",
+            "data":
+            {
+                "controller":
+                {
+                    "sitePriorities" :
+                    {
+                        "distance" : self.hubController.siteDistancePriority,
+                        "size"     : self.hubController.siteSizePriority
+                    }
+                }
+            }
+        }
+
+        print(json.dumps(priorityJson))
 
 '''
 Hub controller TODO: add functionality for the mission state

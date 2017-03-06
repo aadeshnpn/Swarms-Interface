@@ -117,12 +117,14 @@ function draw()
    window.setTimeout(() => { window.requestAnimationFrame(draw)}, 1000 / 60);
 }
 
+// TODO: I don't like where this is going, I should be able to make one subscription
+//       to the socket and let the UI class sort out all the details
+
 socket.on('updateMission', function(data)
 {
   ui.on(data);
 });
 
-socket.on('updateMeta', function(data)
-{
-   ui.on(data);
-});
+socket.on('updateRadial'        , function(data) { ui.on(data) });
+socket.on('updateDebugParams'   , function(data) { ui.on(data) });
+socket.on('updateSitePriorities', function(data) { ui.on(data) });

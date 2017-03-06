@@ -14,8 +14,8 @@ class UI
       this.canvasElems.push( new BaitBombGhost (this) );
       this.canvasElems.push( new MissionLayer  (this) );
 
-      this.documentElems.push( debugParams.init(this) );
-      this.documentElems.push( sitePriorityMetres.init(this) );
+      this.documentElems.push( new DebugParams       (this) );
+      this.documentElems.push( new SitePriorityMeters(this) );
 
       this.activeCursor = cursors.default.activate();
    }

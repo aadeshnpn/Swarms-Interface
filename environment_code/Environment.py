@@ -343,8 +343,10 @@ class Environment:
         self.number_of_agents         = int  (params['numberOfAgents'          ])
         self.frames_per_sec           = int  (params['fps'                     ])
 
-        #self.useDefaultParams = False
         self.restart_simulation = True
+
+        # echo the change out for any other connected clients
+        print(self.parametersToJson())
 
     def restart_sim(self, json):
         self.restart_simulation = True
@@ -360,7 +362,10 @@ class Environment:
         self.inputEventManager.subscribe('parameterUpdate', self.updateParameters)
         self.inputEventManager.subscribe('restart', self.restart_sim)
         self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
+
+        print(self.parametersToJson())
         world.to_json()
+
         while True:
             if not self.isPaused:
                 world.to_json()
@@ -454,24 +459,31 @@ class Environment:
                     "rough"     : self.rough,
                     "attractors": list(map(lambda a: a.toJson(), self.attractors)),
                     "repulsors" : list(map(lambda r: r.toJson(), self.repulsors )),
-                    "agents"    : self.agents_to_json(),
+                    "agents"    : self.agents_to_json()
                 }
             })
         )
 
-        newMetaJson = {
-            "type": "updateMeta",
+    def agents_to_json(self):
+        agents = []
+        for agent_id in self.agents:
+            agent_dict = {}
+            agent_dict["x"] = self.agents[agent_id].location[0]
+            agent_dict["y"] = self.agents[agent_id].location[1]
+            agent_dict["id"] = self.agents[agent_id].id
+            agent_dict["state"] = self.agents[agent_id].state.name
+            agent_dict["direction"] = self.agents[agent_id].direction
+            agent_dict["potential_site"] = self.agents[agent_id].potential_site
+            agent_dict["live"] = self.agents[agent_id].live
+            agent_dict["qVal"] = self.agents[agent_id].q_value
+            agents.append(agent_dict)
+        return agents
+
+    def parametersToJson(self):
+        parameterJson = {
+            "type": "updateDebugParams",
             "data":
             {
-                "controller":
-                {
-                    "agentDirections" : self.hubController.directions,
-                    "sitePriorities" :
-                    {
-                        "distance" : self.hubController.siteDistancePriority,
-                        "size"     : self.hubController.siteSizePriority
-                    }
-                },
                 "parameters":
                 {
                     "beePipingThreshold"      : self.beePipingThreshold,
@@ -489,24 +501,7 @@ class Environment:
             }
         }
 
-        if (newMetaJson != self.previousMetaJson):
-            self.previousMetaJson = copy.deepcopy(newMetaJson)
-            print(json.dumps(newMetaJson))
-
-    def agents_to_json(self):
-        agents = []
-        for agent_id in self.agents:
-            agent_dict = {}
-            agent_dict["x"] = self.agents[agent_id].location[0]
-            agent_dict["y"] = self.agents[agent_id].location[1]
-            agent_dict["id"] = self.agents[agent_id].id
-            agent_dict["state"] = self.agents[agent_id].state.name
-            agent_dict["direction"] = self.agents[agent_id].direction
-            agent_dict["potential_site"] = self.agents[agent_id].potential_site
-            agent_dict["live"] = self.agents[agent_id].live
-            agent_dict["qVal"] = self.agents[agent_id].q_value
-            agents.append(agent_dict)
-        return agents
+        return json.dumps(parameterJson)
 
 file = "world.json"
 world = Environment(os.path.join(ROOT_DIR, file))

@@ -137,7 +137,7 @@ class RadialControl
       cursors.radialDrag.addEventListener('mousedown', this.onMouseDown.bind(this));
       cursors.radialDrag.addEventListener('mouseup', this.onMouseUp.bind(this));
 
-      ui.register('updateMeta', this.update.bind(this));
+      ui.register('updateRadial', this.update.bind(this));
    }
 
    update(data)
