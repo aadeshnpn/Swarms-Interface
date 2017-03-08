@@ -57,6 +57,20 @@ class Agent(StateMachine):
         self.SiteAssessRadius = site_assess_radius  # so far this is arbitrary
         self.PipingTimer = piping_time  # long enough to allow all bees to make it back before commit?
 
+        # These parameters may be modified at run-time
+        self.current_parameters = {"PipingThreshold":       12,
+                                   "Velocity":              2,
+                                   "ExploreTime":           3625,
+                                   "RestTime":              450,
+                                   "DanceTime":             1150,
+                                   "ObserveTime":           2000,
+                                   "SiteAssessTime":        235,
+                                   "SiteAssessRadius":      15,
+                                   "PipingTime":            1200}
+
+        # This time-stamp should be updated whenever the bee receives new parameters
+        self.param_time_stamp = 0
+
         # bee agent variables
         self.live = True
         self.id = agentId  # for communication with environment
@@ -70,9 +84,10 @@ class Agent(StateMachine):
         self.assessments = 1
         self.hubRadius = hub["radius"]
         self.inHub = True
+        self.atSite = False
+        self.siteIndex = None
         self.goingToSite = True
         self.quadrant = []
-
 
         # create table here.
         dict = {(Exploring().__class__, input.nestFound): [None, Assessing(self)],
@@ -99,6 +114,19 @@ class Agent(StateMachine):
         self.repulsor = None
         self.ignore_repulsor = None
 
+    def update_params(self, updated_parameters):
+        self.current_parameters = updated_parameters
+
+        self.PipingThreshold = self.current_parameters["PipingThreshold"]
+        self.GlobalVelocity = self.current_parameters["Velocity"]
+        self.ExploreTimeMultiplier = self.current_parameters["ExploreTime"]
+        self.RestTime = self.current_parameters["RestTime"]
+        self.DanceTime = self.current_parameters["DanceTime"]
+        self.ObserveTime = self.current_parameters["ObserveTime"]
+        self.SiteAssessTime = self.current_parameters["SiteAssessTime"]
+        self.SiteAssessRadius = self.current_parameters["SiteAssessRadius"]
+        self.PipingTimer = self.current_parameters["PipingTime"]
+
 # so, the exploring part needs to give the input..
 class Exploring(State):
     def __init__(self, agent=None, ExploreTimeMultiplier=None):
@@ -123,7 +151,7 @@ class Exploring(State):
                     agent.inHub = False
                     return
 
-        new_q = environment.get_q(agent.location[0], agent.location[1])["q"]
+        new_q = environment.get_q(agent)["q"]
         agent.q_value = new_q
         agent.attractor = environment.getAttractor(agent.location)
         if(agent.attractor is not None and agent.attracted is None):
@@ -199,7 +227,7 @@ class Assessing(State):
                 agent.inHub = True
 
         if ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2 ) < 1:
-            siteInfo = environment.get_q(agent.location[0],agent.location[1])
+            siteInfo = environment.get_q(agent)
             if(siteInfo["q"] >= 0): #CHECK THIS, IT MAY BE A PROBLEM...
                 agent.goingToSite = False
 
@@ -431,7 +459,7 @@ class SiteAssess(State):
 
     def sense(self, agent, environment):
         ## Code to help the bees find the center of the site
-        new_q = environment.get_q(agent.location[0], agent.location[1])["q"]
+        new_q = environment.get_q(agent)["q"]
         if new_q > agent.q_value:
             agent.potential_site = [agent.location[0], agent.location[1]]
             agent.q_value = new_q

@@ -1,7 +1,8 @@
 from agent.agent import *
-from worldGenerator import worldGenerator
+# from worldGenerator import worldGenerator
 from InputEventManager import InputEventManager
 from potentialField import PotentialField
+from infoStation import InfoStation
 from debug import *
 import flowController
 import numpy as np
@@ -29,6 +30,7 @@ class Environment:
         self.potential_fields = []
         self.traps = []
         self.rough = []
+        self.info_stations = []
         self.agents = {}
         self.states = {Exploring().__class__:[],
                        Assessing().__class__: [],
@@ -44,7 +46,7 @@ class Environment:
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
 
         #  bee parameters
-        self.beePipingThreshold       =   14
+        self.beePipingThreshold       =   12
         self.beeGlobalVelocity        =    2
         self.beeExploreTimeMultiplier = 3625
         self.beeRestTime              =  450
@@ -93,6 +95,9 @@ class Environment:
         self.rough = data["rough terrain"]
         self.create_potential_fields()
 
+        for x in range(len(self.sites)):
+            self.info_stations.append(InfoStation())
+
     def getClosestFlowController(self, flowControllers, agent_location):
         if(len(flowControllers) == 0):
             raise ValueError('flowControllers list must not be empty.')
@@ -140,36 +145,45 @@ class Environment:
             eprint("Error:", agent_id, "not in", prev_state)
             eprint("It wants to change to", cur_state)
 
-
     # Function to return the Q-value for given coordinates. Returns 0 if nothing is there and a value between 0 and 1
     # if it finds a site.
-    def get_q(self, x, y):
-
+    def get_q(self, agent):
         # Calculate the distance between the coordinates and the center of each site, then compare that distance with
         # the radius of the obstacles, traps, rough spots, and sites
-
-        for site in self.sites:
-            x_dif = x - site["x"]
-            y_dif = y - site["y"]
+        for i, site in enumerate(self.sites):
+            x_dif = agent.location[0] - site["x"]
+            y_dif = agent.location[1] - site["y"]
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
             if tot_dif <= site["radius"]:
+                info = self.info_stations[i]
+                if not agent.atSite:
+                    info.bee_count += 1
+                    agent.atSite = True
+                    agent.siteIndex = i
+                    if info.check_for_changes(agent.current_parameters, agent.param_time_stamp):
+                        agent.update_params(info.parameters)
+                        agent.param_time_stamp = info.last_update
+
+                # return the q_value as a linear gradient. The center of the site will return 100% of the q_value,
+                # the edge will return 75% of the q_value
                 return {
                     "radius": site["radius"],
-                    "q"     : site["q_value"] -
-                              (tot_dif / site["radius"] * .25 * site["q_value"])
+                    "q"     : site["q_value"] - (tot_dif / site["radius"] * .25 * site["q_value"])
                 }
-                # the q_value is a linear gradient. The center of the
-                # site will return 100% of the q_value, the edge will
-                # return 75% of the q_value
-                # return site[3]*np.random.normal(1, .2, 1)  # for testing purposes I'm just returning the q value.
-                # return (site[3] / site[2] ** (tot_dif / site[2])) * site[4] # Uses an inverse-power function to compute
-                # q_value based on distance from center of site,
-                # multiplied by the site's ease of detection
+
+        if agent.atSite:
+            self.info_stations[agent.siteIndex].bee_count -= 1
+
+            if self.info_stations[agent.siteIndex].check_for_changes(agent.current_parameters, agent.param_time_stamp):
+                agent.update_params(self.info_stations[agent.siteIndex].parameters)
+                agent.param_time_stamp = self.info_stations[agent.siteIndex].last_update
+            agent.atSite = False
+            agent.siteIndex = None
+
         return {"radius": -1, "q": 0}
 
-        # Returns 0 if terrain is clear, -1 if it is rough (slows velocity of agent to half-speed), -2 if there is an obstacle,
-        # and -3 if there is a trap
-
+    # Returns 0 if terrain is clear, -1 if it is rough (slows velocity of agent to half-speed), -2 if there is an
+    # obstacle, and -3 if there is a trap
     def check_terrain(self, x, y):
         for trap in self.traps:
             x_dif = x - trap["x"]
@@ -332,7 +346,7 @@ class Environment:
         params = json['params']
 
         self.beePipingThreshold       = int  (params['beePipingThreshold'      ])
-        self.beeGlobalVelocity        = int  (params['beeGlobalVelocity'       ])
+        self.beeGlobalVelocity        = float(params['beeGlobalVelocity'       ])
         self.beeExploreTimeMultiplier = float(params['beeExploreTimeMultiplier'])
         self.beeRestTime              = int  (params['beeRestTime'             ])
         self.beeDanceTime             = int  (params['beeDanceTime'            ])
@@ -375,8 +389,8 @@ class Environment:
                         agent.act()
                         agent.sense(self)
                         self.suggest_new_direction(agent.id)
-                        wind_direction = 1  # in radians
-                        wind_velocity = .01
+                        # wind_direction = 1  # in radians
+                        # wind_velocity = .01
                         # uncomment the next line to add wind to the environment
                         #self.wind(wind_direction, wind_velocity)
                         agent.update(self)
