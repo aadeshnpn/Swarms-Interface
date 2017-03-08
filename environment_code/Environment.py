@@ -341,12 +341,19 @@ class Environment:
         self.beeSiteAccessRadius      = int  (params['beeSiteAccessRadius'     ])
         self.beePipingTimer           = int  (params['beePipingTimer'          ])
         self.number_of_agents         = int  (params['numberOfAgents'          ])
-        self.frames_per_sec           = int  (params['fps'                     ])
 
         self.restart_simulation = True
 
         # echo the change out for any other connected clients
         print(self.parametersToJson())
+
+    def updateUIParameters(self, json):
+        params = json['params']
+
+        self.frames_per_sec           = int  (params['uiFps'                   ])
+
+        # echo the change out for any other connected clients
+        print(self.UIParametersToJson())
 
     def restart_sim(self, json):
         self.restart_simulation = True
@@ -360,6 +367,7 @@ class Environment:
         self.inputEventManager.subscribe('attractor', self.newAttractor)
         self.inputEventManager.subscribe('repulsor', self.newRepulsor)
         self.inputEventManager.subscribe('parameterUpdate', self.updateParameters)
+        self.inputEventManager.subscribe('UIParameterUpdate', self.updateUIParameters)
         self.inputEventManager.subscribe('restart', self.restart_sim)
         self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
 
@@ -495,8 +503,21 @@ class Environment:
                     "beeSiteAccessTime"       : self.beeSiteAccessTime,
                     "beeSiteAccessRadius"     : self.beeSiteAccessRadius,
                     "beePipingTimer"          : self.beePipingTimer,
-                    "numberOfAgents"          : self.number_of_agents,
-                    "fps"                     : self.frames_per_sec
+                    "numberOfAgents"          : self.number_of_agents
+                }
+            }
+        }
+
+        return json.dumps(parameterJson)
+
+    def UIParametersToJson(self):
+        parameterJson = {
+            "type": "updateUIParams",
+            "data":
+            {
+                "parameters":
+                {
+                    "uiFps"                     : self.frames_per_sec
                 }
             }
         }
