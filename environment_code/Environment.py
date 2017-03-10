@@ -313,12 +313,15 @@ class Environment:
             agent.location[1] += np.sin(agent.direction) * agent.velocity * slow_down \
                                     + np.sin(potential_field_d) * potential_field_v
 
+        '''
+        This is computationally very expensive!
         # add collision checking for other bees
         for agent_id in self.agents:
             if (self.agents[agent_id].location[:] == agent.location[:]) and (agentId != agent_id):
                 agent.location[0] -= np.cos(agent.direction) * agent.velocity
                 agent.location[1] -= np.sin(agent.direction) * agent.velocity
                 break
+        '''
 
         # If the agent goes outside of the limits, it re-enters on the opposite side.
         if agent.location[0] > self.x_limit:
