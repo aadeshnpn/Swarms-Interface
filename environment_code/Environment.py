@@ -224,6 +224,7 @@ class Environment:
                     agent.live = False
                     self.dead_agents.append(agent)
                     self.states[agent.state].remove(agent_id)
+                    del self.agents[agent_id]
                     return
                 elif terrain_value == -2:
                     pass
@@ -484,14 +485,31 @@ class Environment:
                     "rough"     : self.rough,
                     "attractors": list(map(lambda a: a.toJson(), self.attractors)),
                     "repulsors" : list(map(lambda r: r.toJson(), self.repulsors )),
-                    "agents"    : self.agents_to_json()
+                    "agents"    : self.agents_to_json(),
+                    "dead_agents": self.dead_agents_to_json()
                 }
             })
         )
 
+    def dead_agents_to_json(self):
+        dead_agents = []
+        for agent in self.dead_agents:
+            agent_dict = {"x": agent.location[0],
+                          "y": agent.location[1],
+                          "id": agent.id,
+                          "state": agent.state.name,
+                          "direction": agent.direction,
+                          "potential_site": agent.potential_site,
+                          "live": agent.live,
+                          "qVal": agent.q_value}
+            dead_agents.append(agent_dict)
+        return dead_agents
+
     def agents_to_json(self):
         agents = []
         for agent_id in self.agents:
+            # would it not be better to initialize this dictionary all at once?
+            # dict = {"x":loc[0], "y":loc[1], "id":id, ..., "qVal":q_value}
             agent_dict = {}
             agent_dict["x"] = self.agents[agent_id].location[0]
             agent_dict["y"] = self.agents[agent_id].location[1]
