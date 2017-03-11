@@ -17,6 +17,7 @@ class UI
       this.documentElems.push( new DebugParams       (this) );
       this.documentElems.push( new UIParams			  (this) );
       this.documentElems.push( new SitePriorityMeters(this) );
+      this.documentElems.push( new DebugTable        (this) );
 
       this.activeCursor = cursors.default.activate();
    }
@@ -81,18 +82,6 @@ class UI
       for (var id of ids)
       {
          this.selectedAgents[id] = true;
-         var row = $(document.createElement('tr'));
-         for (let [prop, val] of Object.entries(world.agents[0]))
-         {
-           // KLUDGE CODE TEMPORARY PUT IN A PROPER SPOT SOMETIME
-           if (!$(`#infoTableHeaders #${prop}`).length)
-           {
-             $(`#infoTableHeaders`).append(`<th id='${prop}'>${prop}</th>`);
-           }
-           row.append(`<td id='${prop}${id}'></td>`);
-         }
-         //console.log(row);
-         $('#infoTable').append(row);
       }
 
    }
@@ -101,8 +90,6 @@ class UI
    {
       this.selectedAgents = {};
       this.selectedNumber = 0;
-      $('#infoTable').html("");
-      $('#infoTable').append('<tr id="infoTableHeaders"></tr>');
    }
 
    isAgentSelected(id)

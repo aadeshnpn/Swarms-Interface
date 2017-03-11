@@ -25,6 +25,16 @@ body
    width: 100%;
 }
 
+.agentInfo td
+{
+	text-align: right;
+}
+
+.agentCoord
+{
+	width: 15%;
+}
+
 #debugTools
 {
    float: left;

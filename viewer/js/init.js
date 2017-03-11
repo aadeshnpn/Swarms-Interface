@@ -75,24 +75,6 @@ socket.on('update', function(worldUpdate)
       //ui.RadialControl.updateActual(world.hub.directions);
    }
 
-   // TODO: work this in to the rest of the UI refactor
-   for (var agent of world.agents)
-   {
-      if (ui.isAgentSelected(agent.id))
-      {
-         // Find an update all the information elements we created in the
-         // selection process
-         for (var [prop, val] of Object.entries(agent))
-         {
-            if (typeof val === 'number')
-               val = val.toFixed(2);
-           $(`#${prop}${agent.id}`).html(val);
-         }
-         //document.getElementById(`x${agent.id}`).innerHTML = Math.round(agent.x);
-         //document.getElementById(`y${agent.id}`).innerHTML = Math.round(agent.y);
-         //document.getElementById(`state${agent.id}`).innerHTML = agent.state;
-      }
-   }
 });
 
 function draw()
@@ -125,6 +107,7 @@ socket.on('updateMission', function(data)
   ui.on(data);
 });
 
+socket.on('update'              , function(data) { ui.on(data) });
 socket.on('updateRadial'        , function(data) { ui.on(data) });
 socket.on('updateDebugParams'   , function(data) { ui.on(data) });
 socket.on('updateUIParams'      , function(data) { ui.on(data) });
