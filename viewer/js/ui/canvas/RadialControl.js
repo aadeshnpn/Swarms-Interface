@@ -95,7 +95,7 @@ class Handle
 
    beeNumberToRadiusScale(number)
    {
-      return ((number - 1) / 19) + 1;
+      return ((number - 1) / 10) + 1;
    }
 
    isHovered(x, y)
