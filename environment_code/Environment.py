@@ -302,6 +302,7 @@ class Environment:
                 if self.states[state].count(agentId) > 0:
                     self.states[state].remove(agentId)
                     break
+            del self.agents[agentId]
             return
         elif terrain_value == -2:
             #  pass
@@ -395,17 +396,26 @@ class Environment:
         while True:
             if not self.isPaused:
                 world.to_json()
-                for agent_id in self.agents:
+                keys = list(self.agents.keys())  # deleting a key mid-iteration (suggest_new_direction())
+                                                        # makes python mad...
+                for agent_id in keys:
+                    '''
                     agent = self.agents[agent_id]
-                    if agent.live is True:
-                        agent.act()
-                        agent.sense(self)
-                        self.suggest_new_direction(agent.id)
-                        # wind_direction = 1  # in radians
-                        # wind_velocity = .01
-                        # uncomment the next line to add wind to the environment
-                        #self.wind(wind_direction, wind_velocity)
-                        agent.update(self)
+                    agent.act()
+                    agent.sense(self)
+                    self.suggest_new_direction(agent.id)
+                    # wind_direction = 1  # in radians
+                    # wind_velocity = .01
+                    # uncomment the next line to add wind to the environment
+                    #self.wind(wind_direction, wind_velocity)
+                    agent.update(self)
+                    '''
+                    # is this faster?
+                    self.agents[agent_id].act()
+                    self.agents[agent_id].sense(self)
+                    self.agents[agent_id].update(self)
+                    self.suggest_new_direction(agent_id)
+
                 self.hubController.hiveAdjust(self.agents)
 
             self.updateFlowControllers()
