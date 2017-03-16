@@ -1,11 +1,13 @@
 class BaitBombGhost
 {
-  constructor()
+  constructor(ui)
   {
     cursors.placeBaitBomb.addEventListener('mousemove', this.onMouseMove.bind(this));
     cursors.placeBaitBomb.addEventListener('mousedown', this.onMouseDown.bind(this));
     this.cursorCoords = {x: null, y: null};
     this.active = false;
+
+    ui.register('restart', this.reset.bind(this));
   }
 
   update()
@@ -66,5 +68,11 @@ class BaitBombGhost
     socket.emit('input', {type: entityType, x: worldRelative.x, y: worldRelative.y});
     this.active = false;
     ui.setActiveCursor(cursors.default);
+  }
+
+  reset()
+  {
+    this.cursorCoords = {x: null, y: null};
+    this.active = false;
   }
 }

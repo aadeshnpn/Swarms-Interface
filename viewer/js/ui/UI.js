@@ -20,6 +20,8 @@ class UI
       this.documentElems.push( new DebugTable        (this) );
 
       this.activeCursor = cursors.default.activate();
+
+      this.register('restart', this.reset.bind(this));
    }
 
    register(event, callback)
@@ -98,5 +100,9 @@ class UI
          return true;
    }
 
+   reset()
+   {
+      this.clearSelectedAgents();
+   }
 
 }

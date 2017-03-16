@@ -458,6 +458,13 @@ class Environment:
         self.clear_for_reset()
         self.add_agents()
         self.hubController.reset([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self)
+        # echo the restart for any other connected clients
+        print(
+            json.dumps(
+            {
+                "type": "restart"
+            })
+        )
 
     def create_potential_fields(self):
         for obstacle in self.obstacles:
