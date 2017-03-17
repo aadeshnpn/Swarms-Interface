@@ -225,36 +225,7 @@ class Assessing(State):
             if not agent.goingToSite and not agent.inHub:
                 environment.hubController.beeCheckIn(agent)
                 agent.inHub = True
-        '''
-        if ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2 ) < 1:
-            siteInfo = environment.get_q(agent)
-            if(siteInfo["q"] >= 0): #CHECK THIS, IT MAY BE A PROBLEM...
-                agent.goingToSite = False
 
-                distance = np.sqrt((agent.location[0] - agent.hub[0])**2 + (agent.location[1] - agent.hub[1]**2))
-                size     = siteInfo["radius"]
-                q        = siteInfo["q"]
-
-
-
-                # TODO: have the bees update these values only on hub check-in?
-                priorities = environment.hubController.getSitePriorities()
-
-                # TODO: what is a good way to handle constants in python
-                STD_SITE_SIZE = 15
-
-                # scale from (0 to 30) to (-1 to 1)
-                size = size / (STD_SITE_SIZE) - 1
-
-                # scale from (0 to max dist) to (-1 to 1)
-                distance = distance / (np.sqrt((environment.x_limit**2) + (environment.y_limit**2)) / 2) - 1
-
-                adjustedQ = siteInfo["q"] + priorities["distance"] * distance + priorities["size"] * size
-
-                #eprint("distance: ", distance, "; size: ", size, "; q: ", q, "; pDist: ", priorities["distance"], "; pSize: ", priorities["size"], "; adjusted: ", adjustedQ)
-
-                agent.q_value = 1 if adjustedQ > 1 else 0 if adjustedQ < 0 else adjustedQ
-        '''
     def act(self, agent):
         self.move(agent)
 
@@ -337,6 +308,7 @@ class Dancing(State):
         # info from environment
         if self.dance_counter < 1:
             agent.assessments += 1
+            agent.q_value = 0
             return input.notTiredDance
 
         else:
@@ -459,12 +431,37 @@ class SiteAssess(State):
 
     def sense(self, agent, environment):
         ## Code to help the bees find the center of the site
-        new_q = environment.get_q(agent)["q"]
-        if new_q > agent.q_value:
+        siteInfo = environment.get_q(agent)
+        if siteInfo["q"] > agent.q_value:
             agent.potential_site = [agent.location[0], agent.location[1]]
-            agent.q_value = new_q
+            agent.q_value = siteInfo["q"]
         if self.check_num_close_assessors(agent, environment):
             self.thresholdPassed = True
+
+        if(siteInfo["q"] >= 0): #CHECK THIS, IT MAY BE A PROBLEM...
+
+            distance = np.sqrt((agent.location[0] - agent.hub[0])**2 + (agent.location[1] - agent.hub[1]**2))
+            size     = siteInfo["radius"]
+            q        = siteInfo["q"]
+
+            # TODO: have the bees update these values only on hub check-in?
+            priorities = environment.hubController.getSitePriorities()
+
+            # TODO: what is a good way to handle constants in python
+            STD_SITE_SIZE = 15
+
+            # scale from (0 to 30) to (-1 to 1)
+            size = size / (STD_SITE_SIZE) - 1
+
+            # scale from (0 to max dist) to (-1 to 1)
+            distance = distance / (np.sqrt((environment.x_limit**2) + (environment.y_limit**2)) / 2) - 1
+
+            adjustedQ = siteInfo["q"] + priorities["distance"] * distance + priorities["size"] * size
+
+            #eprint("distance: ", distance, "; size: ", size, "; q: ", q, "; pDist: ", priorities["distance"], "; pSize: ", priorities["size"], "; adjusted: ", adjustedQ)
+
+            agent.q_value = 1 if adjustedQ > 1 else 0 if adjustedQ < 0 else adjustedQ
+
 
     def act(self, agent):
         self.move(agent)
