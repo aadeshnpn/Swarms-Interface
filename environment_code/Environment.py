@@ -57,8 +57,10 @@ class Environment:
         self.beePipingTimer           = 1200  # long enough to allow all bees to make it back before commit?
 
         #  environment parameters
+
         self.number_of_agents = 200
         self.frames_per_sec = 220
+
 
         #self.useDefaultParams = True
         self.restart_simulation = False
