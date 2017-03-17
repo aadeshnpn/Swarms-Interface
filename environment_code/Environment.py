@@ -57,11 +57,12 @@ class Environment:
         self.beePipingTimer           = 1200  # long enough to allow all bees to make it back before commit?
 
         #  environment parameters
-        self.number_of_agents = 100
+        self.number_of_agents = 1000
         self.frames_per_sec = 60
 
         #self.useDefaultParams = True
         self.restart_simulation = False
+        self.change_agent_params = False
 
         self.add_agents()
 
@@ -361,10 +362,22 @@ class Environment:
         self.beePipingTimer           = int  (params['beePipingTimer'          ])
         self.number_of_agents         = int  (params['numberOfAgents'          ])
 
-        self.restart_simulation = True
+        self.change_agent_params = True
 
         # echo the change out for any other connected clients
         print(self.parametersToJson())
+
+    def updateAgentParameters(self, agent):
+        agent.PipingThreshold = self.beePipingThreshold
+        agent.GlobalVelocity = self.beeGlobalVelocity
+        agent.ExploreTimeMultiplier = self.beeExploreTimeMultiplier
+        agent.RestTime = self.beeRestTime
+        agent.DanceTime = self.beeDanceTime
+        agent.ObserveTime = self.beeObserveTime
+        agent.SiteAssessTime = self.beeSiteAccessTime
+        agent.SiteAssessRadius = self.beeSiteAccessRadius
+        agent.PipingTimer = self.beePipingTimer
+
 
     def updateUIParameters(self, json):
         params = json['params']
@@ -410,6 +423,8 @@ class Environment:
                     #self.wind(wind_direction, wind_velocity)
                     agent.update(self)
                     '''
+                    if self.change_agent_params:
+                        self.updateAgentParameters(self.agents[agent_id])
                     # is this faster?
                     self.agents[agent_id].act()
                     self.agents[agent_id].sense(self)
@@ -417,6 +432,8 @@ class Environment:
                     self.suggest_new_direction(agent_id)
 
                 self.hubController.hiveAdjust(self.agents)
+                if self.change_agent_params:
+                    self.change_agent_params = False
 
             self.updateFlowControllers()
 
