@@ -1,4 +1,4 @@
-class Agent
+class DeadAgent
 {
   constructor(agentJson)
   {
@@ -16,7 +16,7 @@ class Agent
   {
     if (!debug)
       return;
-      
+
     ctx.save();
 
     // move the drawing context to the agent's x and y coords
@@ -25,7 +25,7 @@ class Agent
     ctx.save();
 
     ctx.rotate(this.rotation);
-    ctx.drawImage(bee, -bee.width/2, -bee.height/2);
+    ctx.drawImage(beeDead, -bee.width/2, -bee.height/2);
 
     ctx.restore();
 
