@@ -8,7 +8,7 @@ class SitePriorityMeters
       {
          var priorityObj = {};
 
-         var prioritiesSerialised = priorityMetres.serializeArray();
+         var prioritiesSerialised = this.priorityMeters.serializeArray();
 
          for (let entry of prioritiesSerialised)
          {

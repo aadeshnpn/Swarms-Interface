@@ -21,10 +21,10 @@ class Obstacle
     // img, x, y, width, height
     ctx.drawImage(obstacle, 0, 0, this.radius * 2, this.radius * 2);
 
-    ctx.font = "14pt sans-serif";
+    /*ctx.font = "14pt sans-serif";
     ctx.fillStyle = "rgb(0, 0, 0)";
     let width = ctx.measureText("Obstacle").width;
-    ctx.fillText("Obstacle", this.radius - width/2, this.radius + 20 + this.radius);
+    ctx.fillText("Obstacle", this.radius - width/2, this.radius + 20 + this.radius);*/
 
     ctx.restore();
   }
