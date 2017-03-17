@@ -11,6 +11,7 @@ class UI
       this.canvasElems.push( new SelectionBoxes(this) );
       this.canvasElems.push( new SelectionRect (this) );
       this.canvasElems.push( new RadialControl (this) );
+      this.canvasElems.push( new RadialControl (this, {interactive: false, colour: "green", updateEvent: "updateInbound"}) );
       this.canvasElems.push( new BaitBombGhost (this) );
       this.canvasElems.push( new MissionLayer  (this) );
 
@@ -20,6 +21,8 @@ class UI
       this.documentElems.push( new DebugTable        (this) );
 
       this.activeCursor = cursors.default.activate();
+
+      this.register('restart', this.reset.bind(this));
    }
 
    register(event, callback)
@@ -98,5 +101,9 @@ class UI
          return true;
    }
 
+   reset()
+   {
+      this.clearSelectedAgents();
+   }
 
 }

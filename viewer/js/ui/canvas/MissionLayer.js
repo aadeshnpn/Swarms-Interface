@@ -5,6 +5,7 @@ class MissionLayer
     this.points = [];
 
     ui.register('updateMission', this.update.bind(this));
+    ui.register('restart',       this.reset.bind(this));
   }
 
   update(data)
@@ -31,5 +32,10 @@ class MissionLayer
     }
 
     ctx.restore();
+  }
+
+  reset()
+  {
+     this.points = [];
   }
 }

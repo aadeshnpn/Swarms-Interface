@@ -1,7 +1,9 @@
 class Handle
 {
-   constructor(angle)
+   constructor(angle, {interactive = true, colour = RadialControl.LINE_COLOUR} = {})
    {
+      this.interactive = interactive;
+      this.colour = colour;
       this.actual = null;
       this.requested = null;
       this.r = angle * Math.PI/180;
@@ -57,7 +59,7 @@ class Handle
    {
       ctx.save()
 
-      ctx.strokeStyle = "blue";
+      ctx.strokeStyle = this.colour;
 
       ctx.beginPath();
       ctx.moveTo(this.prev.actualX, -this.prev.actualY);
@@ -81,9 +83,9 @@ class Handle
          ctx.arc(this.requestedX, -this.requestedY, 3, 0, 2 * Math.PI, false);
          ctx.fill();
       }
-      else
+      else if (this.interactive)
       {
-         ctx.fillStyle = "blue";
+         ctx.fillStyle = this.colour;
 
          ctx.beginPath();
          ctx.arc(this.requestedX, -this.requestedY, 2, 0, 2 * Math.PI, false);
@@ -111,15 +113,19 @@ class Handle
 
 class RadialControl
 {
-   constructor(ui)
+   constructor(ui, {interactive = true, colour = RadialControl.LINE_COLOUR, updateEvent = "updateRadial"} = {})
    {
+      this.interactive  = interactive;
+      this.colour       = colour;
+      this.updateEvent  = updateEvent;
+
       this.handles = [];
       this.drag = {active: false, handle: null};
       this.hover = {active: true, handle: null};
 
       for (let i = 0; i < (360 / 5); i++)
       {
-         this.handles.push(new Handle(i * 5)); // we're doing it this way so eventually we can paramaterise the 5
+         this.handles.push( new Handle(i * 5, {interactive: this.interactive, colour: this.colour}) ); // we're doing it this way so eventually we can paramaterise the 5
       }
 
       this.handles[0].setPrev(this.handles[this.handles.length - 1])
@@ -132,12 +138,15 @@ class RadialControl
          this.handles[i].setNext(this.handles[(i + 1) % this.handles.length]);
       }
 
-      cursors.default.addEventListener('mousemove', this.startHandleHover.bind(this));
-      cursors.radialDrag.addEventListener('mousemove', this.onMouseMove.bind(this));
-      cursors.radialDrag.addEventListener('mousedown', this.onMouseDown.bind(this));
-      cursors.radialDrag.addEventListener('mouseup', this.onMouseUp.bind(this));
+      if (this.interactive)
+      {
+        cursors.default.addEventListener('mousemove', this.startHandleHover.bind(this));
+        cursors.radialDrag.addEventListener('mousemove', this.onMouseMove.bind(this));
+        cursors.radialDrag.addEventListener('mousedown', this.onMouseDown.bind(this));
+        cursors.radialDrag.addEventListener('mouseup', this.onMouseUp.bind(this));
+      }
 
-      ui.register('updateRadial', this.update.bind(this));
+      ui.register(this.updateEvent, this.update.bind(this));
    }
 
    update(data)
@@ -416,5 +425,5 @@ class RadialControl
 }*/
 
 RadialControl.RADIUS_SCALE = 50;
-RadialControl.LINE_COLOUR = '#b53b3b';
-RadialControl.HANDLE_COLOUR = '#d14545';
+RadialControl.LINE_COLOUR = 'blue';
+RadialControl.HANDLE_COLOUR = 'blue';

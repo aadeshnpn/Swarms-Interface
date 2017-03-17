@@ -35,10 +35,10 @@ class Trap
     ctx.fill();
     ctx.stroke();
 
-    ctx.font = "14pt sans-serif";
+    /*ctx.font = "14pt sans-serif";
     ctx.fillStyle = "rgb(0, 0, 0)";
     let width = ctx.measureText("Trap").width;
-    ctx.fillText("Trap", -width/2, 20 + this.radius);
+    ctx.fillText("Trap", -width/2, 20 + this.radius);*/
 
     ctx.restore();
   }

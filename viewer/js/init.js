@@ -107,6 +107,7 @@ socket.on('updateMission', function(data)
   ui.on(data);
 });
 
+socket.on('restart'             , function(data) { ui.on(data)  });
 socket.on('update'              , function(data) { ui.on(data) });
 socket.on('updateRadial'        , function(data) { ui.on(data) });
 socket.on('updateDebugParams'   , function(data) { ui.on(data) });

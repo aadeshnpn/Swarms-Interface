@@ -1,6 +1,6 @@
 class SelectionRect
 {
-   constructor()
+   constructor(ui)
    {
       this.active = false;
       this.x = 0;
@@ -11,6 +11,8 @@ class SelectionRect
       cursors.default  .addEventListener('mousedown', this.onMouseDown.bind(this));
       cursors.selecting.addEventListener('mousemove', this.onMouseMove.bind(this));
       cursors.selecting.addEventListener('mouseup'  , this.onMouseUp  .bind(this));
+
+      ui.register('restart', this.reset.bind(this));
    }
 
    update()
@@ -105,5 +107,14 @@ class SelectionRect
    rectIntersect(a, b)
    {
       return !(b.left > a.right || b.right < a.left || b.top > a.bottom || b.bottom < a.top);
+   }
+
+   reset()
+   {
+      this.active = false;
+      this.x = 0;
+      this.y = 0;
+      this.width = 0;
+      this.height = 0;
    }
 }
