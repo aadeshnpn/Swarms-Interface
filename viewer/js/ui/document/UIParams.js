@@ -11,7 +11,7 @@ class UIParams
 
 			var updatedParam = e.target;
 
-			paramObj[updatedParam.name] = updatedParam.value;
+			paramObj[updatedParam.name] = updatedParam.value || UIParams.defaults[updatedParam.name];
 
 			socket.emit('input', {'type': 'UIParameterUpdate', params: paramObj});
 		});
@@ -25,4 +25,10 @@ class UIParams
          $(`#UIParams input[name=${param}]`).val(val);
       }
    }
+}
+
+// have sane behaviour if the user clears the fps box
+UIParams.defaults =
+{
+  "uiFps" : 1
 }

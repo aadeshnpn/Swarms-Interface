@@ -30,10 +30,10 @@ class Site
 
     if (debug == true)
     {
-      ctx.font = "14pt sans-serif";
+      /*ctx.font = "14pt sans-serif";
       ctx.fillStyle = "rgb(0, 0, 0)";
       let width = ctx.measureText(`Site: ${this.q}`).width;
-      ctx.fillText(`Site: ${this.q}`, -width/2, 20 + this.radius);
+      ctx.fillText(`Site: ${this.q}`, -width/2, 20 + this.radius);*/
     }
 
     ctx.restore();
