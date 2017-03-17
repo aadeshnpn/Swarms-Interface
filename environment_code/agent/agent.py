@@ -324,7 +324,6 @@ class Dancing(State):
             agent.direction = (agent.direction + delta_d) % (2 * np.pi)
         return
 
-
 class Observing(State):
     def __init__(self, agent=None, observerTimer=None):
         self.name = "observing"
@@ -338,7 +337,6 @@ class Observing(State):
         self.seesDancer = False
         self.atHub = False
         self.seesPiper = False
-
 
     def sense(self, agent, environment):
         # get nearby bees from environment and check for dancers
@@ -360,7 +358,6 @@ class Observing(State):
                     environment.hubController.beeCheckIn(agent)
                     agent.inHub = True
                     return
-
 
     def act(self, agent):
         if self.atHub:
@@ -447,7 +444,6 @@ class SiteAssess(State):
             # TODO: have the bees update these values only on hub check-in?
             priorities = environment.hubController.getSitePriorities()
 
-            # TODO: what is a good way to handle constants in python
             STD_SITE_SIZE = 15
 
             # scale from (0 to 30) to (-1 to 1)
@@ -506,7 +502,7 @@ class Piping(State):
             agent.hub[1] - agent.location[1]) ** 2) ** .5 <= agent.hubRadius:
             bees = environment.get_nearby_agents(agent.id, 10)  # we may need to reformat this
             for bee in bees:
-                if not isinstance(bee.state, Piping.__class__):
+                if not isinstance(bee.state, Piping().__class__):
                     return
             self.quorum = True
 
