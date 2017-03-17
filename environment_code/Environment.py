@@ -32,14 +32,14 @@ class Environment:
         self.rough = []
         self.info_stations = []
         self.agents = {}
-        self.states = {Exploring().__class__:[],
+        '''self.states = {Exploring().__class__:[],
                        Assessing().__class__: [],
                        Dancing().__class__:[],
                        Resting().__class__:[],
                        Observing().__class__:[],
                        SiteAssess().__class__:[],
                        Piping().__class__:[],
-                       Commit().__class__:[]}
+                       Commit().__class__:[]}'''
         self.dead_agents = []
 
         self.quadrants = [[set() for x in range(800)] for y in range(400)]
@@ -57,8 +57,8 @@ class Environment:
         self.beePipingTimer           = 1200  # long enough to allow all bees to make it back before commit?
 
         #  environment parameters
-        self.number_of_agents = 1000
-        self.frames_per_sec = 60
+        self.number_of_agents = 200
+        self.frames_per_sec = 220
 
         #self.useDefaultParams = True
         self.restart_simulation = False
@@ -139,12 +139,16 @@ class Environment:
         self.repulsors = new_repulsor_list
 
     def sort_by_state(self, agent_id, prev_state, cur_state):
-        if self.states[prev_state].count(agent_id) > 0:
+        pass
+        '''if self.states[prev_state].count(agent_id) > 0:
             self.states[prev_state].remove(agent_id)
             self.states[cur_state].append(agent_id)
         else:
             eprint("Error:", agent_id, "not in", prev_state)
             eprint("It wants to change to", cur_state)
+
+            this is not being used currently'''
+
 
     # Function to return the Q-value for given coordinates. Returns 0 if nothing is there and a value between 0 and 1
     # if it finds a site.
@@ -224,7 +228,7 @@ class Environment:
                     agent.location[1] = proposed_y
                     agent.live = False
                     self.dead_agents.append(agent)
-                    self.states[agent.state].remove(agent_id)
+                    #self.states[agent.state].remove(agent_id) also not using this currently
                     del self.agents[agent_id]
                     return
                 elif terrain_value == -2:
@@ -244,7 +248,7 @@ class Environment:
             elif agent.location[1] < self.y_limit * -1:
                 agent.location[1] += 2 * self.y_limit
 
-    def get_nearby_dancers(self, agent_id, radius):
+    '''def get_nearby_dancers(self, agent_id, radius):
         nearby = []
         for other_id in self.states[Dancing().__class__]:
             if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0]) ** 2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1]) ** 2) ** .5 <= radius:
@@ -264,7 +268,7 @@ class Environment:
             if other_id != agent_id:
                 if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0]) ** 2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1]) ** 2) ** .5 <= radius:
                     nearby.append(self.agents[other_id])
-        return nearby
+        return nearby'''
 
     def get_nearby_agents(self, agent_id, radius):
         nearby = []
@@ -299,10 +303,10 @@ class Environment:
             agent.location[1] = proposed_y
             agent.live = False
             self.dead_agents.append(agent)
-            for state in self.states:
+            '''for state in self.states:
                 if self.states[state].count(agentId) > 0:
                     self.states[state].remove(agentId)
-                    break
+                    break'''
             del self.agents[agentId]
             return
         elif terrain_value == -2:
@@ -447,8 +451,8 @@ class Environment:
         self.agents.clear()
         self.attractors.clear()
         self.repulsors.clear()
-        for state in self.states:
-            self.states[state].clear()
+        '''for state in self.states:
+            self.states[state].clear()'''
         self.dead_agents.clear()
 
     def add_agents(self):
@@ -469,7 +473,7 @@ class Environment:
                           site_assess_time        = self.beeSiteAccessTime,
                           site_assess_radius      = self.beeSiteAccessRadius)
             self.agents[agent_id] = agent
-            self.states[Exploring().__class__].append(agent_id)
+            #self.states[Exploring().__class__].append(agent_id)
 
     def reset_sim(self):
         self.clear_for_reset()

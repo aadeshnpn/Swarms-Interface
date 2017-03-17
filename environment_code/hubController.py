@@ -4,6 +4,7 @@ from debug import *
 import copy
 import operator
 import json
+#from randomdict import RandomDict
 
 class beeInfo:
     def __init__(self, direction, velocity, state, AtHub):
@@ -31,6 +32,10 @@ class hubController:
         if (self.directionParams[angle] == -1):      #No user input, all is well
             #eprint("checking out:", bee.id, "direction:", int(bee.direction*(180/np.pi)))
             self.directions[angle] = self.directions[angle] + 1
+
+            if agent.direction is not None:
+                self.incoming[int(agent.direction/5)] -= 1
+
             agent.atHub = 0
         elif self.directionParams[angle] < self.directions[angle]: #too many bees, stop it!
             #eprint("INHIBITED!!!!! ")
@@ -40,6 +45,8 @@ class hubController:
         elif (self.directionParams[angle] > self.directions[angle]): #there needs to be more bees in that direction anyways
             #eprint("checking out:", bee.id, "direction:", int(bee.direction*(180/np.pi)))
             self.directions[angle] = self.directions[angle] + 1
+            if agent.direction is not None:
+                self.incoming[int(agent.direction/5)] -= 1
             agent.atHub = 0
         elif self.directionParams[angle] == self.directions[angle]: #perfect amount of bees, stop it
             #eprint("INHIBITED!!!!! ")
@@ -50,17 +57,24 @@ class hubController:
         agent.direction = angle*5
         #eprint("going in:", agent.direction)
         agent.state = bee.state
+
+        self.agentsInHub
         return agent.atHub
-         #******if explorer set a timer for it, if assessor calculate projected time
+        #******if explorer set a timer for it, if assessor calculate projected time
         #so upon check out state is used to gauge stuff for right now it can just be used as the array
 
     def beeCheckIn(self, bee): #technically only explorers or assessors will ever call this (which they do as they enter the hub)
-        #check if they are coming in from a weird angle if they're assessors, which can be a 'red flag'
+        #TODO check if they are coming in from a weird angle if they're assessors, which can be a 'red flag'
         #eprint("checking in:", id, " Initial direction:", self.agentList[id].direction, " from:", int(dir*(180/np.pi))+180)
         angle = int(self.agentList[bee.id].direction/5)
 
         self.directions[angle] = self.directions[angle] - 1
+        angle2 = (bee.direction- np.pi) % (2 * np.pi)
+        angle2 = int(int(angle2 * (180 / np.pi)) / 5)
+        self.incoming[angle2] += 1
         self.agentList[bee.id].atHub = 1
+        self.agentList[bee.id].direction = angle2*5
+
         if (isinstance(bee.state, Assessing)):
             print (json.dumps({"type": "updateMission", "data": {"x": bee.potential_site[0] , "y": bee.potential_site[1], "q": bee.q_value}}))
 
@@ -105,7 +119,6 @@ class hubController:
                         bee.inHub = False
                         break # only execute this once per iteration, that way it's a 'slow' change
             elif self.directionParams[angle] == self.directions[angle]:  #meaning it has reached the user's requirements
-                #pass
                 self.directionParams[angle] = -1
 
         radialJson = {
@@ -114,7 +127,8 @@ class hubController:
             {
                 "controller":
                 {
-                    "agentDirections" : self.directions
+                    "agentDirections" : self.directions,
+                    "agentsIn" : self.incoming
                 }
             }
         }
@@ -123,19 +137,24 @@ class hubController:
 
 
     def reset(self, radius, agents, environment):
+        self.incoming = [None] *72
         self.environment = environment
         self.radius = radius  # needs an array of direction parameters
         self.directions = [None]*72  # #bees that have left the hub in each direction
-        self.directionParams = [None]*72  # #desired user values
-        # counter * (np.pi / 72)
+        self.directionParams = [None]*72  #desired user values
+
+        self.agentsInHub = {}
         self.agentList = {}
         for counter in range(0, 72):
             self.directions[counter] = 0
             self.directionParams[counter] = -1
+            self.incoming[counter] = 0
         # self.directionParams[10] = 10
         for id, bee in agents.items():
-            info = beeInfo(int(bee.direction * (180 / np.pi)), bee.velocity, bee.state, 1)
+            info = beeInfo(None, bee.velocity, bee.state, 1)
             self.agentList[bee.id] = info
+
+            self.agentsInHub[bee.id] = bee.id
 
 
     def convertToIndex(self, degrees):
@@ -165,6 +184,4 @@ class hubController:
 
         print(json.dumps(priorityJson))
 
-'''
-Hub controller TODO: add functionality for the mission state
- fix check ins!!'''
+

@@ -113,11 +113,11 @@ class Handle
 
 class RadialControl
 {
-   constructor(ui, {interactive = true, colour = RadialControl.LINE_COLOUR, updateEvent = "updateRadial"} = {})
+   constructor(ui, {interactive = true, colour = RadialControl.LINE_COLOUR, dataset = "agentDirections"} = {})
    {
       this.interactive  = interactive;
       this.colour       = colour;
-      this.updateEvent  = updateEvent;
+      this.dataset      = dataset;
 
       this.handles = [];
       this.drag = {active: false, handle: null};
@@ -146,7 +146,7 @@ class RadialControl
         cursors.radialDrag.addEventListener('mouseup', this.onMouseUp.bind(this));
       }
 
-      ui.register(this.updateEvent, this.update.bind(this));
+      ui.register("updateRadial", this.update.bind(this));
    }
 
    update(data)
@@ -154,7 +154,7 @@ class RadialControl
       // data is an array[72] of direction information for every five degrees
 
       for (let i = 0; i < (360 / 5); i++)
-         this.handles[i].updateActual(data.controller.agentDirections[i]);
+         this.handles[i].updateActual(data.controller[this.dataset][i]);
    }
 
    draw(ctx, debug = false)
