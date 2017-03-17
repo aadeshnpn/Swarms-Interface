@@ -90,7 +90,7 @@ class Agent(StateMachine):
         self.quadrant = []
 
         # create table here.
-        dict = {(Exploring().__class__, input.nestFound): [None, Assessing(self)],
+        dict = {(Exploring().__class__, input.nestFound): [None, SiteAssess(self)],
                 (Exploring().__class__, input.exploreTime): [None, Observing(self)],
                 (Observing().__class__, input.observeTime): [None, Exploring(self)],
                 (Observing().__class__, input.dancerFound): [None, Assessing(self)],
@@ -225,7 +225,7 @@ class Assessing(State):
             if not agent.goingToSite and not agent.inHub:
                 environment.hubController.beeCheckIn(agent)
                 agent.inHub = True
-
+        '''
         if ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2 ) < 1:
             siteInfo = environment.get_q(agent)
             if(siteInfo["q"] >= 0): #CHECK THIS, IT MAY BE A PROBLEM...
@@ -254,7 +254,7 @@ class Assessing(State):
                 #eprint("distance: ", distance, "; size: ", size, "; q: ", q, "; pDist: ", priorities["distance"], "; pSize: ", priorities["size"], "; adjusted: ", adjustedQ)
 
                 agent.q_value = 1 if adjustedQ > 1 else 0 if adjustedQ < 0 else adjustedQ
-
+        '''
     def act(self, agent):
         self.move(agent)
 
