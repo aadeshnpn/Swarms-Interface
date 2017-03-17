@@ -16,8 +16,6 @@ class DebugParams
             paramObj[param.name] = param.value;
          }
 
-         console.log(paramObj);
-
          socket.emit('input', {'type': 'parameterUpdate', params: paramObj});
       });
    }
