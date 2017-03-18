@@ -41,13 +41,13 @@ class Agent(StateMachine):
         else:
             self.state.dance_counter = dance
 
-    def __init__(self, agentId, initialstate, hub, piping_threshold=10, piping_time=1000, global_velocity=1,
+    def __init__(self, agentId, initialstate, hub, numOfAgents, piping_threshold=.1, piping_time=1000, global_velocity=1,
                  explore_time_multiplier=3600, rest_time=300, dance_time=700, observe_time=2000,
                  site_assess_time=300, site_assess_radius=10):
         self.state = initialstate
 
         # bee agent constants (i.e. these should not be modified while running)
-        self.PipingThreshold = piping_threshold
+        self.PipingThreshold = piping_threshold*numOfAgents
         self.GlobalVelocity = global_velocity
         self.ExploreTimeMultiplier = explore_time_multiplier
         self.RestTime = rest_time
@@ -58,7 +58,7 @@ class Agent(StateMachine):
         self.PipingTimer = piping_time  # long enough to allow all bees to make it back before commit?
 
         # These parameters may be modified at run-time
-        self.current_parameters = {"PipingThreshold":       12,
+        self.current_parameters = {"PipingThreshold":       10,
                                    "Velocity":              2,
                                    "ExploreTime":           3625,
                                    "RestTime":              450,
@@ -341,18 +341,17 @@ class Observing(State):
     def sense(self, agent, environment):
         # get nearby bees from environment and check for dancers
         if self.atHub:
-            bees = environment.get_nearby_agents(agent.id, 2)  # we may need to reformat this so the agent knows what is
-            for bee in bees:
-                if isinstance(bee.state, Piping().__class__):
-                    self.seesPiper = True
-                    agent.velocity = agent.GlobalVelocity
-                    agent.potential_site = bee.potential_site
-                    break
-                if isinstance(bee.state, Dancing().__class__):
-                    self.seesDancer = True
-                    agent.velocity = agent.GlobalVelocity
-                    agent.potential_site = bee.potential_site
-                    break
+            #bees = environment.get_nearby_agents(agent.id, 2)  # we may need to reformat this so the agent knows what is
+            #for bee in bees:
+            bee = environment.hubController.observersCheck()
+            if isinstance(bee.state, Piping().__class__):
+                self.seesPiper = True
+                agent.velocity = agent.GlobalVelocity
+                agent.potential_site = bee.potential_site
+            if isinstance(bee.state, Dancing().__class__):
+                self.seesDancer = True
+                agent.velocity = agent.GlobalVelocity
+                agent.potential_site = bee.potential_site
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
                 and agent.inHub is False:
                     environment.hubController.beeCheckIn(agent)

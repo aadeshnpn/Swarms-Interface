@@ -58,8 +58,8 @@ class Environment:
 
         #  environment parameters
 
-        self.number_of_agents = 200
-        self.frames_per_sec = 220
+        self.number_of_agents = 1000
+        self.frames_per_sec = 600
 
 
         #self.useDefaultParams = True
@@ -470,7 +470,7 @@ class Environment:
             #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
                 #agent = Agent(agent_id,Observing())
             #else:
-            agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub,
+            agent = Agent(agent_id,  Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub, self.number_of_agents,
                           piping_threshold        = self.beePipingThreshold,
                           piping_time             = self.beePipingTimer,
                           global_velocity         = self.beeGlobalVelocity,

@@ -4,7 +4,7 @@ from debug import *
 import copy
 import operator
 import json
-#from randomdict import RandomDict
+from randomdict import RandomDict
 
 class beeInfo:
     def __init__(self, direction, velocity, state, AtHub):
@@ -37,28 +37,35 @@ class hubController:
                 self.incoming[int(agent.direction/5)] -= 1
 
             agent.atHub = 0
+            del self.agentsInHub[bee.id]
+            agent.direction = angle * 5
+
         elif self.directionParams[angle] < self.directions[angle]: #too many bees, stop it!
             #eprint("INHIBITED!!!!! ")
             #eprint("Angle:", angle, "  Id:", bee.id, "  Bee in hub?:", bee.inHub)
             self.environment.sort_by_state(bee.id, bee.state.__class__, Observing().__class__)
             bee.state = Observing(bee)
+
         elif (self.directionParams[angle] > self.directions[angle]): #there needs to be more bees in that direction anyways
             #eprint("checking out:", bee.id, "direction:", int(bee.direction*(180/np.pi)))
             self.directions[angle] = self.directions[angle] + 1
             if agent.direction is not None:
                 self.incoming[int(agent.direction/5)] -= 1
             agent.atHub = 0
+            del self.agentsInHub[bee.id]
+            agent.direction = angle * 5
+
         elif self.directionParams[angle] == self.directions[angle]: #perfect amount of bees, stop it
             #eprint("INHIBITED!!!!! ")
             #eprint("Angle:", angle, "  Id:", bee.id, "  Bee in hub?:", bee.inHub)
             self.environment.sort_by_state(bee.id, bee.state.__class__, Observing().__class__)
             bee.state = Observing(bee)
 
-        agent.direction = angle*5
+
         #eprint("going in:", agent.direction)
         agent.state = bee.state
 
-        self.agentsInHub
+
         return agent.atHub
         #******if explorer set a timer for it, if assessor calculate projected time
         #so upon check out state is used to gauge stuff for right now it can just be used as the array
@@ -74,6 +81,7 @@ class hubController:
         self.incoming[angle2] += 1
         self.agentList[bee.id].atHub = 1
         self.agentList[bee.id].direction = angle2*5
+        self.agentsInHub[bee.id] = bee
 
         if (isinstance(bee.state, Assessing)):
             print (json.dumps({"type": "updateMission", "data": {"x": bee.potential_site[0] , "y": bee.potential_site[1], "q": bee.q_value}}))
@@ -88,6 +96,10 @@ class hubController:
         angle = int(int(direction % 360) / 5)   # converting to fit in the array
 
         self.directionParams[angle] = int(newValue)
+    def observersCheck(self):
+        return self.agentsInHub.random_value()
+        #if bee.state ==
+
 
     def hiveAdjust(self, bees):
         #sortedParams = sorted(self.directionParams, operator.getitem(1), Reverse=True)
@@ -143,7 +155,7 @@ class hubController:
         self.directions = [None]*72  # #bees that have left the hub in each direction
         self.directionParams = [None]*72  #desired user values
 
-        self.agentsInHub = {}
+        self.agentsInHub = RandomDict()
         self.agentList = {}
         for counter in range(0, 72):
             self.directions[counter] = 0
@@ -154,7 +166,7 @@ class hubController:
             info = beeInfo(None, bee.velocity, bee.state, 1)
             self.agentList[bee.id] = info
 
-            self.agentsInHub[bee.id] = bee.id
+            self.agentsInHub[id] = bee
 
 
     def convertToIndex(self, degrees):
