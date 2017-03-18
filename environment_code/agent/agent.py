@@ -420,8 +420,7 @@ class SiteAssess(State):
 
     def check_num_close_assessors(self, agent, environment):
         """Check if number of local bees assessing current site exceeds threshold for piping"""
-        bees = environment.get_nearby_agents(agent.id, self.siteRadius)  # we may need to reformat this
-        if len(bees) >= agent.PipingThreshold:
+        if agent.siteIndex is not None and environment.info_stations[agent.siteIndex].bee_count > agent.PipingThreshold:
             return True
         else:
             return False
@@ -468,6 +467,7 @@ class SiteAssess(State):
             return input.startPipe
         # counter functions
         if self.counter < 1:
+            agent.atSite = False
             return input.finAssess
         else:
             self.counter -= 1

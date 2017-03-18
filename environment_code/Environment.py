@@ -164,7 +164,7 @@ class Environment:
             if tot_dif <= site["radius"]:
                 info = self.info_stations[i]
                 if not agent.atSite:
-                    info.bee_count += 1
+                    self.info_stations[i].bee_count += 1
                     agent.atSite = True
                     agent.siteIndex = i
                     if info.check_for_changes(agent.current_parameters, agent.param_time_stamp):
@@ -179,13 +179,10 @@ class Environment:
                 }
 
         if agent.atSite:
-            self.info_stations[agent.siteIndex].bee_count -= 1
-
             if self.info_stations[agent.siteIndex].check_for_changes(agent.current_parameters, agent.param_time_stamp):
                 agent.update_params(self.info_stations[agent.siteIndex].parameters)
                 agent.param_time_stamp = self.info_stations[agent.siteIndex].last_update
-            agent.atSite = False
-            agent.siteIndex = None
+            # agent.atSite = False
 
         return {"radius": -1, "q": 0}
 
@@ -434,7 +431,16 @@ class Environment:
                     # is this faster?
                     self.agents[agent_id].act()
                     self.agents[agent_id].sense(self)
+
+                    atSite = False
+                    if self.agents[agent_id].atSite:
+                        atSite = True
+
                     self.agents[agent_id].update(self)
+                    if atSite and not self.agents[agent_id].atSite:
+                        self.info_stations[self.agents[agent_id].siteIndex].bee_count -= 1
+                        self.agents[agent_id].siteIndex = None
+
                     self.suggest_new_direction(agent_id)
 
                 self.hubController.hiveAdjust(self.agents)
