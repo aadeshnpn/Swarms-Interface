@@ -82,6 +82,8 @@ class hubController:
         self.agentList[bee.id].atHub = 1
         self.agentList[bee.id].direction = angle2*5
         self.agentsInHub[bee.id] = bee
+        if isinstance(bee.state, Piping):
+            self.piperCount +=1
 
         if (isinstance(bee.state, Assessing)):
             print (json.dumps({"type": "updateMission", "data": {"x": bee.potential_site[0] , "y": bee.potential_site[1], "q": bee.q_value}}))
@@ -99,6 +101,12 @@ class hubController:
     def observersCheck(self):
         return self.agentsInHub.random_value()
         #if bee.state ==
+    def piperCheck(self):
+        if len(self.agentsInHub) <= self.piperCount:
+            return True
+        return False
+    def newPiper(self):
+        self.piperCount += 1
 
 
     def hiveAdjust(self, bees):
@@ -129,6 +137,7 @@ class hubController:
                         agent.direction = angle*5
                         agent.atHub = 0
                         bee.inHub = False
+                        del self.agentsInHub[bee.id]
                         break # only execute this once per iteration, that way it's a 'slow' change
             elif self.directionParams[angle] == self.directions[angle]:  #meaning it has reached the user's requirements
                 self.directionParams[angle] = -1
@@ -167,6 +176,7 @@ class hubController:
             self.agentList[bee.id] = info
 
             self.agentsInHub[id] = bee
+        self.piperCount = 0
 
 
     def convertToIndex(self, degrees):

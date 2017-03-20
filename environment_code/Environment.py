@@ -46,7 +46,7 @@ class Environment:
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
 
         #  bee parameters
-        self.beePipingThreshold       =   12
+        self.beePipingThreshold       =   30
         self.beeGlobalVelocity        =    2
         self.beeExploreTimeMultiplier = 3625
         self.beeRestTime              =  450
@@ -58,7 +58,7 @@ class Environment:
 
         #  environment parameters
 
-        self.number_of_agents = 1000
+        self.number_of_agents = 500
         self.frames_per_sec = 600
 
 
@@ -471,7 +471,7 @@ class Environment:
             #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
                 #agent = Agent(agent_id,Observing())
             #else:
-            agent = Agent(agent_id,  Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub, self.number_of_agents,
+            agent = Agent(agent_id,  Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub,
                           piping_threshold        = self.beePipingThreshold,
                           piping_time             = self.beePipingTimer,
                           global_velocity         = self.beeGlobalVelocity,

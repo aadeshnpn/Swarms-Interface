@@ -41,13 +41,13 @@ class Agent(StateMachine):
         else:
             self.state.dance_counter = dance
 
-    def __init__(self, agentId, initialstate, hub, numOfAgents, piping_threshold=.1, piping_time=1000, global_velocity=1,
+    def __init__(self, agentId, initialstate, hub, piping_threshold=10, piping_time=1000, global_velocity=1,
                  explore_time_multiplier=3600, rest_time=300, dance_time=700, observe_time=2000,
                  site_assess_time=300, site_assess_radius=10):
         self.state = initialstate
 
         # bee agent constants (i.e. these should not be modified while running)
-        self.PipingThreshold = piping_threshold*numOfAgents
+        self.PipingThreshold = piping_threshold
         self.GlobalVelocity = global_velocity
         self.ExploreTimeMultiplier = explore_time_multiplier
         self.RestTime = rest_time
@@ -370,6 +370,7 @@ class Observing(State):
                 self.seesPiper = True
                 agent.velocity = agent.GlobalVelocity
                 agent.potential_site = bee.potential_site
+                environment.hubController.newPiper()
             if isinstance(bee.state, Dancing().__class__):
                 self.seesDancer = True
                 agent.velocity = agent.GlobalVelocity
@@ -513,7 +514,7 @@ class Piping(State):
             self.pipe_counter = agent.PipingTimer
         self.quorum = False
 
-    def neighbors_piping(self, agent, environment):
+    '''def neighbors_piping(self, agent, environment):
         """Check if all neighboring bees are piping
 
             Could need to be modified to address corner cases - like when no bees are the hub due to
@@ -527,10 +528,19 @@ class Piping(State):
                     return
             self.quorum = True
 
-        return
+        return'''
 
     def sense(self, agent, environment):
-        self.neighbors_piping(agent, environment)
+        #self.neighbors_piping(agent, environment)
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
+                and agent.inHub is False:
+                    environment.hubController.beeCheckIn(agent)
+                    agent.inHub = True
+                    return
+        if agent.inHub:
+            if environment.hubController.piperCheck():
+                self.quorum = True
+
 
     def act(self, agent):
         self.move(agent)
