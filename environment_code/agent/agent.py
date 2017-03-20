@@ -127,7 +127,29 @@ class Agent(StateMachine):
         self.SiteAssessRadius = self.current_parameters["SiteAssessRadius"]
         self.PipingTimer = self.current_parameters["PipingTime"]
 
-# so, the exploring part needs to give the input..
+        self.reset_trans_table()
+
+    def reset_trans_table(self):
+        #  Reset table in order to update parameters in states
+        del self.transitionTable
+        self.transitionTable = {(Exploring().__class__, input.nestFound): [None, SiteAssess(self)],
+                (Exploring().__class__, input.exploreTime): [None, Observing(self)],
+                (Observing().__class__, input.observeTime): [None, Exploring(self)],
+                (Observing().__class__, input.dancerFound): [None, Assessing(self)],
+                (Observing().__class__, input.startPipe): [None, Piping(self)],
+                (Observing().__class__, input.quit): [None, Resting(self)],
+                (Assessing().__class__, input.siteFound): [self.danceTransition, Dancing(self)], # self.danceTransition()
+                (Assessing().__class__, input.siteAssess): [None, SiteAssess(self)],
+                #(Assessing().__class__, input.quit): [None, Observing(self)],
+                (SiteAssess().__class__, input.finAssess): [None, Assessing(self)],
+                (SiteAssess().__class__, input.startPipe): [None, Piping(self)],
+                (Dancing().__class__, input.tiredDance): [None, Resting(self)],
+                (Dancing().__class__, input.notTiredDance): [None, Assessing(self)],
+                (Resting().__class__, input.restingTime): [None, Observing(self)],
+                (Piping().__class__, input.quorum): [None, Commit(self)]
+                }
+
+    # so, the exploring part needs to give the input..
 class Exploring(State):
     def __init__(self, agent=None, ExploreTimeMultiplier=None):
         self.name = "exploring"

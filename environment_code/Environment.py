@@ -380,6 +380,7 @@ class Environment:
         agent.SiteAssessTime = self.beeSiteAccessTime
         agent.SiteAssessRadius = self.beeSiteAccessRadius
         agent.PipingTimer = self.beePipingTimer
+        agent.reset_trans_table()
 
 
     def updateUIParameters(self, json):
@@ -477,7 +478,7 @@ class Environment:
                           explore_time_multiplier = self.beeExploreTimeMultiplier,
                           rest_time               = self.beeRestTime,
                           dance_time              = self.beeDanceTime,
-                          observe_time            = self.beeDanceTime,
+                          observe_time            = self.beeObserveTime,
                           site_assess_time        = self.beeSiteAccessTime,
                           site_assess_radius      = self.beeSiteAccessRadius)
             self.agents[agent_id] = agent
