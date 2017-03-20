@@ -98,8 +98,7 @@ class Environment:
         self.rough = data["rough terrain"]
         self.create_potential_fields()
 
-        for x in range(len(self.sites)):
-            self.info_stations.append(InfoStation())
+        self.create_infoStations()
 
     def getClosestFlowController(self, flowControllers, agent_location):
         if(len(flowControllers) == 0):
@@ -392,6 +391,7 @@ class Environment:
         print(self.UIParametersToJson())
 
     def restart_sim(self, json):
+        eprint("\n\n\nRESTARTING\n\n\n")
         self.restart_simulation = True
 
     # Move all of the agents
@@ -427,6 +427,7 @@ class Environment:
                     #self.wind(wind_direction, wind_velocity)
                     agent.update(self)
                     '''
+
                     if self.change_agent_params:
                         self.updateAgentParameters(self.agents[agent_id])
                     # is this faster?
@@ -438,6 +439,7 @@ class Environment:
                         atSite = True
 
                     self.agents[agent_id].update(self)
+
                     if atSite and not self.agents[agent_id].atSite:
                         self.info_stations[self.agents[agent_id].siteIndex].bee_count -= 1
                         self.agents[agent_id].siteIndex = None
@@ -463,6 +465,12 @@ class Environment:
         '''for state in self.states:
             self.states[state].clear()'''
         self.dead_agents.clear()
+        self.info_stations.clear()
+        self.create_infoStations()
+
+    def create_infoStations(self):
+        for x in range(len(self.sites)):
+            self.info_stations.append(InfoStation())
 
     def add_agents(self):
         for x in range(self.number_of_agents):

@@ -29,3 +29,4 @@ class InfoStation:
         self.parameters = new_parameters
         self.last_update = time_stamp
         return False
+
