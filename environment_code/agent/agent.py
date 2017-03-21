@@ -90,21 +90,21 @@ class Agent(StateMachine):
         self.quadrant = []
 
         # create table here.
-        dict = {(Exploring().__class__, input.nestFound): [None, SiteAssess(self)],
-                (Exploring().__class__, input.exploreTime): [None, Observing(self)],
-                (Observing().__class__, input.observeTime): [None, Exploring(self)],
-                (Observing().__class__, input.dancerFound): [None, Assessing(self)],
-                (Observing().__class__, input.startPipe): [None, Piping(self)],
-                (Observing().__class__, input.quit): [None, Resting(self)],
-                (Assessing().__class__, input.siteFound): [self.danceTransition, Dancing(self)], # self.danceTransition()
-                (Assessing().__class__, input.siteAssess): [None, SiteAssess(self)],
+        dict = {(Exploring(self).__class__, input.nestFound): [None, SiteAssess(self)],
+                (Exploring(self).__class__, input.exploreTime): [None, Observing(self)],
+                (Observing(self).__class__, input.observeTime): [None, Exploring(self)],
+                (Observing(self).__class__, input.dancerFound): [None, Assessing(self)],
+                (Observing(self).__class__, input.startPipe): [None, Piping(self)],
+                (Observing(self).__class__, input.quit): [None, Resting(self)],
+                (Assessing(self).__class__, input.siteFound): [self.danceTransition, Dancing(self)], # self.danceTransition()
+                (Assessing(self).__class__, input.siteAssess): [None, SiteAssess(self)],
                 #(Assessing().__class__, input.quit): [None, Observing(self)],
-                (SiteAssess().__class__, input.finAssess): [None, Assessing(self)],
-                (SiteAssess().__class__, input.startPipe): [None, Piping(self)],
-                (Dancing().__class__, input.tiredDance): [None, Resting(self)],
-                (Dancing().__class__, input.notTiredDance): [None, Assessing(self)],
-                (Resting().__class__, input.restingTime): [None, Observing(self)],
-                (Piping().__class__, input.quorum): [None, Commit(self)]
+                (SiteAssess(self).__class__, input.finAssess): [None, Assessing(self)],
+                (SiteAssess(self).__class__, input.startPipe): [None, Piping(self)],
+                (Dancing(self).__class__, input.tiredDance): [None, Resting(self)],
+                (Dancing(self).__class__, input.notTiredDance): [None, Assessing(self)],
+                (Resting(self).__class__, input.restingTime): [None, Observing(self)],
+                (Piping(self).__class__, input.quorum): [None, Commit(self)]
                 }
         self.transitionTable = dict
 
@@ -162,7 +162,7 @@ class Exploring(State):
         elif ExploreTimeMultiplier is not None:
             self.exploretime = exp*ExploreTimeMultiplier
         else:
-            warnings.warn("No agent or initial condition given! Using default...")
+            # warnings.warn("No agent or initial condition given! Using default...")
             self.exploretime = exp*3600
         #self.exploretime = 200
 
@@ -276,13 +276,16 @@ class Assessing(State):
 
 
 class Resting(State):
-    def __init__(self, agent=None):
+    def __init__(self, agent=None, rest_time=None):
         self.name = "resting"
         self.atHub = True  #we may not need this code at all... to turn it on make it default false.
-        if agent is None:
-            self.restCountdown = 300
+        multiplier = np.random.normal(1, .3, 1)  #Add normal distribution noise to resting counter
+        if agent is not None:
+            self.restCountdown = agent.RestTime * multiplier
+        elif rest_time is not None:
+            self.restCountdown = rest_time * multiplier
         else:
-            self.restCountdown = agent.RestTime
+            self.restCountdown = 4000 * multiplier
 
     def sense(self, agent, environment):
         pass

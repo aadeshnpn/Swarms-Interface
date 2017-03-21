@@ -473,7 +473,7 @@ class Environment:
             self.info_stations.append(InfoStation())
 
     def add_agents(self):
-        for x in range(self.number_of_agents):
+        for x in range(self.number_of_agents // 2):
             agent_id = str(x)
             #if self.useDefaultParams:
             #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
@@ -491,6 +491,21 @@ class Environment:
                           site_assess_radius      = self.beeSiteAccessRadius)
             self.agents[agent_id] = agent
             #self.states[Exploring().__class__].append(agent_id)
+
+        for y in range(self.number_of_agents // 2):
+            agent_id = str(x + 1 + y)
+
+            agent = Agent(agent_id, Resting(agent=None, rest_time=self.beeRestTime), self.hub,
+                          piping_threshold=self.beePipingThreshold,
+                          piping_time=self.beePipingTimer,
+                          global_velocity=self.beeGlobalVelocity,
+                          explore_time_multiplier=self.beeExploreTimeMultiplier,
+                          rest_time=self.beeRestTime,
+                          dance_time=self.beeDanceTime,
+                          observe_time=self.beeObserveTime,
+                          site_assess_time=self.beeSiteAccessTime,
+                          site_assess_radius=self.beeSiteAccessRadius)
+            self.agents[agent_id] = agent
 
     def reset_sim(self):
         self.clear_for_reset()
