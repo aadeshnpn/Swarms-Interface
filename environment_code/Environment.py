@@ -473,7 +473,8 @@ class Environment:
             self.info_stations.append(InfoStation())
 
     def add_agents(self):
-        for x in range(self.number_of_agents // 2):
+        rest_num = int(.05*self.number_of_agents)
+        for x in range(self.number_of_agents - rest_num):
             agent_id = str(x)
             #if self.useDefaultParams:
             #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
@@ -492,7 +493,7 @@ class Environment:
             self.agents[agent_id] = agent
             #self.states[Exploring().__class__].append(agent_id)
 
-        for y in range(self.number_of_agents // 2):
+        for y in range(rest_num):
             agent_id = str(x + 1 + y)
 
             agent = Agent(agent_id, Resting(agent=None, rest_time=self.beeRestTime), self.hub,

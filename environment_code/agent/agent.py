@@ -279,7 +279,7 @@ class Resting(State):
     def __init__(self, agent=None, rest_time=None):
         self.name = "resting"
         self.atHub = True  #we may not need this code at all... to turn it on make it default false.
-        multiplier = np.random.normal(1, .3, 1)  #Add normal distribution noise to resting counter
+        multiplier = np.abs(np.random.normal(1, 0.6, 1))  #Add normal distribution noise to resting counter
         if agent is not None:
             self.restCountdown = agent.RestTime * multiplier
         elif rest_time is not None:
