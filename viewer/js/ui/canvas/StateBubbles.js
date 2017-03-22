@@ -8,6 +8,7 @@ class StateBubbles
 
     ui.register("setStates", this.init.bind(this));
     ui.register("stateCounts", this.update.bind(this));
+    ui.register("restart", this.restart.bind(this));
 
     socket.emit("input", {"type": "requestStates"});
   }
@@ -42,6 +43,15 @@ class StateBubbles
       if (state.radius < StateBubbles.MIN_RADIUS)
         state.radius = StateBubbles.MIN_RADIUS;
     }
+  }
+
+  restart()
+  {
+    this.states = {};
+    this.totalAgentsInStates = 0;
+    this.initialised = false;
+
+    socket.emit("input", {"type": "requestStates"});
   }
 
   draw(ctx, debug = false)
