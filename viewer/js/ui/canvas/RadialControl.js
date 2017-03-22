@@ -97,7 +97,8 @@ class Handle
 
    beeNumberToRadiusScale(number)
    {
-      return ((number - 1) / 10) + 1;
+      let ratio = Math.min(number / world.agents.length, 1);
+      return (ratio * (RadialControl.MAX_AGENT_SCALE - 1)) + 1;
    }
 
    isHovered(x, y)
@@ -224,12 +225,13 @@ class RadialControl
          {
             component = 1 * RadialControl.RADIUS_SCALE
          }
-         else if (component > 2.0 * RadialControl.RADIUS_SCALE)
+         else if (component > RadialControl.MAX_AGENT_SCALE * RadialControl.RADIUS_SCALE)
          {
-            component = 2.0 * RadialControl.RADIUS_SCALE;
+            component = RadialControl.MAX_AGENT_SCALE * RadialControl.RADIUS_SCALE;
          }
 
-         this.drag.handle.updateRequested( Math.round( ((component / RadialControl.RADIUS_SCALE) - 1) * 20 ))
+         let adjustedComponent = (RadialControl.MAX_AGENT_SCALE / (RadialControl.MAX_AGENT_SCALE - 1)) * (component - 50);
+         this.drag.handle.updateRequested( Math.round( adjustedComponent / (RadialControl.RADIUS_SCALE * RadialControl.MAX_AGENT_SCALE) * world.agents.length ))
 
          //this.drag.handle.val = (component / RadialControl.RADIUS_SCALE) * 10;
          //this.drag.handle.x = component * Math.cos(this.drag.handle.r);
@@ -424,6 +426,8 @@ class RadialControl
    }
 }*/
 
+// If 100% of the agents are going in a direction, that point will have distance of MAX_AGENT_SCALE * RADIUS_SCALE
+RadialControl.MAX_AGENT_SCALE = 4.0;
 RadialControl.RADIUS_SCALE = 50;
 RadialControl.LINE_COLOUR = 'blue';
 RadialControl.HANDLE_COLOUR = 'blue';

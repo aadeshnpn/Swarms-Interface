@@ -75,6 +75,7 @@ socket.on('update', function(worldUpdate)
       //ui.RadialControl.updateActual(world.hub.directions);
    }
 
+   ui.on(worldUpdate);
 });
 
 function draw()
@@ -108,7 +109,6 @@ socket.on('updateMission', function(data)
 });
 
 socket.on('restart'             , function(data) { ui.on(data)  });
-socket.on('update'              , function(data) { ui.on(data) });
 socket.on('updateRadial'        , function(data) { ui.on(data) });
 socket.on('updateDebugParams'   , function(data) { ui.on(data) });
 socket.on('updateUIParams'      , function(data) { ui.on(data) });
