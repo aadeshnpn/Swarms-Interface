@@ -148,6 +148,7 @@ class RadialControl
       }
 
       ui.register("updateRadial", this.update.bind(this));
+      ui.register("restart", this.reset.bind(this));
    }
 
    update(data)
@@ -266,6 +267,28 @@ class RadialControl
       var component = mouseMagnitude * Math.cos(mouseAngle - handle.r);
 
       return component;
+   }
+
+   reset()
+   {
+      this.handles = [];
+      this.drag = {active: false, handle: null};
+      this.hover = {active: true, handle: null};
+
+      for (let i = 0; i < (360 / 5); i++)
+      {
+         this.handles.push( new Handle(i * 5, {interactive: this.interactive, colour: this.colour}) ); // we're doing it this way so eventually we can paramaterise the 5
+      }
+
+      this.handles[0].setPrev(this.handles[this.handles.length - 1])
+      this.handles[0].setNext(this.handles[1]);
+
+      for (let i = 1; i < this.handles.length; i++)
+      {
+         // this only works because js lets you do negative array indices
+         this.handles[i].setPrev(this.handles[(i - 1) % this.handles.length]);
+         this.handles[i].setNext(this.handles[(i + 1) % this.handles.length]);
+      }
    }
 }
 
