@@ -97,8 +97,17 @@ class Handle
 
    beeNumberToRadiusScale(number)
    {
-      let ratio = Math.min(number / world.agents.length, 1);
-      return (ratio * (RadialControl.MAX_AGENT_SCALE - 1)) + 1;
+      // KLUDGE FOR WHEN WORLD HASN'T BEE LOADED
+      // TODO: handle this properly
+      try
+      {
+         let ratio = Math.min(number / world.agents.length, 1);
+         return (ratio * (RadialControl.MAX_AGENT_SCALE - 1)) + 1;
+      }
+      catch (e)
+      {
+         console.log(e.message);
+      }
    }
 
    isHovered(x, y)

@@ -394,6 +394,16 @@ class Environment:
         eprint("\n\n\nRESTARTING\n\n\n")
         self.restart_simulation = True
 
+    def getUiStates(self, data):
+        eprint("getting ui states")
+        print(json.dumps({
+            "type" : "setStates",
+            "data" : list(self.agents.values())[0].getUiRepresentation()
+        }))
+
+    def getParams(self, data):
+        print(self.parametersToJson())
+
     # Move all of the agents
     def run(self):
 
@@ -406,12 +416,8 @@ class Environment:
         self.inputEventManager.subscribe('UIParameterUpdate', self.updateUIParameters)
         self.inputEventManager.subscribe('restart', self.restart_sim)
         self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
-
-        print(self.parametersToJson())
-        print(json.dumps({
-            "type" : "setStates",
-            "data" : list(self.agents.values())[0].getUiRepresentation()
-        }))
+        self.inputEventManager.subscribe('requestStates', self.getUiStates)
+        self.inputEventManager.subscribe('requestParams', self.getParams)
 
         world.to_json()
 

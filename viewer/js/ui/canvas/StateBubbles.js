@@ -4,10 +4,12 @@ class StateBubbles
   {
     this.states = {};
     this.totalAgentsInStates = 0;
-    this.initialised = false;
+    this.initialised = false
 
     ui.register("setStates", this.init.bind(this));
     ui.register("stateCounts", this.update.bind(this));
+
+    socket.emit("input", {"type": "requestStates"});
   }
 
   init(json)

@@ -18,6 +18,8 @@ class DebugParams
 
          socket.emit('input', {'type': 'parameterUpdate', params: paramObj});
       });
+
+      socket.emit('input', {'type': 'requestParams'});
    }
 
    update(data)
