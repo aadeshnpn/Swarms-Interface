@@ -408,11 +408,18 @@ class Environment:
         self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
 
         print(self.parametersToJson())
+        print(json.dumps({
+            "type" : "setStates",
+            "data" : list(self.agents.values())[0].getUiRepresentation()
+        }))
+
         world.to_json()
 
         while True:
             if not self.isPaused:
                 world.to_json()
+                stateCounts = {}
+
                 keys = list(self.agents.keys())  # deleting a key mid-iteration (suggest_new_direction())
                                                         # makes python mad...
                 for agent_id in keys:
@@ -427,6 +434,11 @@ class Environment:
                     #self.wind(wind_direction, wind_velocity)
                     agent.update(self)
                     '''
+
+                    if self.agents[agent_id].state.name not in stateCounts:
+                        stateCounts[self.agents[agent_id].state.name] = 0
+
+                    stateCounts[self.agents[agent_id].state.name] += 1
 
                     if self.change_agent_params:
                         self.updateAgentParameters(self.agents[agent_id])
@@ -447,8 +459,14 @@ class Environment:
                     self.suggest_new_direction(agent_id)
 
                 self.hubController.hiveAdjust(self.agents)
+
                 if self.change_agent_params:
                     self.change_agent_params = False
+
+                print(json.dumps({
+                    "type": "stateCounts",
+                    "data": stateCounts
+                }))
 
             self.updateFlowControllers()
 

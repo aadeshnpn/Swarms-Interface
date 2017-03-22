@@ -108,8 +108,10 @@ socket.on('updateMission', function(data)
   ui.on(data);
 });
 
-socket.on('restart'             , function(data) { ui.on(data)  });
+socket.on('restart'             , function(data) { ui.on(data) });
 socket.on('updateRadial'        , function(data) { ui.on(data) });
 socket.on('updateDebugParams'   , function(data) { ui.on(data) });
 socket.on('updateUIParams'      , function(data) { ui.on(data) });
 socket.on('updateSitePriorities', function(data) { ui.on(data) });
+socket.on('setStates'           , function(data) { ui.on(data) });
+socket.on('stateCounts'         , function(data) { ui.on(data) });

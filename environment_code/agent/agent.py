@@ -41,6 +41,17 @@ class Agent(StateMachine):
         else:
             self.state.dance_counter = dance
 
+    def getUiRepresentation(self):
+        return {
+            # these names should match the state.name property for each state
+            "states": ["assessing", "exploring", "commit"],
+            "transitions": {
+                "assessing": ["exploring"],
+                "exploring": ["assessing", "commit"],
+                "commit": []
+            }
+        }
+
     def __init__(self, agentId, initialstate, hub, piping_threshold=10, piping_time=1000, global_velocity=1,
                  explore_time_multiplier=3600, rest_time=300, dance_time=700, observe_time=2000,
                  site_assess_time=300, site_assess_radius=10):

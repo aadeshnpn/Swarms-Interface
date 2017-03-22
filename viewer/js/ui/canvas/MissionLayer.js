@@ -11,6 +11,10 @@ class MissionLayer
   update(data)
   {
     this.points.push(data);
+
+    // this can really slow down the ui if it gets out of hand
+    if (this.points.length > 200)
+      this.points.shift();
   }
 
   draw(ctx, debug = false)

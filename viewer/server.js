@@ -242,12 +242,17 @@ function cleanup()
 process.on('SIGTERM', cleanup);
 process.on('SIGINT', cleanup);
 
+http.listen(process.env.PORT || 3000, function(i)
+{
+  console.log("listening without sticky");
+});
+
  /*******************************************************************************
   * Server initialisation
   ******************************************************************************/
 
 // sticky automatically forks the process up to the number of CPUs
-if(!sticky.listen( http, process.env.PORT || 3000))
+/*if(!sticky.listen( http, process.env.PORT || 3000))
 {
    // Master code
    http.once('listening', () => { console.log(`Listening on ${(process.env.PORT || 3000)}`)});
@@ -255,4 +260,4 @@ if(!sticky.listen( http, process.env.PORT || 3000))
 else
 {
    // Worker code, if any becomes necessary
-}
+}*/

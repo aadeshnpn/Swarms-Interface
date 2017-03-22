@@ -18,6 +18,15 @@ class StateMachine:
         return
         RuntimeError("Input not supported for current state")
 
+    # return a dictionary representing states that should be shown to the user
+    # and transitions between them
+    # all state machines should override this
+    def getUiRepresentation(self):
+        return {
+            states: [],
+            transitions: {}
+        }
+
 
 
 
@@ -29,4 +38,3 @@ class StateMachine:
 # we don't need a transition...
 # so table: currentState, Input (type accepted..) :
 # condition that is accepted, nextState
-
