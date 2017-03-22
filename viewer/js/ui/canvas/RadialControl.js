@@ -427,7 +427,7 @@ class RadialControl
 }*/
 
 // If 100% of the agents are going in a direction, that point will have distance of MAX_AGENT_SCALE * RADIUS_SCALE
-RadialControl.MAX_AGENT_SCALE = 4.0;
+RadialControl.MAX_AGENT_SCALE = 10.0;
 RadialControl.RADIUS_SCALE = 50;
 RadialControl.LINE_COLOUR = 'blue';
 RadialControl.HANDLE_COLOUR = 'blue';
