@@ -114,7 +114,9 @@ class Agent(StateMachine):
                 (SiteAssess(self).__class__, input.startPipe): [None, Piping(self)],
                 (Dancing(self).__class__, input.tiredDance): [None, Resting(self)],
                 (Dancing(self).__class__, input.notTiredDance): [None, Assessing(self)],
+                (Dancing(self).__class__, input.startPipe): [None, Piping(self)],
                 (Resting(self).__class__, input.restingTime): [None, Observing(self)],
+                (Resting(self).__class__, input.startPipe): [None, Piping(self)],
                 (Piping(self).__class__, input.quorum): [None, Commit(self)]
                 }
         self.transitionTable = dict
@@ -143,21 +145,23 @@ class Agent(StateMachine):
     def reset_trans_table(self):
         #  Reset table in order to update parameters in states
         del self.transitionTable
-        self.transitionTable = {(Exploring().__class__, input.nestFound): [None, SiteAssess(self)],
-                (Exploring().__class__, input.exploreTime): [None, Observing(self)],
-                (Observing().__class__, input.observeTime): [None, Exploring(self)],
-                (Observing().__class__, input.dancerFound): [None, Assessing(self)],
-                (Observing().__class__, input.startPipe): [None, Piping(self)],
-                (Observing().__class__, input.quit): [None, Resting(self)],
-                (Assessing().__class__, input.siteFound): [self.danceTransition, Dancing(self)], # self.danceTransition()
-                (Assessing().__class__, input.siteAssess): [None, SiteAssess(self)],
+        self.transitionTable = {(Exploring(self).__class__, input.nestFound): [None, SiteAssess(self)],
+                (Exploring(self).__class__, input.exploreTime): [None, Observing(self)],
+                (Observing(self).__class__, input.observeTime): [None, Exploring(self)],
+                (Observing(self).__class__, input.dancerFound): [None, Assessing(self)],
+                (Observing(self).__class__, input.startPipe): [None, Piping(self)],
+                (Observing(self).__class__, input.quit): [None, Resting(self)],
+                (Assessing(self).__class__, input.siteFound): [self.danceTransition, Dancing(self)], # self.danceTransition()
+                (Assessing(self).__class__, input.siteAssess): [None, SiteAssess(self)],
                 #(Assessing().__class__, input.quit): [None, Observing(self)],
-                (SiteAssess().__class__, input.finAssess): [None, Assessing(self)],
-                (SiteAssess().__class__, input.startPipe): [None, Piping(self)],
-                (Dancing().__class__, input.tiredDance): [None, Resting(self)],
-                (Dancing().__class__, input.notTiredDance): [None, Assessing(self)],
-                (Resting().__class__, input.restingTime): [None, Observing(self)],
-                (Piping().__class__, input.quorum): [None, Commit(self)]
+                (SiteAssess(self).__class__, input.finAssess): [None, Assessing(self)],
+                (SiteAssess(self).__class__, input.startPipe): [None, Piping(self)],
+                (Dancing(self).__class__, input.tiredDance): [None, Resting(self)],
+                (Dancing(self).__class__, input.notTiredDance): [None, Assessing(self)],
+                (Dancing(self).__class__, input.startPipe): [None, Piping(self)],
+                (Resting(self).__class__, input.restingTime): [None, Observing(self)],
+                (Resting(self).__class__, input.startPipe): [None, Piping(self)],
+                (Piping(self).__class__, input.quorum): [None, Commit(self)]
                 }
 
     # so, the exploring part needs to give the input..
@@ -290,6 +294,7 @@ class Resting(State):
     def __init__(self, agent=None, rest_time=None):
         self.name = "resting"
         self.atHub = True  #we may not need this code at all... to turn it on make it default false.
+        self.seesPiper = False
         multiplier = np.abs(np.random.normal(1, 0.6, 1))  #Add normal distribution noise to resting counter
         if agent is not None:
             self.restCountdown = agent.RestTime * multiplier
@@ -299,10 +304,16 @@ class Resting(State):
             self.restCountdown = 4000 * multiplier
 
     def sense(self, agent, environment):
-        pass
+        if self.atHub:
+            bee = environment.hubController.observersCheck()
+            if isinstance(bee.state, Piping().__class__):
+                self.seesPiper = True
+                agent.velocity = agent.GlobalVelocity
+                agent.potential_site = bee.potential_site
+                environment.hubController.newPiper()
 
     def act(self, agent):
-        if self.atHub:
+        if self.atHub and not self.seesPiper:
             agent.velocity = 0
             self.restCountdown -= 1
         else:
@@ -314,6 +325,8 @@ class Resting(State):
                 agent.atHub = True
 
     def update(self, agent):
+        if self.seesPiper:
+            return input.startPipe
         if self.restCountdown < 1:
             agent.velocity = agent.GlobalVelocity
             return input.restingTime
@@ -328,6 +341,7 @@ class Resting(State):
 class Dancing(State):
     def __init__(self, agent=None):
         self.name = "dancing"
+        self.seesPiper = False
         if agent is None:
             self.dance_counter = 700
         else:
@@ -335,13 +349,20 @@ class Dancing(State):
                                              # we can consider implementing that in the transition.
 
     def sense(self, agent, environment):
-        pass
+        bee = environment.hubController.observersCheck()
+        if isinstance(bee.state, Piping().__class__):
+            self.seesPiper = True
+            agent.velocity = agent.GlobalVelocity
+            agent.potential_site = bee.potential_site
+            environment.hubController.newPiper()
 
     def act(self, agent):
         self.move(agent)
 
     def update(self, agent):
         # info from environment
+        if self.seesPiper:
+            return input.startPipe
         if self.dance_counter < 1:
             agent.assessments += 1
             agent.q_value = 0
