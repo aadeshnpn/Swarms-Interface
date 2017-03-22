@@ -46,20 +46,20 @@ class Environment:
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
 
         #  bee parameters
-        self.beePipingThreshold       =   30
+        self.beePipingThreshold       =   40
         self.beeGlobalVelocity        =    2
         self.beeExploreTimeMultiplier = 3625
-        self.beeRestTime              =  450
+        self.beeRestTime              = 2000
         self.beeDanceTime             = 1150
         self.beeObserveTime           = 2000
-        self.beeSiteAccessTime        =  235
+        self.beeSiteAccessTime        =  250
         self.beeSiteAccessRadius      =   15
         self.beePipingTimer           = 1200  # long enough to allow all bees to make it back before commit?
 
         #  environment parameters
 
         self.number_of_agents = 500
-        self.frames_per_sec = 600
+        self.frames_per_sec = 100
 
 
         #self.useDefaultParams = True
