@@ -1,6 +1,6 @@
-const checkbox = document.getElementById('checkboxDebug');
+const debugCheckbox = document.getElementById('checkboxDebug');
 
-checkbox.addEventListener('change', function(e)
+debugCheckbox.addEventListener('change', function(e)
 {
    if (e.target.checked)
    {

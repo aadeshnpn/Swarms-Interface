@@ -34,7 +34,7 @@ class World
 
   // Draw the whole world recursively. Takes a 2dRenderingContext obj from
   // a canvas element
-  draw(ctx, debug = false)
+  draw(ctx, debug = false, showAgentStates = false)
   {
     // Ok so this isn't really buying us all that much simplification at this level
     // right *now*, but the point is if in the future we ever need some sort of
@@ -49,7 +49,7 @@ class World
 
     this.hub.draw(ctx, debug)
 
-    for (var agent      of this.agents     ) { agent     .draw(ctx, debug); }
+    for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates); }
     for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
   }
 }

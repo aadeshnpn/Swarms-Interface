@@ -4,9 +4,11 @@
 
 // get a socket object from the socket.io script included above
 var socket = io();
-var debug = true;
 var world = null;
 var clientId;
+
+var debug           = true;
+var showAgentStates = false;
 
 // get a reference to the canvas element
 var canvas = document.getElementById("canvas");
@@ -91,7 +93,7 @@ function draw()
    ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
    ctx.restore();
 
-   world.draw(ctx, debug);
+   world.draw(ctx, debug, showAgentStates);
    ui.draw(ctx, debug);
 
    finishedDrawing = true;
