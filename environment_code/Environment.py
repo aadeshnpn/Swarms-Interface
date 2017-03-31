@@ -1,3 +1,5 @@
+#import multiprocessing
+#pool=multiprocessing.Pool(processes=16)
 from agent.agent import *
 # from worldGenerator import worldGenerator
 from InputEventManager import InputEventManager
@@ -45,8 +47,13 @@ class Environment:
         self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
 
+        #  environment parameters
+
+        self.number_of_agents = 1000
+        self.frames_per_sec = 600
+
         #  bee parameters
-        self.beePipingThreshold       =   40
+        self.beePipingThreshold       =   self.number_of_agents*.1
         self.beeGlobalVelocity        =    2
         self.beeExploreTimeMultiplier = 3625
         self.beeRestTime              = 2000
@@ -56,10 +63,7 @@ class Environment:
         self.beeSiteAccessRadius      =   15
         self.beePipingTimer           = 1200  # long enough to allow all bees to make it back before commit?
 
-        #  environment parameters
 
-        self.number_of_agents = 500
-        self.frames_per_sec = 100
 
 
         #self.useDefaultParams = True
@@ -191,13 +195,13 @@ class Environment:
         for trap in self.traps:
             x_dif = x - trap["x"]
             y_dif = y - trap["y"]
-            if x_dif ** 2 + y_dif ** 2 <= trap["radius"] ** 2:
+            if x_dif ** 2 + y_dif ** 2 <= (trap["radius"])** 2:
                 return -3
 
         for obstacle in self.obstacles:
             x_dif = x - obstacle["x"]
             y_dif = y - obstacle["y"]
-            if x_dif ** 2 + y_dif ** 2 <= obstacle["radius"] ** 2:
+            if x_dif ** 2 + y_dif ** 2 <= (obstacle["radius"]) ** 2:
                 return -2
 
         for spot in self.rough:
@@ -282,14 +286,12 @@ class Environment:
         agent = self.agents[agentId]
 
         # Check the effects of moving in the suggested direction
-        potential_field_effect = self.potential_field_sum(agent.location)
-        potential_field_v = np.sqrt(potential_field_effect[0]**2 + potential_field_effect[1]**2)
-        potential_field_d = np.arctan2(potential_field_effect[1], potential_field_effect[0])
+        '''potential_field_effect = self.potential_field_sum(agent.location)
+        potential_field_v = np.sqrt(potential_field_effect[0] ** 2 + potential_field_effect[1] ** 2)
+        potential_field_d = np.arctan2(potential_field_effect[1], potential_field_effect[0])'''
 
-        proposed_x = agent.location[0] + np.cos(agent.direction) * agent.velocity \
-                                        + np.cos(potential_field_d) * potential_field_v
-        proposed_y = agent.location[1] + np.sin(agent.direction) * agent.velocity \
-                                        + np.sin(potential_field_d) * potential_field_v
+        proposed_x = agent.location[0] + np.cos(agent.direction) * agent.velocity #+ np.cos(potential_field_d) * potential_field_v
+        proposed_y = agent.location[1] + np.sin(agent.direction) * agent.velocity #+ np.sin(potential_field_d) * potential_field_v
 
         terrain_value = self.check_terrain(proposed_x, proposed_y)
 
@@ -309,14 +311,16 @@ class Environment:
             return
         elif terrain_value == -2:
             #  pass
+            potential_field_effect = self.potential_field_sum(agent.location)
+            potential_field_v = np.sqrt(potential_field_effect[0] ** 2 + potential_field_effect[1] ** 2)
+            potential_field_d = np.arctan2(potential_field_effect[1], potential_field_effect[0])
+
             agent.location[0] += np.cos(potential_field_d) * potential_field_v  # potential field should push away from obstacles
             agent.location[1] += np.sin(potential_field_d) * potential_field_v
         elif terrain_value == -1:  # If the agent is in rough terrain, it will move at half speed
             slow_down = .5
-            agent.location[0] += np.cos(agent.direction) * agent.velocity * slow_down \
-                                    + np.cos(potential_field_d) * potential_field_v
-            agent.location[1] += np.sin(agent.direction) * agent.velocity * slow_down \
-                                    + np.sin(potential_field_d) * potential_field_v
+            agent.location[0] += np.cos(agent.direction) * agent.velocity * slow_down #+ np.cos(potential_field_d) * potential_field_v
+            agent.location[1] += np.sin(agent.direction) * agent.velocity * slow_down # + np.sin(potential_field_d) * potential_field_v
 
         '''
         This is computationally very expensive!
@@ -547,8 +551,8 @@ class Environment:
     def create_potential_fields(self):
         for obstacle in self.obstacles:
             location = [obstacle["x"], obstacle["y"]]
-            spread = 30  #  What should this be?
-            strength = .035  #  Dictates the strength of the field
+            spread = 20  #  What should this be?
+            strength = .25  #  Dictates the strength of the field
             self.potential_fields.append(PotentialField(location, obstacle["radius"], spread, strength, type='repulsor'))
 
     def potential_field_sum(self, location):
