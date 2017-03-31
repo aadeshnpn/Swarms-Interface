@@ -16,7 +16,7 @@ class SitePriorityMeters
          }
 
          socket.emit('input', {type: 'priorityUpdate', sitePriorities: priorityObj});
-      });
+      }.bind(this));
 
       ui.register('updateSitePriorities', this.update.bind(this));
    }

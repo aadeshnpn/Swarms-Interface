@@ -491,7 +491,7 @@ class SiteAssess(State):
         if self.check_num_close_assessors(agent, environment):
             self.thresholdPassed = True
 
-        if(siteInfo["q"] >= 0): #CHECK THIS, IT MAY BE A PROBLEM...
+        if(siteInfo["q"] >= 0 and siteInfo["radius"] > 0): #CHECK THIS, IT MAY BE A PROBLEM...
 
             distance = np.sqrt((agent.location[0] - agent.hub[0])**2 + (agent.location[1] - agent.hub[1]**2))
             size     = siteInfo["radius"]

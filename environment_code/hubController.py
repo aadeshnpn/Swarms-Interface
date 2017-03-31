@@ -197,13 +197,11 @@ class hubController:
                 {
                     "sitePriorities" :
                     {
-                        "distance" : self.hubController.siteDistancePriority,
-                        "size"     : self.hubController.siteSizePriority
+                        "distance" : self.siteDistancePriority,
+                        "size"     : self.siteSizePriority
                     }
                 }
             }
         }
 
         print(json.dumps(priorityJson))
-
-
