@@ -185,9 +185,9 @@ class hubController:
     def getSitePriorities(self):
         return {"distance": self.siteDistancePriority, "size": self.siteSizePriority}
 
-    def handlePriorityUpdate(self, json):
-        self.siteDistancePriority = float( json["sitePriorities"]["distance"] )
-        self.siteSizePriority     = float( json["sitePriorities"]["size"]     )
+    def handlePriorityUpdate(self, json_dict):
+        self.siteDistancePriority = float(json_dict["sitePriorities"]["distance"])
+        self.siteSizePriority     = float(json_dict["sitePriorities"]["size"])
 
         priorityJson = {
             "type": "updateSitePriorities",
@@ -205,3 +205,7 @@ class hubController:
         }
 
         print(json.dumps(priorityJson))
+
+    def update_parameters(self, agent, parameters):
+        eprint("Updating", agent.id, "parameters")
+        agent.parameters = parameters

@@ -1,4 +1,4 @@
-// Express is the web server frameworke. It handles all the low level http
+// Express is the web server framework. It handles all the low level http
 // stuff. It initialises a server based off the basic node httpserver which
 // we can then use to define http routes
 const express = require( 'express' );

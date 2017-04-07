@@ -34,17 +34,8 @@ class Environment:
         self.rough = []
         self.info_stations = []
         self.agents = {}
-        '''self.states = {Exploring().__class__:[],
-                       Assessing().__class__: [],
-                       Dancing().__class__:[],
-                       Resting().__class__:[],
-                       Observing().__class__:[],
-                       SiteAssess().__class__:[],
-                       Piping().__class__:[],
-                       Commit().__class__:[]}'''
         self.dead_agents = []
 
-        self.quadrants = [[set() for x in range(800)] for y in range(400)]
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
 
         #  environment parameters
@@ -53,17 +44,15 @@ class Environment:
         self.frames_per_sec = 600
 
         #  bee parameters
-        self.beePipingThreshold       =   self.number_of_agents*.1
-        self.beeGlobalVelocity        =    2
-        self.beeExploreTimeMultiplier = 3625
-        self.beeRestTime              = 2000
-        self.beeDanceTime             = 1150
-        self.beeObserveTime           = 2000
-        self.beeSiteAccessTime        =  250
-        self.beeSiteAccessRadius      =   15
-        self.beePipingTimer           = 1200  # long enough to allow all bees to make it back before commit?
-
-
+        self.parameters = {"PipingThreshold":       self.number_of_agents*.1,
+                           "Velocity":              2,
+                           "ExploreTime":           3625,
+                           "RestTime":              2000,
+                           "DanceTime":             1150,
+                           "ObserveTime":           2000,
+                           "SiteAssessTime":        250,
+                           "SiteAssessRadius":      15,
+                           "PipingTime":            1200}
 
 
         #self.useDefaultParams = True
@@ -143,18 +132,6 @@ class Environment:
                 new_repulsor_list.append(repulsor)
         self.repulsors = new_repulsor_list
 
-    def sort_by_state(self, agent_id, prev_state, cur_state):
-        pass
-        '''if self.states[prev_state].count(agent_id) > 0:
-            self.states[prev_state].remove(agent_id)
-            self.states[cur_state].append(agent_id)
-        else:
-            eprint("Error:", agent_id, "not in", prev_state)
-            eprint("It wants to change to", cur_state)
-
-            this is not being used currently'''
-
-
     # Function to return the Q-value for given coordinates. Returns 0 if nothing is there and a value between 0 and 1
     # if it finds a site.
     def get_q(self, agent):
@@ -170,7 +147,7 @@ class Environment:
                     self.info_stations[i].bee_count += 1
                     agent.atSite = True
                     agent.siteIndex = i
-                    if info.check_for_changes(agent.current_parameters, agent.param_time_stamp):
+                    if info.check_for_changes(agent.parameters, agent.param_time_stamp):
                         agent.update_params(info.parameters)
                         agent.param_time_stamp = info.last_update
 
@@ -182,7 +159,7 @@ class Environment:
                 }
 
         if agent.atSite:
-            if self.info_stations[agent.siteIndex].check_for_changes(agent.current_parameters, agent.param_time_stamp):
+            if self.info_stations[agent.siteIndex].check_for_changes(agent.parameters, agent.param_time_stamp):
                 agent.update_params(self.info_stations[agent.siteIndex].parameters)
                 agent.param_time_stamp = self.info_stations[agent.siteIndex].last_update
             # agent.atSite = False
@@ -290,6 +267,7 @@ class Environment:
         potential_field_v = np.sqrt(potential_field_effect[0] ** 2 + potential_field_effect[1] ** 2)
         potential_field_d = np.arctan2(potential_field_effect[1], potential_field_effect[0])'''
 
+        # eprint(agent.GlobalVelocity)
         proposed_x = agent.location[0] + np.cos(agent.direction) * agent.velocity #+ np.cos(potential_field_d) * potential_field_v
         proposed_y = agent.location[1] + np.sin(agent.direction) * agent.velocity #+ np.sin(potential_field_d) * potential_field_v
 
@@ -310,7 +288,6 @@ class Environment:
             del self.agents[agentId]
             return
         elif terrain_value == -2:
-            #  pass
             potential_field_effect = self.potential_field_sum(agent.location)
             potential_field_v = np.sqrt(potential_field_effect[0] ** 2 + potential_field_effect[1] ** 2)
             potential_field_d = np.arctan2(potential_field_effect[1], potential_field_effect[0])
@@ -355,36 +332,37 @@ class Environment:
         self.repulsors.append(flowController.Repulsor((json['x'], json['y'])))
 
     def updateParameters(self, json):
+        eprint("updateParameters")
         params = json['params']
 
-        self.beePipingThreshold       = int  (params['beePipingThreshold'      ])
-        self.beeGlobalVelocity        = float(params['beeGlobalVelocity'       ])
-        self.beeExploreTimeMultiplier = float(params['beeExploreTimeMultiplier'])
-        self.beeRestTime              = int  (params['beeRestTime'             ])
-        self.beeDanceTime             = int  (params['beeDanceTime'            ])
-        self.beeObserveTime           = int  (params['beeObserveTime'          ])
-        self.beeSiteAccessTime        = int  (params['beeSiteAccessTime'       ])
-        self.beeSiteAccessRadius      = int  (params['beeSiteAccessRadius'     ])
-        self.beePipingTimer           = int  (params['beePipingTimer'          ])
-        self.number_of_agents         = int  (params['numberOfAgents'          ])
+        self.parameters["PipingThreshold"]  = int   (params['beePipingThreshold'      ])
+        self.parameters["Velocity"]         = float (params['beeGlobalVelocity'       ])
+        self.parameters["ExploreTime"]      = float (params['beeExploreTimeMultiplier'])
+        self.parameters["RestTime"]         = int   (params['beeRestTime'             ])
+        self.parameters["DanceTime"]        = int   (params['beeDanceTime'            ])
+        self.parameters["ObserveTime"]      = int   (params['beeObserveTime'          ])
+        self.parameters["SiteAssessTime"]   = int   (params['beeSiteAccessTime'       ])
+        self.parameters["SiteAssessRadius"] = int   (params['beeSiteAccessRadius'     ])
+        self.parameters["PipingTime"]       = int   (params['beePipingTimer'          ])
+        self.number_of_agents               = int   (params['numberOfAgents'          ])
 
         self.change_agent_params = True
+        eprint("New velocity =", params["beeGlobalVelocity"])
 
         # echo the change out for any other connected clients
         print(self.parametersToJson())
 
     def updateAgentParameters(self, agent):
-        agent.PipingThreshold = self.beePipingThreshold
-        agent.GlobalVelocity = self.beeGlobalVelocity
-        agent.ExploreTimeMultiplier = self.beeExploreTimeMultiplier
-        agent.RestTime = self.beeRestTime
-        agent.DanceTime = self.beeDanceTime
-        agent.ObserveTime = self.beeObserveTime
-        agent.SiteAssessTime = self.beeSiteAccessTime
-        agent.SiteAssessRadius = self.beeSiteAccessRadius
-        agent.PipingTimer = self.beePipingTimer
+        agent.PipingThreshold       = int   (self.parameters["PipingThreshold"  ])
+        agent.GlobalVelocity        = float (self.parameters["Velocity"         ])
+        agent.ExploreTimeMultiplier = float (self.parameters["ExploreTime"      ])
+        agent.RestTime              = int   (self.parameters["RestTime"         ])
+        agent.DanceTime             = int   (self.parameters["DanceTime"        ])
+        agent.ObserveTime           = int   (self.parameters["ObserveTime"      ])
+        agent.SiteAssessTime        = int   (self.parameters["SiteAssessTime"   ])
+        agent.SiteAssessRadius      = int   (self.parameters["SiteAssessRadius" ])
+        agent.PipingTimer           = int   (self.parameters["PipingTime"       ])
         agent.reset_trans_table()
-
 
     def updateUIParameters(self, json):
         params = json['params']
@@ -450,8 +428,12 @@ class Environment:
 
                     stateCounts[self.agents[agent_id].state.name] += 1
 
+                    # if agent_id == "500":
+                    #     self.change_agent_params = True
+
                     if self.change_agent_params:
                         self.updateAgentParameters(self.agents[agent_id])
+
                     # is this faster?
                     self.agents[agent_id].act()
                     self.agents[agent_id].sense(self)
@@ -508,32 +490,32 @@ class Environment:
             #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
                 #agent = Agent(agent_id,Observing())
             #else:
-            agent = Agent(agent_id,  Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub,
-                          piping_threshold        = self.beePipingThreshold,
-                          piping_time             = self.beePipingTimer,
-                          global_velocity         = self.beeGlobalVelocity,
-                          explore_time_multiplier = self.beeExploreTimeMultiplier,
-                          rest_time               = self.beeRestTime,
-                          dance_time              = self.beeDanceTime,
-                          observe_time            = self.beeObserveTime,
-                          site_assess_time        = self.beeSiteAccessTime,
-                          site_assess_radius      = self.beeSiteAccessRadius)
+            agent = Agent(agent_id,  Exploring(ExploreTimeMultiplier=self.parameters["ExploreTime"]), self.hub,
+                          piping_threshold          = int   (self.parameters["PipingThreshold"  ]),
+                          global_velocity           = float (self.parameters["Velocity"         ]),
+                          explore_time_multiplier   = float (self.parameters["ExploreTime"      ]),
+                          rest_time                 = int   (self.parameters["RestTime"         ]),
+                          dance_time                = int   (self.parameters["DanceTime"        ]),
+                          observe_time              = int   (self.parameters["ObserveTime"      ]),
+                          site_assess_time          = int   (self.parameters["SiteAssessTime"   ]),
+                          site_assess_radius        = int   (self.parameters["SiteAssessRadius" ]),
+                          piping_time               = int   (self.parameters["PipingTime"       ]))
             self.agents[agent_id] = agent
             #self.states[Exploring().__class__].append(agent_id)
 
         for y in range(rest_num):
             agent_id = str(x + 1 + y)
 
-            agent = Agent(agent_id, Resting(agent=None, rest_time=self.beeRestTime), self.hub,
-                          piping_threshold=self.beePipingThreshold,
-                          piping_time=self.beePipingTimer,
-                          global_velocity=self.beeGlobalVelocity,
-                          explore_time_multiplier=self.beeExploreTimeMultiplier,
-                          rest_time=self.beeRestTime,
-                          dance_time=self.beeDanceTime,
-                          observe_time=self.beeObserveTime,
-                          site_assess_time=self.beeSiteAccessTime,
-                          site_assess_radius=self.beeSiteAccessRadius)
+            agent = Agent(agent_id, Resting(agent=None, rest_time=self.parameters["RestTime"]), self.hub,
+                          piping_threshold          = int   (self.parameters["PipingThreshold"]),
+                          global_velocity           = float (self.parameters["Velocity"]),
+                          explore_time_multiplier   = float (self.parameters["ExploreTime"]),
+                          rest_time                 = int   (self.parameters["RestTime"]),
+                          dance_time                = int   (self.parameters["DanceTime"]),
+                          observe_time              = int   (self.parameters["ObserveTime"]),
+                          site_assess_time          = int   (self.parameters["SiteAssessTime"]),
+                          site_assess_radius        = int   (self.parameters["SiteAssessRadius"]),
+                          piping_time               = int   (self.parameters["PipingTime"]))
             self.agents[agent_id] = agent
 
     def reset_sim(self):
@@ -628,20 +610,19 @@ class Environment:
             {
                 "parameters":
                 {
-                    "beePipingThreshold"      : self.beePipingThreshold,
-                    "beeGlobalVelocity"       : self.beeGlobalVelocity,
-                    "beeExploreTimeMultiplier": self.beeExploreTimeMultiplier,
-                    "beeRestTime"             : self.beeRestTime,
-                    "beeDanceTime"            : self.beeDanceTime,
-                    "beeObserveTime"          : self.beeObserveTime,
-                    "beeSiteAccessTime"       : self.beeSiteAccessTime,
-                    "beeSiteAccessRadius"     : self.beeSiteAccessRadius,
-                    "beePipingTimer"          : self.beePipingTimer,
+                    "beePipingThreshold"      : self.parameters["PipingThreshold"],
+                    "beeGlobalVelocity"       : self.parameters["Velocity"],
+                    "beeExploreTimeMultiplier": self.parameters["ExploreTime"],
+                    "beeRestTime"             : self.parameters["RestTime"],
+                    "beeDanceTime"            : self.parameters["DanceTime"],
+                    "beeObserveTime"          : self.parameters["ObserveTime"],
+                    "beeSiteAccessTime"       : self.parameters["SiteAssessTime"],
+                    "beeSiteAccessRadius"     : self.parameters["SiteAssessRadius"],
+                    "beePipingTimer"          : self.parameters["PipingTime"] ,
                     "numberOfAgents"          : self.number_of_agents
                 }
             }
         }
-
         return json.dumps(parameterJson)
 
     def UIParametersToJson(self):
@@ -651,7 +632,7 @@ class Environment:
             {
                 "parameters":
                 {
-                    "uiFps"                     : self.frames_per_sec
+                    "uiFps": self.frames_per_sec
                 }
             }
         }

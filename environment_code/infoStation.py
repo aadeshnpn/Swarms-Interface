@@ -5,7 +5,7 @@ class InfoStation:
     def __init__(self):
         self.bee_count = 0
 
-        self.parameters = {"PipingThreshold":       12,
+        self.parameters = {"PipingThreshold":       40,
                            "Velocity":              2,
                            "ExploreTime":           3625,
                            "RestTime":              450,

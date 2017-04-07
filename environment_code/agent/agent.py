@@ -52,32 +52,21 @@ class Agent(StateMachine):
             }
         }
 
-    def __init__(self, agentId, initialstate, hub, piping_threshold=10, piping_time=1000, global_velocity=1,
-                 explore_time_multiplier=3600, rest_time=300, dance_time=700, observe_time=2000,
-                 site_assess_time=300, site_assess_radius=10):
+    def __init__(self, agentId, initialstate, hub, piping_threshold=40, piping_time=1200, global_velocity=2,
+                 explore_time_multiplier=3625, rest_time=2000, dance_time=1150, observe_time=2000,
+                 site_assess_time=250, site_assess_radius=15):
         self.state = initialstate
 
-        # bee agent constants (i.e. these should not be modified while running)
-        self.PipingThreshold = piping_threshold
-        self.GlobalVelocity = global_velocity
-        self.ExploreTimeMultiplier = explore_time_multiplier
-        self.RestTime = rest_time
-        self.DanceTime = dance_time
-        self.ObserveTime = observe_time
-        self.SiteAssessTime = site_assess_time
-        self.SiteAssessRadius = site_assess_radius  # so far this is arbitrary
-        self.PipingTimer = piping_time  # long enough to allow all bees to make it back before commit?
-
         # These parameters may be modified at run-time
-        self.current_parameters = {"PipingThreshold":       10,
-                                   "Velocity":              2,
-                                   "ExploreTime":           3625,
-                                   "RestTime":              450,
-                                   "DanceTime":             1150,
-                                   "ObserveTime":           2000,
-                                   "SiteAssessTime":        235,
-                                   "SiteAssessRadius":      15,
-                                   "PipingTime":            1200}
+        self.parameters =  {"PipingThreshold":       piping_threshold,
+                            "Velocity":              global_velocity,
+                            "ExploreTime":           explore_time_multiplier,
+                            "RestTime":              rest_time,
+                            "DanceTime":             dance_time,
+                            "ObserveTime":           observe_time,
+                            "SiteAssessTime":        site_assess_time,
+                            "SiteAssessRadius":      site_assess_radius,
+                            "PipingTime":            piping_time}
 
         # This time-stamp should be updated whenever the bee receives new parameters
         self.param_time_stamp = 0
@@ -88,7 +77,7 @@ class Agent(StateMachine):
         self.location = [hub["x"], hub["y"]]
         self.direction = 2*np.pi*np.random.random()  # should be initialized? potentially random?
         #self.direction = np.pi/2
-        self.velocity = self.GlobalVelocity
+        self.velocity = self.parameters["Velocity"]
         self.hub = [hub["x"], hub["y"]]  # should be initialized?
         self.potential_site = None  # array [x,y]
         self.q_value = 0
@@ -127,21 +116,6 @@ class Agent(StateMachine):
         self.repulsor = None
         self.ignore_repulsor = None
 
-    def update_params(self, updated_parameters):
-        self.current_parameters = updated_parameters
-
-        self.PipingThreshold = self.current_parameters["PipingThreshold"]
-        self.GlobalVelocity = self.current_parameters["Velocity"]
-        self.ExploreTimeMultiplier = self.current_parameters["ExploreTime"]
-        self.RestTime = self.current_parameters["RestTime"]
-        self.DanceTime = self.current_parameters["DanceTime"]
-        self.ObserveTime = self.current_parameters["ObserveTime"]
-        self.SiteAssessTime = self.current_parameters["SiteAssessTime"]
-        self.SiteAssessRadius = self.current_parameters["SiteAssessRadius"]
-        self.PipingTimer = self.current_parameters["PipingTime"]
-
-        self.reset_trans_table()
-
     def reset_trans_table(self):
         #  Reset table in order to update parameters in states
         del self.transitionTable
@@ -173,13 +147,12 @@ class Exploring(State):
         while exp < 0:
             exp = np.random.normal(1, .3, 1)
         if agent is not None:
-            self.exploretime = exp*agent.ExploreTimeMultiplier
+            self.exploretime = exp*agent.parameters["ExploreTime"]
         elif ExploreTimeMultiplier is not None:
             self.exploretime = exp*ExploreTimeMultiplier
         else:
             # warnings.warn("No agent or initial condition given! Using default...")
-            self.exploretime = exp*3600
-        #self.exploretime = 200
+            self.exploretime = exp*3625
 
     def sense(self, agent, environment):
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius) \
@@ -222,21 +195,21 @@ class Exploring(State):
 
     def move(self, agent):
         if(agent.attractor is not None and distance(agent.attractor, agent.location) < 40 and agent.attracted is True):
-                angle = safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.attractor[0]-agent.location[0],agent.attractor[1]-agent.location[1]))
-                angle = np.clip(angle, -np.pi/16, np.pi/16)
-                error = np.random.normal(0, .3)
-                agent.direction += angle + error
-                agent.direction = agent.direction % (2 *np.pi)
+            angle = safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.attractor[0]-agent.location[0],agent.attractor[1]-agent.location[1]))
+            angle = np.clip(angle, -np.pi/16, np.pi/16)
+            error = np.random.normal(0, .3)
+            agent.direction += angle + error
+            agent.direction = agent.direction % (2 *np.pi)
 
         elif(agent.repulsor is not None and distance(agent.repulsor, agent.location) < 40 and agent.ignore_repulsor is False):
-                 angle = - safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.repulsor[0]-agent.location[0],agent.repulsor[1]-agent.location[1]))
-                 angle = np.clip(angle, -np.pi/16, np.pi/16)
-                 if(angle >= 0):
-                          agent.direction += .3
-                 else:
-                          agent.direction -= .3
+             angle = - safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.repulsor[0]-agent.location[0],agent.repulsor[1]-agent.location[1]))
+             angle = np.clip(angle, -np.pi/16, np.pi/16)
+             if(angle >= 0):
+                      agent.direction += .3
+             else:
+                      agent.direction -= .3
 
-                 agent.direction %= 2 * np.pi
+             agent.direction %= 2 * np.pi
 
         elif self.inputExplore: #this is for when the user has requested more bees
             delta_d = np.random.normal(0, .013) # this will assure that the bee moves less erratically, it can be decreased a little as well
@@ -297,7 +270,7 @@ class Resting(State):
         self.seesPiper = False
         multiplier = np.abs(np.random.normal(1, 0.6, 1))  #Add normal distribution noise to resting counter
         if agent is not None:
-            self.restCountdown = agent.RestTime * multiplier
+            self.restCountdown = agent.parameters["RestTime"] * multiplier
         elif rest_time is not None:
             self.restCountdown = rest_time * multiplier
         else:
@@ -308,7 +281,7 @@ class Resting(State):
             bee = environment.hubController.observersCheck()
             if isinstance(bee.state, Piping().__class__):
                 self.seesPiper = True
-                agent.velocity = agent.GlobalVelocity
+                agent.velocity = agent.parameters["Velocity"]
                 agent.potential_site = bee.potential_site
                 environment.hubController.newPiper()
 
@@ -317,7 +290,7 @@ class Resting(State):
             agent.velocity = 0
             self.restCountdown -= 1
         else:
-            # if not at hub, more towards it
+            # if not at hub, move towards it
             self.move(agent)
             if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <= 1:
                 agent.velocity = 0
@@ -328,7 +301,7 @@ class Resting(State):
         if self.seesPiper:
             return input.startPipe
         if self.restCountdown < 1:
-            agent.velocity = agent.GlobalVelocity
+            agent.velocity = agent.parameters["Velocity"]
             return input.restingTime
 
     def move(self, agent):
@@ -343,16 +316,16 @@ class Dancing(State):
         self.name = "dancing"
         self.seesPiper = False
         if agent is None:
-            self.dance_counter = 700
+            self.dance_counter = 1150
         else:
-            self.dance_counter = agent.DanceTime  # this dance counter should be determined by the q value and the distance,
+            self.dance_counter = agent.parameters["DanceTime"]  # this dance counter should be determined by the q value and the distance,
                                              # we can consider implementing that in the transition.
 
     def sense(self, agent, environment):
         bee = environment.hubController.observersCheck()
         if isinstance(bee.state, Piping().__class__):
             self.seesPiper = True
-            agent.velocity = agent.GlobalVelocity
+            agent.velocity = agent.parameters["Velocity"]
             agent.potential_site = bee.potential_site
             environment.hubController.newPiper()
 
@@ -385,7 +358,7 @@ class Observing(State):
     def __init__(self, agent=None, observerTimer=None):
         self.name = "observing"
         if agent is not None:
-            self.observerTimer = agent.ObserveTime
+            self.observerTimer = agent.parameters["ObserveTime"]
         elif observerTimer is not None:
             self.observerTimer = observerTimer
         else:
@@ -403,12 +376,12 @@ class Observing(State):
             bee = environment.hubController.observersCheck()
             if isinstance(bee.state, Piping().__class__):
                 self.seesPiper = True
-                agent.velocity = agent.GlobalVelocity
+                agent.velocity = agent.parameters["Velocity"]
                 agent.potential_site = bee.potential_site
                 environment.hubController.newPiper()
             if isinstance(bee.state, Dancing().__class__):
                 self.seesDancer = True
-                agent.velocity = agent.GlobalVelocity
+                agent.velocity = agent.parameters["Velocity"]
                 agent.potential_site = bee.potential_site
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
                 and agent.inHub is False:
@@ -420,7 +393,7 @@ class Observing(State):
         if self.atHub:
             self.observerTimer -= 1
             if self.observerTimer == 0:
-                agent.velocity = agent.GlobalVelocity
+                agent.velocity = agent.parameters["Velocity"]
             self.wander(agent)
         else:
             # if not at hub, more towards it
@@ -430,7 +403,7 @@ class Observing(State):
                 self.atHub = True
                 #agent.inHub = True
                 agent.direction += -89 + 179 * np.random.random()
-                agent.velocity = agent.GlobalVelocity
+                agent.velocity = agent.parameters["Velocity"]
 
     def update(self, agent):
         if self.seesPiper is True:
@@ -471,13 +444,13 @@ class SiteAssess(State):
             self.counter = 300
             self.siteRadius = 10
         else:
-            self.counter = agent.SiteAssessTime
-            self.siteRadius = agent.SiteAssessRadius
+            self.counter = agent.parameters["SiteAssessTime"]
+            self.siteRadius = agent.parameters["SiteAssessRadius"]
         self.thresholdPassed = False
 
     def check_num_close_assessors(self, agent, environment):
         """Check if number of local bees assessing current site exceeds threshold for piping"""
-        if agent.siteIndex is not None and environment.info_stations[agent.siteIndex].bee_count > agent.PipingThreshold:
+        if agent.siteIndex is not None and environment.info_stations[agent.siteIndex].bee_count > agent.parameters["PipingThreshold"]:
             return True
         else:
             return False
@@ -491,7 +464,7 @@ class SiteAssess(State):
         if self.check_num_close_assessors(agent, environment):
             self.thresholdPassed = True
 
-        if(siteInfo["q"] >= 0 and siteInfo["radius"] > 0): #CHECK THIS, IT MAY BE A PROBLEM...
+        if siteInfo["q"] >= 0 and siteInfo["radius"] > 0: #CHECK THIS, IT MAY BE A PROBLEM...
 
             distance = np.sqrt((agent.location[0] - agent.hub[0])**2 + (agent.location[1] - agent.hub[1]**2))
             size     = siteInfo["radius"]
@@ -513,7 +486,6 @@ class SiteAssess(State):
             #eprint("distance: ", distance, "; size: ", size, "; q: ", q, "; pDist: ", priorities["distance"], "; pSize: ", priorities["size"], "; adjusted: ", adjustedQ)
 
             agent.q_value = 1 if adjustedQ > 1 else 0 if adjustedQ < 0 else adjustedQ
-
 
     def act(self, agent):
         self.move(agent)
@@ -546,7 +518,7 @@ class Piping(State):
         if agent is None:
             self.pipe_counter = 1000
         else:
-            self.pipe_counter = agent.PipingTimer
+            self.pipe_counter = agent.parameters["PipingTime"]
         self.quorum = False
 
     '''def neighbors_piping(self, agent, environment):
