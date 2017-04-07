@@ -1,0 +1,30 @@
+World Limits
+X   Y
+800 400
+
+Hub
+X   Y   Rad
+0   0   20
+
+Sites
+X    Y    Rad Q-value
+200  -50  30  .2
+700  -300 20  .9
+500  350  15  .5
+-300 -250 7   .05
+-750 375  25  .4
+
+Obstacles
+X    Y   Rad
+450  100 20
+-600 -20 15
+-400 200 40
+
+Traps
+X   Y    Rad
+50  250  10
+10  -315 20
+
+Rough Terrain
+X    Y   Rad
+-350 200 150
