@@ -6,7 +6,7 @@ class StateMachine:
         self.transitionTable = tranTable
         self.id = id
 
-    def nextState(self, input, environment):
+    def nextState(self, input):
         if input is None:
             return
         currState = self.transitionTable[(self.state.__class__, input)]
@@ -14,18 +14,14 @@ class StateMachine:
 
 
         if currState[0] is not None:
-            currState[0](environment)
+            currState[0]()
         return
         RuntimeError("Input not supported for current state")
 
     # return a dictionary representing states that should be shown to the user
     # and transitions between them
     # all state machines should override this
-    def getUiRepresentation(self):
-        return {
-            states: [],
-            transitions: {}
-        }
+
 
 
 
