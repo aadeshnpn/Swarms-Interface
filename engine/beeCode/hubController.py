@@ -43,7 +43,6 @@ class hubController:
         elif self.directionParams[angle] < self.directions[angle]: #too many bees, stop it!
             #eprint("INHIBITED!!!!! ")
             #eprint("Angle:", angle, "  Id:", bee.id, "  Bee in hub?:", bee.inHub)
-            self.environment.sort_by_state(bee.id, bee.state.__class__, Observing().__class__)
             bee.state = Observing(bee)
 
         elif (self.directionParams[angle] > self.directions[angle]): #there needs to be more bees in that direction anyways
@@ -58,7 +57,6 @@ class hubController:
         elif self.directionParams[angle] == self.directions[angle]: #perfect amount of bees, stop it
             #eprint("INHIBITED!!!!! ")
             #eprint("Angle:", angle, "  Id:", bee.id, "  Bee in hub?:", bee.inHub)
-            self.environment.sort_by_state(bee.id, bee.state.__class__, Observing().__class__)
             bee.state = Observing(bee)
 
 
@@ -128,7 +126,6 @@ class hubController:
                         #eprint("angle:",angle*5, ".. id:",bee.id, ".. bee in hub?:", bee.inHub)
 
                         bee.state = Exploring(bee)
-                        self.environment.sort_by_state(bee.id, Observing().__class__, Exploring().__class__)
                         bee.state.inputExplore=True
                         bee.state.exploretime *= 0.5 #since the bees are going out in an almost straight line.
                         bee.direction = ((angle*5)/180)*np.pi

@@ -1,6 +1,7 @@
-from .stateMachine import state
-from .stateMachine import StateMachine
 from enum import Enum
+
+from .StateMachine import StateMachine
+from .state import State
 
 input = Enum('input', 'startFollowing getLost1 getLost2 startSearching stopSearching discover join retire arrive stopRecruiting startRecruiting')
 
@@ -19,13 +20,13 @@ class agent(StateMachine):
                 (following(self).__class__, input.getLost1): [None, waiting(self)],
                 (following(self).__class__, input.getLost2): [None, searching(self)],
                 }
-class waiting(state):
+class waiting(State):
     pass
-class searching(state):
+class searching(State):
     pass
-class following(state):
+class following(State):
     pass
-class exploiting(state):
+class exploiting(State):
     pass
-class recruiting(state):
+class recruiting(State):
     pass
