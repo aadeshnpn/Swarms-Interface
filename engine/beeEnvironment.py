@@ -3,6 +3,9 @@
 import json
 import os
 import time
+#Json doesn't work with numpy type 64
+#import numpy as np
+import random
 
 from beeCode.debug import *
 from InputEventManager import InputEventManager
@@ -12,6 +15,8 @@ from beeCode.infoStation import InfoStation
 from beeCode.potentialField import PotentialField
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+#Set the seed to always set same random values
+#random.seed(123)
 
 class Environment:
 
@@ -31,7 +36,7 @@ class Environment:
         self.dead_agents = []
 
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
-
+        self.randomizeSites()
         #  environment parameters
 
         self.number_of_agents = 1000
@@ -86,6 +91,14 @@ class Environment:
         self.create_potential_fields()
 
         self.create_infoStations()
+    
+    def randomizeSites(self,flag=True):
+        #Foe each site randomize the values
+        for site in self.sites:
+            site['q_value']=round(random.random(),2)
+            site['x']=random.randint(-self.x_limit,self.x_limit)
+            site['y']=np.random.randint(-self.y_limit,self.y_limit)
+            site['radius']=site['q_value']*30
 
     def getClosestFlowController(self, flowControllers, agent_location):
         if(len(flowControllers) == 0):
