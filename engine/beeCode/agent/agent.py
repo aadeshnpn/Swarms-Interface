@@ -381,9 +381,10 @@ class Observing(State):
                 agent.potential_site = bee.potential_site
                 environment.hubController.newPiper()
             if isinstance(bee.state, Dancing().__class__):
-                self.seesDancer = True
-                agent.velocity = agent.parameters["Velocity"]
-                agent.potential_site = bee.potential_site
+                if np.random.random() < agent.q_value:
+                    self.seesDancer = True
+                    agent.velocity = agent.parameters["Velocity"]
+                    agent.potential_site = bee.potential_site
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
                 and agent.inHub is False:
                     environment.hubController.beeCheckIn(agent)
