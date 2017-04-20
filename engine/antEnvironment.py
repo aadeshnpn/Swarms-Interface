@@ -4,15 +4,15 @@ import json
 import os
 import time
 #Json doesn't work with numpy type 64
-import numpy as np
+#import numpy as np
 import random
 
-#from beeCode.debug import *
+from utils.debug import *
 from InputEventManager import InputEventManager
-from antCode.ant.agent import *
-#from beeCode.hubController import hubController
-#from beeCode.infoStation import InfoStation
-#from beeCode.potentialField import PotentialField
+from beeCode.agent.agent import *
+from beeCode.hubController import hubController
+from beeCode.infoStation import InfoStation
+from utils.potentialField import PotentialField
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #Set the seed to always set same random values
@@ -42,13 +42,18 @@ class Environment:
         self.number_of_agents = 1000
         self.frames_per_sec = 600
 
-        #  ants parameters
-        self.parameters = {"Velocity":              2,
-                           "SearchTime":           3625,
-                           "ReturnTime":              2000,
-                           "RecruitmentTime":             1150,
-                           "IndependentDiscoveryTime":           2000
-                            }
+        #  bee parameters
+        self.parameters = {"PipingThreshold":       self.number_of_agents*.1,
+                           "Velocity":              2,
+                           "ExploreTime":           3625,
+                           "RestTime":              2000,
+                           "DanceTime":             1150,
+                           "ObserveTime":           2000,
+                           "SiteAssessTime":        250,
+                           "SiteAssessRadius":      15,
+                           "PipingTime":            1200}
+
+
         #self.useDefaultParams = True
         self.restart_simulation = False
         self.change_agent_params = False
@@ -56,7 +61,7 @@ class Environment:
         self.add_agents()
 
         self.inputEventManager = InputEventManager()
-
+        self.hubController = hubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self)
         self.isPaused = False
         self.attractors = [] #[flowController.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
         self.repulsors = [] #[flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
@@ -72,6 +77,10 @@ class Environment:
 
         data = json.loads(json_data)
 
+        #generator = worldGenerator()
+        #js = generator.to_json()
+        #data = json.loads(js)
+
         self.x_limit = data["dimensions"]["x_length"] / 2
         self.y_limit = data["dimensions"]["y_length"] / 2
         self.hub = data["hub"]
@@ -79,9 +88,9 @@ class Environment:
         self.obstacles = data["obstacles"]
         self.traps = data["traps"]
         self.rough = data["rough terrain"]
-        #self.create_potential_fields()
+        self.create_potential_fields()
 
-        #self.create_infoStations()
+        self.create_infoStations()
     
     def randomizeSites(self,flag=True):
         #Foe each site randomize the values
@@ -90,6 +99,45 @@ class Environment:
             site['x']=random.randint(-self.x_limit,self.x_limit)
             site['y']=np.random.randint(-self.y_limit,self.y_limit)
             site['radius']=site['q_value']*30
+
+    def getClosestFlowController(self, flowControllers, agent_location):
+        if(len(flowControllers) == 0):
+            raise ValueError('flowControllers list must not be empty.')
+        closest = flowControllers[0]
+        for flowController in flowControllers:
+            if(geomUtil.point_distance(agent_location, flowController.point) < geomUtil.point_distance(agent_location, closest.point)):
+                closest = flowController
+        return closest
+
+    def getAttractor(self, agent_location):
+        if(len(self.attractors)>0):
+            return self.getClosestFlowController(self.attractors, agent_location).point
+        else:
+            return None
+
+    def getRepulsor(self, agent_location):
+        if(len(self.repulsors) > 0):
+            return self.getClosestFlowController(self.repulsors, agent_location).point
+        else:
+            return None
+
+    def updateFlowControllers(self):
+
+        new_attractor_list = []
+
+        for attractor in self.attractors:
+            attractor.time_ticks -= 1
+            if(attractor.time_ticks > 0):
+                new_attractor_list.append(attractor)
+        self.attractors = new_attractor_list
+
+        new_repulsor_list = []
+
+        for repulsor in self.repulsors:
+            repulsor.time_ticks -= 1
+            if(repulsor.time_ticks > 0):
+                new_repulsor_list.append(repulsor)
+        self.repulsors = new_repulsor_list
 
     # Function to return the Q-value for given coordinates. Returns 0 if nothing is there and a value between 0 and 1
     # if it finds a site.
@@ -284,6 +332,45 @@ class Environment:
     def play(self, json):
         self.isPaused = False
 
+    def newAttractor(self, json):
+        self.attractors.append(flowController.Attractor((json['x'], json['y'])))
+
+    def newRepulsor(self, json):
+        self.repulsors.append(flowController.Repulsor((json['x'], json['y'])))
+
+    def updateParameters(self, json):
+        eprint("updateParameters")
+        params = json['params']
+
+        self.parameters["PipingThreshold"]  = int   (params['beePipingThreshold'      ])
+        self.parameters["Velocity"]         = float (params['beeGlobalVelocity'       ])
+        self.parameters["ExploreTime"]      = float (params['beeExploreTimeMultiplier'])
+        self.parameters["RestTime"]         = int   (params['beeRestTime'             ])
+        self.parameters["DanceTime"]        = int   (params['beeDanceTime'            ])
+        self.parameters["ObserveTime"]      = int   (params['beeObserveTime'          ])
+        self.parameters["SiteAssessTime"]   = int   (params['beeSiteAccessTime'       ])
+        self.parameters["SiteAssessRadius"] = int   (params['beeSiteAccessRadius'     ])
+        self.parameters["PipingTime"]       = int   (params['beePipingTimer'          ])
+        self.number_of_agents               = int   (params['numberOfAgents'          ])
+
+        self.change_agent_params = True
+        eprint("New velocity =", params["beeGlobalVelocity"])
+
+        # echo the change out for any other connected clients
+        print(self.parametersToJson())
+
+    def updateAgentParameters(self, agent):
+        agent.PipingThreshold       = int   (self.parameters["PipingThreshold"  ])
+        agent.GlobalVelocity        = float (self.parameters["Velocity"         ])
+        agent.ExploreTimeMultiplier = float (self.parameters["ExploreTime"      ])
+        agent.RestTime              = int   (self.parameters["RestTime"         ])
+        agent.DanceTime             = int   (self.parameters["DanceTime"        ])
+        agent.ObserveTime           = int   (self.parameters["ObserveTime"      ])
+        agent.SiteAssessTime        = int   (self.parameters["SiteAssessTime"   ])
+        agent.SiteAssessRadius      = int   (self.parameters["SiteAssessRadius" ])
+        agent.PipingTimer           = int   (self.parameters["PipingTime"       ])
+        agent.reset_trans_table()
+
     def updateUIParameters(self, json):
         params = json['params']
 
@@ -293,11 +380,11 @@ class Environment:
         print(self.UIParametersToJson())
 
     def restart_sim(self, json):
-        #eprint("\n\n\nRESTARTING\n\n\n")
+        eprint("\n\n\nRESTARTING\n\n\n")
         self.restart_simulation = True
 
     def getUiStates(self, data):
-        #eprint("getting ui states")
+        eprint("getting ui states")
         print(json.dumps({
             "type" : "setStates",
             "data" : list(self.agents.values())[0].getUiRepresentation()
@@ -312,14 +399,14 @@ class Environment:
         self.inputEventManager.start()
         self.inputEventManager.subscribe('pause', self.pause)
         self.inputEventManager.subscribe('play', self.play)
-        #self.inputEventManager.subscribe('attractor', self.newAttractor)
-        #self.inputEventManager.subscribe('repulsor', self.newRepulsor)
-        #self.inputEventManager.subscribe('parameterUpdate', self.updateParameters)
-        #self.inputEventManager.subscribe('UIParameterUpdate', self.updateUIParameters)
+        self.inputEventManager.subscribe('attractor', self.newAttractor)
+        self.inputEventManager.subscribe('repulsor', self.newRepulsor)
+        self.inputEventManager.subscribe('parameterUpdate', self.updateParameters)
+        self.inputEventManager.subscribe('UIParameterUpdate', self.updateUIParameters)
         self.inputEventManager.subscribe('restart', self.restart_sim)
-        #self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
+        self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
         self.inputEventManager.subscribe('requestStates', self.getUiStates)
-        #self.inputEventManager.subscribe('requestParams', self.getParams)
+        self.inputEventManager.subscribe('requestParams', self.getParams)
 
         world.to_json()
 
@@ -342,9 +429,46 @@ class Environment:
                     #self.wind(wind_direction, wind_velocity)
                     agent.update(self)
                     '''
+
+                    if self.agents[agent_id].state.name not in stateCounts:
+                        stateCounts[self.agents[agent_id].state.name] = 0
+
+                    stateCounts[self.agents[agent_id].state.name] += 1
+
+                    # if agent_id == "500":
+                    #     self.change_agent_params = True
+
+                    if self.change_agent_params:
+                        self.updateAgentParameters(self.agents[agent_id])
+
+                    # is this faster?
                     self.agents[agent_id].act()
-                    #self.agents[agent_id].sense(self)
-                    #self.agents[agent_id].update(self)
+                    self.agents[agent_id].sense(self)
+
+                    atSite = False
+                    if self.agents[agent_id].atSite:
+                        atSite = True
+
+                    self.agents[agent_id].update(self)
+
+                    if atSite and not self.agents[agent_id].atSite:
+                        self.info_stations[self.agents[agent_id].siteIndex].bee_count -= 1
+                        self.agents[agent_id].siteIndex = None
+
+                    self.suggest_new_direction(agent_id)
+
+                self.hubController.hiveAdjust(self.agents)
+
+                if self.change_agent_params:
+                    self.change_agent_params = False
+
+                print(json.dumps({
+                    "type": "stateCounts",
+                    "data": stateCounts
+                }))
+
+            self.updateFlowControllers()
+
             if self.restart_simulation:
                 self.reset_sim()
                 self.restart_simulation = False
@@ -373,14 +497,38 @@ class Environment:
             #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
                 #agent = Agent(agent_id,Observing())
             #else:
-            agent = Agent(agent_id,self.hub,Waiting())
+            agent = Agent(agent_id,  Exploring(ExploreTimeMultiplier=self.parameters["ExploreTime"]), self.hub,
+                          piping_threshold          = int   (self.parameters["PipingThreshold"  ]),
+                          global_velocity           = float (self.parameters["Velocity"         ]),
+                          explore_time_multiplier   = float (self.parameters["ExploreTime"      ]),
+                          rest_time                 = int   (self.parameters["RestTime"         ]),
+                          dance_time                = int   (self.parameters["DanceTime"        ]),
+                          observe_time              = int   (self.parameters["ObserveTime"      ]),
+                          site_assess_time          = int   (self.parameters["SiteAssessTime"   ]),
+                          site_assess_radius        = int   (self.parameters["SiteAssessRadius" ]),
+                          piping_time               = int   (self.parameters["PipingTime"       ]))
             self.agents[agent_id] = agent
             #self.states[Exploring().__class__].append(agent_id)
+
+        for y in range(rest_num):
+            agent_id = str(x + 1 + y)
+
+            agent = Agent(agent_id, Resting(agent=None, rest_time=self.parameters["RestTime"]), self.hub,
+                          piping_threshold          = int   (self.parameters["PipingThreshold"]),
+                          global_velocity           = float (self.parameters["Velocity"]),
+                          explore_time_multiplier   = float (self.parameters["ExploreTime"]),
+                          rest_time                 = int   (self.parameters["RestTime"]),
+                          dance_time                = int   (self.parameters["DanceTime"]),
+                          observe_time              = int   (self.parameters["ObserveTime"]),
+                          site_assess_time          = int   (self.parameters["SiteAssessTime"]),
+                          site_assess_radius        = int   (self.parameters["SiteAssessRadius"]),
+                          piping_time               = int   (self.parameters["PipingTime"]))
+            self.agents[agent_id] = agent
 
     def reset_sim(self):
         self.clear_for_reset()
         self.add_agents()
-        #self.hubController.reset([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self)
+        self.hubController.reset([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self)
         # echo the restart for any other connected clients
         print(
             json.dumps(
@@ -423,10 +571,10 @@ class Environment:
                     "obstacles" : self.obstacles,
                     "traps"     : self.traps,
                     "rough"     : self.rough,
-                    #"attractors": list(map(lambda a: a.toJson(), self.attractors)),
-                    #"repulsors" : list(map(lambda r: r.toJson(), self.repulsors )),
+                    "attractors": list(map(lambda a: a.toJson(), self.attractors)),
+                    "repulsors" : list(map(lambda r: r.toJson(), self.repulsors )),
                     "agents"    : self.agents_to_json(),
-                    #"dead_agents": self.dead_agents_to_json()
+                    "dead_agents": self.dead_agents_to_json()
                 }
             })
         )

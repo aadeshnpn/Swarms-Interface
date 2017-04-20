@@ -3,7 +3,7 @@ import json
 from randomdict import RandomDict
 
 from .agent.agent import *
-from .debug import *
+from utils.debug import *
 
 
 class beeInfo:

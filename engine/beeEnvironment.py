@@ -7,12 +7,12 @@ import time
 #import numpy as np
 import random
 
-from beeCode.debug import *
+from utils.debug import *
 from InputEventManager import InputEventManager
 from beeCode.agent.agent import *
 from beeCode.hubController import hubController
 from beeCode.infoStation import InfoStation
-from beeCode.potentialField import PotentialField
+from utils.potentialField import PotentialField
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #Set the seed to always set same random values
