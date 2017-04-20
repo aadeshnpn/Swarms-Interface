@@ -9,7 +9,8 @@ import random
 
 from utils.debug import *
 from InputEventManager import InputEventManager
-from beeCode.agent.agent import *
+#from beeCode.agent.agent import *
+from antCode.ant.agent import *
 from beeCode.hubController import hubController
 from beeCode.infoStation import InfoStation
 from utils.potentialField import PotentialField
@@ -491,12 +492,16 @@ class Environment:
 
     def add_agents(self):
         rest_num = int(.05*self.number_of_agents)
-        for x in range(self.number_of_agents - rest_num):
+        #for x in range(self.number_of_agents - rest_num):
+        for x in range(self.number_of_agents):
             agent_id = str(x)
             #if self.useDefaultParams:
             #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
                 #agent = Agent(agent_id,Observing())
             #else:
+            agent = Agent(agent_id, self.hub, Waiting())
+            self.agents[agent_id] = agent            
+            """
             agent = Agent(agent_id,  Exploring(ExploreTimeMultiplier=self.parameters["ExploreTime"]), self.hub,
                           piping_threshold          = int   (self.parameters["PipingThreshold"  ]),
                           global_velocity           = float (self.parameters["Velocity"         ]),
@@ -509,7 +514,8 @@ class Environment:
                           piping_time               = int   (self.parameters["PipingTime"       ]))
             self.agents[agent_id] = agent
             #self.states[Exploring().__class__].append(agent_id)
-
+        
+        
         for y in range(rest_num):
             agent_id = str(x + 1 + y)
 
@@ -524,6 +530,7 @@ class Environment:
                           site_assess_radius        = int   (self.parameters["SiteAssessRadius"]),
                           piping_time               = int   (self.parameters["PipingTime"]))
             self.agents[agent_id] = agent
+        """
 
     def reset_sim(self):
         self.clear_for_reset()

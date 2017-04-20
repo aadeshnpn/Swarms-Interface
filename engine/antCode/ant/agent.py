@@ -16,10 +16,15 @@ class Agent(StateMachine):
         self.hub = [hub["x"],hub["y"]]
         self.potential_site = None
         self.q_value = 0
-        self.hub_radius = hub["radius"]
+        self.hubRadius = hub["radius"]
         self.state = initial_state
         self.live = True
-
+        self.assessment = 1
+        self.inHub = True
+        self.atSite = False
+        self.siteIndex = None
+        self.goingToSite = True
+        self.quadrant = []
         dict = {(Waiting(self).__class__, input.startSearching): [None, Searching(self)],
                 (Waiting(self).__class__, input.join): [None, Exploiting(self)],
                 (Waiting(self).__class__, input.startFollowing): [None, Following(self)],
@@ -32,10 +37,17 @@ class Agent(StateMachine):
                 (Following(self).__class__, input.arrive): [None, Exploiting(self)],
                 (Following(self).__class__, input.getLost1): [None, Waiting(self)],
                 (Following(self).__class__, input.getLost2): [None, Searching(self)],
-                }
+                }        
+    def sense(self, environment):
+        self.state.sense(self, environment)
 
     def act(self):
         self.state.act(self)
+
+    def update(self, environment):
+        self.nextState(self.state.update(self), environment)
+    
+
 
     def getUiRepresentation(self):
         return {
@@ -52,20 +64,62 @@ class Waiting(State):
     def __init__(self,agent=None,time=None):
         self.name = 'waiting'        
 
-    def sense(self):
+    def sense(self,agent,environment):
         pass
-    def update(self):
+    def update(self,agent):
         pass
     def act(self,agent):
         agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
-        agent.location = [np.random.randint(1,10),np.random.randint(1,10)]
+        agent.location = [agent.location[0]+np.random.randint(1,10),agent.location[1]+np.random.randint(1,10)]
 
 
 class Searching(State):
-    pass
+    def __init__(self,agent=None,time=None):
+        self.name = 'searching'        
+
+    def sense(self,agent,environment):
+        pass
+    def update(self,agent):
+        pass
+
+    def act(self,agent):
+        agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
+        agent.location = [np.random.randint(1,10),np.random.randint(1,10)]    
+
 class Following(State):
-    pass
+    def __init__(self,agent=None,time=None):
+        self.name = 'following'        
+    
+    def sense(self,agent,environment):
+        pass
+    def update(self,agent):
+        pass
+
+    def act(self,agent):
+        agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
+        agent.location = [np.random.randint(1,10),np.random.randint(1,10)]    
+
 class Exploiting(State):
-    pass
+    def __init__(self,agent=None,time=None):
+        self.name = 'exploiting'        
+
+    def sense(self,agent,environment):
+        pass
+    def update(self,agent):
+        pass
+
+    def act(self,agent):
+        agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
+        agent.location = [np.random.randint(1,10),np.random.randint(1,10)]    
+
 class Recruiting(State):
-    pass
+    def __init__(self,agent=None,time=None):
+        self.name = 'recruiting'        
+    def sense(self,agent,environment):
+        pass
+    def update(self,agent):
+        pass
+
+    def act(self,agent):
+        agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
+        agent.location = [np.random.randint(1,10),np.random.randint(1,10)]    
