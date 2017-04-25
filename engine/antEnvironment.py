@@ -18,6 +18,8 @@ from utils.potentialField import PotentialField
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #Set the seed to always set same random values
 #random.seed(123)
+#class Site:
+#    def __init__(self,location,radius,q_value):
 
 class Environment:
 
@@ -40,7 +42,7 @@ class Environment:
         self.randomizeSites()
         #  environment parameters
 
-        self.number_of_agents = 1000
+        self.number_of_agents = 200
         self.frames_per_sec = 600
 
         #  bee parameters
@@ -96,10 +98,11 @@ class Environment:
     def randomizeSites(self,flag=True):
         #Foe each site randomize the values
         for site in self.sites:
-            site['q_value']=round(random.random(),2)
-            site['x']=random.randint(-self.x_limit,self.x_limit)
-            site['y']=np.random.randint(-self.y_limit,self.y_limit)
-            site['radius']=site['q_value']*30
+            site['q_value'] = round(random.random(),2)
+            site['x'] = random.randint(-self.x_limit,self.x_limit)
+            site['y'] = np.random.randint(-self.y_limit,self.y_limit)
+            site['radius'] = site['q_value']*30
+            site['food_unit'] = np.power(site['radius'],3)
 
     def getClosestFlowController(self, flowControllers, agent_location):
         if(len(flowControllers) == 0):
@@ -155,9 +158,9 @@ class Environment:
                     self.info_stations[i].bee_count += 1
                     agent.atSite = True
                     agent.siteIndex = i
-                    if info.check_for_changes(agent.parameters, agent.param_time_stamp):
-                        agent.update_params(info.parameters)
-                        agent.param_time_stamp = info.last_update
+                    #if info.check_for_changes(agent.parameters, agent.param_time_stamp):
+                    #    agent.update_params(info.parameters)
+                    #    agent.param_time_stamp = info.last_update
 
                 # return the q_value as a linear gradient. The center of the site will return 100% of the q_value,
                 # the edge will return 75% of the q_value
@@ -166,10 +169,10 @@ class Environment:
                     "q"     : site["q_value"] - (tot_dif / site["radius"] * .25 * site["q_value"])
                 }
 
-        if agent.atSite:
-            if self.info_stations[agent.siteIndex].check_for_changes(agent.parameters, agent.param_time_stamp):
-                agent.update_params(self.info_stations[agent.siteIndex].parameters)
-                agent.param_time_stamp = self.info_stations[agent.siteIndex].last_update
+        #if agent.atSite:
+        #    if self.info_stations[agent.siteIndex].check_for_changes(agent.parameters, agent.param_time_stamp):
+        #        agent.update_params(self.info_stations[agent.siteIndex].parameters)
+        #        agent.param_time_stamp = self.info_stations[agent.siteIndex].last_update
             # agent.atSite = False
 
         return {"radius": -1, "q": 0}
@@ -419,17 +422,17 @@ class Environment:
                 keys = list(self.agents.keys())  # deleting a key mid-iteration (suggest_new_direction())
                                                         # makes python mad...
                 for agent_id in keys:
-                    '''
-                    agent = self.agents[agent_id]
-                    agent.act()
-                    agent.sense(self)
-                    self.suggest_new_direction(agent.id)
-                    # wind_direction = 1  # in radians
-                    # wind_velocity = .01
+
+                    #agent = self.agents[agent_id]
+                    #agent.act()
+                    #agent.sense(self)
+                    #self.suggest_new_direction(agent.id)
+                    #wind_direction = 1  # in radians
+                    #wind_velocity = .01
                     # uncomment the next line to add wind to the environment
                     #self.wind(wind_direction, wind_velocity)
-                    agent.update(self)
-                    '''
+                    #agent.update(self)
+
 
                     if self.agents[agent_id].state.name not in stateCounts:
                         stateCounts[self.agents[agent_id].state.name] = 0
@@ -490,17 +493,34 @@ class Environment:
         for x in range(len(self.sites)):
             self.info_stations.append(InfoStation())
 
+    def agents_at_hub(self,state):
+        agent_state_list = [self.agents[agent].state for agent in self.agents if self.agents[agent].inHub]
+        count_state = agent_state_list.count(state)
+        return count_state,len(agent_state_list)
+            
     def add_agents(self):
-        rest_num = int(.05*self.number_of_agents)
+        #Start agents in searching, resting and waiting state
+        #rest_num = int(.1*self.number_of_agents)
+        wait_num = int(.5*self.number_of_agents)
         #for x in range(self.number_of_agents - rest_num):
-        for x in range(self.number_of_agents):
+        for x in range(wait_num):
             agent_id = str(x)
             #if self.useDefaultParams:
             #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
                 #agent = Agent(agent_id,Observing())
             #else:
             agent = Agent(agent_id, self.hub, Waiting())
+            #agent = Agent(agent_id, self.hub, Resting())
             self.agents[agent_id] = agent            
+        for y in range(self.number_of_agents-wait_num):
+            agent_id = str(x + y + 1)
+            #if self.useDefaultParams:
+            #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
+                #agent = Agent(agent_id,Observing())
+            #else:
+            agent = Agent(agent_id, self.hub, Searching())
+            #agent = Agent(agent_id, self.hub, Resting())
+            self.agents[agent_id] = agent                        
             """
             agent = Agent(agent_id,  Exploring(ExploreTimeMultiplier=self.parameters["ExploreTime"]), self.hub,
                           piping_threshold          = int   (self.parameters["PipingThreshold"  ]),
