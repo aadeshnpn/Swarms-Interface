@@ -212,6 +212,8 @@ class Exploiting(State):
         if (((agent.hub[0] - agent.location[0]) ** 2 + (
                 agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) and (agent.goingToSite is False):
             agent.goingToSite = True
+            environment.sites[agent.siteIndex]['food_unit'] -= 1
+            environment.sites[agent.siteIndex]['radius'] -= 0.02
             return input.startRecruiting
         elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (
                 agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
@@ -236,13 +238,28 @@ class Exploiting(State):
 class Recruiting(State):
     def __init__(self,agent=None,time=None):
         self.name = 'recruiting'  
+        if agent:
+            self.recruitmentTime = agent.q_value * 30
+        else:
+            self.recruitmentTime = 30
 
     def sense(self,agent,environment):
-        pass
+        agent.carrying_food = False
     
     def update(self,agent,environment):
-        pass
+        if self.recruitmentTime < 1 :
+            return input.stopRecruiting
+        else:
+            self.recruitmentTime -= 1
 
     def act(self,agent):
-        agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
-        agent.location = [np.random.randint(1,10),np.random.randint(1,10)]    
+        if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 >= agent.hubRadius:
+            dx = agent.hub[0] - agent.location[0]
+            dy = agent.hub[1] - agent.location[1]
+            agent.direction = np.arctan2(dy, dx)
+        else:
+            delta_d = np.random.normal(0, .3)
+            agent.direction = (agent.direction + delta_d) % (2 * np.pi)
+        return        
+        #agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
+        #agent.location = [np.random.randint(1,10),np.random.randint(1,10)]    
