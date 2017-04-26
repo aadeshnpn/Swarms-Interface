@@ -42,7 +42,7 @@ class Environment:
         self.randomizeSites()
         #  environment parameters
 
-        self.number_of_agents = 200
+        self.number_of_agents = 500
         self.frames_per_sec = 600
 
         #  bee parameters
@@ -465,12 +465,12 @@ class Environment:
 
                 if self.change_agent_params:
                     self.change_agent_params = False
-
+                #"""
                 print(json.dumps({
                     "type": "stateCounts",
                     "data": stateCounts
                 }))
-
+                #"""
             self.updateFlowControllers()
 
             if self.restart_simulation:
@@ -494,14 +494,30 @@ class Environment:
             self.info_stations.append(InfoStation())
 
     def agents_at_hub(self,state):
-        agent_state_list = [self.agents[agent].state for agent in self.agents if self.agents[agent].inHub]
-        count_state = agent_state_list.count(state)
-        return count_state,len(agent_state_list)
-            
+        #agent_state_list = [self.agents[agent].state for agent in self.agents if self.agents[agent].inHub]
+        #count_state = agent_state_list.count(state)
+        #return count_state,len(agent_state_list)
+        agent_state_count = 0
+        total_agent_hub = 0
+        agent_state_site = {}
+        for agent in self.agents:
+            if self.agents[agent].inHub:
+                total_agent_hub += 1 
+                if self.agents[agent].state == state:
+                    if self.agents[agent].potential_site in agent_state_site.keys():
+                        agent_state_site[self.agents[agent].potential_site].append(agent)
+                    else:
+                        agent_state_site[self.agents[agent].potential_site]=[agent]
+                    agent_state_count += 1
+
+        return agent_state_count,total_agent_hub,agent_state_site
+    #def agent_to_follow(self,state):
+        #agent_state_list = [(self.agents[agent].siteIndex,agent) for agent in self.agents if self.agents[agent].inHub and self.agents[agen].state==state]
+        #agentidnp.random.choice(agent_state_list)            
     def add_agents(self):
         #Start agents in searching, resting and waiting state
         #rest_num = int(.1*self.number_of_agents)
-        wait_num = int(.5*self.number_of_agents)
+        wait_num = int(.05*self.number_of_agents)
         #for x in range(self.number_of_agents - rest_num):
         for x in range(wait_num):
             agent_id = str(x)

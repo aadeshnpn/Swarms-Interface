@@ -30,7 +30,9 @@ class Agent(StateMachine):
         self.attractor = None
         self.attracted = None
         self.repulsor = None
-        self.ignore_repulsor = None 
+        self.ignore_repulsor = None
+        #This holds the identity of following ants
+        self.following = None
         # These parameters may be modified at run-time
         self.parameters =  {"WaitingTime": 3000,
                             "SearchTime": 2000}  
@@ -41,9 +43,10 @@ class Agent(StateMachine):
                 (Searching(self).__class__, input.discover): [None, Exploiting(self)],
                 (Searching(self).__class__, input.stopSearching): [None, Waiting(self)],
                 (Exploiting(self).__class__, input.retire): [None, Waiting(self)],
-                (Exploiting(self).__class__, input.startRecruiting): [None, Recruiting(self)],
+                (Exploiting(self).__class__, input.startRecruiting): [None, Recruiting(self,3000)],
                 (Exploiting(self).__class__, input.getLost1): [None, Searching(self)],
                 (Recruiting(self).__class__, input.stopRecruiting): [None, Exploiting(self)],
+                #(Recruiting(self).__class__, input.stopRecruiting): [None, Following(self)],                
                 (Following(self).__class__, input.arrive): [None, Exploiting(self)],
                 (Following(self).__class__, input.getLost1): [None, Waiting(self)],
                 (Following(self).__class__, input.getLost2): [None, Searching(self)],
@@ -62,9 +65,9 @@ class Agent(StateMachine):
     def getUiRepresentation(self):
         return {
             # these names should match the state.name property for each state
-            "states": ["waiting", "searching", "recruiting"],
+            "states": ["waiting", "searching", "recruiting","following", "exploiting"],
             "transitions": {
-                "searching": ["exploring"],
+                "searching": ["exploiting"],
                 "following": ["exploiting"]
                 #"commit": []
             }
@@ -91,9 +94,13 @@ class Waiting(State):
         #Read that the change follows poission distribution. First implementing simple model. Latter need to switch to poission
         #If rate of ants contacts many exploiting ants (log(n)) successively then start following them
         #if round(np.log(environment.number_of_agents))
-        exploiters_at_hub,total_at_hub = environment.agents_at_hub('exploiting')
+        exploiters_at_hub,total_at_hub,recruiters_dict = environment.agents_at_hub('exploiting')
+        #print (exploiters_at_hub,total_at_hub)
         #Condition for transition from waiting to following
         if exploiters_at_hub > round(np.log(environment.number_of_agents)) and exploiters_at_hub/(total_at_hub+1) > np.random.random():
+            #self.
+            #print (recruiters_dict)
+            #exit(0)
             return input.startFollowing
         elif self.waitingtime < 1:
             return input.startSearching
@@ -196,34 +203,49 @@ class Following(State):
 class Exploiting(State):
     def __init__(self,agent=None,time=None):
         self.name = 'exploiting'        
-
+        self.atsite = False
     def sense(self,agent,environment):
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius):
             if agent.goingToSite and agent.inHub:
                 if environment.hubController.beeCheckOut(agent)==0:
                     agent.inHub = False
+                    #self.atsite = False
                     return
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius+1.251858563765788):
             if not agent.goingToSite and not agent.inHub:
                 environment.hubController.beeCheckIn(agent)
-                agent.inHub = True        
+                agent.inHub = True
+                environment.sites[agent.siteIndex]['food_unit'] -= 1
+                environment.sites[agent.siteIndex]['radius'] -= 0.02
+                environment.sites[agent.siteIndex]['q_value']/30.0                
 
+        new_q = environment.get_q(agent)["q"]
+        if round(new_q) == round(agent.q_value):
+            self.atsite = True
+                #self.atsite = False
+        #if (((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2) ** .5 < 1):
+        #    self.atsite = True
+                    
     def update(self,agent,environment):
+        #if agent.inHub and :
+        #    return input.startRecruiting
         if (((agent.hub[0] - agent.location[0]) ** 2 + (
                 agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) and (agent.goingToSite is False):
             agent.goingToSite = True
-            environment.sites[agent.siteIndex]['food_unit'] -= 1
-            environment.sites[agent.siteIndex]['radius'] -= 0.02
             return input.startRecruiting
         elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (
                 agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
             agent.goingToSite = False
+        #if agent.inHub:
+
             #if(np.random.uniform(0,1) < 1 - agent.q_value): # (1-q)% chance of going to observer state instead of dancing
             #    return input.quit
             #return input.siteAssess        
         #pass
 
     def act(self,agent):
+        #if self.atsite:
+        #    pass
         if agent.goingToSite:
             dx = agent.potential_site[0] - agent.location[0]
             dy = agent.potential_site[1] - agent.location[1]
@@ -237,20 +259,23 @@ class Exploiting(State):
 
 class Recruiting(State):
     def __init__(self,agent=None,time=None):
-        self.name = 'recruiting'  
-        if agent:
-            self.recruitmentTime = agent.q_value * 30
-        else:
-            self.recruitmentTime = 30
+        self.name = 'recruiting'
+        #self.recruitmentTime = time
+        #if agent:
+        #    print ('Recuriting:',agent.q_value)              
+        #    self.recruitmentTime = agent.q_value * 300000
+        #else:
+        self.recruitmentTime = 300
 
     def sense(self,agent,environment):
         agent.carrying_food = False
     
     def update(self,agent,environment):
-        if self.recruitmentTime < 1 :
+        #pass
+        self.recruitmentTime -= 1        
+        if self.recruitmentTime <= 1 :
             return input.stopRecruiting
-        else:
-            self.recruitmentTime -= 1
+
 
     def act(self,agent):
         if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 >= agent.hubRadius:
