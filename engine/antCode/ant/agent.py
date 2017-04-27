@@ -94,13 +94,21 @@ class Waiting(State):
         #Read that the change follows poission distribution. First implementing simple model. Latter need to switch to poission
         #If rate of ants contacts many exploiting ants (log(n)) successively then start following them
         #if round(np.log(environment.number_of_agents))
-        exploiters_at_hub,total_at_hub,recruiters_dict = environment.agents_at_hub('exploiting')
+        exploiters_at_hub,total_at_hub,recruiters_dict = environment.agents_at_hub('recruiting')
         #print (exploiters_at_hub,total_at_hub)
         #Condition for transition from waiting to following
         if exploiters_at_hub > round(np.log(environment.number_of_agents)) and exploiters_at_hub/(total_at_hub+1) > np.random.random():
             #self.
             #print (recruiters_dict)
             #exit(0)
+            major_list=[]
+            for site in recruiters_dict:
+                if len (recruiters_dict[site]) > len (major_list):
+                    major_list = recruiters_dict[site]
+            #self.following = environment.agents[np.random.choice(major_list)]
+            self.following = np.random.choice(major_list)
+            #print ('self following value',self.following)
+            environment.following[agent.id] = self.following
             return input.startFollowing
         elif self.waitingtime < 1:
             return input.startSearching
@@ -190,20 +198,53 @@ class Searching(State):
 class Following(State):
     def __init__(self,agent=None,time=None):
         self.name = 'following'        
-    
+        self.following = None
+
     def sense(self,agent,environment):
-        pass
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius) \
+                and agent.inHub is True:
+                if environment.hubController.beeCheckOut(agent) == 0:
+                    agent.inHub = False
+                    return
+
+        new_q = environment.get_q(agent)["q"]
+        agent.q_value = new_q
+        agent.attractor = environment.getAttractor(agent.location)
+        if(agent.attractor is not None and agent.attracted is None):
+            if(np.random.random () > .2):
+                agent.attracted = True
+            else:
+                agent.attracted = False
+
+
+        agent.repulsor = environment.getRepulsor(agent.location)
+        if(agent.repulsor is not None and agent.ignore_repulsor is None):
+            if(np.random.random() >.9):
+                 agent.ignore_repulsor = True
+            else:
+                 agent.ignore_repulsor = False 
+        self.following=environment.agents[environment.following[agent.id]]
+        #print ('Update',environment.following[agent.id])        
+
     def update(self,agent,environment):
-        pass
+        if agent.q_value > 0 :
+            agent.potential_site = [agent.location[0], agent.location[1]]
+            return input.arrive        
 
     def act(self,agent):
-        agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
-        agent.location = [np.random.randint(1,10),np.random.randint(1,10)]    
+        #agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
+        #agent.location = [np.random.randint(1,10),np.random.randint(1,10)]
+        if self.following:
+            #print ('from flowing',self.following)
+            agent.direction = self.following.direction
+            agent.location[0] = self.following.location[0] - 1
+            agent.location[1] = self.following.location[1] - 1
 
 class Exploiting(State):
     def __init__(self,agent=None,time=None):
         self.name = 'exploiting'        
         self.atsite = False
+
     def sense(self,agent,environment):
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius):
             if agent.goingToSite and agent.inHub:

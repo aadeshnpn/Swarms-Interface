@@ -45,6 +45,8 @@ class Environment:
         self.number_of_agents = 500
         self.frames_per_sec = 600
 
+        #This should be working from angent class. Its not working. So using it over here
+        self.following = {}
         #  bee parameters
         self.parameters = {"PipingThreshold":       self.number_of_agents*.1,
                            "Velocity":              2,
@@ -500,15 +502,21 @@ class Environment:
         agent_state_count = 0
         total_agent_hub = 0
         agent_state_site = {}
+        temp_list = []
         for agent in self.agents:
             if self.agents[agent].inHub:
-                total_agent_hub += 1 
-                if self.agents[agent].state == state:
-                    if self.agents[agent].potential_site in agent_state_site.keys():
-                        agent_state_site[self.agents[agent].potential_site].append(agent)
+                total_agent_hub += 1
+                temp_list.append(self.agents[agent].state.name)
+                if self.agents[agent].state.name == state:
+                    #print ('Potential site',self.agents[agent].potential_site)
+                    #As our site doesn't have an id using multiplying locations to hash a dictonary. For latter purpose we need to give id for site as well
+                    temp_site_id = int(round (self.agents[agent].potential_site[0] * self.agents[agent].potential_site[0]))
+                    if temp_site_id in agent_state_site.keys():
+                        agent_state_site[temp_site_id].append(agent)
                     else:
-                        agent_state_site[self.agents[agent].potential_site]=[agent]
+                        agent_state_site[temp_site_id] = [agent]
                     agent_state_count += 1
+        #print (agent_state_site)
 
         return agent_state_count,total_agent_hub,agent_state_site
     #def agent_to_follow(self,state):
@@ -517,7 +525,7 @@ class Environment:
     def add_agents(self):
         #Start agents in searching, resting and waiting state
         #rest_num = int(.1*self.number_of_agents)
-        wait_num = int(.05*self.number_of_agents)
+        wait_num = int(.35*self.number_of_agents)
         #for x in range(self.number_of_agents - rest_num):
         for x in range(wait_num):
             agent_id = str(x)
