@@ -34,7 +34,7 @@ class Agent(StateMachine):
         #This holds the identity of following ants
         self.following = None
         # These parameters may be modified at run-time
-        self.parameters =  {"WaitingTime": 3000,
+        self.parameters =  {"WaitingTime": 1000,
                             "SearchTime": 2000}  
 
         dict = {(Waiting(self).__class__, input.startSearching): [None, Searching(self)],
@@ -46,7 +46,6 @@ class Agent(StateMachine):
                 (Exploiting(self).__class__, input.startRecruiting): [None, Recruiting(self,3000)],
                 (Exploiting(self).__class__, input.getLost1): [None, Searching(self)],
                 (Recruiting(self).__class__, input.stopRecruiting): [None, Exploiting(self)],
-                #(Recruiting(self).__class__, input.stopRecruiting): [None, Following(self)],                
                 (Following(self).__class__, input.arrive): [None, Exploiting(self)],
                 (Following(self).__class__, input.getLost1): [None, Waiting(self)],
                 (Following(self).__class__, input.getLost2): [None, Searching(self)],
@@ -63,7 +62,7 @@ class Agent(StateMachine):
         self.nextState(self.state.update(self,environment), environment)
     
     def getUiRepresentation(self):
-        return {
+        return { #TODO: this should represent swarm states not individual states
             # these names should match the state.name property for each state
             "states": ["waiting", "searching", "recruiting","following", "exploiting"],
             "transitions": {
@@ -82,7 +81,7 @@ class Waiting(State):
         if agent is not None:
             self.waitingtime = exp*agent.parameters["WaitingTime"]
         else:
-            self.waitingtime = exp*3000               
+            self.waitingtime = exp*1000
 
     def sense(self,agent,environment):
         #if self.atHub:
@@ -91,13 +90,17 @@ class Waiting(State):
 
     def update(self,agent,environment):
         self.waitingtime -= 1
-        #Read that the change follows poission distribution. First implementing simple model. Latter need to switch to poission
+        #Read that the change follows poission distribution. First implementing simple model. Later need to switch to poission
         #If rate of ants contacts many exploiting ants (log(n)) successively then start following them
         #if round(np.log(environment.number_of_agents))
+
+        #TODO the hubcontroller keeps track of who is in the hub (cheaper computationally)
+        # shouldn't we be counting the recruiters and not the exploiters?? oh we are... it's just named differently..
+
         exploiters_at_hub,total_at_hub,recruiters_dict = environment.agents_at_hub('recruiting')
         #print (exploiters_at_hub,total_at_hub)
         #Condition for transition from waiting to following
-        if exploiters_at_hub > round(np.log(environment.number_of_agents)) and exploiters_at_hub/(total_at_hub+1) > np.random.random():
+        if exploiters_at_hub > round(np.log(environment.number_of_agents)) and exploiters_at_hub/(total_at_hub+1) > np.random.random() and agent.inHub:
             #self.
             #print (recruiters_dict)
             #exit(0)
@@ -115,13 +118,27 @@ class Waiting(State):
         #pass
 
     def act(self,agent):
-        agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
-        agent.location = [np.random.randint(1,10),np.random.randint(1,10)]          
+        if agent.inHub:
+            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 >= agent.hubRadius:
+                dx = agent.hub[0] - agent.location[0]
+                dy = agent.hub[1] - agent.location[1]
+                agent.direction = np.arctan2(dy, dx)
+            else:
+                delta_d = np.random.normal(0, .3)
+                agent.direction = (agent.direction + delta_d) % (2 * np.pi)
+        else:
+            dx = agent.hub[0] - agent.location[0]
+            dy = agent.hub[1] - agent.location[1]
+            agent.direction = np.arctan2(dy, dx)
+            return
+        #agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
+        #agent.location = [np.random.randint(1,10),np.random.randint(1,10)]
+        ## TODO the agent shouldn't be teleporting....
         #pass
 
 
 
-class Searching(State):
+class Searching(State): #basically the same as explorer..
     def __init__(self,agent=None,time=None):
         self.name = 'searching'        
         exp = np.random.normal(1, .3, 1)
@@ -219,7 +236,7 @@ class Following(State):
 
         agent.repulsor = environment.getRepulsor(agent.location)
         if(agent.repulsor is not None and agent.ignore_repulsor is None):
-            if(np.random.random() >.9):
+            if(np.random.random() >.5):
                  agent.ignore_repulsor = True
             else:
                  agent.ignore_repulsor = False 
@@ -258,7 +275,8 @@ class Exploiting(State):
                 agent.inHub = True
                 environment.sites[agent.siteIndex]['food_unit'] -= 1
                 environment.sites[agent.siteIndex]['radius'] -= 0.02
-                environment.sites[agent.siteIndex]['q_value']/30.0                
+                environment.sites[agent.siteIndex]['q_value']/30.0
+                ##TODO TODO fix the radius so that it never goes negative, in addition add checking in the other states to never go to negative sites..
 
         new_q = environment.get_q(agent)["q"]
         if round(new_q) == round(agent.q_value):

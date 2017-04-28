@@ -495,6 +495,7 @@ class Environment:
         for x in range(len(self.sites)):
             self.info_stations.append(InfoStation())
 
+    # TODO the hubcontroller keeps track of who is in the hub (cheaper computationally)
     def agents_at_hub(self,state):
         #agent_state_list = [self.agents[agent].state for agent in self.agents if self.agents[agent].inHub]
         #count_state = agent_state_list.count(state)
@@ -509,7 +510,7 @@ class Environment:
                 temp_list.append(self.agents[agent].state.name)
                 if self.agents[agent].state.name == state:
                     #print ('Potential site',self.agents[agent].potential_site)
-                    #As our site doesn't have an id using multiplying locations to hash a dictonary. For latter purpose we need to give id for site as well
+                    #As our site doesn't have an id using multiplying locations to hash a dictonary. For later purpose we need to give id for site as well
                     temp_site_id = int(round (self.agents[agent].potential_site[0] * self.agents[agent].potential_site[0]))
                     if temp_site_id in agent_state_site.keys():
                         agent_state_site[temp_site_id].append(agent)
@@ -525,7 +526,7 @@ class Environment:
     def add_agents(self):
         #Start agents in searching, resting and waiting state
         #rest_num = int(.1*self.number_of_agents)
-        wait_num = int(.35*self.number_of_agents)
+        wait_num = int(.1*self.number_of_agents)
         #for x in range(self.number_of_agents - rest_num):
         for x in range(wait_num):
             agent_id = str(x)
