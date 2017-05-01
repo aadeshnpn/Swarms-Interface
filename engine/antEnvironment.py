@@ -11,7 +11,7 @@ from utils.debug import *
 from InputEventManager import InputEventManager
 #from beeCode.agent.agent import *
 from antCode.ant.agent import *
-from beeCode.hubController import hubController
+from antCode.hubController import hubController
 from beeCode.infoStation import InfoStation
 from utils.potentialField import PotentialField
 

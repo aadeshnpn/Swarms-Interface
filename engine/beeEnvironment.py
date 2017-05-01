@@ -39,7 +39,7 @@ class Environment:
         self.randomizeSites()
         #  environment parameters
 
-        self.number_of_agents = 2
+        self.number_of_agents = 500
         self.frames_per_sec = 600
 
         #  bee parameters

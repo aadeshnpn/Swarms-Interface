@@ -82,7 +82,13 @@ class Client
       {
          var executable = config.has(`pythonExecutable.${os.platform()}`) ? config.get(`pythonExecutable.${os.platform()}`) : config.get("pythonExecutable.default");
 
-         const engine = spawn(executable, [path.join(__dirname, '../engine/antEnvironment.py')], {stdio: ['pipe', 'pipe', process.stderr]});
+         var typeDir = '../engine/beeEnvironment.py';
+         if(process.argv[2]== "ants"){
+            typeDir = '../engine/antEnvironment.py';
+         } else if(process.argv[2]=="bees"){
+            typeDir = '../engine/beeEnvironment.py';
+         }
+         const engine = spawn(executable, [path.join(__dirname, typeDir)], {stdio: ['pipe', 'pipe', process.stderr]});
          engine.on('error', (err) => { console.error("[!] Unable to start engine process: " + err)});
 
          this.world = {engine: engine, clientsAttached: 0};

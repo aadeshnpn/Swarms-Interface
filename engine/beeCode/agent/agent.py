@@ -381,7 +381,7 @@ class Observing(State):
                 agent.potential_site = bee.potential_site
                 environment.hubController.newPiper()
             if isinstance(bee.state, Dancing().__class__):
-                if np.random.random() < agent.q_value:
+                if np.random.random() < (agent.q_value*agent.q_value):
                     self.seesDancer = True
                     agent.velocity = agent.parameters["Velocity"]
                     agent.potential_site = bee.potential_site

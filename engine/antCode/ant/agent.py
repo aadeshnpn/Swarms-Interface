@@ -72,7 +72,7 @@ class Agent(StateMachine):
             }
         }
 
-class Waiting(State):
+class Waiting(State): #like observing
     def __init__(self,agent=None,time=None):
         self.name = 'waiting'
         exp = np.random.normal(1, .3, 1)
@@ -84,8 +84,11 @@ class Waiting(State):
             self.waitingtime = exp*1000
 
     def sense(self,agent,environment):
-        #if self.atHub:
-        pass
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
+                and agent.inHub is False:
+                    environment.hubController.beeCheckIn(agent)
+                    agent.inHub = True
+                    return
                    
 
     def update(self,agent,environment):
@@ -97,10 +100,10 @@ class Waiting(State):
         #TODO the hubcontroller keeps track of who is in the hub (cheaper computationally)
         # shouldn't we be counting the recruiters and not the exploiters?? oh we are... it's just named differently..
 
-        exploiters_at_hub,total_at_hub,recruiters_dict = environment.agents_at_hub('recruiting')
+        recruiters_at_hub,total_at_hub,recruiters_dict = environment.agents_at_hub('recruiting')
         #print (exploiters_at_hub,total_at_hub)
         #Condition for transition from waiting to following
-        if exploiters_at_hub > round(np.log(environment.number_of_agents)) and exploiters_at_hub/(total_at_hub+1) > np.random.random() and agent.inHub:
+        if recruiters_at_hub > round(np.log(environment.number_of_agents)) and recruiters_at_hub/(total_at_hub+1) > np.random.random() and agent.inHub:
             #self.
             #print (recruiters_dict)
             #exit(0)
@@ -108,6 +111,7 @@ class Waiting(State):
             for site in recruiters_dict:
                 if len (recruiters_dict[site]) > len (major_list):
                     major_list = recruiters_dict[site]
+            #follows the one with the most amount of dancers for that site...
             #self.following = environment.agents[np.random.choice(major_list)]
             self.following = np.random.choice(major_list)
             #print ('self following value',self.following)
@@ -133,7 +137,6 @@ class Waiting(State):
             return
         #agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
         #agent.location = [np.random.randint(1,10),np.random.randint(1,10)]
-        ## TODO the agent shouldn't be teleporting....
         #pass
 
 
@@ -212,7 +215,7 @@ class Searching(State): #basically the same as explorer..
         #agent.location = [agent.location[0]+np.random.randint(1,10),agent.location[1]+np.random.randint(1,10)]        
   
 
-class Following(State):
+class Following(State): #similar to assessor.
     def __init__(self,agent=None,time=None):
         self.name = 'following'        
         self.following = None
@@ -220,19 +223,22 @@ class Following(State):
     def sense(self,agent,environment):
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius) \
                 and agent.inHub is True:
+            if __name__ == '__main__':
                 if environment.hubController.beeCheckOut(agent) == 0:
                     agent.inHub = False
                     return
+            #TODO they are starting following while the agents are still in the hub, maybe they shouldn't follow them.
+            # The problem is they leave the hub and then show a hub checkout.
 
         new_q = environment.get_q(agent)["q"]
         agent.q_value = new_q
+
         agent.attractor = environment.getAttractor(agent.location)
         if(agent.attractor is not None and agent.attracted is None):
             if(np.random.random () > .2):
                 agent.attracted = True
             else:
                 agent.attracted = False
-
 
         agent.repulsor = environment.getRepulsor(agent.location)
         if(agent.repulsor is not None and agent.ignore_repulsor is None):
@@ -244,7 +250,7 @@ class Following(State):
         #print ('Update',environment.following[agent.id])        
 
     def update(self,agent,environment):
-        if agent.q_value > 0 :
+        if agent.q_value > 0:
             agent.potential_site = [agent.location[0], agent.location[1]]
             return input.arrive        
 
@@ -256,11 +262,13 @@ class Following(State):
             agent.direction = self.following.direction
             agent.location[0] = self.following.location[0] - 1
             agent.location[1] = self.following.location[1] - 1
+            #TODO better way to follow, this is preventing them from reaching the site.
 
-class Exploiting(State):
+class Exploiting(State): #like site assess
     def __init__(self,agent=None,time=None):
         self.name = 'exploiting'        
         self.atsite = False
+        self.stopSite = False
 
     def sense(self,agent,environment):
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius):
@@ -269,14 +277,18 @@ class Exploiting(State):
                     agent.inHub = False
                     #self.atsite = False
                     return
-        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius+1.251858563765788):
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius+.251858563765788):
             if not agent.goingToSite and not agent.inHub:
                 environment.hubController.beeCheckIn(agent)
                 agent.inHub = True
-                environment.sites[agent.siteIndex]['food_unit'] -= 1
-                environment.sites[agent.siteIndex]['radius'] -= 0.02
-                environment.sites[agent.siteIndex]['q_value']/30.0
+                if environment.sites[agent.siteIndex]['radius']>.02:
+                    environment.sites[agent.siteIndex]['food_unit'] -= 1
+                    environment.sites[agent.siteIndex]['radius'] -= 0.02
+                    environment.sites[agent.siteIndex]['q_value']/30.0
+                else:
+                    self.stopSite = True
                 ##TODO TODO fix the radius so that it never goes negative, in addition add checking in the other states to never go to negative sites..
+                ##TODO!!!!! Followers need to still exploit as they are not doing that right now.
 
         new_q = environment.get_q(agent)["q"]
         if round(new_q) == round(agent.q_value):
@@ -288,19 +300,14 @@ class Exploiting(State):
     def update(self,agent,environment):
         #if agent.inHub and :
         #    return input.startRecruiting
-        if (((agent.hub[0] - agent.location[0]) ** 2 + (
-                agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) and (agent.goingToSite is False):
+        if self.stopSite is True:
+            return input.retire
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) and (agent.goingToSite is False):
             agent.goingToSite = True
             return input.startRecruiting
-        elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (
-                agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
+        elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
             agent.goingToSite = False
-        #if agent.inHub:
 
-            #if(np.random.uniform(0,1) < 1 - agent.q_value): # (1-q)% chance of going to observer state instead of dancing
-            #    return input.quit
-            #return input.siteAssess        
-        #pass
 
     def act(self,agent):
         #if self.atsite:
@@ -316,7 +323,7 @@ class Exploiting(State):
         #agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
         #agent.location = [np.random.randint(1,10),np.random.randint(1,10)]    
 
-class Recruiting(State):
+class Recruiting(State): #like dancing
     def __init__(self,agent=None,time=None):
         self.name = 'recruiting'
         #self.recruitmentTime = time
