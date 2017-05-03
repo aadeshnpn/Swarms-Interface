@@ -5,11 +5,13 @@ class Attractor
     this.x     = attractorJson.x;
     this.y     = attractorJson.y;
     this.timer = attractorJson.timer;
+    this.radius= attractorJson.radius; //add a new property here -done
   }
 
-  draw(ctx, debug = false)
+  draw(ctx, debug = false) //then swap out hard coded radius for the dynamic
+  //property you added above. Then consider working on adding user input for radius #done?
   {
-    ctx.save()
+    ctx.save();
 
     ctx.translate(this.x, -this.y);
     ctx.fillStyle = Attractor.FILL_STYLE;
@@ -27,4 +29,8 @@ class Attractor
 
 Attractor.FILL_STYLE = "rgba(0, 255, 0, 0.5)";
 Attractor.STROKE_STYLE = "rgb(0, 255, 0)";
-Attractor.RADIUS = 40; // really ought to get this passed to us from the engine
+
+//attractor nerf
+//1. add a new property to the python that will enable us to un-hard code the RADIUS
+//2. we're going to add it to json so we can receive the dynamic RADIUS
+//3. update the draw routine in js with the json data

@@ -320,10 +320,10 @@ class Environment:
         self.isPaused = False
 
     def newAttractor(self, json):
-        self.attractors.append(flowController.Attractor((json['x'], json['y'])))
+        self.attractors.append(flowController.Attractor((json['x'], json['y']), json['radius']))
 
     def newRepulsor(self, json):
-        self.repulsors.append(flowController.Repulsor((json['x'], json['y'])))
+        self.repulsors.append(flowController.Repulsor((json['x'], json['y']), json['radius']))
 
     def updateParameters(self, json):
         eprint("updateParameters")
@@ -394,6 +394,7 @@ class Environment:
         self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
         self.inputEventManager.subscribe('requestStates', self.getUiStates)
         self.inputEventManager.subscribe('requestParams', self.getParams)
+
 
         world.to_json()
 

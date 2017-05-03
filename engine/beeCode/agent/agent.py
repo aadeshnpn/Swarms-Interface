@@ -1,4 +1,6 @@
+
 import warnings
+
 from enum import Enum
 
 import numpy as np
@@ -195,12 +197,13 @@ class Exploring(State):
             return None
 
     def move(self, agent):
-        if(agent.attractor is not None and distance(agent.attractor, agent.location) < 40 and agent.attracted is True):
-            angle = safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.attractor[0]-agent.location[0],agent.attractor[1]-agent.location[1]))
-            angle = np.clip(angle, -np.pi/16, np.pi/16)
-            error = np.random.normal(0, .3)
-            agent.direction += angle + error
-            agent.direction = agent.direction % (2 *np.pi)
+
+        if(agent.attractor is not None and distance(agent.attractor, agent.location) < agent.attractor['radius'] and agent.attracted is True):
+                angle = safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.attractor[0]-agent.location[0],agent.attractor[1]-agent.location[1]))
+                angle = np.clip(angle, -np.pi/16, np.pi/16)
+                error = np.random.normal(0, .3)
+                agent.direction += angle + error
+                agent.direction = agent.direction % (2 *np.pi)
 
         elif(agent.repulsor is not None and distance(agent.repulsor, agent.location) < 40 and agent.ignore_repulsor is False):
              angle = - safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.repulsor[0]-agent.location[0],agent.repulsor[1]-agent.location[1]))
