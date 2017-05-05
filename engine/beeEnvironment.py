@@ -3,7 +3,7 @@
 import json
 import os
 import time
-
+import numpy as np
 from beeCode.debug import *
 from InputEventManager import InputEventManager
 from beeCode.agent.agent import *
@@ -34,14 +34,14 @@ class Environment:
 
         #  environment parameters
 
-        self.number_of_agents = 1000
-        self.frames_per_sec = 600
+        self.number_of_agents = 500
+        self.frames_per_sec = 300
 
         #  bee parameters
         self.parameters = {"PipingThreshold":       self.number_of_agents*.1,
                            "Velocity":              2,
                            "ExploreTime":           3625,
-                           "RestTime":              2000,
+                           "RestTime":              1000,
                            "DanceTime":             1150,
                            "ObserveTime":           2000,
                            "SiteAssessTime":        250,
@@ -477,7 +477,7 @@ class Environment:
             self.info_stations.append(InfoStation())
 
     def add_agents(self):
-        rest_num = int(.05*self.number_of_agents)
+        rest_num = int(.5*np.sqrt(self.number_of_agents))
         for x in range(self.number_of_agents - rest_num):
             agent_id = str(x)
             #if self.useDefaultParams:

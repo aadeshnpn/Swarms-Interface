@@ -381,9 +381,10 @@ class Observing(State):
                 agent.potential_site = bee.potential_site
                 environment.hubController.newPiper()
             if isinstance(bee.state, Dancing().__class__):
-                self.seesDancer = True
-                agent.velocity = agent.parameters["Velocity"]
-                agent.potential_site = bee.potential_site
+                if np.random.random()<(bee.q_value*bee.q_value*.02):
+                    self.seesDancer = True
+                    agent.velocity = agent.parameters["Velocity"]
+                    agent.potential_site = bee.potential_site
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
                 and agent.inHub is False:
                     environment.hubController.beeCheckIn(agent)
@@ -580,7 +581,11 @@ class Commit(State):
         self.atHub = False  # we may not need this code at all... to turn it on make it default false.
 
     def sense(self, agent, environment):  # probably not needed for now, but can be considered a place holder
-        pass
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius) \
+                and agent.inHub is True:
+                if environment.hubController.beeCheckOut(agent) == 0:
+                    agent.inHub = False
+                    return
 
     def act(self, agent):
         if self.atHub:

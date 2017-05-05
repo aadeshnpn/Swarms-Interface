@@ -234,7 +234,7 @@ class RadialControl
          if (component < 1 * RadialControl.RADIUS_SCALE)
          {
             component = 1 * RadialControl.RADIUS_SCALE
-         }
+         } else if(component <)
          else if (component > RadialControl.MAX_AGENT_SCALE * RadialControl.RADIUS_SCALE)
          {
             component = RadialControl.MAX_AGENT_SCALE * RadialControl.RADIUS_SCALE;
