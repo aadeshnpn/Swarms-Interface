@@ -10,6 +10,7 @@ from beeCode.agent.agent import *
 from beeCode.hubController import hubController
 from beeCode.infoStation import InfoStation
 from beeCode.potentialField import PotentialField
+from beeCode.worldGenerator import *
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -34,8 +35,8 @@ class Environment:
 
         #  environment parameters
 
-        self.number_of_agents = 500
-        self.frames_per_sec = 300
+        self.number_of_agents = 1000
+        self.frames_per_sec = 3000
 
         #  bee parameters
         self.parameters = {"PipingThreshold":       self.number_of_agents*.1,
@@ -68,13 +69,13 @@ class Environment:
 
     # Function to initialize data on the environment from a json file
     def build_json_environment(self):
-        json_data = open(self.file_name).read()
+        #json_data = open(self.file_name).read()
 
-        data = json.loads(json_data)
+        #data = json.loads(json_data)
 
-        #generator = worldGenerator()
-        #js = generator.to_json()
-        #data = json.loads(js)
+        generator = worldGenerator()
+        js = generator.to_json()
+        data = json.loads(js)
 
         self.x_limit = data["dimensions"]["x_length"] / 2
         self.y_limit = data["dimensions"]["y_length"] / 2
@@ -107,6 +108,15 @@ class Environment:
             return self.getClosestFlowController(self.repulsors, agent_location).point
         else:
             return None
+
+    '''def randomizeSites(self, flag=True):
+        # Foe each site randomize the values
+        for site in self.sites:
+            site['q_value'] = round(np.random.random(), 2)
+            site['x'] = np.random.randint(-self.x_limit, self.x_limit)
+            site['y'] = np.random.randint(-self.y_limit, self.y_limit)
+            site['radius'] = np.random.normal(30,10)
+            site['food_unit'] = np.power(site['radius'], 3)'''
 
     def updateFlowControllers(self):
 

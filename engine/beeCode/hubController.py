@@ -120,7 +120,7 @@ class hubController:
 
                 for id,bee in bees.items(): #use environment classes soon.
                     if bee.state.__class__ == Observing().__class__ and bee.inHub is True: #to speed up keep a list of the observers..
-                        if np.random.random() < 0.5: #this gives a 50% chance of it happening
+                        if np.random.random() < 0.05: #this gives a 50% chance of it happening
                             break
                         #eprint("hiveadjust: ")
                         #eprint("angle:",angle*5, ".. id:",bee.id, ".. bee in hub?:", bee.inHub)
