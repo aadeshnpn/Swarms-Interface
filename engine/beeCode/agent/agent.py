@@ -1,11 +1,14 @@
-import warnings
-from enum import Enum
 
+import warnings
+
+from enum import Enum
+from ..debug import eprint
 import numpy as np
 
 from .stateMachine.StateMachine import StateMachine
 from .stateMachine.state import State
 
+#from .geomUtil import *
 # reset velocity of agent at begining of each state transition?
 
 input = Enum('input', 'nestFound exploreTime observeTime dancerFound siteFound tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
@@ -195,15 +198,16 @@ class Exploring(State):
             return None
 
     def move(self, agent):
-        if(agent.attractor is not None and distance(agent.attractor, agent.location) < 40 and agent.attracted is True):
-            angle = safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.attractor[0]-agent.location[0],agent.attractor[1]-agent.location[1]))
-            angle = np.clip(angle, -np.pi/16, np.pi/16)
-            error = np.random.normal(0, .3)
-            agent.direction += angle + error
-            agent.direction = agent.direction % (2 *np.pi)
 
-        elif(agent.repulsor is not None and distance(agent.repulsor, agent.location) < 40 and agent.ignore_repulsor is False):
-             angle = - safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.repulsor[0]-agent.location[0],agent.repulsor[1]-agent.location[1]))
+        if(agent.attractor is not None and distance(agent.attractor.point, agent.location) < agent.attractor.radius and agent.attracted is True):
+                angle = safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.attractor.x-agent.location[0],agent.attractor.y-agent.location[1]))
+                angle = np.clip(angle, -np.pi/16, np.pi/16)
+                error = np.random.normal(0, .3)
+                agent.direction += angle + error
+                agent.direction = agent.direction % (2 *np.pi)
+
+        elif(agent.repulsor is not None and distance(agent.repulsor.point, agent.location) < agent.repulsor.radius and agent.ignore_repulsor is False):
+             angle = - safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.repulsor.x-agent.location[0],agent.repulsor.y-agent.location[1]))
              angle = np.clip(angle, -np.pi/16, np.pi/16)
              if(angle >= 0):
                       agent.direction += .3

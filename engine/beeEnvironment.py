@@ -11,6 +11,8 @@ from beeCode.hubController import hubController
 from beeCode.infoStation import InfoStation
 from beeCode.potentialField import PotentialField
 from beeCode.worldGenerator import *
+import beeCode.flowController as flowController
+import beeCode.geomUtil as geomUtil
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -99,13 +101,13 @@ class Environment:
 
     def getAttractor(self, agent_location):
         if(len(self.attractors)>0):
-            return self.getClosestFlowController(self.attractors, agent_location).point
+            return self.getClosestFlowController(self.attractors, agent_location)
         else:
             return None
 
     def getRepulsor(self, agent_location):
         if(len(self.repulsors) > 0):
-            return self.getClosestFlowController(self.repulsors, agent_location).point
+            return self.getClosestFlowController(self.repulsors, agent_location)
         else:
             return None
 
@@ -330,10 +332,10 @@ class Environment:
         self.isPaused = False
 
     def newAttractor(self, json):
-        self.attractors.append(flowController.Attractor((json['x'], json['y'])))
+        self.attractors.append(flowController.Attractor((json['x'], json['y']), json['radius']))
 
     def newRepulsor(self, json):
-        self.repulsors.append(flowController.Repulsor((json['x'], json['y'])))
+        self.repulsors.append(flowController.Repulsor((json['x'], json['y']), json['radius']))
 
     def updateParameters(self, json):
         eprint("updateParameters")
@@ -404,6 +406,7 @@ class Environment:
         self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
         self.inputEventManager.subscribe('requestStates', self.getUiStates)
         self.inputEventManager.subscribe('requestParams', self.getParams)
+
 
         world.to_json()
 
