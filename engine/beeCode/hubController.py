@@ -20,6 +20,7 @@ class hubController:
         self.reset(radius, agents, environment)
         self.siteDistancePriority = 0
         self.siteSizePriority     = 0
+        self.no_viewer = environment.args.no_viewer
 
         environment.inputEventManager.subscribe('priorityUpdate', self.handlePriorityUpdate)
 
@@ -83,7 +84,7 @@ class hubController:
         if isinstance(bee.state, Piping):
             self.piperCount +=1
 
-        if (isinstance(bee.state, Assessing)):
+        if (isinstance(bee.state, Assessing) and not self.no_viewer):
             print (json.dumps({"type": "updateMission", "data": {"x": bee.potential_site[0] , "y": bee.potential_site[1], "q": bee.q_value}}))
 
     def handleRadialControl(self, jsonInput):
@@ -151,7 +152,8 @@ class hubController:
             }
         }
 
-        print(json.dumps(radialJson))
+        if not self.no_viewer:
+            print(json.dumps(radialJson))
 
 
     def reset(self, radius, agents, environment):

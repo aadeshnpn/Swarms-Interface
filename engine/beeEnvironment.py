@@ -14,6 +14,17 @@ from beeCode.hubController import hubController
 from beeCode.infoStation import InfoStation
 from utils.potentialField import PotentialField
 
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-m", "--model"      , choices=["ant", "bee"], help="Run an 'ant' or 'bee' simulation"  )
+parser.add_argument("-n", "--no-viewer"  , action="store_true"   , help="Don't output viewer world info"    )
+parser.add_argument("-s", "--stats"      , action="store_true"   , help="Output json stats after simulation")
+parser.add_argument("-c", "--commit-stop", action="store_true"   , help="Stop simulation after all agents have committed")
+parser.add_argument("-t", "--tick-limit" , type=int              , help="Stop simulation after TICK_LIMIT ticks"         )
+
+args = parser.parse_args()
+
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #Set the seed to always set same random values
 #random.seed(123)
@@ -21,6 +32,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 class Environment:
 
     def __init__(self, file_name):
+        self.args = args
         self.file_name = file_name
         self.x_limit = 0
         self.y_limit = 0
@@ -34,13 +46,18 @@ class Environment:
         self.info_stations = []
         self.agents = {}
         self.dead_agents = []
+        self.stats = {}
 
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
         self.randomizeSites()
-        #  environment parameters
 
-        self.number_of_agents = 500
-        self.frames_per_sec = 600
+        self.stats["parameters"] = {"environment" : {}, "agent" : {}}
+
+        #  environment parameters
+        self.number_of_agents = 100
+        self.frames_per_sec = 60
+
+        self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
 
         #  bee parameters
         self.parameters = {"PipingThreshold":       self.number_of_agents*.1,
@@ -53,6 +70,7 @@ class Environment:
                            "SiteAssessRadius":      15,
                            "PipingTime":            1200}
 
+        self.stats["parameters"]["agent"] = self.parameters
 
         #self.useDefaultParams = True
         self.restart_simulation = False
@@ -77,6 +95,8 @@ class Environment:
 
         data = json.loads(json_data)
 
+        self.stats["world"] = data
+
         #generator = worldGenerator()
         #js = generator.to_json()
         #data = json.loads(js)
@@ -91,7 +111,7 @@ class Environment:
         self.create_potential_fields()
 
         self.create_infoStations()
-    
+
     def randomizeSites(self,flag=True):
         #Foe each site randomize the values
         for site in self.sites:
@@ -214,6 +234,7 @@ class Environment:
                     agent.location[1] = proposed_y
                     agent.live = False
                     self.dead_agents.append(agent)
+                    self.stats["deadAgents"] += 1
                     #self.states[agent.state].remove(agent_id) also not using this currently
                     del self.agents[agent_id]
                     return
@@ -288,6 +309,7 @@ class Environment:
             agent.location[1] = proposed_y
             agent.live = False
             self.dead_agents.append(agent)
+            self.stats["deadAgents"] += 1
             '''for state in self.states:
                 if self.states[state].count(agentId) > 0:
                     self.states[state].remove(agentId)
@@ -333,10 +355,10 @@ class Environment:
         self.isPaused = False
 
     def newAttractor(self, json):
-        self.attractors.append(flowController.Attractor((json['x'], json['y'])))
+        self.attractors.append(Attractor((json['x'], json['y'])))
 
     def newRepulsor(self, json):
-        self.repulsors.append(flowController.Repulsor((json['x'], json['y'])))
+        self.repulsors.append(Repulsor((json['x'], json['y'])))
 
     def updateParameters(self, json):
         eprint("updateParameters")
@@ -374,7 +396,7 @@ class Environment:
     def updateUIParameters(self, json):
         params = json['params']
 
-        self.frames_per_sec           = int  (params['uiFps'                   ])
+        self.frames_per_sec = int(params['uiFps'])
 
         # echo the change out for any other connected clients
         print(self.UIParametersToJson())
@@ -396,24 +418,41 @@ class Environment:
     # Move all of the agents
     def run(self):
 
-        self.inputEventManager.start()
-        self.inputEventManager.subscribe('pause', self.pause)
-        self.inputEventManager.subscribe('play', self.play)
-        self.inputEventManager.subscribe('attractor', self.newAttractor)
-        self.inputEventManager.subscribe('repulsor', self.newRepulsor)
-        self.inputEventManager.subscribe('parameterUpdate', self.updateParameters)
-        self.inputEventManager.subscribe('UIParameterUpdate', self.updateUIParameters)
-        self.inputEventManager.subscribe('restart', self.restart_sim)
-        self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
-        self.inputEventManager.subscribe('requestStates', self.getUiStates)
-        self.inputEventManager.subscribe('requestParams', self.getParams)
+        if (not args.no_viewer):
+            self.inputEventManager.start()
+            self.inputEventManager.subscribe('pause', self.pause)
+            self.inputEventManager.subscribe('play', self.play)
+            self.inputEventManager.subscribe('attractor', self.newAttractor)
+            self.inputEventManager.subscribe('repulsor', self.newRepulsor)
+            self.inputEventManager.subscribe('parameterUpdate', self.updateParameters)
+            self.inputEventManager.subscribe('UIParameterUpdate', self.updateUIParameters)
+            self.inputEventManager.subscribe('restart', self.restart_sim)
+            self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
+            self.inputEventManager.subscribe('requestStates', self.getUiStates)
+            self.inputEventManager.subscribe('requestParams', self.getParams)
 
-        world.to_json()
+            world.to_json()
+            self.getParams(None) # this is a shortcut for letting the client know what the initial parameters are.
+
+        self.stats["ticks"] = 0
+        self.stats["deadAgents"] = 0
 
         while True:
+
+            if args.tick_limit != None and self.ticks >= args.tick_limit:
+                self.stats["didNotFinish"] = True
+                break
+
+            self.stats["ticks"] = self.stats["ticks"] + 1
+
+            if args.stats and self.stats["ticks"] % 100 == 0:
+                print( json.dumps(self.stats) )
+
             if not self.isPaused:
-                world.to_json()
-                stateCounts = {}
+                if not args.no_viewer:
+                    world.to_json()
+
+                self.stats["stateCounts"] = {}
 
                 keys = list(self.agents.keys())  # deleting a key mid-iteration (suggest_new_direction())
                                                         # makes python mad...
@@ -430,10 +469,10 @@ class Environment:
                     agent.update(self)
                     '''
 
-                    if self.agents[agent_id].state.name not in stateCounts:
-                        stateCounts[self.agents[agent_id].state.name] = 0
+                    if self.agents[agent_id].state.name not in self.stats["stateCounts"]:
+                        self.stats["stateCounts"][self.agents[agent_id].state.name] = 0
 
-                    stateCounts[self.agents[agent_id].state.name] += 1
+                    self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
 
                     # if agent_id == "500":
                     #     self.change_agent_params = True
@@ -462,10 +501,14 @@ class Environment:
                 if self.change_agent_params:
                     self.change_agent_params = False
 
-                print(json.dumps({
-                    "type": "stateCounts",
-                    "data": stateCounts
-                }))
+                if not args.no_viewer:
+                    print(json.dumps({
+                        "type": "stateCounts",
+                        "data": self.stats["stateCounts"]
+                    }))
+
+            if (args.commit_stop and "commit" in self.stats["stateCounts"] and self.stats["stateCounts"]["commit"] + len(self.dead_agents) >= self.number_of_agents * .95):
+                break
 
             self.updateFlowControllers()
 
@@ -473,7 +516,16 @@ class Environment:
                 self.reset_sim()
                 self.restart_simulation = False
 
-            time.sleep(1/self.frames_per_sec)
+            if not args.no_viewer:
+                time.sleep(1/self.frames_per_sec)
+
+        self.stats["committedSites"] = []
+
+        for id in self.agents:
+            if self.agents[id].potential_site != None:
+                self.stats["committedSites"].append({"x": self.agents[id].potential_site[0], "y": self.agents[id].potential_site[1]})
+
+        self.stats["committedSites"] = list( dict(y) for y in set( tuple( x.items() ) for x in self.stats["committedSites"] ))
 
     def clear_for_reset(self):
         self.agents.clear()
@@ -646,6 +698,12 @@ class Environment:
 
         return json.dumps(parameterJson)
 
+    def printStats(self):
+        print( json.dumps(self.stats) )
+
 file = "world.json"
 world = Environment(os.path.join(ROOT_DIR, file))
 world.run()
+
+if args.stats:
+    world.printStats()
