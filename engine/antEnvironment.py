@@ -509,7 +509,6 @@ class Environment:
                 total_agent_hub += 1
                 temp_list.append(self.agents[agent].state.name)
                 if self.agents[agent].state.name == state:
-                    #print ('Potential site',self.agents[agent].potential_site)
                     #As our site doesn't have an id using multiplying locations to hash a dictonary. For later purpose we need to give id for site as well
                     temp_site_id = int(round (self.agents[agent].potential_site[0] * self.agents[agent].potential_site[0]))
                     if temp_site_id in agent_state_site.keys():
@@ -517,7 +516,6 @@ class Environment:
                     else:
                         agent_state_site[temp_site_id] = [agent]
                     agent_state_count += 1
-        #print (agent_state_site)
 
         return agent_state_count,total_agent_hub,agent_state_site
     #def agent_to_follow(self,state):
