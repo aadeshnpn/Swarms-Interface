@@ -18,7 +18,7 @@ class Attractor
     ctx.strokeStyle = Attractor.STROKE_STYLE;
 
     ctx.beginPath();
-    ctx.arc(0, 0, Attractor.RADIUS, 0, Math.PI * 2, false);
+    ctx.arc(0, 0, this.radius, 0, Math.PI * 2, false);
     ctx.fill();
 
     ctx.stroke();

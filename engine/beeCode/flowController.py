@@ -1,6 +1,8 @@
 class Attractor:
     def __init__(self, point, radius):
         self.point = point
+        self.x = point[0]
+        self.y = point[1]
         self.time_ticks = 10000
         self.radius = radius #?
         #we need a new radius property -done
@@ -17,10 +19,14 @@ class Attractor:
 class Repulsor:
     def __init__(self, point, radius):
         self.point = point
+        self.x = point[0]
+        self.y = point[1]
         self.time_ticks = 10000
+        self.radius = radius
 
     def toJson(self):
         dict = {}
         dict['x'], dict['y'] = self.point
         dict['timer'] = self.time_ticks
+        dict['radius'] = self.radius
         return dict

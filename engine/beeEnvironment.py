@@ -10,6 +10,8 @@ from beeCode.agent.agent import *
 from beeCode.hubController import hubController
 from beeCode.infoStation import InfoStation
 from beeCode.potentialField import PotentialField
+import beeCode.flowController as flowController
+import beeCode.geomUtil as geomUtil
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -98,13 +100,13 @@ class Environment:
 
     def getAttractor(self, agent_location):
         if(len(self.attractors)>0):
-            return self.getClosestFlowController(self.attractors, agent_location).point
+            return self.getClosestFlowController(self.attractors, agent_location)
         else:
             return None
 
     def getRepulsor(self, agent_location):
         if(len(self.repulsors) > 0):
-            return self.getClosestFlowController(self.repulsors, agent_location).point
+            return self.getClosestFlowController(self.repulsors, agent_location)
         else:
             return None
 
