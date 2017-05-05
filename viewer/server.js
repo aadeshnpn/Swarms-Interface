@@ -82,7 +82,16 @@ class Client
       {
          var executable = config.has(`pythonExecutable.${os.platform()}`) ? config.get(`pythonExecutable.${os.platform()}`) : config.get("pythonExecutable.default");
 
-         const engine = spawn(executable, [path.join(__dirname, '../engine/beeEnvironment.py')], {stdio: ['pipe', 'pipe', process.stderr]});
+         // TODO: we shouldn't have to manage this here, consolidate environments
+         //       and pass a flag into the python instead
+         var typeDir = (process.argv[2] === "ants") ? ('../engine/antEnvironment.py') : ('../engine/beeEnvironment.py');
+         var args = [];
+         args.push(path.join(__dirname,typeDir));
+         if(process.argv[2] == "-r"){
+            args.push("-r");
+         }
+         //var typeDir = (process.argv[2] === "-r") ? ([typeDir ])
+         const engine = spawn(executable, args, {stdio: ['pipe', 'pipe', process.stderr]});
          engine.on('error', (err) => { console.error("[!] Unable to start engine process: " + err)});
 
          this.world = {engine: engine, clientsAttached: 0};
@@ -242,17 +251,17 @@ function cleanup()
 process.on('SIGTERM', cleanup);
 process.on('SIGINT', cleanup);
 
-http.listen(process.env.PORT || 3000, function(i)
+/*http.listen(process.env.PORT || 3000, function(i)
 {
   console.log("listening without sticky");
-});
+});*/
 
  /*******************************************************************************
   * Server initialisation
   ******************************************************************************/
 
 // sticky automatically forks the process up to the number of CPUs
-/*if(!sticky.listen( http, process.env.PORT || 3000))
+if(!sticky.listen( http, process.env.PORT || 3000))
 {
    // Master code
    http.once('listening', () => { console.log(`Listening on ${(process.env.PORT || 3000)}`)});
@@ -260,4 +269,4 @@ http.listen(process.env.PORT || 3000, function(i)
 else
 {
    // Worker code, if any becomes necessary
-}*/
+}

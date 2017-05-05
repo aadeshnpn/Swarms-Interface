@@ -4,13 +4,16 @@ import random
 class worldGenerator:
 
     def __init__(self):
-        self.min_length = 250
-        self.max_length = 2000
-        self.dimensions = {"x_length": random.randint(self.min_length, self.max_length), "y_length": random.randint(self.min_length, self.max_length)}
+        self.min_length = 500
+        self.max_length = 1000
+        x = random.randint(self.min_length, self.max_length)
+        y = random.randint(int(x/2), int(x*2))
+        self.dimensions = {"x_length": x, "y_length": y}
         hub_radius = 20
-        self.hub = {"x": random.randint(hub_radius/2, self.dimensions["x_length"] - hub_radius/2) - self.dimensions["x_length"]/2,
+        '''self.hub = {"x": random.randint(hub_radius/2, self.dimensions["x_length"] - hub_radius/2) - self.dimensions["x_length"]/2,
                     "y": random.randint(hub_radius/2, self.dimensions["y_length"] - hub_radius/2) - self.dimensions["y_length"]/2,
-                    "radius": hub_radius}
+                    "radius": hub_radius}'''
+        self.hub = {"x": 0, "y": 0, "radius": hub_radius}
         self.sites = []
         self.obstacles = []
         self.traps = []

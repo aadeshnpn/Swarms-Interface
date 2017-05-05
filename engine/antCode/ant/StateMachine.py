@@ -6,7 +6,7 @@ class StateMachine:
         self.transitionTable = tranTable
         self.id = id
 
-    def nextState(self, input):
+    def nextState(self, input, environment):
         if input is None:
             return
         currState = self.transitionTable[(self.state.__class__, input)]

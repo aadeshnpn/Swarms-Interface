@@ -2,7 +2,7 @@ import json
 
 from randomdict import RandomDict
 
-from .agent.agent import *
+from .ant.agent import *
 from utils.debug import *
 
 
@@ -20,7 +20,6 @@ class hubController:
         self.reset(radius, agents, environment)
         self.siteDistancePriority = 0
         self.siteSizePriority     = 0
-        self.no_viewer = environment.args.no_viewer
 
         environment.inputEventManager.subscribe('priorityUpdate', self.handlePriorityUpdate)
 
@@ -81,11 +80,9 @@ class hubController:
         self.agentList[bee.id].atHub = 1
         self.agentList[bee.id].direction = angle2*5
         self.agentsInHub[bee.id] = bee
-        if isinstance(bee.state, Piping):
-            self.piperCount +=1
 
-        if (isinstance(bee.state, Assessing) and not self.no_viewer):
-            print (json.dumps({"type": "updateMission", "data": {"x": bee.potential_site[0] , "y": bee.potential_site[1], "q": bee.q_value}}))
+        #if (isinstance(bee.state, Assessing)):
+         #   print (json.dumps({"type": "updateMission", "data": {"x": bee.potential_site[0] , "y": bee.potential_site[1], "q": bee.q_value}}))
 
     def handleRadialControl(self, jsonInput):
         jsonDict = jsonInput['state'] # id, dictionary(r:radian, deg: degrees, val: 1-30)
@@ -121,7 +118,7 @@ class hubController:
 
                 for id,bee in bees.items(): #use environment classes soon.
                     if bee.state.__class__ == Observing().__class__ and bee.inHub is True: #to speed up keep a list of the observers..
-                        if np.random.random() < 0.05: #this gives a 50% chance of it happening
+                        if np.random.random() < 0.5: #this gives a 50% chance of it happening
                             break
                         #eprint("hiveadjust: ")
                         #eprint("angle:",angle*5, ".. id:",bee.id, ".. bee in hub?:", bee.inHub)
@@ -152,8 +149,7 @@ class hubController:
             }
         }
 
-        if not self.no_viewer:
-            print(json.dumps(radialJson))
+        print(json.dumps(radialJson))
 
 
     def reset(self, radius, agents, environment):

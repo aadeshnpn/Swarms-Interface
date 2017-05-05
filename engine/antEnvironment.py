@@ -3,42 +3,27 @@
 import json
 import os
 import time
-import numpy as np
 #Json doesn't work with numpy type 64
 #import numpy as np
+import random
 
 from utils.debug import *
 from InputEventManager import InputEventManager
-from beeCode.agent.agent import *
-from beeCode.hubController import hubController
+#from beeCode.agent.agent import *
+from antCode.ant.agent import *
+from antCode.hubController import hubController
 from beeCode.infoStation import InfoStation
-
-
-from beeCode.worldGenerator import *
-import utils.flowController as flowController
-import utils.geomUtil as geomUtil
 from utils.potentialField import PotentialField
-
-import argparse
-
-parser = argparse.ArgumentParser()
-parser.add_argument("-m", "--model"      , choices=["ant", "bee"], help="Run an 'ant' or 'bee' simulation"  )
-parser.add_argument("-n", "--no-viewer"  , action="store_true"   , help="Don't output viewer world info"    )
-parser.add_argument("-s", "--stats"      , action="store_true"   , help="Output json stats after simulation")
-parser.add_argument("-c", "--commit-stop", action="store_true"   , help="Stop simulation after all agents have committed")
-parser.add_argument("-t", "--tick-limit" , type=int              , help="Stop simulation after TICK_LIMIT ticks"         )
-parser.add_argument("-r", "--randomize" , action="store_true"           , help="randomizes the environment"         )
-
-args = parser.parse_args()
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #Set the seed to always set same random values
 #random.seed(123)
+#class Site:
+#    def __init__(self,location,radius,q_value):
 
 class Environment:
 
     def __init__(self, file_name):
-        self.args = args
         self.file_name = file_name
         self.x_limit = 0
         self.y_limit = 0
@@ -52,30 +37,27 @@ class Environment:
         self.info_stations = []
         self.agents = {}
         self.dead_agents = []
-        self.stats = {}
 
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
-
-        self.stats["parameters"] = {"environment" : {}, "agent" : {}}
-
+        self.randomizeSites()
         #  environment parameters
+
         self.number_of_agents = 500
-        self.frames_per_sec = 60
+        self.frames_per_sec = 600
 
-        self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
-
+        #This should be working from angent class. Its not working. So using it over here
+        self.following = {}
         #  bee parameters
         self.parameters = {"PipingThreshold":       self.number_of_agents*.1,
                            "Velocity":              2,
                            "ExploreTime":           3625,
-                           "RestTime":              1000,
+                           "RestTime":              2000,
                            "DanceTime":             1150,
                            "ObserveTime":           2000,
                            "SiteAssessTime":        250,
                            "SiteAssessRadius":      15,
                            "PipingTime":            1200}
 
-        self.stats["parameters"]["agent"] = self.parameters
 
         #self.useDefaultParams = True
         self.restart_simulation = False
@@ -96,16 +78,13 @@ class Environment:
 
     # Function to initialize data on the environment from a json file
     def build_json_environment(self):
-        if self.args.randomize:
-            generator = worldGenerator()
-            js = generator.to_json()
-            data = json.loads(js)
-        else:
-            json_data = open(self.file_name).read()
-            data = json.loads(json_data)
+        json_data = open(self.file_name).read()
 
-        self.stats["world"] = data
+        data = json.loads(json_data)
 
+        #generator = worldGenerator()
+        #js = generator.to_json()
+        #data = json.loads(js)
 
         self.x_limit = data["dimensions"]["x_length"] / 2
         self.y_limit = data["dimensions"]["y_length"] / 2
@@ -117,6 +96,15 @@ class Environment:
         self.create_potential_fields()
 
         self.create_infoStations()
+    
+    def randomizeSites(self,flag=True):
+        #Foe each site randomize the values
+        for site in self.sites:
+            site['q_value'] = round(random.random(),2)
+            site['x'] = random.randint(-self.x_limit,self.x_limit)
+            site['y'] = np.random.randint(-self.y_limit,self.y_limit)
+            site['radius'] = site['q_value']*30
+            site['food_unit'] = np.power(site['radius'],3)
 
     def getClosestFlowController(self, flowControllers, agent_location):
         if(len(flowControllers) == 0):
@@ -129,24 +117,15 @@ class Environment:
 
     def getAttractor(self, agent_location):
         if(len(self.attractors)>0):
-            return self.getClosestFlowController(self.attractors, agent_location)
+            return self.getClosestFlowController(self.attractors, agent_location).point
         else:
             return None
 
     def getRepulsor(self, agent_location):
         if(len(self.repulsors) > 0):
-            return self.getClosestFlowController(self.repulsors, agent_location)
+            return self.getClosestFlowController(self.repulsors, agent_location).point
         else:
             return None
-
-    '''def randomizeSites(self, flag=True):
-        # Foe each site randomize the values
-        for site in self.sites:
-            site['q_value'] = round(np.random.random(), 2)
-            site['x'] = np.random.randint(-self.x_limit, self.x_limit)
-            site['y'] = np.random.randint(-self.y_limit, self.y_limit)
-            site['radius'] = np.random.normal(30,10)
-            site['food_unit'] = np.power(site['radius'], 3)'''
 
     def updateFlowControllers(self):
 
@@ -181,9 +160,9 @@ class Environment:
                     self.info_stations[i].bee_count += 1
                     agent.atSite = True
                     agent.siteIndex = i
-                    if info.check_for_changes(agent.parameters, agent.param_time_stamp):
-                        agent.update_params(info.parameters)
-                        agent.param_time_stamp = info.last_update
+                    #if info.check_for_changes(agent.parameters, agent.param_time_stamp):
+                    #    agent.update_params(info.parameters)
+                    #    agent.param_time_stamp = info.last_update
 
                 # return the q_value as a linear gradient. The center of the site will return 100% of the q_value,
                 # the edge will return 75% of the q_value
@@ -192,10 +171,10 @@ class Environment:
                     "q"     : site["q_value"] - (tot_dif / site["radius"] * .25 * site["q_value"])
                 }
 
-        if agent.atSite:
-            if self.info_stations[agent.siteIndex].check_for_changes(agent.parameters, agent.param_time_stamp):
-                agent.update_params(self.info_stations[agent.siteIndex].parameters)
-                agent.param_time_stamp = self.info_stations[agent.siteIndex].last_update
+        #if agent.atSite:
+        #    if self.info_stations[agent.siteIndex].check_for_changes(agent.parameters, agent.param_time_stamp):
+        #        agent.update_params(self.info_stations[agent.siteIndex].parameters)
+        #        agent.param_time_stamp = self.info_stations[agent.siteIndex].last_update
             # agent.atSite = False
 
         return {"radius": -1, "q": 0}
@@ -241,7 +220,6 @@ class Environment:
                     agent.location[1] = proposed_y
                     agent.live = False
                     self.dead_agents.append(agent)
-                    self.stats["deadAgents"] += 1
                     #self.states[agent.state].remove(agent_id) also not using this currently
                     del self.agents[agent_id]
                     return
@@ -316,7 +294,6 @@ class Environment:
             agent.location[1] = proposed_y
             agent.live = False
             self.dead_agents.append(agent)
-            self.stats["deadAgents"] += 1
             '''for state in self.states:
                 if self.states[state].count(agentId) > 0:
                     self.states[state].remove(agentId)
@@ -362,11 +339,10 @@ class Environment:
         self.isPaused = False
 
     def newAttractor(self, json):
-        self.attractors.append(flowController.Attractor((json['x'], json['y']), json['radius']))
+        self.attractors.append(flowController.Attractor((json['x'], json['y'])))
 
     def newRepulsor(self, json):
-        self.repulsors.append(flowController.Repulsor((json['x'], json['y']), json['radius']))
-
+        self.repulsors.append(flowController.Repulsor((json['x'], json['y'])))
 
     def updateParameters(self, json):
         eprint("updateParameters")
@@ -404,7 +380,7 @@ class Environment:
     def updateUIParameters(self, json):
         params = json['params']
 
-        self.frames_per_sec = int(params['uiFps'])
+        self.frames_per_sec           = int  (params['uiFps'                   ])
 
         # echo the change out for any other connected clients
         print(self.UIParametersToJson())
@@ -426,61 +402,44 @@ class Environment:
     # Move all of the agents
     def run(self):
 
-        if (not args.no_viewer):
-            self.inputEventManager.start()
-            self.inputEventManager.subscribe('pause', self.pause)
-            self.inputEventManager.subscribe('play', self.play)
-            self.inputEventManager.subscribe('attractor', self.newAttractor)
-            self.inputEventManager.subscribe('repulsor', self.newRepulsor)
-            self.inputEventManager.subscribe('parameterUpdate', self.updateParameters)
-            self.inputEventManager.subscribe('UIParameterUpdate', self.updateUIParameters)
-            self.inputEventManager.subscribe('restart', self.restart_sim)
-            self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
-            self.inputEventManager.subscribe('requestStates', self.getUiStates)
-            self.inputEventManager.subscribe('requestParams', self.getParams)
+        self.inputEventManager.start()
+        self.inputEventManager.subscribe('pause', self.pause)
+        self.inputEventManager.subscribe('play', self.play)
+        self.inputEventManager.subscribe('attractor', self.newAttractor)
+        self.inputEventManager.subscribe('repulsor', self.newRepulsor)
+        self.inputEventManager.subscribe('parameterUpdate', self.updateParameters)
+        self.inputEventManager.subscribe('UIParameterUpdate', self.updateUIParameters)
+        self.inputEventManager.subscribe('restart', self.restart_sim)
+        self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
+        self.inputEventManager.subscribe('requestStates', self.getUiStates)
+        self.inputEventManager.subscribe('requestParams', self.getParams)
 
-            world.to_json()
-            self.getParams(None) # this is a shortcut for letting the client know what the initial parameters are.
-
-        self.stats["ticks"] = 0
-        self.stats["deadAgents"] = 0
+        world.to_json()
 
         while True:
-
-            if args.tick_limit != None and self.ticks >= args.tick_limit:
-                self.stats["didNotFinish"] = True
-                break
-
-            self.stats["ticks"] = self.stats["ticks"] + 1
-
-            if args.stats and self.stats["ticks"] % 100 == 0:
-                print( json.dumps(self.stats) )
-
             if not self.isPaused:
-                if not args.no_viewer:
-                    world.to_json()
-
-                self.stats["stateCounts"] = {}
+                world.to_json()
+                stateCounts = {}
 
                 keys = list(self.agents.keys())  # deleting a key mid-iteration (suggest_new_direction())
                                                         # makes python mad...
                 for agent_id in keys:
-                    '''
-                    agent = self.agents[agent_id]
-                    agent.act()
-                    agent.sense(self)
-                    self.suggest_new_direction(agent.id)
-                    # wind_direction = 1  # in radians
-                    # wind_velocity = .01
+
+                    #agent = self.agents[agent_id]
+                    #agent.act()
+                    #agent.sense(self)
+                    #self.suggest_new_direction(agent.id)
+                    #wind_direction = 1  # in radians
+                    #wind_velocity = .01
                     # uncomment the next line to add wind to the environment
                     #self.wind(wind_direction, wind_velocity)
-                    agent.update(self)
-                    '''
+                    #agent.update(self)
 
-                    if self.agents[agent_id].state.name not in self.stats["stateCounts"]:
-                        self.stats["stateCounts"][self.agents[agent_id].state.name] = 0
 
-                    self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
+                    if self.agents[agent_id].state.name not in stateCounts:
+                        stateCounts[self.agents[agent_id].state.name] = 0
+
+                    stateCounts[self.agents[agent_id].state.name] += 1
 
                     # if agent_id == "500":
                     #     self.change_agent_params = True
@@ -508,32 +467,19 @@ class Environment:
 
                 if self.change_agent_params:
                     self.change_agent_params = False
-
-                if not args.no_viewer:
-                    print(json.dumps({
-                        "type": "stateCounts",
-                        "data": self.stats["stateCounts"]
-                    }))
-
-            if (args.commit_stop and "commit" in self.stats["stateCounts"] and self.stats["stateCounts"]["commit"] + len(self.dead_agents) >= self.number_of_agents * .95):
-                break
-
+                #"""
+                print(json.dumps({
+                    "type": "stateCounts",
+                    "data": stateCounts
+                }))
+                #"""
             self.updateFlowControllers()
 
             if self.restart_simulation:
                 self.reset_sim()
                 self.restart_simulation = False
 
-            if not args.no_viewer:
-                time.sleep(1/self.frames_per_sec)
-
-        self.stats["committedSites"] = []
-
-        for id in self.agents:
-            if self.agents[id].potential_site != None:
-                self.stats["committedSites"].append({"x": self.agents[id].potential_site[0], "y": self.agents[id].potential_site[1]})
-
-        self.stats["committedSites"] = list( dict(y) for y in set( tuple( x.items() ) for x in self.stats["committedSites"] ))
+            time.sleep(1/self.frames_per_sec)
 
     def clear_for_reset(self):
         self.agents.clear()
@@ -549,14 +495,58 @@ class Environment:
         for x in range(len(self.sites)):
             self.info_stations.append(InfoStation())
 
+    # TODO the hubcontroller keeps track of who is in the hub (cheaper computationally)
+    def agents_at_hub(self,state):
+        #agent_state_list = [self.agents[agent].state for agent in self.agents if self.agents[agent].inHub]
+        #count_state = agent_state_list.count(state)
+        #return count_state,len(agent_state_list)
+        agent_state_count = 0
+        total_agent_hub = 0
+        agent_state_site = {}
+        temp_list = []
+        for agent in self.agents:
+            if self.agents[agent].inHub:
+                total_agent_hub += 1
+                temp_list.append(self.agents[agent].state.name)
+                if self.agents[agent].state.name == state:
+                    #print ('Potential site',self.agents[agent].potential_site)
+                    #As our site doesn't have an id using multiplying locations to hash a dictonary. For later purpose we need to give id for site as well
+                    temp_site_id = int(round (self.agents[agent].potential_site[0] * self.agents[agent].potential_site[0]))
+                    if temp_site_id in agent_state_site.keys():
+                        agent_state_site[temp_site_id].append(agent)
+                    else:
+                        agent_state_site[temp_site_id] = [agent]
+                    agent_state_count += 1
+        #print (agent_state_site)
+
+        return agent_state_count,total_agent_hub,agent_state_site
+    #def agent_to_follow(self,state):
+        #agent_state_list = [(self.agents[agent].siteIndex,agent) for agent in self.agents if self.agents[agent].inHub and self.agents[agen].state==state]
+        #agentidnp.random.choice(agent_state_list)            
     def add_agents(self):
-        rest_num = int(.5*np.sqrt(self.number_of_agents))
-        for x in range(self.number_of_agents - rest_num):
+        #Start agents in searching, resting and waiting state
+        #rest_num = int(.1*self.number_of_agents)
+        wait_num = int(.1*self.number_of_agents)
+        #for x in range(self.number_of_agents - rest_num):
+        for x in range(wait_num):
             agent_id = str(x)
             #if self.useDefaultParams:
             #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
                 #agent = Agent(agent_id,Observing())
             #else:
+            agent = Agent(agent_id, self.hub, Waiting())
+            #agent = Agent(agent_id, self.hub, Resting())
+            self.agents[agent_id] = agent            
+        for y in range(self.number_of_agents-wait_num):
+            agent_id = str(x + y + 1)
+            #if self.useDefaultParams:
+            #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
+                #agent = Agent(agent_id,Observing())
+            #else:
+            agent = Agent(agent_id, self.hub, Searching())
+            #agent = Agent(agent_id, self.hub, Resting())
+            self.agents[agent_id] = agent                        
+            """
             agent = Agent(agent_id,  Exploring(ExploreTimeMultiplier=self.parameters["ExploreTime"]), self.hub,
                           piping_threshold          = int   (self.parameters["PipingThreshold"  ]),
                           global_velocity           = float (self.parameters["Velocity"         ]),
@@ -569,7 +559,8 @@ class Environment:
                           piping_time               = int   (self.parameters["PipingTime"       ]))
             self.agents[agent_id] = agent
             #self.states[Exploring().__class__].append(agent_id)
-
+        
+        
         for y in range(rest_num):
             agent_id = str(x + 1 + y)
 
@@ -584,6 +575,7 @@ class Environment:
                           site_assess_radius        = int   (self.parameters["SiteAssessRadius"]),
                           piping_time               = int   (self.parameters["PipingTime"]))
             self.agents[agent_id] = agent
+        """
 
     def reset_sim(self):
         self.clear_for_reset()
@@ -706,12 +698,6 @@ class Environment:
 
         return json.dumps(parameterJson)
 
-    def printStats(self):
-        print( json.dumps(self.stats) )
-
 file = "world.json"
 world = Environment(os.path.join(ROOT_DIR, file))
 world.run()
-
-if args.stats:
-    world.printStats()
