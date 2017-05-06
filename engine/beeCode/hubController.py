@@ -7,17 +7,18 @@ from utils.debug import *
 
 
 class beeInfo:
-    def __init__(self, direction, velocity, state, AtHub):
+    def __init__(self, direction, velocity, state, AtHub,ret):
         self.direction = direction #stored in degrees
         self.velocity = velocity
         self.state = state
         self.atHub = AtHub
+        self.returnedToHub=ret
         #include a variable projecting at what time it left the hub? (add later)
 
 class hubController:
 
-    def __init__(self, radius, agents, environment):
-        self.reset(radius, agents, environment)
+    def __init__(self, radius, agents, environment, exploreTime):
+        self.reset(radius, agents, environment, exploreTime)
         self.siteDistancePriority = 0
         self.siteSizePriority     = 0
         self.no_viewer = environment.args.no_viewer
@@ -111,6 +112,16 @@ class hubController:
     def hiveAdjust(self, bees):
         #sortedParams = sorted(self.directionParams, operator.getitem(1), Reverse=True)
         # ^^this is so it will adjust the bees based on the biggest difference or the lowest difference first, an option if this is a problem
+
+        self.exploreCounter -=1
+        '''if self.exploreCounter <1:
+            for id, beeInf in self.agentList.items():
+                if beeInf.returnedToHub:
+                    reset to false
+                else:
+                    add dead bee,
+             pass'''
+            # TODO TODO TODO TODO this is where I need to add the logic of counting dead bees
         for counter in range(0, 72): #the one problem with this is then the lower buckets have priority of sending bees out hence ^^
             angle = counter
             if self.directionParams[angle] == -1:  # No user input, all is well
@@ -121,17 +132,19 @@ class hubController:
 
                 for id,bee in bees.items(): #use environment classes soon.
                     if bee.state.__class__ == Observing().__class__ and bee.inHub is True: #to speed up keep a list of the observers..
-                        if np.random.random() < 0.05: #this gives a 50% chance of it happening
+                        if np.random.random() > 0.05: #this gives a 5% chance of it happening
                             break
                         #eprint("hiveadjust: ")
                         #eprint("angle:",angle*5, ".. id:",bee.id, ".. bee in hub?:", bee.inHub)
 
                         bee.state = Exploring(bee)
                         bee.state.inputExplore=True
-                        bee.state.exploretime *= 0.5 #since the bees are going out in an almost straight line.
+                        bee.state.exploretime *= 0.35 #since the bees are going out in an almost straight line.
                         bee.direction = ((angle*5)/180)*np.pi
                         self.directions[angle] += 1
                         agent = self.agentList[bee.id]
+                        if agent.direction is not None:
+                            self.incoming[int(agent.direction / 5)] -= 1
                         agent.direction = angle*5
                         agent.atHub = 0
                         bee.inHub = False
@@ -156,7 +169,7 @@ class hubController:
             print(json.dumps(radialJson))
 
 
-    def reset(self, radius, agents, environment):
+    def reset(self, radius, agents, environment, exploreTime):
         self.incoming = [None] *72
         self.environment = environment
         self.radius = radius  # needs an array of direction parameters
@@ -171,11 +184,13 @@ class hubController:
             self.incoming[counter] = 0
         # self.directionParams[10] = 10
         for id, bee in agents.items():
-            info = beeInfo(None, bee.velocity, bee.state, 1)
+            info = beeInfo(None, bee.velocity, bee.state, 1, False)
             self.agentList[bee.id] = info
 
             self.agentsInHub[id] = bee
         self.piperCount = 0
+        self.exploreTime = int(exploreTime)
+        self.exploreCounter = int(exploreTime*1.7)
 
 
     def convertToIndex(self, degrees):

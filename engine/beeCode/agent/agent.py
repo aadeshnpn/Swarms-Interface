@@ -37,7 +37,7 @@ class Agent(StateMachine):
         self.nextState(self.state.update(self), environment)
 
     def danceTransition(self, environment):  #this runs after the agent has changed state
-        dance = int(self.q_value*1000-(200*self.assessments))
+        dance = int(self.q_value*1000-(250*self.assessments))
         if dance < 15:
             self.assessments = 1
             self.potential_site = None
@@ -217,7 +217,7 @@ class Exploring(State):
              agent.direction %= 2 * np.pi
 
         elif self.inputExplore: #this is for when the user has requested more bees
-            delta_d = np.random.normal(0, .08) # this will assure that the bee moves less erratically, it can be decreased a little as well
+            delta_d = np.random.normal(0, .04) # this will assure that the bee moves less erratically, it can be decreased a little as well
             agent.direction = (agent.direction + delta_d) % (2 * np.pi)
         else:
             delta_d = np.random.normal(0, .1)

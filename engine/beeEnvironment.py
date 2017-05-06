@@ -84,7 +84,7 @@ class Environment:
         self.add_agents()
 
         self.inputEventManager = InputEventManager()
-        self.hubController = hubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self)
+        self.hubController = hubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self, self.parameters["ExploreTime"])
         self.isPaused = False
         self.attractors = [] #[flowController.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
         self.repulsors = [] #[flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
@@ -588,7 +588,7 @@ class Environment:
     def reset_sim(self):
         self.clear_for_reset()
         self.add_agents()
-        self.hubController.reset([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self)
+        self.hubController.reset([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self, self.parameters["ExploreTime"])
         # echo the restart for any other connected clients
         print(
             json.dumps(

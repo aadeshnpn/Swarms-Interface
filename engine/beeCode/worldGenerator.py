@@ -1,13 +1,16 @@
 import json
 import random
+import numpy as np
 
 class worldGenerator:
 
     def __init__(self):
-        self.min_length = 500
-        self.max_length = 1000
+        self.min_length = 700
+        self.max_length = 1500
         x = random.randint(self.min_length, self.max_length)
-        y = random.randint(int(x/2), int(x*2))
+        y = int(x*np.random.normal(1,.2))
+        if y<600:
+            y=600
         self.dimensions = {"x_length": x, "y_length": y}
         hub_radius = 20
         '''self.hub = {"x": random.randint(hub_radius/2, self.dimensions["x_length"] - hub_radius/2) - self.dimensions["x_length"]/2,
