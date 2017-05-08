@@ -43,7 +43,9 @@ class hubController:
         elif self.directionParams[angle] < self.directions[angle]: #too many bees, stop it!
             #eprint("INHIBITED!!!!! ")
             #eprint("Angle:", angle, "  Id:", bee.id, "  Bee in hub?:", bee.inHub)
-            bee.state = Observing(bee)
+            ##This should be a different state in Ants
+            #bee.state = Observing(bee)
+            bee.state = Waiting(bee)
 
         elif (self.directionParams[angle] > self.directions[angle]): #there needs to be more bees in that direction anyways
             #eprint("checking out:", bee.id, "direction:", int(bee.direction*(180/np.pi)))
@@ -57,7 +59,9 @@ class hubController:
         elif self.directionParams[angle] == self.directions[angle]: #perfect amount of bees, stop it
             #eprint("INHIBITED!!!!! ")
             #eprint("Angle:", angle, "  Id:", bee.id, "  Bee in hub?:", bee.inHub)
-            bee.state = Observing(bee)
+            ##This should be a different state in Ants            
+            #bee.state = Observing(bee)            
+            bee.state =  Waiting(bee)
 
 
         #eprint("going in:", agent.direction)
@@ -123,10 +127,11 @@ class hubController:
                         #eprint("hiveadjust: ")
                         #eprint("angle:",angle*5, ".. id:",bee.id, ".. bee in hub?:", bee.inHub)
 
-                        bee.state = Exploring(bee)
-                        bee.state.inputExplore=True
-                        bee.state.exploretime *= 0.5 #since the bees are going out in an almost straight line.
-                        bee.direction = ((angle*5)/180)*np.pi
+                        #bee.state = Exploring(bee)
+                        bee.state = Searching(bee)
+                        #bee.state.inputExplore=True
+                        #bee.state.exploretime *= 0.5 #since the bees are going out in an almost straight line.
+                        #bee.direction = ((angle*5)/180)*np.pi
                         self.directions[angle] += 1
                         agent = self.agentList[bee.id]
                         agent.direction = angle*5

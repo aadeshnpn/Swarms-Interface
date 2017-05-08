@@ -223,7 +223,6 @@ class Following(State): #similar to assessor.
     def sense(self,agent,environment):
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius) \
                 and agent.inHub is True:
-            if __name__ == '__main__':
                 if environment.hubController.beeCheckOut(agent) == 0:
                     agent.inHub = False
                     return
@@ -260,8 +259,8 @@ class Following(State): #similar to assessor.
         if self.following:
             #print ('from flowing',self.following)
             agent.direction = self.following.direction
-            agent.location[0] = self.following.location[0] - 1
-            agent.location[1] = self.following.location[1] - 1
+            agent.location[0] = self.following.location[0] - 0.2
+            agent.location[1] = self.following.location[1] - 0.2
             #TODO better way to follow, this is preventing them from reaching the site.
 
 class Exploiting(State): #like site assess

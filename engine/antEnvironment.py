@@ -496,6 +496,7 @@ class Environment:
             self.info_stations.append(InfoStation())
 
     # TODO the hubcontroller keeps track of who is in the hub (cheaper computationally)
+    ## Using hubController now
     def agents_at_hub(self,state):
         #agent_state_list = [self.agents[agent].state for agent in self.agents if self.agents[agent].inHub]
         #count_state = agent_state_list.count(state)
@@ -504,18 +505,19 @@ class Environment:
         total_agent_hub = 0
         agent_state_site = {}
         temp_list = []
-        for agent in self.agents:
-            if self.agents[agent].inHub:
-                total_agent_hub += 1
-                temp_list.append(self.agents[agent].state.name)
-                if self.agents[agent].state.name == state:
-                    #As our site doesn't have an id using multiplying locations to hash a dictonary. For later purpose we need to give id for site as well
-                    temp_site_id = int(round (self.agents[agent].potential_site[0] * self.agents[agent].potential_site[0]))
-                    if temp_site_id in agent_state_site.keys():
-                        agent_state_site[temp_site_id].append(agent)
-                    else:
-                        agent_state_site[temp_site_id] = [agent]
-                    agent_state_count += 1
+        #for agent in self.agents:
+        for agent in self.hubController.agentsInHub:
+            #if self.agents[agent].inHub:
+            total_agent_hub += 1
+            temp_list.append(self.agents[agent].state.name)
+            if self.agents[agent].state.name == state:
+                #As our site doesn't have an id using multiplying locations to hash a dictonary. For later purpose we need to give id for site as well
+                temp_site_id = int(round (self.agents[agent].potential_site[0] * self.agents[agent].potential_site[0]))
+                if temp_site_id in agent_state_site.keys():
+                    agent_state_site[temp_site_id].append(agent)
+                else:
+                    agent_state_site[temp_site_id] = [agent]
+                agent_state_count += 1
 
         return agent_state_count,total_agent_hub,agent_state_site
     #def agent_to_follow(self,state):
