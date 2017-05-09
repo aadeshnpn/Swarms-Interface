@@ -71,7 +71,15 @@ socket.on('update', function(worldUpdate)
    }
    else if (finishedDrawing)
    {
-      world = new World(worldUpdate.data);
+      world = new World(worldUpdate.data); //try implementing an array and stack
+      //you'd push worldupdate.data into array, and then pop it off the stack when you need it
+      // "need it" means you've finished a draw cycle, which is happening in browser
+      // if you want to keep everything in draw function like it is, make the array and stack
+      // if you want to split it up you need to move the world.draw function into this function
+      //the idea is to draw the world only when we're ready for it
+      //read through socket documentation, maybe there are options that say
+      //"don't register every single callback" or something
+
 
       // TODO: split this out into a separate update? worldMeta?
       //ui.RadialControl.updateActual(world.hub.directions);
@@ -93,7 +101,7 @@ function draw()
    ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
    ctx.restore();
 
-   world.draw(ctx, debug, showAgentStates);
+   world.draw(ctx, debug, showAgentStates); // move to update path rather than 1/60
    ui.draw(ctx, debug);
 
    finishedDrawing = true;
