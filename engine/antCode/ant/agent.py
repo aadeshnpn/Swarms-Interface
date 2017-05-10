@@ -3,6 +3,7 @@ from enum import Enum
 from .StateMachine import StateMachine
 from .state import State
 import numpy as np
+from .pheromone import Pheromone
 
 input = Enum('input', 'startFollowing getLost1 getLost2 startSearching stopSearching discover join retire arrive stopRecruiting startRecruiting')
 
@@ -22,6 +23,7 @@ class Agent(StateMachine):
         self.assessment = 1
         self.inHub = True
         self.atSite = False
+        self.atPheromone = 0
         self.siteIndex = None
         self.goingToSite = True
         self.quadrant = []
@@ -33,6 +35,7 @@ class Agent(StateMachine):
         self.ignore_repulsor = None
         #This holds the identity of following ants
         self.following = None
+        self.pheromoneList = []
         # These parameters may be modified at run-time
         self.parameters =  {"WaitingTime": 1000,
                             "SearchTime": 2000}  
@@ -42,6 +45,7 @@ class Agent(StateMachine):
                 (Waiting(self).__class__, input.startFollowing): [None, Following(self)],
                 (Searching(self).__class__, input.discover): [None, Exploiting(self)],
                 (Searching(self).__class__, input.stopSearching): [None, Waiting(self)],
+                (Searching(self).__class__, input.startFollowing): [None, Following(self)],                
                 (Exploiting(self).__class__, input.retire): [None, Waiting(self)],
                 (Exploiting(self).__class__, input.startRecruiting): [None, Recruiting(self,3000)],
                 (Exploiting(self).__class__, input.getLost1): [None, Searching(self)],
@@ -108,9 +112,9 @@ class Waiting(State): #like observing
 
         #TODO the hubcontroller keeps track of who is in the hub (cheaper computationally)
         # shouldn't we be counting the recruiters and not the exploiters?? oh we are... it's just named differently..
-        if self.seesRecuriter is True:
-            return input.startFollowing
-        elif self.waitingtime < 1:
+        #if self.seesRecuriter is True:
+        #    return input.startFollowing
+        if self.waitingtime < 1:
             #if np.random.uniform(0, 1) < 0.1:  # 10% chance a bee goes back to rest after observing
             #    return input.startSearching
             return input.startSearching
@@ -209,6 +213,7 @@ class Searching(State): #basically the same as explorer..
 
         new_q = environment.get_q(agent)["q"]
         agent.q_value = new_q
+        agent.atPheromone = environment.get_pheromone(agent)
         agent.attractor = environment.getAttractor(agent.location)
         if(agent.attractor is not None and agent.attracted is None):
             if(np.random.random () > .2):
@@ -229,6 +234,8 @@ class Searching(State): #basically the same as explorer..
         if agent.q_value > 0 :
             agent.potential_site = [agent.location[0], agent.location[1]]
             return input.discover
+        elif agent.atPheromone > 0 :
+            return input.startFollowing
         elif self.searchingtime < 1 :
             return input.stopSearching
 
@@ -263,7 +270,34 @@ class Searching(State): #basically the same as explorer..
         #agent.location = [agent.location[0]+np.random.randint(1,10),agent.location[1]+np.random.randint(1,10)]        
   
 
-class Following(State): #similar to assessor.
+class Following(State):
+    def __init__(self,agent=None,time=None):
+        self.name = 'following'        
+        self.following = None
+
+    def sense(self,agent,environment):
+        agent.atPheromone = environment.get_pheromone(agent)
+
+    def update(self,agent,environment):
+        if not agent.atPheromone:
+            return input.getLost2
+        #else:
+        #    self.following = True
+
+    def act(self,agent):
+        #if agent.goingToSite:
+        #    dx = agent.potential_site[0] - agent.location[0]
+        #    dy = agent.potential_site[1] - agent.location[1]
+        #    agent.direction = np.arctan2(dy, dx)
+        #else:
+        dx = agent.hub[0] - agent.location[0]
+        dy = agent.hub[1] - agent.location[1]
+        agent.direction = np.arctan2(dy, dx)
+        return        
+        #agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
+        #agent.location = [np.random.randint(1,10),np.random.randint(1,10)]
+
+class Following1(State): #similar to assessor.
     def __init__(self,agent=None,time=None):
         self.name = 'following'        
         self.following = None
@@ -380,6 +414,13 @@ class Exploiting(State): #like site assess
     def update(self,agent,environment):
         #if agent.inHub and :
         #    return input.startRecruiting
+        if agent.pheromoneList:
+            for pheremone in agent.pheromoneList:
+                if pheremone.scope <=0:
+                    agent.pheromoneList.remove(pheremone)
+                else:
+                    pheremone.reduce_scope()        
+
         if self.stopSite is True:
             return input.retire
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) and (agent.goingToSite is False):
@@ -387,6 +428,8 @@ class Exploiting(State): #like site assess
             return input.startRecruiting
         elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
             agent.goingToSite = False
+
+
 
 
     def act(self,agent):
@@ -398,6 +441,8 @@ class Exploiting(State): #like site assess
             agent.direction = np.arctan2(dy, dx)
         else:
             ##Need to spread pheremon while returning back to hub
+            p1=Pheromone(agent.location)
+            agent.pheromoneList.append(p1)
             dx = agent.hub[0] - agent.location[0]
             dy = agent.hub[1] - agent.location[1]
             agent.direction = np.arctan2(dy, dx)        

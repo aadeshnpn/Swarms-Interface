@@ -56,7 +56,9 @@ class Environment:
                            "ObserveTime":           2000,
                            "SiteAssessTime":        250,
                            "SiteAssessRadius":      15,
-                           "PipingTime":            1200}
+                           "PipingTime":            1200,
+                           "DiffusionTime":         3,
+                           "Strength":              2}
 
 
         #self.useDefaultParams = True
@@ -72,7 +74,7 @@ class Environment:
         self.repulsors = [] #[flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
         #self.repulsors[0].time_ticks = 600
         #self.repulsors[1].time_ticks = 1800
-
+        self.pheromoneList = []
         #json aux
         self.previousMetaJson = None
 
@@ -178,6 +180,22 @@ class Environment:
             # agent.atSite = False
 
         return {"radius": -1, "q": 0}
+
+    def get_pheromone(self,agent):
+        ##Loop through all the pehromonelist
+        if self.pheromoneList:
+            for pheremone in self.pheromoneList:
+                x_dif = agent.location[0] - pheremone.location[0]
+                y_dif = agent.location[1] - pheremone.location[1]
+                tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
+                #print('Calling get raidus',self.parameters["DiffusionTime"],self.parameters["Strength"])
+                if tot_dif <= pheremone.get_radius(self.parameters["DiffusionTime"],self.parameters["Strength"]):
+                    agent.atPheromone = True
+                    return tot_dif
+                else:
+                    return 0
+        else:
+            return 0
 
     # Returns 0 if terrain is clear, -1 if it is rough (slows velocity of agent to half-speed), -2 if there is an
     # obstacle, and -3 if there is a trap
@@ -446,6 +464,9 @@ class Environment:
 
                     if self.change_agent_params:
                         self.updateAgentParameters(self.agents[agent_id])
+
+                    if self.agents[agent_id].pheromoneList:
+                        self.pheromoneList[len(self.pheromoneList):] = self.agents[agent_id].pheromoneList
 
                     # is this faster?
                     self.agents[agent_id].act()
