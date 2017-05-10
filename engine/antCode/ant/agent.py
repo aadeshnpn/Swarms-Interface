@@ -76,6 +76,8 @@ class Waiting(State): #like observing
     def __init__(self,agent=None,time=None):
         self.name = 'waiting'
         exp = np.random.normal(1, .3, 1)
+        self.atHub = True
+        self.seesRecuriter = False
         while exp < 0:
             exp = np.random.normal(1, .3, 1)
         if agent is not None:
@@ -84,6 +86,13 @@ class Waiting(State): #like observing
             self.waitingtime = exp*1000
 
     def sense(self,agent,environment):
+        if self.atHub:
+            ant = environment.hubController.waitingCheck()
+            if isinstance(ant.state, Recruiting().__class__):
+                if np.random.random()<(ant.q_value*ant.q_value*.02):
+                    self.seesRecuriter = True
+                    agent.potential_site = ant.potential_site
+
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
                 and agent.inHub is False:
                     environment.hubController.beeCheckIn(agent)
@@ -99,7 +108,13 @@ class Waiting(State): #like observing
 
         #TODO the hubcontroller keeps track of who is in the hub (cheaper computationally)
         # shouldn't we be counting the recruiters and not the exploiters?? oh we are... it's just named differently..
-
+        if self.seesRecuriter is True:
+            return input.startFollowing
+        elif self.waitingtime < 1:
+            #if np.random.uniform(0, 1) < 0.1:  # 10% chance a bee goes back to rest after observing
+            #    return input.startSearching
+            return input.startSearching
+        """
         recruiters_at_hub,total_at_hub,recruiters_dict = environment.agents_at_hub('recruiting')
         #print (exploiters_at_hub,total_at_hub)
         #Condition for transition from waiting to following
@@ -115,13 +130,29 @@ class Waiting(State): #like observing
             #self.following = environment.agents[np.random.choice(major_list)]
             self.following = np.random.choice(major_list)
             #print ('self following value',self.following)
-            environment.following[agent.id] = self.following
-            return input.startFollowing
+            if self.following.recruitmentTime <=1:
+                environment.following[agent.id] = self.following
+                return input.startFollowing
         elif self.waitingtime < 1:
             return input.startSearching
+        """
         #pass
-
     def act(self,agent):
+        if self.atHub:
+            self.waitingtime -= 1
+            #if self.waitingtime == 0:
+            #    agent.velocity = agent.parameters["Velocity"]
+            self.wander(agent)
+        else:
+            # if not at hub, more towards it
+            self.movehome(agent)
+            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 <= 1.1:
+                # 1.1 prevents moving back and forth around origin
+                self.atHub = True
+                #agent.inHub = True
+                agent.direction += -89 + 179 * np.random.random()
+                #agent.velocity = agent.parameters["Velocity"]        
+        """                
         if agent.inHub:
             if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 >= agent.hubRadius:
                 dx = agent.hub[0] - agent.location[0]
@@ -138,6 +169,23 @@ class Waiting(State): #like observing
         #agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
         #agent.location = [np.random.randint(1,10),np.random.randint(1,10)]
         #pass
+        """
+    def movehome(self, agent):
+        dx = agent.hub[0] - agent.location[0]
+        dy = agent.hub[1] - agent.location[1]
+        agent.direction = np.arctan2(dy, dx)
+
+    def wander(self, agent):
+        if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 >= agent.hubRadius:
+            dx = agent.hub[0] - agent.location[0]
+            dy = agent.hub[1] - agent.location[1]
+            agent.direction = np.arctan2(dy, dx)
+        else:
+            delta_d = np.random.normal(0, .3)
+            agent.direction = (agent.direction + delta_d) % (2 * np.pi)
+
+        return
+
 
 
 
@@ -226,9 +274,15 @@ class Following(State): #similar to assessor.
                 if environment.hubController.beeCheckOut(agent) == 0:
                     agent.inHub = False
                     return
+
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
+                and agent.inHub is False:
+                    environment.hubController.beeCheckIn(agent)
+                    agent.inHub = True
+                    return
             #TODO they are starting following while the agents are still in the hub, maybe they shouldn't follow them.
             # The problem is they leave the hub and then show a hub checkout.
-
+        """
         new_q = environment.get_q(agent)["q"]
         agent.q_value = new_q
 
@@ -245,23 +299,49 @@ class Following(State): #similar to assessor.
                  agent.ignore_repulsor = True
             else:
                  agent.ignore_repulsor = False 
-        self.following=environment.agents[environment.following[agent.id]]
-        #print ('Update',environment.following[agent.id])        
+        #self.following=environment.agents[environment.following[agent.id]]
+        #print ('Update',environment.following[agent.id])
+        """        
 
     def update(self,agent,environment):
-        if agent.q_value > 0:
-            agent.potential_site = [agent.location[0], agent.location[1]]
-            return input.arrive        
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (
+                agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) and (agent.goingToSite is False):
+            agent.goingToSite = True
+            return input.arrive
+        elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (
+                agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
+            agent.goingToSite = False
+            #if(np.random.uniform(0,1) < 1 - agent.q_value): # (1-q)% chance of going to observer state instead of dancing
+            #    return input.quit
+            #return input.startRecruiting
+            return      
+        """
+        if self.following:
+            if agent.q_value > 0 #or self.following.q_value > 0:
+                agent.potential_site = [agent.location[0], agent.location[1]]
+                return input.arrive
+        """
 
     def act(self,agent):
+        if agent.goingToSite:
+            dx = agent.potential_site[0] - agent.location[0]
+            dy = agent.potential_site[1] - agent.location[1]
+            agent.direction = np.arctan2(dy, dx)
+        else:
+            dx = agent.hub[0] - agent.location[0]
+            dy = agent.hub[1] - agent.location[1]
+            agent.direction = np.arctan2(dy, dx)
+        return        
         #agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
         #agent.location = [np.random.randint(1,10),np.random.randint(1,10)]
-        if self.following:
+        """
+        if self.following and agent.inHub is False:
             #print ('from flowing',self.following)
             agent.direction = self.following.direction
             agent.location[0] = self.following.location[0] - 0.2
             agent.location[1] = self.following.location[1] - 0.2
             #TODO better way to follow, this is preventing them from reaching the site.
+        """
 
 class Exploiting(State): #like site assess
     def __init__(self,agent=None,time=None):
@@ -280,12 +360,13 @@ class Exploiting(State): #like site assess
             if not agent.goingToSite and not agent.inHub:
                 environment.hubController.beeCheckIn(agent)
                 agent.inHub = True
-                if environment.sites[agent.siteIndex]['radius']>.02:
-                    environment.sites[agent.siteIndex]['food_unit'] -= 1
-                    environment.sites[agent.siteIndex]['radius'] -= 0.02
-                    environment.sites[agent.siteIndex]['q_value']/30.0
-                else:
-                    self.stopSite = True
+                if agent.siteIndex:
+                    if environment.sites[agent.siteIndex]['radius']>.02:
+                        environment.sites[agent.siteIndex]['food_unit'] -= 1
+                        environment.sites[agent.siteIndex]['radius'] -= 0.02
+                        environment.sites[agent.siteIndex]['q_value']/30.0
+                    else:
+                        self.stopSite = True
                 ##TODO TODO fix the radius so that it never goes negative, in addition add checking in the other states to never go to negative sites..
                 ##TODO!!!!! Followers need to still exploit as they are not doing that right now.
 
@@ -316,6 +397,7 @@ class Exploiting(State): #like site assess
             dy = agent.potential_site[1] - agent.location[1]
             agent.direction = np.arctan2(dy, dx)
         else:
+            ##Need to spread pheremon while returning back to hub
             dx = agent.hub[0] - agent.location[0]
             dy = agent.hub[1] - agent.location[1]
             agent.direction = np.arctan2(dy, dx)        
@@ -339,6 +421,7 @@ class Recruiting(State): #like dancing
         #pass
         self.recruitmentTime -= 1        
         if self.recruitmentTime <= 1 :
+            agent.q_value = 0
             return input.stopRecruiting
 
 

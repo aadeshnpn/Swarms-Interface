@@ -98,7 +98,7 @@ class hubController:
         angle = int(int(direction % 360) / 5)   # converting to fit in the array
 
         self.directionParams[angle] = int(newValue)
-    def observersCheck(self):
+    def waitingCheck(self):
         return self.agentsInHub.random_value()
         #if bee.state ==
     def piperCheck(self):
