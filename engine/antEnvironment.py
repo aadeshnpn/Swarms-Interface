@@ -647,7 +647,8 @@ class Environment:
                     "attractors": list(map(lambda a: a.toJson(), self.attractors)),
                     "repulsors" : list(map(lambda r: r.toJson(), self.repulsors )),
                     "agents"    : self.agents_to_json(),
-                    "dead_agents": self.dead_agents_to_json()
+                    "dead_agents": self.dead_agents_to_json(),
+                    "pheromones": self.pheromone_trails_to_json()
                 }
             })
         )
@@ -665,6 +666,16 @@ class Environment:
                           "qVal": agent.q_value}
             dead_agents.append(agent_dict)
         return dead_agents
+
+    def pheromone_trails_to_json(self):
+        pheromones = []
+        for pheromone in self.pheromoneList:
+            pheromone_dict = {}
+            pheromone_dict["x"] = pheromone.location[0]
+            pheromone_dict["y"] = pheromone.location[1]
+            pheromone_dict["radius"] = pheromone.get_radius(self.parameters["DiffusionTime"],self.parameters["Strength"])
+            pheromones.append(pheromone_dict)
+        return pheromones
 
     def agents_to_json(self):
         agents = []
