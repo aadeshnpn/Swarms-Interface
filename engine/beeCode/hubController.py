@@ -13,6 +13,7 @@ class beeInfo:
         self.state = state
         self.atHub = AtHub
         self.returnedToHub=ret
+        self.dead = False
         #include a variable projecting at what time it left the hub? (add later)
 
 class hubController:
@@ -82,6 +83,10 @@ class hubController:
         self.agentList[bee.id].atHub = 1
         self.agentList[bee.id].direction = angle2*5
         self.agentsInHub[bee.id] = bee
+        self.agentList[bee.id].returnedToHub = True
+        if self.agentList[bee.id].dead:
+            self.agentList[bee.id].dead = False
+            self.deadBees -= 1
         if isinstance(bee.state, Piping):
             self.piperCount +=1
 
@@ -113,14 +118,19 @@ class hubController:
         #sortedParams = sorted(self.directionParams, operator.getitem(1), Reverse=True)
         # ^^this is so it will adjust the bees based on the biggest difference or the lowest difference first, an option if this is a problem
 
-        self.exploreCounter -=1
-        '''if self.exploreCounter <1:
+
+        if self.exploreCounter <1:
             for id, beeInf in self.agentList.items():
                 if beeInf.returnedToHub:
-                    reset to false
-                else:
-                    add dead bee,
-             pass'''
+                    beeInf.returnedToHub = False
+                    pass # have a way to check if they've come back again...
+                elif beeInf.dead is False:
+                    beeInf.dead = True
+                    self.deadBees +=1
+                    self.exploreCounter = self.exploreTime*1.7
+        else:
+            self.exploreCounter -= 1
+
             # TODO TODO TODO TODO this is where I need to add the logic of counting dead bees
         for counter in range(0, 72): #the one problem with this is then the lower buckets have priority of sending bees out hence ^^
             angle = counter
@@ -160,7 +170,8 @@ class hubController:
                 "controller":
                 {
                     "agentDirections" : self.directions,
-                    "agentsIn" : self.incoming
+                    "agentsIn" : self.incoming,
+                    "dead"     : self.deadBees
                 }
             }
         }
@@ -190,7 +201,8 @@ class hubController:
             self.agentsInHub[id] = bee
         self.piperCount = 0
         self.exploreTime = int(exploreTime)
-        self.exploreCounter = int(exploreTime*1.7)
+        self.exploreCounter = int(exploreTime*1)
+        self.deadBees = 0
 
 
     def convertToIndex(self, degrees):

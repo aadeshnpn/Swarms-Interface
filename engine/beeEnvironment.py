@@ -59,15 +59,15 @@ class Environment:
         self.stats["parameters"] = {"environment" : {}, "agent" : {}}
 
         #  environment parameters
-        self.number_of_agents = 500
-        self.frames_per_sec = 60
+        self.number_of_agents = 100
+        self.frames_per_sec = 600
 
         self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
 
         #  bee parameters
-        self.parameters = {"PipingThreshold":       self.number_of_agents*.1,
+        self.parameters = {"PipingThreshold":       self.number_of_agents*.17,
                            "Velocity":              2,
-                           "ExploreTime":           3625,
+                           "ExploreTime":           1400,
                            "RestTime":              1000,
                            "DanceTime":             1150,
                            "ObserveTime":           2000,
@@ -93,7 +93,8 @@ class Environment:
 
         #json aux
         self.previousMetaJson = None
-
+    def countUpdate(self, state1, state2):
+        pass
     # Function to initialize data on the environment from a json file
     def build_json_environment(self):
         if self.args.randomize:
@@ -242,6 +243,7 @@ class Environment:
                     agent.live = False
                     self.dead_agents.append(agent)
                     self.stats["deadAgents"] += 1
+                    eprint("dead: ", self.state["deadAgents"])
                     #self.states[agent.state].remove(agent_id) also not using this currently
                     del self.agents[agent_id]
                     return
@@ -321,6 +323,7 @@ class Environment:
                 if self.states[state].count(agentId) > 0:
                     self.states[state].remove(agentId)
                     break'''
+            eprint("dead: ", self.stats["deadAgents"])
             del self.agents[agentId]
             return
         elif terrain_value == -2:
