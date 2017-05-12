@@ -414,12 +414,13 @@ class Exploiting(State): #like site assess
     def update(self,agent,environment):
         #if agent.inHub and :
         #    return input.startRecruiting
+
         if agent.pheromoneList:
-            for pheremone in agent.pheromoneList:
-                if pheremone.scope <=0:
-                    agent.pheromoneList.remove(pheremone)
+            for pheromone in agent.pheromoneList:
+                if pheromone.scope <=0:
+                    agent.pheromoneList.remove(pheromone)
                 else:
-                    pheremone.reduce_scope()        
+                    pheromone.reduce_scope()
 
         if self.stopSite is True:
             return input.retire
@@ -441,8 +442,10 @@ class Exploiting(State): #like site assess
             agent.direction = np.arctan2(dy, dx)
         else:
             ##Need to spread pheremon while returning back to hub
-            p1=Pheromone(agent.location)
-            agent.pheromoneList.append(p1)
+            if np.random.random() < .3: #so not too much pheromone is spread (60 times/second)
+                p1=Pheromone(agent.location)
+                index = 11.12*p1.location[0]+p1.location[1]*.138
+                agent.pheromoneList(p1)
             dx = agent.hub[0] - agent.location[0]
             dy = agent.hub[1] - agent.location[1]
             agent.direction = np.arctan2(dy, dx)        

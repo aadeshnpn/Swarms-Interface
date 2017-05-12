@@ -217,7 +217,7 @@ class Exploring(State):
              agent.direction %= 2 * np.pi
 
         elif self.inputExplore: #this is for when the user has requested more bees
-            delta_d = np.random.normal(0, .04) # this will assure that the bee moves less erratically, it can be decreased a little as well
+            delta_d = np.random.normal(0, .02) # this will assure that the bee moves less erratically, it can be decreased a little as well
             agent.direction = (agent.direction + delta_d) % (2 * np.pi)
         else:
             delta_d = np.random.normal(0, .1)
@@ -385,7 +385,7 @@ class Observing(State):
                 agent.potential_site = bee.potential_site
                 environment.hubController.newPiper()
             if isinstance(bee.state, Dancing().__class__):
-                if np.random.random()<(bee.q_value*bee.q_value*.02):
+                if np.random.random()<(bee.q_value*np.sqrt(bee.q_value)*.02):#maybe get rid of the second part
                     self.seesDancer = True
                     agent.velocity = agent.parameters["Velocity"]
                     agent.potential_site = bee.potential_site
@@ -437,10 +437,6 @@ class Observing(State):
 
         return
 
-
-#thoughts: we could implement transitions that when each state is implemented the state is passed in the needed values for it's
-#operation.  advantage:no need to pass in agent, states hold the values. con: copying values every state transition
-
 # Code for site convergence (Chace A.) VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 
 class SiteAssess(State):
@@ -470,6 +466,7 @@ class SiteAssess(State):
         if self.check_num_close_assessors(agent, environment):
             self.thresholdPassed = True
 
+        #TODO this code is making the agents commit/report on different parts of the site
         if siteInfo["q"] >= 0 and siteInfo["radius"] > 0: #CHECK THIS, IT MAY BE A PROBLEM...
 
             distance = np.sqrt((agent.location[0] - agent.hub[0])**2 + (agent.location[1] - agent.hub[1])**2)
@@ -479,7 +476,7 @@ class SiteAssess(State):
             # TODO: have the bees update these values only on hub check-in?
             priorities = environment.hubController.getSitePriorities()
 
-            STD_SITE_SIZE = 15
+            STD_SITE_SIZE = 25
 
             # scale from (0 to 30) to (-1 to 1)
             size = size / (STD_SITE_SIZE) - 1

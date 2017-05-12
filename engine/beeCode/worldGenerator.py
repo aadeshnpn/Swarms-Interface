@@ -83,7 +83,7 @@ class worldGenerator:
         max_traps = int(self.dimensions["x_length"] * self.dimensions["y_length"] * (8 / self.max_length ** 2)) + 2
         trapsNum = random.randint(0, max_traps)
         for proposed_trap in range(trapsNum):
-            trap = {"radius": random.randint(5, 30)}
+            trap = {"radius": random.randint(20, 70)}
 
             ready = False
 

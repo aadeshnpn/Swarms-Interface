@@ -42,7 +42,7 @@ class Environment:
         self.randomizeSites()
         #  environment parameters
 
-        self.number_of_agents = 500
+        self.number_of_agents = 100
         self.frames_per_sec = 600
 
         #This should be working from angent class. Its not working. So using it over here
@@ -182,14 +182,14 @@ class Environment:
         return {"radius": -1, "q": 0}
 
     def get_pheromone(self,agent):
-        ##Loop through all the pehromonelist
+        ##Loop through all the pheromonelist
         if self.pheromoneList:
-            for pheremone in self.pheromoneList:
-                x_dif = agent.location[0] - pheremone.location[0]
-                y_dif = agent.location[1] - pheremone.location[1]
+            for pheromone in self.pheromoneList:
+                x_dif = agent.location[0] - pheromone.location[0]
+                y_dif = agent.location[1] - pheromone.location[1]
                 tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
                 #print('Calling get raidus',self.parameters["DiffusionTime"],self.parameters["Strength"])
-                if tot_dif <= pheremone.get_radius(self.parameters["DiffusionTime"],self.parameters["Strength"]):
+                if tot_dif <= pheromone.get_radius(self.parameters["DiffusionTime"],self.parameters["Strength"]):
                     agent.atPheromone = True
                     return tot_dif
                 else:
