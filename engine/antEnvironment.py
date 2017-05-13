@@ -1,12 +1,8 @@
-#import multiprocessing
-#pool=multiprocessing.Pool(processes=16)
 import json
 import os
 import time
 #Json doesn't work with numpy type 64
-#import numpy as np
-import random
-
+import numpy as np
 from utils.debug import *
 from InputEventManager import InputEventManager
 #from beeCode.agent.agent import *
@@ -39,10 +35,10 @@ class Environment:
         self.dead_agents = []
 
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
-        self.randomizeSites()
+        #self.randomizeSites()
         #  environment parameters
 
-        self.number_of_agents = 100
+        self.number_of_agents = 300
         self.frames_per_sec = 600
 
         #This should be working from angent class. Its not working. So using it over here
@@ -74,16 +70,17 @@ class Environment:
         self.repulsors = [] #[flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
         #self.repulsors[0].time_ticks = 600
         #self.repulsors[1].time_ticks = 1800
-        self.pheromoneList = []
+        self.pheromoneList = np.zeros([int(self.x_limit*2),int(self.y_limit*2)])
+
         #json aux
         self.previousMetaJson = None
-
     # Function to initialize data on the environment from a json file
     def build_json_environment(self):
         json_data = open(self.file_name).read()
 
         data = json.loads(json_data)
 
+        #Uncomment this to randomize sites
         #generator = worldGenerator()
         #js = generator.to_json()
         #data = json.loads(js)
@@ -100,7 +97,7 @@ class Environment:
         self.create_infoStations()
     
     def randomizeSites(self,flag=True):
-        #Foe each site randomize the values
+        #For each site randomize the values
         for site in self.sites:
             site['q_value'] = round(random.random(),2)
             site['x'] = random.randint(-self.x_limit,self.x_limit)
@@ -183,7 +180,11 @@ class Environment:
 
     def get_pheromone(self,agent):
         ##Loop through all the pheromonelist
-        if self.pheromoneList:
+        x=int(agent.location[0])
+        y=int(agent.location[1])
+        return self.pheromoneList[x,y]
+
+        '''if self.pheromoneList:
             for pheromone in self.pheromoneList:
                 x_dif = agent.location[0] - pheromone.location[0]
                 y_dif = agent.location[1] - pheromone.location[1]
@@ -195,7 +196,7 @@ class Environment:
                 else:
                     return 0
         else:
-            return 0
+            return 0'''
 
     # Returns 0 if terrain is clear, -1 if it is rough (slows velocity of agent to half-speed), -2 if there is an
     # obstacle, and -3 if there is a trap
@@ -465,8 +466,8 @@ class Environment:
                     if self.change_agent_params:
                         self.updateAgentParameters(self.agents[agent_id])
 
-                    if self.agents[agent_id].pheromoneList:
-                        self.pheromoneList[len(self.pheromoneList):] = self.agents[agent_id].pheromoneList
+                    '''if self.agents[agent_id].pheromoneList:
+                        self.pheromoneList[len(self.pheromoneList):] = self.agents[agent_id].pheromoneList'''
 
                     # is this faster?
                     self.agents[agent_id].act()
@@ -485,7 +486,7 @@ class Environment:
                     self.suggest_new_direction(agent_id)
 
                 self.hubController.hiveAdjust(self.agents)
-
+                self.pheromoneList[np.where(self.pheromoneList - 1 >= 0)] = self.pheromoneList[np.where(self.pheromoneList - 1 >= 0)] - .005
                 if self.change_agent_params:
                     self.change_agent_params = False
                 #"""
@@ -669,11 +670,14 @@ class Environment:
 
     def pheromone_trails_to_json(self):
         pheromones = []
-        for pheromone in self.pheromoneList:
+        pheromones = []
+        #indicies [0] is X's, [1] are y's:
+        indicies = np.where(self.pheromoneList > 0)
+        for i in range(0,len(indicies[0])):
             pheromone_dict = {}
-            pheromone_dict["x"] = pheromone.location[0]
-            pheromone_dict["y"] = pheromone.location[1]
-            pheromone_dict["radius"] = pheromone.get_radius(self.parameters["DiffusionTime"],self.parameters["Strength"])
+            pheromone_dict["x"] = indicies[0][i]
+            pheromone_dict["y"] = indicies[1][i]
+            #TODO include the pheromone strength here, then figure out drawing that
             pheromones.append(pheromone_dict)
         return pheromones
 

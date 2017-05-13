@@ -3,6 +3,7 @@ from enum import Enum
 from .StateMachine import StateMachine
 from .state import State
 import numpy as np
+from ..debug import *
 from .pheromone import Pheromone
 
 input = Enum('input', 'startFollowing getLost1 getLost2 startSearching stopSearching discover join retire arrive stopRecruiting startRecruiting')
@@ -33,9 +34,10 @@ class Agent(StateMachine):
         self.attracted = None
         self.repulsor = None
         self.ignore_repulsor = None
+        #self.currPheromone=0
         #This holds the identity of following ants
         self.following = None
-        self.pheromoneList = []
+        #self.pheromoneList = []
         # These parameters may be modified at run-time
         self.parameters =  {"WaitingTime": 1000,
                             "SearchTime": 2000}  
@@ -235,6 +237,7 @@ class Searching(State): #basically the same as explorer..
             agent.potential_site = [agent.location[0], agent.location[1]]
             return input.discover
         elif agent.atPheromone > 0 :
+            eprint("smells!: ",agent.location[0],", ",agent.location[1])
             return input.startFollowing
         elif self.searchingtime < 1 :
             return input.stopSearching
@@ -274,9 +277,11 @@ class Following(State):
     def __init__(self,agent=None,time=None):
         self.name = 'following'        
         self.following = None
+        #self.currPheromone
 
     def sense(self,agent,environment):
         agent.atPheromone = environment.get_pheromone(agent)
+        #agent.
 
     def update(self,agent,environment):
         if not agent.atPheromone:
@@ -290,6 +295,7 @@ class Following(State):
         #    dy = agent.potential_site[1] - agent.location[1]
         #    agent.direction = np.arctan2(dy, dx)
         #else:
+        #if agent
         dx = agent.hub[0] - agent.location[0]
         dy = agent.hub[1] - agent.location[1]
         agent.direction = np.arctan2(dy, dx)
@@ -396,7 +402,7 @@ class Exploiting(State): #like site assess
                 agent.inHub = True
                 if agent.siteIndex:
                     if environment.sites[agent.siteIndex]['radius']>.02:
-                        environment.sites[agent.siteIndex]['food_unit'] -= 1
+                        #environment.sites[agent.siteIndex]['food_unit'] -= 1
                         environment.sites[agent.siteIndex]['radius'] -= 0.02
                         environment.sites[agent.siteIndex]['q_value']/30.0
                     else:
@@ -415,12 +421,13 @@ class Exploiting(State): #like site assess
         #if agent.inHub and :
         #    return input.startRecruiting
 
-        if agent.pheromoneList:
+        '''if agent.pheromoneList:
             for pheromone in agent.pheromoneList:
                 if pheromone.scope <=0:
                     agent.pheromoneList.remove(pheromone)
                 else:
-                    pheromone.reduce_scope()
+                    pheromone.reduce_scope()'''
+
 
         if self.stopSite is True:
             return input.retire
@@ -429,7 +436,11 @@ class Exploiting(State): #like site assess
             return input.startRecruiting
         elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
             agent.goingToSite = False
-
+        if agent.goingToSite is not True:
+            x = int(agent.location[0] + environment.x_limit/2)
+            y = int(agent.location[1] + environment.y_limit/2)
+            range = 10
+            environment.pheromoneList[x-range:x+range,y-range:y+range] += 10
 
 
 
@@ -442,10 +453,10 @@ class Exploiting(State): #like site assess
             agent.direction = np.arctan2(dy, dx)
         else:
             ##Need to spread pheremon while returning back to hub
-            if np.random.random() < .3: #so not too much pheromone is spread (60 times/second)
-                p1=Pheromone(agent.location)
-                index = 11.12*p1.location[0]+p1.location[1]*.138
-                agent.pheromoneList(p1)
+            #if np.random.random() < .5: #so not too much pheromone is spread (60 times/second)
+
+                #p1=Pheromone(agent.location)
+                #agent.pheromoneList(p1)
             dx = agent.hub[0] - agent.location[0]
             dy = agent.hub[1] - agent.location[1]
             agent.direction = np.arctan2(dy, dx)        
