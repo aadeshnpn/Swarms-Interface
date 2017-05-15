@@ -38,8 +38,8 @@ class Environment:
         #self.randomizeSites()
         #  environment parameters
 
-        self.number_of_agents = 300
-        self.frames_per_sec = 600
+        self.number_of_agents = 150
+        self.frames_per_sec = 200
 
         #This should be working from angent class. Its not working. So using it over here
         self.following = {}
@@ -670,14 +670,17 @@ class Environment:
 
     def pheromone_trails_to_json(self):
         pheromones = []
-        pheromones = []
         #indicies [0] is X's, [1] are y's:
         indicies = np.where(self.pheromoneList > 0)
         for i in range(0,len(indicies[0])):
+            #try:
+            #pheromone_dict = {"x": indicies[0][i],
+                              #"y": indicies[1][i]}
             pheromone_dict = {}
-            pheromone_dict["x"] = indicies[0][i]
-            pheromone_dict["y"] = indicies[1][i]
-            #TODO include the pheromone strength here, then figure out drawing that
+            pheromone_dict["x"] = int(indicies[0][i] -self.x_limit)
+            pheromone_dict["y"] = int(indicies[1][i] -self.y_limit)
+            test = self.pheromoneList[indicies[0][i]][indicies[1][i]]
+            # TODO include the pheromone strength here, then figure out drawing that
             pheromones.append(pheromone_dict)
         return pheromones
 
