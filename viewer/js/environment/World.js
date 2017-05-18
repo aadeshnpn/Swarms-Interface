@@ -26,7 +26,7 @@ class World
     for (var agent      of environmentJson.agents     ) { this.agents     .push( new Agent     (agent     ) ); }
     for (var dead_agent of environmentJson.dead_agents) { this.dead_agents.push( new DeadAgent (dead_agent) ); }
     //for (var pheromone of environmentJson.pheromones)   { this.pheromones .push( new Pheromone (pheromone)  ); }
-    //this.pheromones = new Pheromone(environmentJson.pheromones);
+    this.pheromones = new Pheromone(environmentJson.pheromones);
   }
 
   canvasToWorldCoords(x, y)
@@ -48,7 +48,7 @@ class World
     for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
     for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
     for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
-    //this.pheromones.draw(ctx, debug);
+    this.pheromones.draw(ctx, debug);
     this.hub.draw(ctx, debug);
 
     for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates); }

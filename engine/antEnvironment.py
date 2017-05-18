@@ -70,7 +70,9 @@ class Environment:
         self.repulsors = [] #[flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
         #self.repulsors[0].time_ticks = 600
         #self.repulsors[1].time_ticks = 1800
-        self.pheromoneList = np.zeros([int(self.x_limit*2),int(self.y_limit*2)])
+        x = int(np.ceil(int(self.x_limit*2)/3))
+        y = int(np.ceil(int(self.y_limit*2)/3))
+        self.pheromoneList = np.zeros([x,y])
 
         #json aux
         self.previousMetaJson = None
@@ -180,8 +182,8 @@ class Environment:
 
     def get_pheromone(self,agent):
         ##Loop through all the pheromonelist
-        x=int(agent.location[0])
-        y=int(agent.location[1])
+        x=int(int(agent.location[0]+self.x_limit)/3)
+        y=int(int(agent.location[1]+self.y_limit)/3)
         return self.pheromoneList[x,y]
 
         '''if self.pheromoneList:
@@ -678,8 +680,8 @@ class Environment:
             #pheromone_dict = {"x": indicies[0][i],
                               #"y": indicies[1][i]}
             pheromone_dict = {}
-            pheromone_dict["x"] = int(indicies[0][i] -self.x_limit)
-            pheromone_dict["y"] = int(indicies[1][i] -self.y_limit)
+            pheromone_dict["x"] = int(int(indicies[0][i]*3+1) -self.x_limit)
+            pheromone_dict["y"] = int(int(indicies[1][i]*3+1) -self.y_limit)
             test = self.pheromoneList[indicies[0][i]][indicies[1][i]]
             # TODO include the pheromone strength here, then figure out drawing that
             pheromones.append(pheromone_dict)
