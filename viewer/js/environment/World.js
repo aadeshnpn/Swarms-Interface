@@ -48,7 +48,10 @@ class World
     for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
     for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
     for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
-    this.pheromones.draw(ctx, debug);
+    //if(Math.random()<.5){
+        this.pheromones.draw(ctx, debug);
+    //}
+
     this.hub.draw(ctx, debug);
 
     for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates); }

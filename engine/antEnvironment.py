@@ -488,7 +488,9 @@ class Environment:
                     self.suggest_new_direction(agent_id)
 
                 self.hubController.hiveAdjust(self.agents)
-                self.pheromoneList[np.where(self.pheromoneList - 1 >= 0)] = self.pheromoneList[np.where(self.pheromoneList - 1 >= 0)] - .005
+                evapRate = .05
+                self.pheromoneList[np.where(self.pheromoneList > 0)] = self.pheromoneList[np.where(self.pheromoneList  > 0)] - evapRate
+                self.pheromoneList[np.where(self.pheromoneList < 0)] = 0
                 if self.change_agent_params:
                     self.change_agent_params = False
                 #"""

@@ -24,11 +24,11 @@ class Pheromone
         count += 1;
         ctx.translate(pheromone.x-1.5, -pheromone.y-1.5);
         ctx.rect(0,0, 6, 6);
-        //ctx.fill();
-        ctx.stroke();
+        ctx.fill();
+        //ctx.stroke();
         ctx.restore();
     }
-    console.log(count)
+    //console.log(count)
     //ctx.restore();
   }
 }
