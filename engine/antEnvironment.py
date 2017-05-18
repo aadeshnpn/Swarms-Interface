@@ -38,8 +38,8 @@ class Environment:
         #self.randomizeSites()
         #  environment parameters
 
-        self.number_of_agents = 150
-        self.frames_per_sec = 200
+        self.number_of_agents = 100
+        self.frames_per_sec = 60
 
         #This should be working from angent class. Its not working. So using it over here
         self.following = {}
@@ -669,6 +669,7 @@ class Environment:
         return dead_agents
 
     def pheromone_trails_to_json(self):
+        #return ''
         pheromones = []
         #indicies [0] is X's, [1] are y's:
         indicies = np.where(self.pheromoneList > 0)

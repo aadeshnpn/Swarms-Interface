@@ -437,10 +437,10 @@ class Exploiting(State): #like site assess
         elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
             agent.goingToSite = False
         if agent.goingToSite is not True and np.random.random() < .7:
-            eprint("dropped pheromones! x: ", agent.location[0], "y: ", agent.location[1])
+            #eprint("dropped pheromones! x: ", agent.location[0], "y: ", agent.location[1])
             x = int(agent.location[0] + environment.x_limit)
             y = int(agent.location[1] + environment.y_limit)
-            range = 2
+            range = 1
             environment.pheromoneList[x-range:x+range,y-range:y+range] += 3
 
 
