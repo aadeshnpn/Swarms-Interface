@@ -149,7 +149,8 @@ class hubController:
                 "controller":
                 {
                     "agentDirections" : self.directions,
-                    "agentsIn" : self.incoming
+                    "agentsIn" : self.incoming,
+                    "dead": 0
                 }
             }
         }

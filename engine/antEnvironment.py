@@ -38,8 +38,8 @@ class Environment:
         #self.randomizeSites()
         #  environment parameters
 
-        self.number_of_agents = 300
-        self.frames_per_sec = 600
+        self.number_of_agents = 100
+        self.frames_per_sec = 60
 
         #This should be working from angent class. Its not working. So using it over here
         self.following = {}
@@ -70,7 +70,9 @@ class Environment:
         self.repulsors = [] #[flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
         #self.repulsors[0].time_ticks = 600
         #self.repulsors[1].time_ticks = 1800
-        self.pheromoneList = np.zeros([int(self.x_limit*2),int(self.y_limit*2)])
+        x = int(np.ceil(int(self.x_limit*2)/3))
+        y = int(np.ceil(int(self.y_limit*2)/3))
+        self.pheromoneList = np.zeros([x,y])
 
         #json aux
         self.previousMetaJson = None
@@ -180,8 +182,8 @@ class Environment:
 
     def get_pheromone(self,agent):
         ##Loop through all the pheromonelist
-        x=int(agent.location[0])
-        y=int(agent.location[1])
+        x=int(int(agent.location[0]+self.x_limit)/3)
+        y=int(int(agent.location[1]+self.y_limit)/3)
         return self.pheromoneList[x,y]
 
         '''if self.pheromoneList:
@@ -486,7 +488,9 @@ class Environment:
                     self.suggest_new_direction(agent_id)
 
                 self.hubController.hiveAdjust(self.agents)
-                self.pheromoneList[np.where(self.pheromoneList - 1 >= 0)] = self.pheromoneList[np.where(self.pheromoneList - 1 >= 0)] - .005
+                evapRate = .05
+                self.pheromoneList[np.where(self.pheromoneList > 0)] = self.pheromoneList[np.where(self.pheromoneList  > 0)] - evapRate
+                self.pheromoneList[np.where(self.pheromoneList < 0)] = 0
                 if self.change_agent_params:
                     self.change_agent_params = False
                 #"""
@@ -669,15 +673,19 @@ class Environment:
         return dead_agents
 
     def pheromone_trails_to_json(self):
-        pheromones = []
+        #return ''
         pheromones = []
         #indicies [0] is X's, [1] are y's:
         indicies = np.where(self.pheromoneList > 0)
         for i in range(0,len(indicies[0])):
+            #try:
+            #pheromone_dict = {"x": indicies[0][i],
+                              #"y": indicies[1][i]}
             pheromone_dict = {}
-            pheromone_dict["x"] = indicies[0][i]
-            pheromone_dict["y"] = indicies[1][i]
-            #TODO include the pheromone strength here, then figure out drawing that
+            pheromone_dict["x"] = int(int(indicies[0][i]*3+1) -self.x_limit)
+            pheromone_dict["y"] = int(int(indicies[1][i]*3+1) -self.y_limit)
+            test = self.pheromoneList[indicies[0][i]][indicies[1][i]]
+            # TODO include the pheromone strength here, then figure out drawing that
             pheromones.append(pheromone_dict)
         return pheromones
 
