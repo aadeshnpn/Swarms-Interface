@@ -85,8 +85,13 @@ class Client
          // TODO: we shouldn't have to manage this here, consolidate environments
          //       and pass a flag into the python instead
          var typeDir = (process.argv[2] === "ants") ? ('../engine/antEnvironment.py') : ('../engine/beeEnvironment.py');
-
-         const engine = spawn(executable, [path.join(__dirname, typeDir)], {stdio: ['pipe', 'pipe', process.stderr]});
+         var args = [];
+         args.push(path.join(__dirname,typeDir));
+         if(process.argv[2] == "-r"){
+            args.push("-r");
+         }
+         //var typeDir = (process.argv[2] === "-r") ? ([typeDir ])
+         const engine = spawn(executable, args, {stdio: ['pipe', 'pipe', process.stderr]});
          engine.on('error', (err) => { console.error("[!] Unable to start engine process: " + err)});
 
          this.world = {engine: engine, clientsAttached: 0};

@@ -2,9 +2,10 @@ class Repulsor
 {
   constructor(repulsorJson)
   {
-    this.x     = repulsorJson.x;
-    this.y     = repulsorJson.y;
-    this.timer = repulsorJson.timer;
+    this.x      = repulsorJson.x;
+    this.y      = repulsorJson.y;
+    this.radius = repulsorJson.radius;
+    this.timer  = repulsorJson.timer;
   }
 
   draw(ctx, debug = false)
@@ -16,7 +17,7 @@ class Repulsor
     ctx.strokeStyle = Repulsor.STROKE_STYLE;
 
     ctx.beginPath();
-    ctx.arc(0, 0, Repulsor.RADIUS, 0, Math.PI * 2, false);
+    ctx.arc(0, 0, this.radius, 0, Math.PI * 2, false);
     ctx.fill();
     ctx.stroke();
 
@@ -26,4 +27,3 @@ class Repulsor
 
 Repulsor.FILL_STYLE = "rgba(255, 0, 0, 0.5)";
 Repulsor.STROKE_STYLE = "rgb(255, 0, 0)";
-Repulsor.RADIUS = 40;

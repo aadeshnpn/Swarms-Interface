@@ -24,7 +24,7 @@
          <label>Prefer Close<input name="distance" type="range" min="-1" max="1" step="0.01" value="0">Prefer Far  </label><br/>
          <label>Prefer Small<input name="size"     type="range" min="-1" max="1" step="0.01" value="0">Prefer Large</label>
       </div>
-
+      <p id="deadBees">Estimated Dead: 0 </p>
       <hr/>
 
       <label>Debug mode<input id="checkboxDebug" type="checkbox" checked></label>
@@ -37,8 +37,8 @@
             <button id="buttonRestart">Restart</button>
             <!-- TODO: make this all look nice -->
             <div id="debugParams">
-               <label>Piping Threshold  <input name="beePipingThreshold"       type="number"></label>
-               <label>Velocity          <input name="beeGlobalVelocity"        type="number"></label>
+               <label>Piping Threshold  <input name="beePipingThreshold"       type="number"></label> <br> <!-- nothing seems to be affecting the local html page-->
+               <label>Velocity          <input name="beeGlobalVelocity"        type="number"></label> <br>
                <label>Explore Time      <input name="beeExploreTimeMultiplier" type="number"></label>
                <label>Rest Time         <input name="beeRestTime"              type="number"></label>
                <label>Dance Time        <input name="beeDanceTime"             type="number"></label>
@@ -64,8 +64,8 @@
 
       <div style="display: none">
          <!--<img id="bee"      src="img/bee-transparent-small.png">-->
-         <img id="bee"      src="img/ant-small.png">
-         <img id="bee-dead"      src="img/ant-dead-small.png">         
+         <img id="bee"      src="img/dot.png">
+         <img id="bee-dead"      src="img/bee-dead-transparent-small.png">
          <!--<img id="bee-dead" src="img/bee-dead-transparent-small.png">-->
          <img id="obstacle" src="img/boulder.png">
       </div>

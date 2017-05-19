@@ -1,12 +1,8 @@
-#import multiprocessing
-#pool=multiprocessing.Pool(processes=16)
 import json
 import os
 import time
 #Json doesn't work with numpy type 64
-#import numpy as np
-import random
-
+import numpy as np
 from utils.debug import *
 from InputEventManager import InputEventManager
 #from beeCode.agent.agent import *
@@ -39,10 +35,10 @@ class Environment:
         self.dead_agents = []
 
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
-        self.randomizeSites()
+        #self.randomizeSites()
         #  environment parameters
 
-        self.number_of_agents = 500
+        self.number_of_agents = 300
         self.frames_per_sec = 600
 
         #This should be working from angent class. Its not working. So using it over here
@@ -56,7 +52,9 @@ class Environment:
                            "ObserveTime":           2000,
                            "SiteAssessTime":        250,
                            "SiteAssessRadius":      15,
-                           "PipingTime":            1200}
+                           "PipingTime":            1200,
+                           "DiffusionTime":         3,
+                           "Strength":              2}
 
 
         #self.useDefaultParams = True
@@ -72,16 +70,17 @@ class Environment:
         self.repulsors = [] #[flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
         #self.repulsors[0].time_ticks = 600
         #self.repulsors[1].time_ticks = 1800
+        self.pheromoneList = np.zeros([int(self.x_limit*2),int(self.y_limit*2)])
 
         #json aux
         self.previousMetaJson = None
-
     # Function to initialize data on the environment from a json file
     def build_json_environment(self):
         json_data = open(self.file_name).read()
 
         data = json.loads(json_data)
 
+        #Uncomment this to randomize sites
         #generator = worldGenerator()
         #js = generator.to_json()
         #data = json.loads(js)
@@ -98,7 +97,7 @@ class Environment:
         self.create_infoStations()
     
     def randomizeSites(self,flag=True):
-        #Foe each site randomize the values
+        #For each site randomize the values
         for site in self.sites:
             site['q_value'] = round(random.random(),2)
             site['x'] = random.randint(-self.x_limit,self.x_limit)
@@ -178,6 +177,26 @@ class Environment:
             # agent.atSite = False
 
         return {"radius": -1, "q": 0}
+
+    def get_pheromone(self,agent):
+        ##Loop through all the pheromonelist
+        x=int(agent.location[0])
+        y=int(agent.location[1])
+        return self.pheromoneList[x,y]
+
+        '''if self.pheromoneList:
+            for pheromone in self.pheromoneList:
+                x_dif = agent.location[0] - pheromone.location[0]
+                y_dif = agent.location[1] - pheromone.location[1]
+                tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
+                #print('Calling get raidus',self.parameters["DiffusionTime"],self.parameters["Strength"])
+                if tot_dif <= pheromone.get_radius(self.parameters["DiffusionTime"],self.parameters["Strength"]):
+                    agent.atPheromone = True
+                    return tot_dif
+                else:
+                    return 0
+        else:
+            return 0'''
 
     # Returns 0 if terrain is clear, -1 if it is rough (slows velocity of agent to half-speed), -2 if there is an
     # obstacle, and -3 if there is a trap
@@ -447,6 +466,9 @@ class Environment:
                     if self.change_agent_params:
                         self.updateAgentParameters(self.agents[agent_id])
 
+                    '''if self.agents[agent_id].pheromoneList:
+                        self.pheromoneList[len(self.pheromoneList):] = self.agents[agent_id].pheromoneList'''
+
                     # is this faster?
                     self.agents[agent_id].act()
                     self.agents[agent_id].sense(self)
@@ -464,7 +486,7 @@ class Environment:
                     self.suggest_new_direction(agent_id)
 
                 self.hubController.hiveAdjust(self.agents)
-
+                self.pheromoneList[np.where(self.pheromoneList - 1 >= 0)] = self.pheromoneList[np.where(self.pheromoneList - 1 >= 0)] - .005
                 if self.change_agent_params:
                     self.change_agent_params = False
                 #"""
@@ -496,6 +518,7 @@ class Environment:
             self.info_stations.append(InfoStation())
 
     # TODO the hubcontroller keeps track of who is in the hub (cheaper computationally)
+    ## Using hubController now
     def agents_at_hub(self,state):
         #agent_state_list = [self.agents[agent].state for agent in self.agents if self.agents[agent].inHub]
         #count_state = agent_state_list.count(state)
@@ -504,20 +527,19 @@ class Environment:
         total_agent_hub = 0
         agent_state_site = {}
         temp_list = []
-        for agent in self.agents:
-            if self.agents[agent].inHub:
-                total_agent_hub += 1
-                temp_list.append(self.agents[agent].state.name)
-                if self.agents[agent].state.name == state:
-                    #print ('Potential site',self.agents[agent].potential_site)
-                    #As our site doesn't have an id using multiplying locations to hash a dictonary. For later purpose we need to give id for site as well
-                    temp_site_id = int(round (self.agents[agent].potential_site[0] * self.agents[agent].potential_site[0]))
-                    if temp_site_id in agent_state_site.keys():
-                        agent_state_site[temp_site_id].append(agent)
-                    else:
-                        agent_state_site[temp_site_id] = [agent]
-                    agent_state_count += 1
-        #print (agent_state_site)
+        #for agent in self.agents:
+        for agent in self.hubController.agentsInHub:
+            #if self.agents[agent].inHub:
+            total_agent_hub += 1
+            temp_list.append(self.agents[agent].state.name)
+            if self.agents[agent].state.name == state:
+                #As our site doesn't have an id using multiplying locations to hash a dictonary. For later purpose we need to give id for site as well
+                temp_site_id = int(round (self.agents[agent].potential_site[0] * self.agents[agent].potential_site[0]))
+                if temp_site_id in agent_state_site.keys():
+                    agent_state_site[temp_site_id].append(agent)
+                else:
+                    agent_state_site[temp_site_id] = [agent]
+                agent_state_count += 1
 
         return agent_state_count,total_agent_hub,agent_state_site
     #def agent_to_follow(self,state):
@@ -626,7 +648,8 @@ class Environment:
                     "attractors": list(map(lambda a: a.toJson(), self.attractors)),
                     "repulsors" : list(map(lambda r: r.toJson(), self.repulsors )),
                     "agents"    : self.agents_to_json(),
-                    "dead_agents": self.dead_agents_to_json()
+                    "dead_agents": self.dead_agents_to_json(),
+                    "pheromones": self.pheromone_trails_to_json()
                 }
             })
         )
@@ -644,6 +667,19 @@ class Environment:
                           "qVal": agent.q_value}
             dead_agents.append(agent_dict)
         return dead_agents
+
+    def pheromone_trails_to_json(self):
+        pheromones = []
+        pheromones = []
+        #indicies [0] is X's, [1] are y's:
+        indicies = np.where(self.pheromoneList > 0)
+        for i in range(0,len(indicies[0])):
+            pheromone_dict = {}
+            pheromone_dict["x"] = indicies[0][i]
+            pheromone_dict["y"] = indicies[1][i]
+            #TODO include the pheromone strength here, then figure out drawing that
+            pheromones.append(pheromone_dict)
+        return pheromones
 
     def agents_to_json(self):
         agents = []

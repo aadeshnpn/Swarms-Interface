@@ -1,16 +1,22 @@
 import json
 import random
+import numpy as np
 
 class worldGenerator:
 
     def __init__(self):
-        self.min_length = 250
-        self.max_length = 2000
-        self.dimensions = {"x_length": random.randint(self.min_length, self.max_length), "y_length": random.randint(self.min_length, self.max_length)}
+        self.min_length = 700
+        self.max_length = 1500
+        x = random.randint(self.min_length, self.max_length)
+        y = int(x*np.random.normal(1,.2))
+        if y<600:
+            y=600
+        self.dimensions = {"x_length": x, "y_length": y}
         hub_radius = 20
-        self.hub = {"x": random.randint(hub_radius/2, self.dimensions["x_length"] - hub_radius/2) - self.dimensions["x_length"]/2,
+        '''self.hub = {"x": random.randint(hub_radius/2, self.dimensions["x_length"] - hub_radius/2) - self.dimensions["x_length"]/2,
                     "y": random.randint(hub_radius/2, self.dimensions["y_length"] - hub_radius/2) - self.dimensions["y_length"]/2,
-                    "radius": hub_radius}
+                    "radius": hub_radius}'''
+        self.hub = {"x": 0, "y": 0, "radius": hub_radius}
         self.sites = []
         self.obstacles = []
         self.traps = []
@@ -77,7 +83,7 @@ class worldGenerator:
         max_traps = int(self.dimensions["x_length"] * self.dimensions["y_length"] * (8 / self.max_length ** 2)) + 2
         trapsNum = random.randint(0, max_traps)
         for proposed_trap in range(trapsNum):
-            trap = {"radius": random.randint(5, 30)}
+            trap = {"radius": random.randint(20, 70)}
 
             ready = False
 

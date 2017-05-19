@@ -83,10 +83,9 @@ class StateBubbles
 
       ctx.font = "8pt sans-serif";
       ctx.fillStyle = "rgb(0, 0, 0)";
-      let width = ctx.measureText(`${name}`).width;
-      let name1 = name[0].toUpperCase();
-      ctx.fillText(`${name1}`, x-width/2, StateBubbles.LABEL_SPACING);
-      ctx.fillText(`${state.count}`, x-width/3, StateBubbles.LABEL_SPACING);
+      let width = ctx.measureText(`${name}/${state.count}`).width;
+      //let name1 = name[0].toUpperCase();
+      ctx.fillText(`${name}/${state.count}`, x-width/2, StateBubbles.LABEL_SPACING);
 
       x += state.radius + StateBubbles.BUBBLE_SPACING;
     }
