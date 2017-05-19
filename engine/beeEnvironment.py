@@ -652,7 +652,8 @@ class Environment:
                             "attractors": list(map(lambda a: a.toJson(), self.attractors)),
                             "repulsors": list(map(lambda r: r.toJson(), self.repulsors)),
                             "agents": self.agents_to_json(),
-                            "dead_agents": self.dead_agents_to_json()
+                            "dead_agents": self.dead_agents_to_json(),
+                            "pheromones": ""
                         }
                 })
         )

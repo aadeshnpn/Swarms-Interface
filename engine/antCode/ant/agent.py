@@ -237,7 +237,7 @@ class Searching(State): #basically the same as explorer..
             agent.potential_site = [agent.location[0], agent.location[1]]
             return input.discover
         elif agent.atPheromone > 0 :
-            eprint("smells!: ",agent.location[0],", ",agent.location[1])
+            #eprint("smells!: ",agent.location[0],", ",agent.location[1])
             return input.startFollowing
         elif self.searchingtime < 1 :
             return input.stopSearching
@@ -278,10 +278,17 @@ class Following(State):
         self.name = 'following'        
         self.following = None
         #self.currPheromone
+        self.next = [0,0]
 
     def sense(self,agent,environment):
         agent.atPheromone = environment.get_pheromone(agent)
-        #agent.
+        lowX, lowY = environment.smellNearby(agent.location)
+        if lowX < 0:
+            agent.atPheromone = 0
+        x = int(int(lowX*3+1) -environment.y_limit)
+        y = int(int(lowY*3+1) -environment.y_limit)
+        self.next = [x, y]
+        environment.get
 
     def update(self,agent,environment):
         if not agent.atPheromone:
@@ -296,8 +303,8 @@ class Following(State):
         #    agent.direction = np.arctan2(dy, dx)
         #else:
         #if agent
-        dx = agent.hub[0] - agent.location[0]
-        dy = agent.hub[1] - agent.location[1]
+        dx = self.next[0] - agent.location[0]
+        dy = self.next[1] - agent.location[1]
         agent.direction = np.arctan2(dy, dx)
         return        
         #agent.direction = np.arctan2(agent.location[0]+np.random.random(),agent.location[1]+np.random.random())
@@ -436,13 +443,13 @@ class Exploiting(State): #like site assess
             return input.startRecruiting
         elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
             agent.goingToSite = False
-        if agent.goingToSite is not True and np.random.random() < .7:
+        #if agent.goingToSite is not True and np.random.random() < .7:
             #eprint("dropped pheromones! x: ", agent.location[0], "y: ", agent.location[1])
-            x = int(int(agent.location[0] + environment.x_limit)/3)
-            y = int(int(agent.location[1] + environment.y_limit)/3)
-            range = 0
-            #environment.pheromoneList[x-range:x+range,y-range:y+range] += 3
-            environment.pheromoneList[x, y] += 3
+        x = int(int(agent.location[0] + environment.x_limit)/3)
+        y = int(int(agent.location[1] + environment.y_limit)/3)
+        range = 0
+        #environment.pheromoneList[x-range:x+range,y-range:y+range] += 3
+        environment.pheromoneList[x, y] += 3
 
 
 

@@ -3,7 +3,10 @@ class Pheromone
   constructor(pheromonesJson)
   {
     this.pheromones = [];
-    for (var pheromone of pheromonesJson)   { this.pheromones .push(pheromone); }
+    if (pheromonesJson != ''){
+        for (var pheromone of pheromonesJson)   { this.pheromones .push(pheromone); }
+    }
+
   }
 
   draw(ctx, debug = false) //then swap out hard coded radius for the dynamic
@@ -11,7 +14,7 @@ class Pheromone
   {
     if (!debug)
         return;
-    //ctx.save();
+    ctx.save();
     //ctx.fillStyle = Pheromone.FILL_STYLE;
     //ctx.strokeStyle = Pheromone.STROKE_STYLE;
     ctx.fillStyle = "rgba(255, 255, 0, 0.75)";
@@ -29,7 +32,7 @@ class Pheromone
         ctx.restore();
     }
     //console.log(count)
-    //ctx.restore();
+    ctx.restore();
   }
 }
 

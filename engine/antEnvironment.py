@@ -186,19 +186,21 @@ class Environment:
         y=int(int(agent.location[1]+self.y_limit)/3)
         return self.pheromoneList[x,y]
 
-        '''if self.pheromoneList:
-            for pheromone in self.pheromoneList:
-                x_dif = agent.location[0] - pheromone.location[0]
-                y_dif = agent.location[1] - pheromone.location[1]
-                tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
-                #print('Calling get raidus',self.parameters["DiffusionTime"],self.parameters["Strength"])
-                if tot_dif <= pheromone.get_radius(self.parameters["DiffusionTime"],self.parameters["Strength"]):
-                    agent.atPheromone = True
-                    return tot_dif
-                else:
-                    return 0
-        else:
-            return 0'''
+    def smellNearby(self, location):
+        x=int(int(location[0]+self.x_limit)/3)
+        y=int(int(location[1]+self.y_limit)/3)
+        lowest = self.pheromoneList[x,y]
+        lowX,lowY = -10
+        for i in range(-1, 2):
+            for j in range(-1,2):
+                x +=i
+                y += j
+                if self.pheromoneList[x,y]> 0 and self.pheromoneList[x,y] < lowest:
+                    lowest = self.pheromoneList[x,y]
+                    lowX = x
+                    lowY = y
+        return lowX, lowY
+
 
     # Returns 0 if terrain is clear, -1 if it is rough (slows velocity of agent to half-speed), -2 if there is an
     # obstacle, and -3 if there is a trap
@@ -488,7 +490,7 @@ class Environment:
                     self.suggest_new_direction(agent_id)
 
                 self.hubController.hiveAdjust(self.agents)
-                evapRate = .05
+                evapRate = .02
                 self.pheromoneList[np.where(self.pheromoneList > 0)] = self.pheromoneList[np.where(self.pheromoneList  > 0)] - evapRate
                 self.pheromoneList[np.where(self.pheromoneList < 0)] = 0
                 if self.change_agent_params:
