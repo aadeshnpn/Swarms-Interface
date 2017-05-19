@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html language="en">
+  <head>
+    <title>Hivemind manager for simulating swarms in a totally non-nefarious way</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/control-panel.css">
+  </head>
+  <body>
+
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Hivemind</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Control Panel</a></li>
+            <li><a href="#data">Data</a></li>
+            <li><a href="#results">Results</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div id="activeSims">
+    </div>
+    <div id="batchPanel" class="panel panel-primary">
+      <div class="panel-heading">
+        <h3 class="panel-title">New batch</h3>
+      </div>
+      <div class="panel-body">
+
+        <div class="panel panel-default simReq">
+          <div class="panel-body">
+            <form name="batchSubmitForm">
+              <div class="form-group">
+                <label>Run <input name="simNum" type="number" min="1" max="100" value="1"> <select name="simType"><option>bee</option><option>ant</option></select> simulations</label>
+                <a href="#" onclick="removeThisSim(this)" class="remove-sim"><span class="glyphicon glyphicon-remove-sign"></span></a>
+                <div>
+                  <a class="toggleOpts" href="#" onclick="$('.simOptions').collapse('toggle')">
+                    + Options
+                  </a>
+                </div>
+              </div>
+              <div class="simOptions collapse">
+                <div class="well">
+                  <label>World
+                    <select name="worldType">
+                      <option value="random">Random </option>
+                      <option value="small" >Small  </option>
+                      <option value="medium">Medium </option>
+                      <option value="large" >Large  </option>
+                      <option value="preset">Preset </option>
+                    </select>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="add-sim">
+          <a href="#" onclick="addSimToBatch()">+</a>
+        </div>
+
+        <div class="batch-options">
+          <!-- <label><input name="simEmailOwner" type="checkbox"> Email results to <input enabled="false" name="simOwnerEmailAddr" type="email"></label>-->
+          <button class="btn btn-primary btn-block" id="batchSubmit" type="submit">Submit</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="batchProgress">
+      <div class="progress">
+        <div class="progress-bar progress-bar-warning progress-bar-striped active" style="width: 100%"></div>
+      </div>
+      <div>Processing...</div>
+    </div>
+
+    <button class="btn btn-lg btn-block btn-success" id="viewResults">View Results</button>
+
+    <div id="stats">
+    </div>
+
+    <script
+      src="https://code.jquery.com/jquery-3.2.1.min.js"
+      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+      crossorigin="anonymous">
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js">
+    </script>
+
+    <script src="js/bootstrap.js">
+    </script>
+
+    <script type="text/javascript">
+      var sims = 1;
+      $('#viewResults').hide();
+
+      function addSimToBatch(element)
+      {
+        let newSim = $('.simReq').last().clone();
+
+        if (sims == 1)
+        {
+          newSim.find(".remove-sim").css("visibility", "visible");
+        }
+
+        newSim.insertAfter($('.simReq').last())
+      }
+
+      function removeThisSim(element)
+      {
+        sims--;
+        $(element).closest('.simReq').remove();
+      }
+
+      $('#batchSubmit').on('click', function(event)
+      {
+        //event.preventDefault();
+
+        var data = {sims: []};
+        $("form").each(function(index)
+        {
+          var simReq = {};
+
+          var form = $(this).serializeArray();
+          for (var i = 0; i < form.length; i++)
+          {
+            simReq[form[i].name] = form[i].value;
+          }
+
+          data.sims.push(simReq);
+        });
+
+        console.log(data);
+
+        $('#batchProgress').show();
+
+        $.post("startSimBatch", data, function(response)
+        {
+          console.log(response);
+          console.log("getting stats");
+
+          $.get(`stats/${response.batchId}`, function(data)
+          {
+            $('#batchProgress').hide();
+            $('#viewResults').show();
+
+            $('#stats').text(JSON.stringify(data, null, 3));
+          });
+        });
+      });
+    </script>
+
+  </body>
+</html>
