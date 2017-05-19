@@ -435,18 +435,16 @@ class Environment:
             self.getParams(None) # this is a shortcut for letting the client know what the initial parameters are.
 
         self.stats["ticks"] = 0
+        self.stats["tickData"] = []
         self.stats["deadAgents"] = 0
 
         while True:
 
-            if args.tick_limit != None and self.ticks >= args.tick_limit:
+            if args.tick_limit != None and self.stats["ticks"] >= args.tick_limit:
                 self.stats["didNotFinish"] = True
                 break
 
             self.stats["ticks"] = self.stats["ticks"] + 1
-
-            if args.stats and self.stats["ticks"] % 100 == 0:
-                print( json.dumps(self.stats) )
 
             if not self.isPaused:
                 if not args.no_viewer:
@@ -515,6 +513,11 @@ class Environment:
             if self.restart_simulation:
                 self.reset_sim()
                 self.restart_simulation = False
+
+            # Anything data we want over the course of the whole simulation
+            # needs to be added here
+            if args.stats and self.stats["ticks"] % 100 == 0:
+                self.stats["tickData"].append({"deadAgents": self.stats["deadAgents"], "stateCounts": self.stats["stateCounts"]})
 
             if not args.no_viewer:
                 time.sleep(1/self.frames_per_sec)
