@@ -39,7 +39,7 @@ class Environment:
         #  environment parameters
 
         self.number_of_agents = 100
-        self.frames_per_sec = 60
+        self.frames_per_sec = 30
 
         #This should be working from angent class. Its not working. So using it over here
         self.following = {}
@@ -70,9 +70,12 @@ class Environment:
         self.repulsors = [] #[flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
         #self.repulsors[0].time_ticks = 600
         #self.repulsors[1].time_ticks = 1800
-        x = int(np.ceil(int(self.x_limit*2)/3))
-        y = int(np.ceil(int(self.y_limit*2)/3))
-        self.pheromoneList = np.zeros([x,y])
+        #drawing the Pheromone list
+        #x = int(np.ceil(int(self.x_limit*2)/3))
+        #y = int(np.ceil(int(self.y_limit*2)/3))
+        self.pheromoneList = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])
+        self.pheromoneView = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])
+
 
         #json aux
         self.previousMetaJson = None
@@ -181,24 +184,35 @@ class Environment:
         return {"radius": -1, "q": 0}
 
     def get_pheromone(self,agent):
-        ##Loop through all the pheromonelist
-        x=int(int(agent.location[0]+self.x_limit)/3)
-        y=int(int(agent.location[1]+self.y_limit)/3)
+        #x=int(int(agent.location[0]+self.x_limit)/3)
+        #y=int(int(agent.location[1]+self.y_limit)/3)
+        x,y = self.worldToPher(agent.location[0],agent.location[1])
         return self.pheromoneList[x,y]
-
+    def pherToWorld(self, x, y):
+        #x = int(int(x * 3 + 1) - self.x_limit) this is for 1/3 array
+        #y = int(int(y * 3 + 1) - self.y_limit)
+        x = int(x-self.x_limit)
+        y = int(y-self.y_limit)
+        return x,y
+    def worldToPher(self,x,y):
+        #x = int(int(x + self.x_limit) / 3) this is for 1/3 array
+        #y = int(int(y + self.y_limit) / 3)
+        x = int(x+self.x_limit)
+        y = int(y+self.y_limit)
+        return x,y
     def smellNearby(self, location):
-        x=int(int(location[0]+self.x_limit)/3)
-        y=int(int(location[1]+self.y_limit)/3)
-        lowest = self.pheromoneList[x,y]
-        lowX,lowY = -10
-        for i in range(-1, 2):
-            for j in range(-1,2):
-                x +=i
-                y += j
-                if self.pheromoneList[x,y]> 0 and self.pheromoneList[x,y] < lowest:
+        x,y = self.worldToPher(location[0], location[1])
+        lowest = self.pheromoneList[x,y]+1000
+        lowX = -10
+        lowY = -10
+        for i in range(-3, 4):
+            for j in range(-3,4):
+                x0 = x+i
+                y0 = y+j
+                if self.pheromoneList[x0,y0] > 0 and self.pheromoneList[x0,y0] < lowest:
                     lowest = self.pheromoneList[x,y]
-                    lowX = x
-                    lowY = y
+                    lowX = x0
+                    lowY = y0
         return lowX, lowY
 
 
@@ -263,28 +277,6 @@ class Environment:
             elif agent.location[1] < self.y_limit * -1:
                 agent.location[1] += 2 * self.y_limit
 
-    '''def get_nearby_dancers(self, agent_id, radius):
-        nearby = []
-        for other_id in self.states[Dancing().__class__]:
-            if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0]) ** 2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1]) ** 2) ** .5 <= radius:
-                nearby.append(self.agents[other_id])
-        return nearby
-
-    def get_nearby_pipers(self, agent_id, radius):
-        nearby = []
-        for other_id in self.states[Piping().__class__]:
-            if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0]) ** 2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1]) ** 2) ** .5 <= radius:
-                nearby.append(self.agents[other_id])
-        return nearby
-
-    def get_nearby_site_assessors(self, agent_id, radius):
-        nearby = []
-        for other_id in self.states[SiteAssess().__class__]:
-            if other_id != agent_id:
-                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0]) ** 2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1]) ** 2) ** .5 <= radius:
-                    nearby.append(self.agents[other_id])
-        return nearby'''
-
     def get_nearby_agents(self, agent_id, radius):
         nearby = []
         for other_id in self.agents:
@@ -334,16 +326,6 @@ class Environment:
             slow_down = .5
             agent.location[0] += np.cos(agent.direction) * agent.velocity * slow_down #+ np.cos(potential_field_d) * potential_field_v
             agent.location[1] += np.sin(agent.direction) * agent.velocity * slow_down # + np.sin(potential_field_d) * potential_field_v
-
-        '''
-        This is computationally very expensive!
-        # add collision checking for other bees
-        for agent_id in self.agents:
-            if (self.agents[agent_id].location[:] == agent.location[:]) and (agentId != agent_id):
-                agent.location[0] -= np.cos(agent.direction) * agent.velocity
-                agent.location[1] -= np.sin(agent.direction) * agent.velocity
-                break
-        '''
 
         # If the agent goes outside of the limits, it re-enters on the opposite side.
         if agent.location[0] > self.x_limit:
@@ -493,6 +475,8 @@ class Environment:
                 evapRate = .02
                 self.pheromoneList[np.where(self.pheromoneList > 0)] = self.pheromoneList[np.where(self.pheromoneList  > 0)] - evapRate
                 self.pheromoneList[np.where(self.pheromoneList < 0)] = 0
+                self.pheromoneView[np.where(self.pheromoneView > 0)] = self.pheromoneView[np.where(self.pheromoneView > 0)] - evapRate
+                self.pheromoneView[np.where(self.pheromoneView < 0)] = 0
                 if self.change_agent_params:
                     self.change_agent_params = False
                 #"""
@@ -678,16 +662,14 @@ class Environment:
         #return ''
         pheromones = []
         #indicies [0] is X's, [1] are y's:
-        indicies = np.where(self.pheromoneList > 0)
+        indicies = np.where(self.pheromoneView > 0)
         for i in range(0,len(indicies[0])):
-            #try:
-            #pheromone_dict = {"x": indicies[0][i],
-                              #"y": indicies[1][i]}
+            #int(int(indicies[1][i]*3+1) -self.y_limit)
             pheromone_dict = {}
-            pheromone_dict["x"] = int(int(indicies[0][i]*3+1) -self.x_limit)
-            pheromone_dict["y"] = int(int(indicies[1][i]*3+1) -self.y_limit)
-            test = self.pheromoneList[indicies[0][i]][indicies[1][i]]
-            # TODO include the pheromone strength here, then figure out drawing that
+            x,y = self.pherToWorld(indicies[0][i],indicies[1][i])
+            pheromone_dict["x"] = x
+            pheromone_dict["y"] = y
+            #test = self.pheromoneList[indicies[0][i]][indicies[1][i]]
             pheromones.append(pheromone_dict)
         return pheromones
 
@@ -705,6 +687,7 @@ class Environment:
             agent_dict["potential_site"] = self.agents[agent_id].potential_site
             agent_dict["live"] = self.agents[agent_id].live
             agent_dict["qVal"] = self.agents[agent_id].q_value
+            agent_dict["pVal"] = self.agents[agent_id].atPheromone
             agents.append(agent_dict)
         return agents
 

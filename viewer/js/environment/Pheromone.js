@@ -25,8 +25,8 @@ class Pheromone
         //console.log("x: " + pheromone.x.toString());
         //console.log("y: " + pheromone.y.toString());
         count += 1;
-        ctx.translate(pheromone.x-1.5, -pheromone.y-1.5);
-        ctx.rect(0,0, 6, 6);
+        ctx.translate(pheromone.x-2, -pheromone.y-2);
+        ctx.rect(0,0, 9, 9);
         ctx.fill();
         //ctx.stroke();
         ctx.restore();

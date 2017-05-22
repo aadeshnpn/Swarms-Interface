@@ -93,11 +93,11 @@ class Waiting(State): #like observing
 
     def sense(self,agent,environment):
         if self.atHub:
-            ant = environment.hubController.waitingCheck()
+            '''ant = environment.hubController.waitingCheck()
             if isinstance(ant.state, Recruiting().__class__):
                 if np.random.random()<(ant.q_value*ant.q_value*.02):
                     self.seesRecuriter = True
-                    agent.potential_site = ant.potential_site
+                    agent.potential_site = ant.potential_site'''
 
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
                 and agent.inHub is False:
@@ -283,18 +283,20 @@ class Following(State):
     def sense(self,agent,environment):
         agent.atPheromone = environment.get_pheromone(agent)
         lowX, lowY = environment.smellNearby(agent.location)
-        if lowX < 0:
+        if lowX < 0 or lowY < 0:
             agent.atPheromone = 0
-        x = int(int(lowX*3+1) -environment.y_limit)
-        y = int(int(lowY*3+1) -environment.y_limit)
+        x,y=environment.pherToWorld(lowX, lowY)
         self.next = [x, y]
-        environment.get
+
 
     def update(self,agent,environment):
         if not agent.atPheromone:
+            #eprint('lost follower', agent.location[0], ', ', agent.location[1])
             return input.getLost2
-        #else:
-        #    self.following = True
+        elif environment.get_q(agent)["q"] > 0:
+            agent.potential_site = agent.location
+            eprint("yay!")
+            return input.arrive
 
     def act(self,agent):
         #if agent.goingToSite:
@@ -438,18 +440,21 @@ class Exploiting(State): #like site assess
 
         if self.stopSite is True:
             return input.retire
-        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) and (agent.goingToSite is False):
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < (agent.hubRadius/2)) and (agent.goingToSite is False):
             agent.goingToSite = True
             return input.startRecruiting
         elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
             agent.goingToSite = False
-        #if agent.goingToSite is not True and np.random.random() < .7:
+        if agent.goingToSite is False:
             #eprint("dropped pheromones! x: ", agent.location[0], "y: ", agent.location[1])
-        x = int(int(agent.location[0] + environment.x_limit)/3)
-        y = int(int(agent.location[1] + environment.y_limit)/3)
-        range = 0
-        #environment.pheromoneList[x-range:x+range,y-range:y+range] += 3
-        environment.pheromoneList[x, y] += 3
+            #x = int(int(agent.location[0] + environment.x_limit)/3)
+            x,y = environment.worldToPher(agent.location[0],agent.location[1])
+            range = 1
+            environment.pheromoneList[x-range:x+range+1,y-range:y+range+1] += 6
+            if np.random.random() < .2:
+                environment.pheromoneView[x,y] += 6
+
+            #environment.pheromoneList[x, y] += 3
 
 
 
