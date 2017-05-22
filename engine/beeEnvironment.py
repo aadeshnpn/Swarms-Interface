@@ -59,7 +59,7 @@ class Environment:
         self.stats["parameters"] = {"environment": {}, "agent": {}}
 
         #  environment parameters
-        self.number_of_agents = 499
+        self.number_of_agents = 500
         self.frames_per_sec = 600
 
         self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
@@ -193,7 +193,7 @@ class Environment:
                 # the edge will return 75% of the q_value
                 return {
                     "radius": site["radius"],
-                    "q": site["q_value"] - (tot_dif / site["radius"] * .25 * site["q_value"])
+                    "q": site["q_value"] - (tot_dif / site["radius"] * .25 * site["q_value"]) #gradient!
                 }
 
         if agent.atSite:

@@ -33,7 +33,7 @@ class worldGenerator:
         max_sites = int(self.dimensions["x_length"]*self.dimensions["y_length"] * (13/self.max_length**2)) + 2
         sitesNum = random.randint(2, max_sites)
         for proposed_site in range(sitesNum):
-            site = {"radius": random.randint(5, 50), "q_value": random.random()}
+            site = {"radius": random.randint(1, 20), "q_value": random.random()}
 
             ready = False
 
@@ -83,7 +83,7 @@ class worldGenerator:
         max_traps = int(self.dimensions["x_length"] * self.dimensions["y_length"] * (8 / self.max_length ** 2)) + 2
         trapsNum = random.randint(0, max_traps)
         for proposed_trap in range(trapsNum):
-            trap = {"radius": random.randint(20, 70)}
+            trap = {"radius": random.randint(1, 20)}
 
             ready = False
 
