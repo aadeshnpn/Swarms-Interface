@@ -44,11 +44,11 @@ class Environment:
         #This should be working from angent class. Its not working. So using it over here
         self.following = {}
         #  bee parameters
-        self.parameters = {"PipingThreshold":       self.number_of_agents*.1,
+        self.parameters = {"PipingThreshold":       2,
                            "Velocity":              2,
-                           "ExploreTime":           3625,
+                           "ExploreTime":           2000,
                            "RestTime":              2000,
-                           "DanceTime":             1150,
+                           "DanceTime":             10,
                            "ObserveTime":           2000,
                            "SiteAssessTime":        250,
                            "SiteAssessRadius":      15,
@@ -76,7 +76,7 @@ class Environment:
         self.pheromoneList = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])
         self.pheromoneView = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])
 
-
+        self.smellRange = 2
         #json aux
         self.previousMetaJson = None
     # Function to initialize data on the environment from a json file
@@ -175,12 +175,6 @@ class Environment:
                     "q"     : site["q_value"] - (tot_dif / site["radius"] * .25 * site["q_value"])
                 }
 
-        #if agent.atSite:
-        #    if self.info_stations[agent.siteIndex].check_for_changes(agent.parameters, agent.param_time_stamp):
-        #        agent.update_params(self.info_stations[agent.siteIndex].parameters)
-        #        agent.param_time_stamp = self.info_stations[agent.siteIndex].last_update
-            # agent.atSite = False
-
         return {"radius": -1, "q": 0}
 
     def get_pheromone(self,agent):
@@ -202,14 +196,15 @@ class Environment:
         return x,y
     def smellNearby(self, location):
         x,y = self.worldToPher(location[0], location[1])
-        lowest = self.pheromoneList[x,y]+1000
+        first = self.pheromoneList[x,y]
+        lowest = first
         lowX = -10
         lowY = -10
-        for i in range(-3, 4):
-            for j in range(-3,4):
+        for i in range(-self.smellRange, self.smellRange+1):
+            for j in range(-self.smellRange,self.smellRange+1):
                 x0 = x+i
                 y0 = y+j
-                if self.pheromoneList[x0,y0] > 0 and self.pheromoneList[x0,y0] < lowest:
+                if self.pheromoneList[x0,y0] > 0 and self.pheromoneList[x0,y0] < lowest and self.pheromoneList[x0,y0] < first+1:
                     lowest = self.pheromoneList[x,y]
                     lowX = x0
                     lowY = y0
@@ -239,44 +234,6 @@ class Environment:
 
         return 0
 
-    # Wind affects the whole environment except the hub.
-    def wind(self, direction, velocity):
-        for agent_id in self.agents:
-            agent = self.agents[agent_id]
-            if ((agent.location[0] - self.hub["x"]) ** 2 + (agent.location[1] - self.hub["y"]) ** 2) ** .5 > self.hub["radius"]:
-                proposed_x = agent.location[0] + np.cos(direction) * velocity
-                proposed_y = agent.location[1] + np.sin(direction) * velocity
-
-                terrain_value = self.check_terrain(proposed_x, proposed_y)
-
-                if terrain_value == 0:
-                    agent.location[0] = proposed_x
-                    agent.location[1] = proposed_y
-                elif terrain_value == -3:
-                    agent.location[0] = proposed_x
-                    agent.location[1] = proposed_y
-                    agent.live = False
-                    self.dead_agents.append(agent)
-                    #self.states[agent.state].remove(agent_id) also not using this currently
-                    del self.agents[agent_id]
-                    return
-                elif terrain_value == -2:
-                    pass
-                elif terrain_value == -1:  # If the agent is in rough terrain, it will move at half speed
-                    slow_down = .5
-                    agent.location[0] += np.cos(direction) * velocity * slow_down
-                    agent.location[1] += np.sin(direction) * velocity * slow_down
-
-            # If the agent goes outside of the limits, it re-enters on the opposite side.
-            if agent.location[0] > self.x_limit:
-                agent.location[0] -= 2 * self.x_limit
-            elif agent.location[0] < self.x_limit * -1:
-                agent.location[0] += 2 * self.x_limit
-            if agent.location[1] > self.y_limit:
-                agent.location[1] -= 2 * self.y_limit
-            elif agent.location[1] < self.y_limit * -1:
-                agent.location[1] += 2 * self.y_limit
-
     def get_nearby_agents(self, agent_id, radius):
         nearby = []
         for other_id in self.agents:
@@ -299,6 +256,9 @@ class Environment:
         proposed_x = agent.location[0] + np.cos(agent.direction) * agent.velocity #+ np.cos(potential_field_d) * potential_field_v
         proposed_y = agent.location[1] + np.sin(agent.direction) * agent.velocity #+ np.sin(potential_field_d) * potential_field_v
 
+        if isinstance(agent.state,Following):
+            proposed_x = agent.location[0]
+            proposed_y = agent.location[1]
         terrain_value = self.check_terrain(proposed_x, proposed_y)
 
         if terrain_value == 0:
@@ -364,6 +324,8 @@ class Environment:
         self.parameters["PipingTime"]       = int   (params['beePipingTimer'          ])
         self.number_of_agents               = int   (params['numberOfAgents'          ])
 
+        self.smellRange = int   (params['beePipingThreshold'      ])
+
         self.change_agent_params = True
         eprint("New velocity =", params["beeGlobalVelocity"])
 
@@ -380,7 +342,7 @@ class Environment:
         agent.SiteAssessTime        = int   (self.parameters["SiteAssessTime"   ])
         agent.SiteAssessRadius      = int   (self.parameters["SiteAssessRadius" ])
         agent.PipingTimer           = int   (self.parameters["PipingTime"       ])
-        agent.reset_trans_table()
+        #agent.reset_trans_table()
 
     def updateUIParameters(self, json):
         params = json['params']
@@ -430,30 +392,16 @@ class Environment:
                                                         # makes python mad...
                 for agent_id in keys:
 
-                    #agent = self.agents[agent_id]
-                    #agent.act()
-                    #agent.sense(self)
-                    #self.suggest_new_direction(agent.id)
-                    #wind_direction = 1  # in radians
-                    #wind_velocity = .01
-                    # uncomment the next line to add wind to the environment
-                    #self.wind(wind_direction, wind_velocity)
-                    #agent.update(self)
-
 
                     if self.agents[agent_id].state.name not in stateCounts:
                         stateCounts[self.agents[agent_id].state.name] = 0
 
                     stateCounts[self.agents[agent_id].state.name] += 1
 
-                    # if agent_id == "500":
-                    #     self.change_agent_params = True
 
                     if self.change_agent_params:
                         self.updateAgentParameters(self.agents[agent_id])
 
-                    '''if self.agents[agent_id].pheromoneList:
-                        self.pheromoneList[len(self.pheromoneList):] = self.agents[agent_id].pheromoneList'''
 
                     # is this faster?
                     self.agents[agent_id].act()
@@ -558,36 +506,7 @@ class Environment:
             agent = Agent(agent_id, self.hub, Searching())
             #agent = Agent(agent_id, self.hub, Resting())
             self.agents[agent_id] = agent                        
-            """
-            agent = Agent(agent_id,  Exploring(ExploreTimeMultiplier=self.parameters["ExploreTime"]), self.hub,
-                          piping_threshold          = int   (self.parameters["PipingThreshold"  ]),
-                          global_velocity           = float (self.parameters["Velocity"         ]),
-                          explore_time_multiplier   = float (self.parameters["ExploreTime"      ]),
-                          rest_time                 = int   (self.parameters["RestTime"         ]),
-                          dance_time                = int   (self.parameters["DanceTime"        ]),
-                          observe_time              = int   (self.parameters["ObserveTime"      ]),
-                          site_assess_time          = int   (self.parameters["SiteAssessTime"   ]),
-                          site_assess_radius        = int   (self.parameters["SiteAssessRadius" ]),
-                          piping_time               = int   (self.parameters["PipingTime"       ]))
-            self.agents[agent_id] = agent
-            #self.states[Exploring().__class__].append(agent_id)
-        
-        
-        for y in range(rest_num):
-            agent_id = str(x + 1 + y)
 
-            agent = Agent(agent_id, Resting(agent=None, rest_time=self.parameters["RestTime"]), self.hub,
-                          piping_threshold          = int   (self.parameters["PipingThreshold"]),
-                          global_velocity           = float (self.parameters["Velocity"]),
-                          explore_time_multiplier   = float (self.parameters["ExploreTime"]),
-                          rest_time                 = int   (self.parameters["RestTime"]),
-                          dance_time                = int   (self.parameters["DanceTime"]),
-                          observe_time              = int   (self.parameters["ObserveTime"]),
-                          site_assess_time          = int   (self.parameters["SiteAssessTime"]),
-                          site_assess_radius        = int   (self.parameters["SiteAssessRadius"]),
-                          piping_time               = int   (self.parameters["PipingTime"]))
-            self.agents[agent_id] = agent
-        """
 
     def reset_sim(self):
         self.clear_for_reset()
@@ -698,7 +617,7 @@ class Environment:
             {
                 "parameters":
                 {
-                    "beePipingThreshold"      : self.parameters["PipingThreshold"],
+                    "beePipingThreshold"      : self.smellRange,
                     "beeGlobalVelocity"       : self.parameters["Velocity"],
                     "beeExploreTimeMultiplier": self.parameters["ExploreTime"],
                     "beeRestTime"             : self.parameters["RestTime"],
