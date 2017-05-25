@@ -147,9 +147,9 @@ class Exploring(State):
     def __init__(self, agent=None, ExploreTimeMultiplier=None):
         self.name = "exploring"
         self.inputExplore = False
-        exp = np.random.normal(1, .2, 1)
+        exp = np.random.normal(1, .002, 1)
         while exp < 0:
-            exp = np.random.normal(1, .2, 1)
+            exp = np.random.normal(1, .002, 1)
         if agent is not None:
             self.exploretime = exp*agent.parameters["ExploreTime"]
         elif ExploreTimeMultiplier is not None:
