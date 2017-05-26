@@ -82,17 +82,16 @@ class Agent(StateMachine):
 class Waiting(State): #like observing
     def __init__(self,agent=None,time=None):
         self.name = 'waiting'
-        exp = np.random.normal(1, .3, 1)
+        exp = np.random.normal(1, .1, 1)
         self.atHub = True
         self.seesRecuriter = False
-        self.pheromone = 1
+        self.pheromone = 0
         while exp < 0:
-            exp = np.random.normal(1, .3, 1)
+            exp = np.random.normal(1, .1, 1)
         if agent is not None:
             self.waitingtime = exp*agent.parameters["WaitingTime"]
         else:
             self.waitingtime = exp*1000
-        self.pheromone -=1
 
 
     def sense(self,agent,environment):
@@ -107,7 +106,6 @@ class Waiting(State): #like observing
                    
 
     def update(self,agent,environment):
-        self.waitingtime -= 1
         if self.pheromone > 0:
             return input.startFollowing
         if self.waitingtime < 1:
@@ -120,10 +118,10 @@ class Waiting(State): #like observing
             self.wander(agent)
         else: # if not at hub, more towards it
             self.movehome(agent)
-            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 <= 1.1:
+            '''if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 <= 1.1:
                 # 1.1 prevents moving back and forth around origin
                 self.atHub = True
-                agent.direction += -89 + 179 * np.random.random()
+                agent.direction += -89 + 179 * np.random.random()'''
 
     def movehome(self, agent):
         dx = agent.hub[0] - agent.location[0]
@@ -164,6 +162,7 @@ class SiteAssess(State):
         if self.counter < 1:
             agent.atSite = False
             agent.goingToSite = False
+            eprint(agent.potential_site, "siteAssess")
             return input.finAssess
         else:
             self.counter -= 1
@@ -220,6 +219,7 @@ class Searching(State): #basically the same as explorer..
         self.searchingtime -= 1
         if agent.q_value > 0 :
             agent.potential_site = [agent.location[0], agent.location[1]]
+            eprint(agent.potential_site, "searching")
             return input.discover
         elif agent.atPheromone > 0 :
             return input.startFollowing
@@ -271,8 +271,8 @@ class Following(State):
         if not agent.atPheromone:
             return input.getLost2
         elif environment.get_q(agent)["q"] > 0:
-            agent.potential_site = agent.location
-            eprint("yay!")
+            agent.potential_site = [agent.location[0], agent.location[1]]
+            eprint(agent.potential_site, "following")
             return input.arrive
 
     def act(self,agent):
@@ -283,7 +283,7 @@ class Following(State):
 
 class Exploiting(State): #like site assess
     def __init__(self,agent=None,time=None):
-        self.name = 'exploiting'        
+        self.name = 'exploiting'
         self.atsite = False
         self.stopSite = False
 
@@ -300,10 +300,10 @@ class Exploiting(State): #like site assess
                 environment.hubController.beeCheckIn(agent)
                 agent.inHub = True
                 if agent.siteIndex:
-                    if environment.sites[agent.siteIndex]['radius']>.02:
+                    if environment.sites[agent.siteIndex]['radius']>.15:
                         #environment.sites[agent.siteIndex]['food_unit'] -= 1
-                        environment.sites[agent.siteIndex]['radius'] -= 0.02
-                        environment.sites[agent.siteIndex]['q_value']/30.0
+                        environment.sites[agent.siteIndex]['radius'] -= 0.5
+                        #environment.sites[agent.siteIndex]['q_value']/30.0
                     else:
                         self.stopSite = True
                 ##TODO TODO fix the radius so that it never goes negative, in addition add checking in the other states to never go to negative sites..
@@ -315,8 +315,10 @@ class Exploiting(State): #like site assess
                     
     def update(self,agent,environment):
         if self.stopSite is True:
+            agent.potential_site = None
+            agent.q_value = 0
             return input.retire
-        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < (agent.hubRadius/2)) and (agent.goingToSite is False):
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < (agent.hubRadius*(2/3))) and (agent.goingToSite is False):
             agent.goingToSite = True
             return input.startRecruiting
         elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
@@ -345,7 +347,7 @@ class Exploiting(State): #like site assess
 class Recruiting(State): #like dancing
     def __init__(self,agent=None,time=None):
         self.name = 'recruiting'
-        self.recruitmentTime = 10
+        self.recruitmentTime = 6
 
     def sense(self,agent,environment):
         agent.carrying_food = False

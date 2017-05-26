@@ -10,7 +10,7 @@ from antCode.ant.agent import *
 from antCode.hubController import hubController
 from beeCode.infoStation import InfoStation
 from utils.potentialField import PotentialField
-
+import sys, os
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #Set the seed to always set same random values
 #random.seed(123)
@@ -645,7 +645,6 @@ class Environment:
         }
 
         return json.dumps(parameterJson)
-
 file = "world.json"
 world = Environment(os.path.join(ROOT_DIR, file))
 world.run()
