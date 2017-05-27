@@ -27,18 +27,11 @@ class Agent(StateMachine):
         self.atPheromone = 0
         self.siteIndex = None
         self.goingToSite = True
-        self.quadrant = []
-        self.carrying_food = False
         self.carrying_capacity = 1
         self.attractor = None
         self.attracted = None
         self.repulsor = None
         self.ignore_repulsor = None
-        #self.currPheromone=0
-        #This holds the identity of following ants
-        self.following = None
-        #self.pheromoneList = []
-        # These parameters may be modified at run-time
         self.parameters =  {"WaitingTime": 1000,
                             "SearchTime": 2000}  
 
@@ -79,108 +72,105 @@ class Agent(StateMachine):
             }
         }
 
-class Waiting(State): #like observing
-    def __init__(self,agent=None,time=None):
-        self.name = 'waiting'
-        exp = np.random.normal(1, .1, 1)
-        self.atHub = True
-        self.seesRecuriter = False
-        self.pheromone = 0
-        while exp < 0:
-            exp = np.random.normal(1, .1, 1)
-        if agent is not None:
-            self.waitingtime = exp*agent.parameters["WaitingTime"]
-        else:
-            self.waitingtime = exp*1000
 
-
-    def sense(self,agent,environment):
-        if self.atHub:
-            self.pheromone = environment.get_pheromone(agent)
-
-        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
-                and agent.inHub is False:
-                    environment.hubController.beeCheckIn(agent)
-                    agent.inHub = True
-                    return
-                   
-
-    def update(self,agent,environment):
-        if self.pheromone > 0:
-            return input.startFollowing
-        if self.waitingtime < 1:
-            return input.startSearching
-
-        #pass
-    def act(self,agent):
-        if self.atHub:
-            self.waitingtime -= 1
-            self.wander(agent)
-        else: # if not at hub, more towards it
-            self.movehome(agent)
-            '''if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 <= 1.1:
-                # 1.1 prevents moving back and forth around origin
-                self.atHub = True
-                agent.direction += -89 + 179 * np.random.random()'''
-
-    def movehome(self, agent):
-        dx = agent.hub[0] - agent.location[0]
-        dy = agent.hub[1] - agent.location[1]
-        agent.direction = np.arctan2(dy, dx)
-
-    def wander(self, agent):
-        if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 >= agent.hubRadius:
-            dx = agent.hub[0] - agent.location[0]
-            dy = agent.hub[1] - agent.location[1]
-            agent.direction = np.arctan2(dy, dx)
-        else:
-            delta_d = np.random.normal(0, .3)
-            agent.direction = (agent.direction + delta_d) % (2 * np.pi)
-
-        return
-
-
-class SiteAssess(State):
-    def __init__(self, agent=None):
-        self.name = "site assess"
-
-        self.counter = 150
-        self.siteRadius = 15
-
+class Exploiting(State):  # like site assess
+    def __init__(self, agent=None, time=None):
+        self.name = 'exploiting'
+        self.atsite = False
+        self.stopSite = False
 
     def sense(self, agent, environment):
-        ## Code to help the bees find the center of the site
-        siteInfo = environment.get_q(agent)
-        if siteInfo["q"] > agent.q_value:
-            agent.potential_site = [agent.location[0], agent.location[1]]
-            agent.q_value = siteInfo["q"]
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (
+            agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius):
+            if agent.goingToSite and agent.inHub:
+                if environment.hubController.beeCheckOut(agent) == 0:
+                    agent.inHub = False
+                    # self.atsite = False
+                    return
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (
+            agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius + .251858563765788):
+            if not agent.goingToSite and not agent.inHub:
+                environment.hubController.beeCheckIn(agent)
+                agent.inHub = True
+                if agent.siteIndex is not None and agent.siteIndex >= 0:
+                    if environment.sites[agent.siteIndex]['radius'] > .15:
+                        # environment.sites[agent.siteIndex]['food_unit'] -= 1
+                        environment.sites[agent.siteIndex]['radius'] -= 0.5
+                        # environment.sites[agent.siteIndex]['q_value']/30.0
+                    else:
+                        self.stopSite = True
+                        ##TODO TODO fix the radius so that it never goes negative, in addition add checking in the other states to never go to negative sites..
+                        ##TODO!!!!! Followers need to still exploit as they are not doing that right now.
 
-    def act(self, agent):
-        self.move(agent)
+        new_q = environment.get_q(agent)["q"]
+        if round(new_q) == round(agent.q_value):
+            self.atsite = True
 
     def update(self, agent, environment):
-        if self.counter < 1:
-            agent.atSite = False
+        if self.stopSite is True:
+            agent.potential_site = None
+            agent.q_value = 0
+            return input.retire
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < (
+            agent.hubRadius * (2 / 3))) and (agent.goingToSite is False):
+            agent.goingToSite = True
+            return input.startRecruiting
+        elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (
+            agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
             agent.goingToSite = False
-            eprint(agent.potential_site, "siteAssess")
-            return input.finAssess
-        else:
-            self.counter -= 1
+        if agent.goingToSite is False:
+            # x = int(int(agent.location[0] + environment.x_limit)/3)
+            x, y = environment.worldToPher(agent.location[0], agent.location[1])
+            range = 1
+            #environment.pheromoneList[x - range:x + range + 1, y - range:y + range + 1] += 6 * np.sqrt(agent.q_value)
+            environment.pheromoneList[x, y] += 6 * np.sqrt(agent.q_value)
+            if np.random.random() < .2:
+                environment.pheromoneView[x, y] += 6 * np.sqrt(agent.q_value)
+                # environment.pheromoneList[x, y] += 3
 
-    def move(self, agent):
-        if ((agent.potential_site[0] - agent.location[0]) ** 2
-                + (agent.potential_site[1] - agent.location[1]) ** 2) ** .5 >= self.siteRadius:
+    def act(self, agent):
+        # if self.atsite:
+        #    pass
+        if agent.goingToSite:
             dx = agent.potential_site[0] - agent.location[0]
             dy = agent.potential_site[1] - agent.location[1]
             agent.direction = np.arctan2(dy, dx)
         else:
-            delta_d = np.random.normal(0, .3)
-            agent.direction = (agent.direction + delta_d) % (2 * np.pi)
+            dx = agent.hub[0] - agent.location[0]
+            dy = agent.hub[1] - agent.location[1]
+            agent.direction = np.arctan2(dy, dx)
+class Following(State):
+    def __init__(self,agent=None,time=None):
+        self.name = 'following'
+        self.next = [0,0]
+
+    def sense(self,agent,environment):
+        agent.atPheromone = environment.get_pheromone(agent)
+        lowX, lowY = environment.smellNearby(agent.location)
+        if lowX < 0 or lowY < 0:
+            agent.atPheromone = 0
+        else:
+            x,y=environment.pherToWorld(lowX, lowY)
+            self.next = [x, y]
+            agent.location = self.next
+
+    def update(self,agent,environment):
+        if not agent.atPheromone:
+            return input.getLost2
+        elif environment.get_q(agent)["q"] > 0:
+            agent.potential_site = [agent.location[0], agent.location[1]]
+            #eprint(agent.potential_site, "following")
+            return input.arrive
+
+    def act(self,agent):
+        dx = self.next[0] - agent.location[0]
+        dy = self.next[1] - agent.location[1]
+        agent.direction = np.arctan2(dy, dx)
         return
 
 class Searching(State): #basically the same as explorer..
     def __init__(self,agent=None,time=None):
-        self.name = 'searching'        
+        self.name = 'searching'
         exp = np.random.normal(1, .3, 1)
         while exp < 0:
             exp = np.random.normal(1, .3, 1)
@@ -219,7 +209,7 @@ class Searching(State): #basically the same as explorer..
         self.searchingtime -= 1
         if agent.q_value > 0 :
             agent.potential_site = [agent.location[0], agent.location[1]]
-            eprint(agent.potential_site, "searching")
+            #eprint(agent.potential_site, "searching")
             return input.discover
         elif agent.atPheromone > 0 :
             return input.startFollowing
@@ -249,100 +239,105 @@ class Searching(State): #basically the same as explorer..
             agent.direction = (agent.direction + delta_d) % (2 * np.pi)
 
         return
-  
 
-class Following(State):
-    def __init__(self,agent=None,time=None):
-        self.name = 'following'        
-        self.following = None
-        self.next = [0,0]
+class SiteAssess(State):
+    def __init__(self, agent=None):
+        self.name = "site assess"
 
-    def sense(self,agent,environment):
-        agent.atPheromone = environment.get_pheromone(agent)
-        lowX, lowY = environment.smellNearby(agent.location)
-        if lowX < 0 or lowY < 0:
-            agent.atPheromone = 0
-        else:
-            x,y=environment.pherToWorld(lowX, lowY)
-            self.next = [x, y]
-            agent.location = self.next
+        self.counter = 150
+        self.siteRadius = 15
 
-    def update(self,agent,environment):
-        if not agent.atPheromone:
-            return input.getLost2
-        elif environment.get_q(agent)["q"] > 0:
+
+    def sense(self, agent, environment):
+        ## Code to help the bees find the center of the site
+        siteInfo = environment.get_q(agent)
+        if siteInfo["q"] > agent.q_value:
             agent.potential_site = [agent.location[0], agent.location[1]]
-            eprint(agent.potential_site, "following")
-            return input.arrive
+            agent.q_value = siteInfo["q"]
 
-    def act(self,agent):
-        dx = self.next[0] - agent.location[0]
-        dy = self.next[1] - agent.location[1]
-        agent.direction = np.arctan2(dy, dx)
-        return
+    def act(self, agent):
+        self.move(agent)
 
-class Exploiting(State): #like site assess
-    def __init__(self,agent=None,time=None):
-        self.name = 'exploiting'
-        self.atsite = False
-        self.stopSite = False
-
-
-    def sense(self,agent,environment):
-        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius):
-            if agent.goingToSite and agent.inHub:
-                if environment.hubController.beeCheckOut(agent)==0:
-                    agent.inHub = False
-                    #self.atsite = False
-                    return
-        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius+.251858563765788):
-            if not agent.goingToSite and not agent.inHub:
-                environment.hubController.beeCheckIn(agent)
-                agent.inHub = True
-                if agent.siteIndex:
-                    if environment.sites[agent.siteIndex]['radius']>.15:
-                        #environment.sites[agent.siteIndex]['food_unit'] -= 1
-                        environment.sites[agent.siteIndex]['radius'] -= 0.5
-                        #environment.sites[agent.siteIndex]['q_value']/30.0
-                    else:
-                        self.stopSite = True
-                ##TODO TODO fix the radius so that it never goes negative, in addition add checking in the other states to never go to negative sites..
-                ##TODO!!!!! Followers need to still exploit as they are not doing that right now.
-
-        new_q = environment.get_q(agent)["q"]
-        if round(new_q) == round(agent.q_value):
-            self.atsite = True
-                    
-    def update(self,agent,environment):
-        if self.stopSite is True:
-            agent.potential_site = None
-            agent.q_value = 0
-            return input.retire
-        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < (agent.hubRadius*(2/3))) and (agent.goingToSite is False):
-            agent.goingToSite = True
-            return input.startRecruiting
-        elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
+    def update(self, agent, environment):
+        if self.counter < 1:
+            agent.atSite = False
             agent.goingToSite = False
-        if agent.goingToSite is False:
-            #x = int(int(agent.location[0] + environment.x_limit)/3)
-            x,y = environment.worldToPher(agent.location[0],agent.location[1])
-            range = 1
-            environment.pheromoneList[x-range:x+range+1,y-range:y+range+1] += 6*agent.q_value
-            if np.random.random() < .2:
-                environment.pheromoneView[x,y] += 6*agent.q_value
-            #environment.pheromoneList[x, y] += 3
+            #eprint(agent.potential_site, "siteAssess")
+            return input.finAssess
+        else:
+            self.counter -= 1
 
-    def act(self,agent):
-        #if self.atsite:
-        #    pass
-        if agent.goingToSite:
+    def move(self, agent):
+        if ((agent.potential_site[0] - agent.location[0]) ** 2
+                + (agent.potential_site[1] - agent.location[1]) ** 2) ** .5 >= self.siteRadius:
             dx = agent.potential_site[0] - agent.location[0]
             dy = agent.potential_site[1] - agent.location[1]
             agent.direction = np.arctan2(dy, dx)
         else:
+            delta_d = np.random.normal(0, .3)
+            agent.direction = (agent.direction + delta_d) % (2 * np.pi)
+        return
+
+
+class Waiting(State):  # like observing
+    def __init__(self, agent=None, time=None):
+        self.name = 'waiting'
+        exp = np.random.normal(1, .1, 1)
+        self.atHub = True
+        self.seesRecuriter = False
+        self.pheromone = 0
+        while exp < 0:
+            exp = np.random.normal(1, .1, 1)
+        if agent is not None:
+            self.waitingtime = exp * agent.parameters["WaitingTime"]
+        else:
+            self.waitingtime = exp * 1000
+
+    def sense(self, agent, environment):
+        if self.atHub:
+            self.pheromone = environment.get_pheromone(agent)
+
+        if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
+                and agent.inHub is False:
+            environment.hubController.beeCheckIn(agent)
+            agent.inHub = True
+            return
+
+    def update(self, agent, environment):
+        if self.pheromone > 0:
+            return input.startFollowing
+        if self.waitingtime < 1:
+            return input.startSearching
+
+            # pass
+
+    def act(self, agent):
+        if self.atHub:
+            self.waitingtime -= 1
+            self.wander(agent)
+        else:  # if not at hub, more towards it
+            self.movehome(agent)
+            '''if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 <= 1.1:
+                # 1.1 prevents moving back and forth around origin
+                self.atHub = True
+                agent.direction += -89 + 179 * np.random.random()'''
+
+    def movehome(self, agent):
+        dx = agent.hub[0] - agent.location[0]
+        dy = agent.hub[1] - agent.location[1]
+        agent.direction = np.arctan2(dy, dx)
+
+    def wander(self, agent):
+        if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 >= agent.hubRadius:
             dx = agent.hub[0] - agent.location[0]
             dy = agent.hub[1] - agent.location[1]
             agent.direction = np.arctan2(dy, dx)
+        else:
+            delta_d = np.random.normal(0, .3)
+            agent.direction = (agent.direction + delta_d) % (2 * np.pi)
+
+        return
+
 
 class Recruiting(State): #like dancing
     def __init__(self,agent=None,time=None):
@@ -350,7 +345,7 @@ class Recruiting(State): #like dancing
         self.recruitmentTime = 6
 
     def sense(self,agent,environment):
-        agent.carrying_food = False
+        pass
     
     def update(self,agent,environment):
         #pass

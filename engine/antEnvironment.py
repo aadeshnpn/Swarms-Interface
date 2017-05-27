@@ -39,7 +39,7 @@ class Environment:
         #  environment parameters
 
         self.number_of_agents = 100
-        self.frames_per_sec = 30
+        self.frames_per_sec = 300
 
         #This should be working from angent class. Its not working. So using it over here
         self.following = {}
@@ -421,10 +421,10 @@ class Environment:
 
                 self.hubController.hiveAdjust(self.agents)
                 evapRate = .02
-                self.pheromoneList[np.where(self.pheromoneList > 0)] = self.pheromoneList[np.where(self.pheromoneList  > 0)] - evapRate
-                self.pheromoneList[np.where(self.pheromoneList < 0)] = 0
-                self.pheromoneView[np.where(self.pheromoneView > 0)] = self.pheromoneView[np.where(self.pheromoneView > 0)] - evapRate
-                self.pheromoneView[np.where(self.pheromoneView < 0)] = 0
+                self.pheromoneList = np.maximum(0,self.pheromoneList - evapRate)
+                #self.pheromoneList[np.where(self.pheromoneList < 0)] = 0
+                self.pheromoneView = np.maximum(0,self.pheromoneView - evapRate)
+                #self.pheromoneView[np.where(self.pheromoneView < 0)] = 0
                 if self.change_agent_params:
                     self.change_agent_params = False
                 #"""
