@@ -65,14 +65,14 @@ class Environment:
         self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
 
         #  bee parameters
-        self.parameters = {"PipingThreshold": self.number_of_agents * .12,
+        self.parameters = {"PipingThreshold": int(self.number_of_agents * .12),
                            "Velocity": 1.25,
-                           "ExploreTime": 10000,
+                           "ExploreTime": 1000,
                            "RestTime": 1000,
                            "DanceTime": 1150,
                            "ObserveTime": 2000,
                            "SiteAssessTime": 250,
-                           "SiteAssessRadius": 8.5,
+                           "SiteAssessRadius": 9,
                            "PipingTime": 1200}
 
         self.stats["parameters"]["agent"] = self.parameters
@@ -331,14 +331,14 @@ class Environment:
 
     def updateAgentParameters(self, agent):
         agent.PipingThreshold = int(self.parameters["PipingThreshold"])
-        agent.GlobalVelocity = float(self.parameters["Velocity"])
-        agent.ExploreTimeMultiplier = float(self.parameters["ExploreTime"])
-        agent.RestTime = int(self.parameters["RestTime"])
-        agent.DanceTime = int(self.parameters["DanceTime"])
-        agent.ObserveTime = int(self.parameters["ObserveTime"])
-        agent.SiteAssessTime = int(self.parameters["SiteAssessTime"])
-        agent.SiteAssessRadius = int(self.parameters["SiteAssessRadius"])
-        agent.PipingTimer = int(self.parameters["PipingTime"])
+        agent.velocity = float(self.parameters["Velocity"])
+        agent.parameters["ExploreTime"] = float(self.parameters["ExploreTime"])
+        agent.parameters["RestTime"] = int(self.parameters["RestTime"])
+        agent.parameters["DanceTime"] = int(self.parameters["DanceTime"])
+        agent.parameters["ObserveTime"] = int(self.parameters["ObserveTime"])
+        agent.parameters["SiteAssessTime"] = int(self.parameters["SiteAssessTime"])
+        agent.parameters["SiteAssessRadius"] = int(self.parameters["SiteAssessRadius"])
+        agent.parameters["PipingTimer"] = int(self.parameters["PipingTime"])
         agent.reset_trans_table()
 
     def updateUIParameters(self, json):

@@ -144,7 +144,7 @@ class Agent(StateMachine):
 
     # so, the exploring part needs to give the input..
 class Exploring(State):
-    def __init__(self, agent=None, ExploreTimeMultiplier=None):
+    def __init__(self, agent=None,ExploreTimeMultiplier = None):
         self.name = "exploring"
         self.inputExplore = False
         exp = np.random.normal(1, .002, 1)
@@ -155,7 +155,7 @@ class Exploring(State):
         elif ExploreTimeMultiplier is not None:
             self.exploretime = exp*ExploreTimeMultiplier
         else:
-            # warnings.warn("No agent or initial condition given! Using default...")
+            warnings.warn("No agent or initial condition given! Using default...")
             self.exploretime = exp*3625
 
     def sense(self, agent, environment):
