@@ -107,8 +107,8 @@ function draw()
    finishedDrawing = true;
 
    // maintain a maximum rate of 60fps
-   //window.setTimeout(() => { window.requestAnimationFrame(draw)}, 1000 / 60);
-   window.requestAnimationFrame(draw);
+   window.setTimeout(() => { window.requestAnimationFrame(draw)}, 1000 / 60);
+   //window.requestAnimationFrame(draw);
 }
 
 // TODO: I don't like where this is going, I should be able to make one subscription

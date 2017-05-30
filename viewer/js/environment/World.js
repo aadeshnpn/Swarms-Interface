@@ -15,6 +15,7 @@ class World
     this.repulsors   = [];
     this.agents      = [];
     this.dead_agents = [];
+    this.pheromones;
 
     for (var site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
     for (var obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
@@ -24,7 +25,8 @@ class World
     for (var repulsor   of environmentJson.repulsors  ) { this.repulsors  .push( new Repulsor  (repulsor  ) ); }
     for (var agent      of environmentJson.agents     ) { this.agents     .push( new Agent     (agent     ) ); }
     for (var dead_agent of environmentJson.dead_agents) { this.dead_agents.push( new DeadAgent (dead_agent) ); }
-
+    //for (var pheromone of environmentJson.pheromones)   { this.pheromones .push( new Pheromone (pheromone)  ); }
+    this.pheromones = new Pheromone(environmentJson.pheromones);
   }
 
   canvasToWorldCoords(x, y)
@@ -46,10 +48,15 @@ class World
     for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
     for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
     for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
+    //if(Math.random()<.5){
+    this.pheromones.draw(ctx, debug);
+    //}
 
-    this.hub.draw(ctx, debug)
+    this.hub.draw(ctx, debug);
 
     for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates); }
+
     for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
+
   }
 }
