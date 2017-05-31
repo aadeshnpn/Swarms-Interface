@@ -54,8 +54,6 @@ class Environment:
         self.dead_agents = []
         self.stats = {}
 
-        self.build_json_environment()  # Calls the function to read in the initialization data from a file
-
         self.stats["parameters"] = {"environment": {}, "agent": {}}
 
         #  environment parameters
@@ -74,6 +72,8 @@ class Environment:
                            "SiteAssessTime": 250,
                            "SiteAssessRadius": 9,
                            "PipingTime": 1200}
+
+        self.build_json_environment()  # Calls the function to read in the initialization data from a file
 
         self.stats["parameters"]["agent"] = self.parameters
 
@@ -480,7 +480,7 @@ class Environment:
 
     def create_infoStations(self):
         for x in range(len(self.sites)):
-            self.info_stations.append(InfoStation())
+            self.info_stations.append(InfoStation(self.parameters))
 
     def add_agents(self):
         rest_num = int(.5 * np.sqrt(self.number_of_agents))
@@ -646,9 +646,10 @@ class Environment:
         print(json.dumps(self.stats))
 
 
-file = "world.json"
-world = Environment(os.path.join(ROOT_DIR, file))
-world.run()
+if __name__ == "__main__":
+    file = "world.json"
+    world = Environment(os.path.join(ROOT_DIR, file))
+    world.run()
 
-if args.stats:
-    world.printStats()
+    if args.stats:
+        world.printStats()

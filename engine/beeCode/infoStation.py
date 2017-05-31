@@ -2,18 +2,10 @@
 
 class InfoStation:
 
-    def __init__(self):
+    def __init__(self, parameters):
         self.bee_count = 0
 
-        self.parameters = {"PipingThreshold":       40,
-                           "Velocity":              2,
-                           "ExploreTime":           3625,
-                           "RestTime":              450,
-                           "DanceTime":             1150,
-                           "ObserveTime":           2000,
-                           "SiteAssessTime":        235,
-                           "SiteAssessRadius":      15,
-                           "PipingTime":            1200}
+        self.parameters = parameters
 
         # last_update starts with negative value, so that the first bee at the station sets the initial parameter values
         self.last_update = -1
