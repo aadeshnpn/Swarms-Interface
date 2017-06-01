@@ -103,26 +103,54 @@ app.post('/startSimBatch', function(req, res)
           let sim = spawn('python3.5', [path.join(__dirname, "../engine/beeEnvironment.py"), "-n", "-s", "-c", "-t", "10000"], {stdio: ['pipe', 'pipe', process.stderr]});
           let jsonStreamParser = JSONStream.parse();
 
-          jsonStreamParser.on('data', makeDataCollectionFunc(
+          // WARNING
+          // voodoo follows
+
+          var collectDataAndSaveToDb = makeDataCollectionFunc(
           {
             owner: batch.owner,
             type: simType,
             simNumber: i,
             batchId: batch._id
-          }));
+          });
+
+          // YOU DON'T WANT TO KNOW
+
+          // ok you probably need to
+
+          // We can't send the stats back until it's all been saved to the db
+          // so how can we tell? I make this promise here which is fulfilled
+          // only after the jsonStreamParser has got something (guaranteed to be
+          // the end of a sim) and it collects and saves the data
+
+          // that function returns a promise that resolves when the db save on
+          // the Batch is finished. so by doing .then(resolve) on that promise
+          // this new promise will only resolve when the db has saved the Batch
+          // with its results
+
+          // by collecting all these promises for a batch and doing Promise.al()
+          // on them, we have a spot to chain into that guarantees all sims have
+          // finished and been saved to their respective Batch ObjectId
+
+          // to the array of sim promises
+          promises.push( new Promise( function(resolve, reject)
+          {
+            // push a new custom promise that doesn't resolve until
+
+            // the json parser gets some data
+            jsonStreamParser.on('data', function(engineJson)
+            {
+              // and we collect and save the data
+              collectDataAndSaveToDb(engineJson)
+                .then(resolve /* we're good */ );
+            });
+          }) );
 
           sim.stdout.pipe(jsonStreamParser);
-
-          promises.push( new Promise(
-            (resolve, reject) =>
-            {
-              sim.on( 'exit' , () => { resolve(); } );
-              sim.on( 'error', () => { reject (); } );
-            })
-          );
         }
       }
 
+      // this will only be resolved once all sims have finished thanks to the above
       userBatchesInProgress[batch.owner.toString()][batch._id.toString()] = Promise.all(promises);
 
       res.status(200).json({batchId: batch._id.toString()});
@@ -187,15 +215,17 @@ function makeDataCollectionFunc(parameters)
     newSim.markModified("tickData");
     newSim.markModified("committedSites");
 
-    newSim.save()
+    return newSim.save()
       .then(function(sim)
       {
-        Models.Batch.findById(parameters.batchId)
+        return Models.Batch.findById(parameters.batchId)
           .then(function(batch)
           {
+            console.log(sim);
             batch.sims.push(sim._id);
+            batch.markModified("sims");
             batch.save();
-          })
+          });
       });
   }
 }

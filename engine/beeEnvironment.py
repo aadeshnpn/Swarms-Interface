@@ -59,8 +59,8 @@ class Environment:
         self.stats["parameters"] = {"environment": {}, "agent": {}}
 
         #  environment parameters
-        self.number_of_agents = 499
-        self.frames_per_sec = 600
+        self.number_of_agents = 100
+        self.frames_per_sec = 100
 
         self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
 
@@ -247,7 +247,7 @@ class Environment:
                     agent.live = False
                     self.dead_agents.append(agent)
                     self.stats["deadAgents"] += 1
-                    eprint("dead: ", self.state["deadAgents"])
+                    #eprint("dead: ", self.state["deadAgents"])
                     # self.states[agent.state].remove(agent_id) also not using this currently
                     del self.agents[agent_id]
                     return
@@ -331,7 +331,7 @@ class Environment:
                 if self.states[state].count(agentId) > 0:
                     self.states[state].remove(agentId)
                     break'''
-            eprint("dead: ", self.stats["deadAgents"])
+            #eprint("dead: ", self.stats["deadAgents"])
             del self.agents[agentId]
             return
         elif terrain_value == -2:
