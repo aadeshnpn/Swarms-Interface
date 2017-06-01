@@ -46,6 +46,7 @@ class hubController:
             ##This should be a different state in Ants
             #bee.state = Observing(bee)
             bee.state = Waiting(bee)
+            eprint('this should not be here..')
 
         elif (self.directionParams[angle] > self.directions[angle]): #there needs to be more bees in that direction anyways
             #eprint("checking out:", bee.id, "direction:", int(bee.direction*(180/np.pi)))
@@ -56,11 +57,13 @@ class hubController:
             del self.agentsInHub[bee.id]
             agent.direction = angle * 5
 
+
         elif self.directionParams[angle] == self.directions[angle]: #perfect amount of bees, stop it
             #eprint("INHIBITED!!!!! ")
             #eprint("Angle:", angle, "  Id:", bee.id, "  Bee in hub?:", bee.inHub)
             ##This should be a different state in Ants            
-            #bee.state = Observing(bee)            
+            #bee.state = Observing(bee)
+            eprint('this should not be here..')
             bee.state =  Waiting(bee)
 
 
@@ -149,7 +152,8 @@ class hubController:
                 "controller":
                 {
                     "agentDirections" : self.directions,
-                    "agentsIn" : self.incoming
+                    "agentsIn" : self.incoming,
+                    "dead": 0
                 }
             }
         }
