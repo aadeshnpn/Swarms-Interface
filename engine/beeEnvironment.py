@@ -3,6 +3,7 @@
 import json
 import os
 import time
+from datetime import datetime
 import numpy as np
 # Json doesn't work with numpy type 64
 # import numpy as np
@@ -27,6 +28,7 @@ parser.add_argument("-s", "--stats", action="store_true", help="Output json stat
 parser.add_argument("-c", "--commit-stop", action="store_true", help="Stop simulation after all agents have committed")
 parser.add_argument("-t", "--tick-limit", type=int, help="Stop simulation after TICK_LIMIT ticks")
 parser.add_argument("-r", "--randomize", action="store_true", help="randomizes the environment")
+parser.add_argument("-l", "--log_file", type=str, help="Log input events to LOG_FILE")
 
 args = parser.parse_args()
 
@@ -38,6 +40,20 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class Environment:
     def __init__(self, file_name):
+        self.seed = np.random.randint(np.iinfo(np.uint32).max)
+        np.random.seed(self.seed)
+        self.logfile = None
+        if (args.log_file):
+            base_fname = args.log_file
+            fname = base_fname
+            fname_id = 1
+            while (os.path.exists(fname)):
+                fname_id += 1
+                fname = base_fname + "-" + str(fname_id)
+
+            self.logfile = open(fname, "w+")
+            self.logfile.write("%s\n" % json.dumps({"seed":self.seed}))
+
         self.args = args
         self.file_name = file_name
         self.x_limit = 0
@@ -460,86 +476,101 @@ class Environment:
 
         while True:
 
-            if args.tick_limit != None and self.ticks >= args.tick_limit:
-                self.stats["didNotFinish"] = True
-                break
+            try:
 
-            self.stats["ticks"] = self.stats["ticks"] + 1
+                if args.tick_limit != None and self.ticks >= args.tick_limit:
+                    self.stats["didNotFinish"] = True
+                    break
 
-            if args.stats and self.stats["ticks"] % 100 == 0:
-                print(json.dumps(self.stats))
+                self.stats["ticks"] = self.stats["ticks"] + 1
 
-            if not self.isPaused:
-                if not args.no_viewer:
-                    world.to_json()
+                if args.stats and self.stats["ticks"] % 100 == 0:
+                    print(json.dumps(self.stats))
 
-                self.stats["stateCounts"] = {}
+                if not self.isPaused:
+                    if not args.no_viewer:
+                        world.to_json()
 
-                keys = list(self.agents.keys())  # deleting a key mid-iteration (suggest_new_direction())
-                # makes python mad...
-                for agent_id in keys:
-                    '''
-                    agent = self.agents[agent_id]
-                    agent.act()
-                    agent.sense(self)
-                    self.suggest_new_direction(agent.id)
-                    # wind_direction = 1  # in radians
-                    # wind_velocity = .01
-                    # uncomment the next line to add wind to the environment
-                    #self.wind(wind_direction, wind_velocity)
-                    agent.update(self)
-                    '''
+                    self.stats["stateCounts"] = {}
 
-                    if self.agents[agent_id].state.name not in self.stats["stateCounts"]:
-                        self.stats["stateCounts"][self.agents[agent_id].state.name] = 0
+                    keys = list(self.agents.keys())  # deleting a key mid-iteration (suggest_new_direction())
+                    # makes python mad...
+                    for agent_id in keys:
+                        '''
+                        agent = self.agents[agent_id]
+                        agent.act()
+                        agent.sense(self)
+                        self.suggest_new_direction(agent.id)
+                        # wind_direction = 1  # in radians
+                        # wind_velocity = .01
+                        # uncomment the next line to add wind to the environment
+                        #self.wind(wind_direction, wind_velocity)
+                        agent.update(self)
+                        '''
 
-                    self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
+                        if self.agents[agent_id].state.name not in self.stats["stateCounts"]:
+                            self.stats["stateCounts"][self.agents[agent_id].state.name] = 0
 
-                    # if agent_id == "500":
-                    #     self.change_agent_params = True
+                        self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
+
+                        # if agent_id == "500":
+                        #     self.change_agent_params = True
+
+                        if self.change_agent_params:
+                            self.updateAgentParameters(self.agents[agent_id])
+
+                        # is this faster?
+                        self.agents[agent_id].act()
+                        self.agents[agent_id].sense(self)
+
+                        atSite = False
+                        if self.agents[agent_id].atSite:
+                            atSite = True
+
+                        self.agents[agent_id].update(self)
+
+                        if atSite and not self.agents[agent_id].atSite:
+                            self.info_stations[self.agents[agent_id].siteIndex].bee_count -= 1
+                            self.agents[agent_id].siteIndex = None
+
+                        self.suggest_new_direction(agent_id)
+
+                    self.hubController.hiveAdjust(self.agents)
 
                     if self.change_agent_params:
-                        self.updateAgentParameters(self.agents[agent_id])
+                        self.change_agent_params = False
 
-                    # is this faster?
-                    self.agents[agent_id].act()
-                    self.agents[agent_id].sense(self)
+                    if not args.no_viewer:
+                        print(json.dumps({
+                            "type": "stateCounts",
+                            "data": self.stats["stateCounts"]
+                        }))
 
-                    atSite = False
-                    if self.agents[agent_id].atSite:
-                        atSite = True
+                if (args.commit_stop and "commit" in self.stats["stateCounts"] and self.stats["stateCounts"][
+                    "commit"] + len(self.dead_agents) >= self.number_of_agents * .95):
+                    break
 
-                    self.agents[agent_id].update(self)
+                self.updateFlowControllers()
 
-                    if atSite and not self.agents[agent_id].atSite:
-                        self.info_stations[self.agents[agent_id].siteIndex].bee_count -= 1
-                        self.agents[agent_id].siteIndex = None
+                if (self.logfile):
+                    for event in self.inputEventManager.eventQueue:
+                        self.logfile.write(("%s\n" % json.dumps({"tick":self.stats["ticks"],"event":event})))
+                        self.inputEventManager.callbackEvent(event)
 
-                    self.suggest_new_direction(agent_id)
+                del self.inputEventManager.eventQueue[:]
 
-                self.hubController.hiveAdjust(self.agents)
-
-                if self.change_agent_params:
-                    self.change_agent_params = False
+                if self.restart_simulation:
+                    self.reset_sim()
+                    self.restart_simulation = False
 
                 if not args.no_viewer:
-                    print(json.dumps({
-                        "type": "stateCounts",
-                        "data": self.stats["stateCounts"]
-                    }))
+                    time.sleep(1 / self.frames_per_sec)
 
-            if (args.commit_stop and "commit" in self.stats["stateCounts"] and self.stats["stateCounts"][
-                "commit"] + len(self.dead_agents) >= self.number_of_agents * .95):
-                break
-
-            self.updateFlowControllers()
-
-            if self.restart_simulation:
-                self.reset_sim()
-                self.restart_simulation = False
-
-            if not args.no_viewer:
-                time.sleep(1 / self.frames_per_sec)
+            except KeyboardInterrupt:
+                eprint("KeyboardInterrupt--Exiting")
+                if (self.logfile):
+                    self.logfile.close()
+                sys.exit()
 
         self.stats["committedSites"] = []
 
@@ -603,6 +634,7 @@ class Environment:
 
     def reset_sim(self):
         self.clear_for_reset()
+        np.random.seed(self.seed)
         self.add_agents()
         self.hubController.reset([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self,
                                  self.parameters["ExploreTime"])

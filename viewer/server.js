@@ -90,6 +90,8 @@ class Client
          if(process.argv[2] == "-r"){
             args.push("-r");
          }
+         args.push("-l")
+         args.push("logs/logfile")
          //var typeDir = (process.argv[2] === "-r") ? ([typeDir ])
          const engine = spawn(executable, args, {stdio: ['pipe', 'pipe', process.stderr]});
          engine.on('error', (err) => { console.error("[!] Unable to start engine process: " + err)});
