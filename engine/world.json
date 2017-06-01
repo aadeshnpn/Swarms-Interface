@@ -15,25 +15,25 @@
     {
       "x":500,
       "y":-300,
-      "radius":20,
+      "radius":5,
       "q_value":0.9
     },
     {
       "x":500,
       "y":350,
-      "radius":14,
+      "radius":3.5,
       "q_value":0.4
     },
     {
       "x":-300,
       "y":-250,
-      "radius":30,
+      "radius":7,
       "q_value":0.6
     },
     {
       "x":-750,
       "y":360,
-      "radius":24,
+      "radius":6,
       "q_value":0.5
     }
   ],
