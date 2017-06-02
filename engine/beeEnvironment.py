@@ -57,7 +57,7 @@ class Environment:
         self.stats["parameters"] = {"environment": {}, "agent": {}}
 
         #  environment parameters
-        self.number_of_agents = 460
+        self.number_of_agents = 120
         self.frames_per_sec = 600
 
         self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
@@ -65,7 +65,7 @@ class Environment:
         #  bee parameters
         self.parameters = {"PipingThreshold": int(self.number_of_agents * .12),
                            "Velocity": 1.25,
-                           "ExploreTime": 1000,
+                           "ExploreTime": 2000,
                            "RestTime": 1000,
                            "DanceTime": 1150,
                            "ObserveTime": 2000,
@@ -330,7 +330,8 @@ class Environment:
         print(self.parametersToJson())
 
     def updateAgentParameters(self, agent):
-        agent.PipingThreshold = int(self.parameters["PipingThreshold"])
+        #TODO get rid of site Access Radius
+        agent.parameters["PipingThreshold"] = int(self.parameters["PipingThreshold"])
         agent.velocity = float(self.parameters["Velocity"])
         agent.parameters["ExploreTime"] = float(self.parameters["ExploreTime"])
         agent.parameters["RestTime"] = int(self.parameters["RestTime"])
@@ -339,7 +340,7 @@ class Environment:
         agent.parameters["SiteAssessTime"] = int(self.parameters["SiteAssessTime"])
         agent.parameters["SiteAssessRadius"] = int(self.parameters["SiteAssessRadius"])
         agent.parameters["PipingTimer"] = int(self.parameters["PipingTime"])
-        agent.reset_trans_table()
+        #agent.reset_trans_table()
 
     def updateUIParameters(self, json):
         params = json['params']
@@ -490,26 +491,27 @@ class Environment:
             #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
             # agent = Agent(agent_id,Observing())
             # else:
-            agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.parameters["ExploreTime"]), self.hub,
+            agent = Agent(agent_id, Exploring(None), self.hub, count=int(self.parameters["ExploreTime"]),
                           piping_threshold=int(self.parameters["PipingThreshold"]),
                           global_velocity=float(self.parameters["Velocity"]),
-                          explore_time_multiplier=float(self.parameters["ExploreTime"]),
+                          explore_time=float(self.parameters["ExploreTime"]),
                           rest_time=int(self.parameters["RestTime"]),
                           dance_time=int(self.parameters["DanceTime"]),
                           observe_time=int(self.parameters["ObserveTime"]),
                           site_assess_time=int(self.parameters["SiteAssessTime"]),
                           site_assess_radius=int(self.parameters["SiteAssessRadius"]),
                           piping_time=int(self.parameters["PipingTime"]))
+            #agent.state = Exploring(agent)
             self.agents[agent_id] = agent
             # self.states[Exploring().__class__].append(agent_id)
 
         for y in range(rest_num):
             agent_id = str(x + 1 + y)
 
-            agent = Agent(agent_id, Resting(agent=None, rest_time=self.parameters["RestTime"]), self.hub,
+            agent = Agent(agent_id, Resting(None), self.hub, count=int(self.parameters["RestTime"]),
                           piping_threshold=int(self.parameters["PipingThreshold"]),
                           global_velocity=float(self.parameters["Velocity"]),
-                          explore_time_multiplier=float(self.parameters["ExploreTime"]),
+                          explore_time=float(self.parameters["ExploreTime"]),
                           rest_time=int(self.parameters["RestTime"]),
                           dance_time=int(self.parameters["DanceTime"]),
                           observe_time=int(self.parameters["ObserveTime"]),

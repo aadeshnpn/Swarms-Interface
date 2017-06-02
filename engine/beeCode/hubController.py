@@ -45,12 +45,14 @@ class hubController:
 
         elif self.directionParams[angle] < self.directions[angle]:  # too many bees, stop it!
             bee.state = Observing(bee)
+            bee.observingTransition()
 
         elif (self.directionParams[angle] > self.directions[angle]):  # there needs to be more bees in that direction
             self.agentLeave(angle,bee.id)
 
         elif self.directionParams[angle] == self.directions[angle]:  # perfect amount of bees, stop it
             bee.state = Observing(bee)
+            bee.observingTransition()
 
         agent.state = bee.state
         return agent.atHub
@@ -106,6 +108,7 @@ class hubController:
     def hiveAdjust(self, bees):
         # sortedParams = sorted(self.directionParams, operator.getitem(1), Reverse=True)
 
+        #This code is checking for the dead bees
         if self.exploreCounter < 1 and not self.piperCheck():
             for id, beeInf in self.agentList.items():
                 if beeInf.returnedToHub:
@@ -134,8 +137,9 @@ class hubController:
 
                         #updating bee info
                         bee.state = Exploring(bee)
+                        bee.exploreTransition()
                         bee.state.inputExplore = True
-                        bee.state.exploretime *= 0.35  # since the bees are going out in an almost straight line: less exploretime
+                        bee.counter *= 0.35  # since the bees are going out in an almost straight line: less exploretime
                         bee.direction = ((angle * 5) / 180) * np.pi
                         bee.inHub = False
 

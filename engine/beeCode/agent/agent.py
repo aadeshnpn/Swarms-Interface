@@ -34,16 +34,33 @@ class Agent(StateMachine):
         self.state.act(self)
 
     def update(self, environment):
-        self.nextState(self.state.update(self), environment)
+        self.nextState(self.state.update(self))
 
-    def danceTransition(self, environment):  #this runs after the agent has changed state
-        dance = int(self.q_value*1000-(250*self.assessments))
+    def danceTransition(self):  #this runs after the agent has changed state
+        dance = int(self.q_value*self.parameters["DanceTime"]-(250*self.assessments))
         if dance < 15:
             self.assessments = 1
             self.potential_site = None
-            self.nextState(input.tiredDance, environment)
+            self.nextState(input.tiredDance)
         else:
-            self.state.dance_counter = dance
+            self.counter = dance
+    def exploreTransition(self):
+        exp = np.random.normal(1, .05, 1)
+        while exp < 0:
+            exp = np.random.normal(1, .05, 1)
+        self.counter = self.parameters["ExploreTime"]*exp
+    def siteAssessTransition(self):
+        self.counter = self.parameters["SiteAssessTime"]
+    def pipingTransition(self):
+        self.counter = self.parameters["PipingTime"]
+    def restingTransition(self):
+        exp = np.random.normal(1, .05, 1)
+        while exp < 0:
+            exp = np.random.normal(1, .05, 1)
+        self.counter = self.parameters["RestTime"] * exp
+    def observeTransition(self):
+        self.counter = self.parameters["ObserveTime"]
+
 
     def getUiRepresentation(self):
         return {
@@ -56,15 +73,18 @@ class Agent(StateMachine):
             }
         }
 
-    def __init__(self, agentId, initialstate, hub, piping_threshold=40, piping_time=1200, global_velocity=2,
-                 explore_time_multiplier=3625, rest_time=2000, dance_time=1150, observe_time=2000,
+    def __init__(self, agentId, initialstate, hub, count = 1000, piping_threshold=40, piping_time=1200, global_velocity=2,
+                 explore_time=3625, rest_time=2000, dance_time=1150, observe_time=2000,
                  site_assess_time=250, site_assess_radius=15):
         self.state = initialstate
-
+        exp = np.random.normal(1, .5, 1)
+        while exp < 0:
+            exp = np.random.normal(1, .5, 1)
+        self.counter = int(count*exp)
         # These parameters may be modified at run-time
         self.parameters =  {"PipingThreshold":       piping_threshold,
                             "Velocity":              global_velocity,
-                            "ExploreTime":           explore_time_multiplier,
+                            "ExploreTime":           explore_time,
                             "RestTime":              rest_time,
                             "DanceTime":             dance_time,
                             "ObserveTime":           observe_time,
@@ -80,7 +100,6 @@ class Agent(StateMachine):
         self.id = agentId  # for communication with environment
         self.location = [hub["x"], hub["y"]]
         self.direction = 2*np.pi*np.random.random()  # should be initialized? potentially random?
-        #self.direction = np.pi/2
         self.velocity = self.parameters["Velocity"]
         self.hub = [hub["x"], hub["y"]]  # should be initialized?
         self.potential_site = None  # array [x,y]
@@ -94,22 +113,21 @@ class Agent(StateMachine):
         self.quadrant = []
 
         # create table here.
-        dict = {(Exploring(self).__class__, input.nestFound): [None, SiteAssess(self)],
-                (Exploring(self).__class__, input.exploreTime): [None, Observing(self)],
-                (Observing(self).__class__, input.observeTime): [None, Exploring(self)],
+        dict = {(Exploring(self).__class__, input.nestFound): [self.siteAssessTransition, SiteAssess(self)],
+                (Exploring(self).__class__, input.exploreTime): [self.observeTransition, Observing(self)],
+                (Observing(self).__class__, input.observeTime): [self.exploreTransition, Exploring(self)],
                 (Observing(self).__class__, input.dancerFound): [None, Assessing(self)],
-                (Observing(self).__class__, input.startPipe): [None, Piping(self)],
-                (Observing(self).__class__, input.quit): [None, Resting(self)],
+                (Observing(self).__class__, input.startPipe): [self.pipingTransition, Piping(self)],
+                (Observing(self).__class__, input.quit): [self.restingTransition, Resting(self)],
                 (Assessing(self).__class__, input.siteFound): [self.danceTransition, Dancing(self)], # self.danceTransition()
-                (Assessing(self).__class__, input.siteAssess): [None, SiteAssess(self)],
-                #(Assessing().__class__, input.quit): [None, Observing(self)],
+                (Assessing(self).__class__, input.siteAssess): [self.siteAssessTransition, SiteAssess(self)],
                 (SiteAssess(self).__class__, input.finAssess): [None, Assessing(self)],
-                (SiteAssess(self).__class__, input.startPipe): [None, Piping(self)],
-                (Dancing(self).__class__, input.tiredDance): [None, Resting(self)],
+                (SiteAssess(self).__class__, input.startPipe): [self.pipingTransition, Piping(self)],
+                (Dancing(self).__class__, input.tiredDance): [self.restingTransition, Resting(self)],
                 (Dancing(self).__class__, input.notTiredDance): [None, Assessing(self)],
-                (Dancing(self).__class__, input.startPipe): [None, Piping(self)],
-                (Resting(self).__class__, input.restingTime): [None, Observing(self)],
-                (Resting(self).__class__, input.startPipe): [None, Piping(self)],
+                (Dancing(self).__class__, input.startPipe): [self.pipingTransition, Piping(self)],
+                (Resting(self).__class__, input.restingTime): [self.observeTransition, Observing(self)],
+                (Resting(self).__class__, input.startPipe): [self.pipingTransition, Piping(self)],
                 (Piping(self).__class__, input.quorum): [None, Commit(self)]
                 }
         self.transitionTable = dict
@@ -120,43 +138,42 @@ class Agent(StateMachine):
         self.repulsor = None
         self.ignore_repulsor = None
 
-    def reset_trans_table(self):
+    '''def reset_trans_table(self):
         #  Reset table in order to update parameters in states
         del self.transitionTable
         self.transitionTable = {(Exploring(self).__class__, input.nestFound): [None, SiteAssess(self)],
-                (Exploring(self).__class__, input.exploreTime): [None, Observing(self)],
-                (Observing(self).__class__, input.observeTime): [None, Exploring(self)],
+                (Exploring(self).__class__, input.exploreTime): [self.observeTransition, Observing(self)],
+                (Observing(self).__class__, input.observeTime): [self.exploreTransition, Exploring(self)],
                 (Observing(self).__class__, input.dancerFound): [None, Assessing(self)],
                 (Observing(self).__class__, input.startPipe): [None, Piping(self)],
-                (Observing(self).__class__, input.quit): [None, Resting(self)],
+                (Observing(self).__class__, input.quit): [self.restingTransition, Resting(self)],
                 (Assessing(self).__class__, input.siteFound): [self.danceTransition, Dancing(self)], # self.danceTransition()
                 (Assessing(self).__class__, input.siteAssess): [None, SiteAssess(self)],
-                #(Assessing().__class__, input.quit): [None, Observing(self)],
                 (SiteAssess(self).__class__, input.finAssess): [None, Assessing(self)],
                 (SiteAssess(self).__class__, input.startPipe): [None, Piping(self)],
-                (Dancing(self).__class__, input.tiredDance): [None, Resting(self)],
+                (Dancing(self).__class__, input.tiredDance): [self.restingTransition, Resting(self)],
                 (Dancing(self).__class__, input.notTiredDance): [None, Assessing(self)],
                 (Dancing(self).__class__, input.startPipe): [None, Piping(self)],
-                (Resting(self).__class__, input.restingTime): [None, Observing(self)],
+                (Resting(self).__class__, input.restingTime): [self.observeTransition, Observing(self)],
                 (Resting(self).__class__, input.startPipe): [None, Piping(self)],
                 (Piping(self).__class__, input.quorum): [None, Commit(self)]
-                }
+                }'''
 
     # so, the exploring part needs to give the input..
 class Exploring(State):
-    def __init__(self, agent=None,ExploreTimeMultiplier = None):
+    def __init__(self, agent=None):
         self.name = "exploring"
         self.inputExplore = False
-        exp = np.random.normal(1, .002, 1)
+        '''exp = np.random.normal(1, .02, 1)
         while exp < 0:
-            exp = np.random.normal(1, .002, 1)
+            exp = np.random.normal(1, .02, 1)
         if agent is not None:
-            self.exploretime = exp*agent.parameters["ExploreTime"]
-        elif ExploreTimeMultiplier is not None:
-            self.exploretime = exp*ExploreTimeMultiplier
+            agent.counter = exp*agent.parameters["ExploreTime"]
+        #elif ExploreTimeMultiplier is not None:
+         #   self.exploretime = exp*ExploreTimeMultiplier
         else:
             warnings.warn("No agent or initial condition given! Using default...")
-            self.exploretime = exp*3625
+            self.exploretime = exp*3625'''
 
     def sense(self, agent, environment):
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius) \
@@ -186,11 +203,11 @@ class Exploring(State):
         self.move(agent)
 
     def update(self, agent):
-        self.exploretime = self.exploretime - 1
+        agent.counter -= 1
         if agent.q_value > 0:
             agent.potential_site = [agent.location[0], agent.location[1]]
             return input.nestFound
-        elif self.exploretime < 1:
+        elif agent.counter < 1:
             #eprint("hub:", agent.inHub)
             return input.exploreTime
 
@@ -269,20 +286,20 @@ class Assessing(State):
 
 
 class Resting(State):
-    def __init__(self, agent=None, rest_time=None):
+    def __init__(self, agent=None):
         self.name = "resting"
-        self.atHub = True  #we may not need this code at all... to turn it on make it default false.
+       # self.atHub = True  #we may not need this code at all... to turn it on make it default false.
         self.seesPiper = False
-        multiplier = np.abs(np.random.normal(1, 0.6, 1))  #Add normal distribution noise to resting counter
+        '''multiplier = np.abs(np.random.normal(1, 0.6, 1))  #Add normal distribution noise to resting counter
         if agent is not None:
             self.restCountdown = agent.parameters["RestTime"] * multiplier
         elif rest_time is not None:
             self.restCountdown = rest_time * multiplier
         else:
-            self.restCountdown = 4000 * multiplier
+            self.restCountdown = 4000 * multiplier'''
 
     def sense(self, agent, environment):
-        if self.atHub:
+        if agent.inHub:
             bee = environment.hubController.observersCheck()
             if isinstance(bee.state, Piping().__class__):
                 self.seesPiper = True
@@ -291,21 +308,20 @@ class Resting(State):
                 environment.hubController.newPiper()
 
     def act(self, agent):
-        if self.atHub and not self.seesPiper:
+        if agent.inHub and not self.seesPiper:
             agent.velocity = 0
-            self.restCountdown -= 1
+            agent.counter -= 1
         else:
             # if not at hub, move towards it
             self.move(agent)
             if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <= 1:
                 agent.velocity = 0
-                self.atHub = True
                 agent.atHub = True
 
     def update(self, agent):
         if self.seesPiper:
             return input.startPipe
-        if self.restCountdown < 1:
+        if agent.counter < 1:
             agent.velocity = agent.parameters["Velocity"]
             return input.restingTime
 
@@ -320,11 +336,10 @@ class Dancing(State):
     def __init__(self, agent=None):
         self.name = "dancing"
         self.seesPiper = False
-        if agent is None:
+        '''if agent is None:
             self.dance_counter = 1150
         else:
-            self.dance_counter = agent.parameters["DanceTime"]  # this dance counter should be determined by the q value and the distance,
-                                             # we can consider implementing that in the transition.
+            self.dance_counter = agent.parameters["DanceTime"]'''
 
     def sense(self, agent, environment):
         bee = environment.hubController.observersCheck()
@@ -341,13 +356,13 @@ class Dancing(State):
         # info from environment
         if self.seesPiper:
             return input.startPipe
-        if self.dance_counter < 1:
+        if agent.counter < 1:
             agent.assessments += 1
             agent.q_value = 0
             return input.notTiredDance
 
         else:
-            self.dance_counter -= 1
+            agent.counter -= 1
 
     def move(self, agent):
         if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 >= agent.hubRadius:
@@ -360,22 +375,21 @@ class Dancing(State):
         return
 
 class Observing(State):
-    def __init__(self, agent=None, observerTimer=None):
+    def __init__(self, agent=None):
         self.name = "observing"
-        if agent is not None:
+        '''if agent is not None:
             self.observerTimer = agent.parameters["ObserveTime"]
         elif observerTimer is not None:
             self.observerTimer = observerTimer
         else:
             warnings.warn("No agent or initial condition given! Using default...")
-            self.observerTimer = 2000
+            self.observerTimer = 2000'''
         self.seesDancer = False
-        self.atHub = False
         self.seesPiper = False
 
     def sense(self, agent, environment):
         # get nearby bees from environment and check for dancers
-        if self.atHub:
+        if agent.inHub:
             #bees = environment.get_nearby_agents(agent.id, 2)  # we may need to reformat this so the agent knows what is
             #for bee in bees:
             bee = environment.hubController.observersCheck()
@@ -396,9 +410,9 @@ class Observing(State):
                     return
 
     def act(self, agent):
-        if self.atHub:
-            self.observerTimer -= 1
-            if self.observerTimer == 0:
+        if agent.inHub:
+            agent.counter -= 1
+            if agent.counter == 0:
                 agent.velocity = agent.parameters["Velocity"]
             self.wander(agent)
         else:
@@ -406,8 +420,7 @@ class Observing(State):
             self.movehome(agent)
             if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 <= 1.1:
                 # 1.1 prevents moving back and forth around origin
-                self.atHub = True
-                #agent.inHub = True
+                agent.inHub = True
                 agent.direction += -89 + 179 * np.random.random()
                 agent.velocity = agent.parameters["Velocity"]
 
@@ -416,7 +429,7 @@ class Observing(State):
             return input.startPipe
         if self.seesDancer is True:
             return input.dancerFound
-        elif self.observerTimer < 1:
+        elif agent.counter < 1:
             if np.random.uniform(0, 1) < 0.1:  # 10% chance a bee goes back to rest after observing
                 return input.quit
             return input.observeTime
@@ -443,10 +456,8 @@ class SiteAssess(State):
     def __init__(self, agent=None):
         self.name = "site assess"
         if agent is None:
-            self.counter = 300
             self.siteRadius = 10
         else:
-            self.counter = agent.parameters["SiteAssessTime"]
             self.siteRadius = agent.parameters["SiteAssessRadius"]
         self.thresholdPassed = False
 
@@ -498,11 +509,11 @@ class SiteAssess(State):
         if self.thresholdPassed:
             return input.startPipe
         # counter functions
-        if self.counter < 1:
+        if agent.counter < 1:
             agent.atSite = False
             return input.finAssess
         else:
-            self.counter -= 1
+            agent.counter -= 1
 
     def move(self, agent):
         if ((agent.potential_site[0] - agent.location[0]) ** 2
@@ -518,10 +529,10 @@ class SiteAssess(State):
 class Piping(State):
     def __init__(self, agent=None):
         self.name = "piping"
-        if agent is None:
+        '''if agent is None:
             self.pipe_counter = 1000
         else:
-            self.pipe_counter = agent.parameters["PipingTime"]
+            self.pipe_counter = agent.parameters["PipingTime"]'''
         self.quorum = False
 
     '''def neighbors_piping(self, agent, environment):
@@ -557,8 +568,8 @@ class Piping(State):
 
     def update(self, agent):
         # info from environment
-        if self.pipe_counter > 1:
-            self.pipe_counter -= 1
+        if agent.counter > 1:
+            agent.counter -= 1
         else:
             if self.quorum is True:
                 agent.hub = agent.potential_site
@@ -579,7 +590,7 @@ class Piping(State):
 class Commit(State):
     def __init__(self, agent=None):
         self.name = "commit"
-        self.atHub = False  # we may not need this code at all... to turn it on make it default false.
+          # we may not need this code at all... to turn it on make it default false.
 
     def sense(self, agent, environment):  # probably not needed for now, but can be considered a place holder
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 > agent.hubRadius) \
@@ -589,14 +600,13 @@ class Commit(State):
                     return
 
     def act(self, agent):
-        if self.atHub:
+        if agent.inHub:
             pass
         else:
             # if not at hub, more towards it
             self.move(agent)
             if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 <= 1:
                 agent.velocity = 0
-                self.atHub = True
                 agent.inHub = True
 
     def update(self, agent):
