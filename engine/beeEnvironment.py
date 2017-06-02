@@ -57,20 +57,19 @@ class Environment:
         self.stats["parameters"] = {"environment": {}, "agent": {}}
 
         #  environment parameters
-        self.number_of_agents = 120
+        self.number_of_agents = 500
         self.frames_per_sec = 600
 
         self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
 
         #  bee parameters
-        self.parameters = {"PipingThreshold": int(self.number_of_agents * .12),
+        self.parameters = {"PipingThreshold": int(self.number_of_agents * .15),
                            "Velocity": 1.25,
                            "ExploreTime": 2000,
                            "RestTime": 1000,
                            "DanceTime": 1150,
                            "ObserveTime": 2000,
                            "SiteAssessTime": 250,
-                           "SiteAssessRadius": 9,
                            "PipingTime": 1200}
 
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
@@ -319,7 +318,6 @@ class Environment:
         self.parameters["DanceTime"] = int(params['beeDanceTime'])
         self.parameters["ObserveTime"] = int(params['beeObserveTime'])
         self.parameters["SiteAssessTime"] = int(params['beeSiteAccessTime'])
-        self.parameters["SiteAssessRadius"] = int(params['beeSiteAccessRadius'])
         self.parameters["PipingTime"] = int(params['beePipingTimer'])
         self.number_of_agents = int(params['numberOfAgents'])
 
@@ -338,7 +336,7 @@ class Environment:
         agent.parameters["DanceTime"] = int(self.parameters["DanceTime"])
         agent.parameters["ObserveTime"] = int(self.parameters["ObserveTime"])
         agent.parameters["SiteAssessTime"] = int(self.parameters["SiteAssessTime"])
-        agent.parameters["SiteAssessRadius"] = int(self.parameters["SiteAssessRadius"])
+        #agent.parameters["SiteAssessRadius"] = int(self.parameters["SiteAssessRadius"])
         agent.parameters["PipingTimer"] = int(self.parameters["PipingTime"])
         #agent.reset_trans_table()
 
@@ -413,11 +411,9 @@ class Environment:
 
                     self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
 
-                    # if agent_id == "500":
-                    #     self.change_agent_params = True
 
-                    if self.change_agent_params:
-                        self.updateAgentParameters(self.agents[agent_id])
+                    #if self.change_agent_params:
+                    #    self.updateAgentParameters(self.agents[agent_id])
 
                     # is this faster?
                     self.agents[agent_id].act()
@@ -484,7 +480,7 @@ class Environment:
             self.info_stations.append(InfoStation(self.parameters))
 
     def add_agents(self):
-        rest_num = int(.5 * np.sqrt(self.number_of_agents))
+        rest_num = int(.1 * np.sqrt(self.number_of_agents))
         for x in range(self.number_of_agents - rest_num):
             agent_id = str(x)
             # if self.useDefaultParams:
@@ -499,7 +495,6 @@ class Environment:
                           dance_time=int(self.parameters["DanceTime"]),
                           observe_time=int(self.parameters["ObserveTime"]),
                           site_assess_time=int(self.parameters["SiteAssessTime"]),
-                          site_assess_radius=int(self.parameters["SiteAssessRadius"]),
                           piping_time=int(self.parameters["PipingTime"]))
             #agent.state = Exploring(agent)
             self.agents[agent_id] = agent
@@ -516,7 +511,6 @@ class Environment:
                           dance_time=int(self.parameters["DanceTime"]),
                           observe_time=int(self.parameters["ObserveTime"]),
                           site_assess_time=int(self.parameters["SiteAssessTime"]),
-                          site_assess_radius=int(self.parameters["SiteAssessRadius"]),
                           piping_time=int(self.parameters["PipingTime"]))
             self.agents[agent_id] = agent
 
@@ -622,7 +616,6 @@ class Environment:
                             "beeDanceTime": self.parameters["DanceTime"],
                             "beeObserveTime": self.parameters["ObserveTime"],
                             "beeSiteAccessTime": self.parameters["SiteAssessTime"],
-                            "beeSiteAccessRadius": self.parameters["SiteAssessRadius"],
                             "beePipingTimer": self.parameters["PipingTime"],
                             "numberOfAgents": self.number_of_agents
                         }

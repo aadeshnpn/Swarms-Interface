@@ -45,19 +45,16 @@ class Agent(StateMachine):
         else:
             self.counter = dance
     def exploreTransition(self):
-        exp = np.random.normal(1, .05, 1)
+        '''exp = np.random.normal(1, .05, 1)
         while exp < 0:
-            exp = np.random.normal(1, .05, 1)
-        self.counter = self.parameters["ExploreTime"]*exp
+            exp = np.random.normal(1, .05, 1)'''
+        self.counter = self.parameters["ExploreTime"]*self.exp
     def siteAssessTransition(self):
         self.counter = self.parameters["SiteAssessTime"]
     def pipingTransition(self):
         self.counter = self.parameters["PipingTime"]
     def restingTransition(self):
-        exp = np.random.normal(1, .05, 1)
-        while exp < 0:
-            exp = np.random.normal(1, .05, 1)
-        self.counter = self.parameters["RestTime"] * exp
+        self.counter = self.parameters["RestTime"] * self.exp
     def observeTransition(self):
         self.counter = self.parameters["ObserveTime"]
 
@@ -75,12 +72,16 @@ class Agent(StateMachine):
 
     def __init__(self, agentId, initialstate, hub, count = 1000, piping_threshold=40, piping_time=1200, global_velocity=2,
                  explore_time=3625, rest_time=2000, dance_time=1150, observe_time=2000,
-                 site_assess_time=250, site_assess_radius=15):
+                 site_assess_time=250):
         self.state = initialstate
         exp = np.random.normal(1, .5, 1)
         while exp < 0:
             exp = np.random.normal(1, .5, 1)
         self.counter = int(count*exp)
+        exp = np.random.normal(1, .05, 1)
+        while exp < 0:
+            exp = np.random.normal(1, .05, 1)
+        self.exp =exp
         # These parameters may be modified at run-time
         self.parameters =  {"PipingThreshold":       piping_threshold,
                             "Velocity":              global_velocity,
@@ -89,7 +90,6 @@ class Agent(StateMachine):
                             "DanceTime":             dance_time,
                             "ObserveTime":           observe_time,
                             "SiteAssessTime":        site_assess_time,
-                            "SiteAssessRadius":      site_assess_radius,
                             "PipingTime":            piping_time}
 
         # This time-stamp should be updated whenever the bee receives new parameters
@@ -234,7 +234,7 @@ class Exploring(State):
              agent.direction %= 2 * np.pi
 
         elif self.inputExplore: #this is for when the user has requested more bees
-            delta_d = np.random.normal(0, .02) # this will assure that the bee moves less erratically, it can be decreased a little as well
+            delta_d = np.random.normal(0, .005) # this will assure that the bee moves less erratically, it can be decreased a little as well
             agent.direction = (agent.direction + delta_d) % (2 * np.pi)
         else:
             delta_d = np.random.normal(0, .1)
@@ -456,9 +456,9 @@ class SiteAssess(State):
     def __init__(self, agent=None):
         self.name = "site assess"
         if agent is None:
-            self.siteRadius = 10
+            self.siteRadius = 9
         else:
-            self.siteRadius = agent.parameters["SiteAssessRadius"]
+            self.siteRadius = 9
         self.thresholdPassed = False
 
     def check_num_close_assessors(self, agent, environment):

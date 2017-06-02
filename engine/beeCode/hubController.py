@@ -45,14 +45,14 @@ class hubController:
 
         elif self.directionParams[angle] < self.directions[angle]:  # too many bees, stop it!
             bee.state = Observing(bee)
-            bee.observingTransition()
+            bee.observeTransition()
 
         elif (self.directionParams[angle] > self.directions[angle]):  # there needs to be more bees in that direction
             self.agentLeave(angle,bee.id)
 
         elif self.directionParams[angle] == self.directions[angle]:  # perfect amount of bees, stop it
             bee.state = Observing(bee)
-            bee.observingTransition()
+            bee.observeTransition()
 
         agent.state = bee.state
         return agent.atHub
