@@ -1,7 +1,7 @@
 import json
 
 from randomdict import RandomDict
-
+import copy
 from .agent.agent import *
 from utils.debug import *
 
@@ -67,6 +67,8 @@ class hubController:
         inAngle = (bee.direction - np.pi) % (2 * np.pi)
         inAngle = int(int(inAngle * (180 / np.pi)) / 5)
 
+        bee.parameters = copy.copy(self.environment.parameters)
+
         #updating hub info and agents
         self.directions[exitAngle] = self.directions[exitAngle] - 1
         self.incoming[inAngle] += 1
@@ -83,6 +85,7 @@ class hubController:
             print(json.dumps({"type": "updateMission",
                               "data": {"x": bee.potential_site[0], "y": bee.potential_site[1], "q": bee.q_value}}))
 
+
     def handleRadialControl(self, jsonInput):
         jsonDict = jsonInput['state']  # id, dictionary(r:radian, deg: degrees, val: 1-30)
         self.directionInput(jsonDict['deg'], jsonDict['val'])
@@ -93,7 +96,10 @@ class hubController:
         angle = int(int(direction % 360) / 5)  # converting to fit in the array
 
         self.directionParams[angle] = int(newValue)
-
+    def emitUpdateParams(self, params):
+        for id,bee in self.agentsInHub.items():
+            bee.parameters = copy.copy(params)
+            bee.velocity = params["Velocity"]
     def observersCheck(self):
         return self.agentsInHub.random_value()
 

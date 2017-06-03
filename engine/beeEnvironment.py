@@ -324,10 +324,11 @@ class Environment:
         self.change_agent_params = True
         eprint("New velocity =", params["beeGlobalVelocity"])
 
+        self.hubController.emitUpdateParams(self.parameters)
         # echo the change out for any other connected clients
         print(self.parametersToJson())
 
-    def updateAgentParameters(self, agent):
+    '''def updateAgentParameters(self, agent):
         #TODO get rid of site Access Radius
         agent.parameters["PipingThreshold"] = int(self.parameters["PipingThreshold"])
         agent.velocity = float(self.parameters["Velocity"])
@@ -338,7 +339,7 @@ class Environment:
         agent.parameters["SiteAssessTime"] = int(self.parameters["SiteAssessTime"])
         #agent.parameters["SiteAssessRadius"] = int(self.parameters["SiteAssessRadius"])
         agent.parameters["PipingTimer"] = int(self.parameters["PipingTime"])
-        #agent.reset_trans_table()
+        #agent.reset_trans_table()'''
 
     def updateUIParameters(self, json):
         params = json['params']
@@ -433,8 +434,8 @@ class Environment:
 
                 self.hubController.hiveAdjust(self.agents)
 
-                if self.change_agent_params:
-                    self.change_agent_params = False
+                '''if self.change_agent_params:
+                    self.change_agent_params = False'''
 
                 if not args.no_viewer:
                     print(json.dumps({
@@ -487,7 +488,7 @@ class Environment:
             #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
             # agent = Agent(agent_id,Observing())
             # else:
-            agent = Agent(agent_id, Exploring(None), self.hub, count=int(self.parameters["ExploreTime"]),
+            '''agent = Agent(agent_id, Exploring(None), self.hub, count=int(self.parameters["ExploreTime"]),
                           piping_threshold=int(self.parameters["PipingThreshold"]),
                           global_velocity=float(self.parameters["Velocity"]),
                           explore_time=float(self.parameters["ExploreTime"]),
@@ -495,23 +496,16 @@ class Environment:
                           dance_time=int(self.parameters["DanceTime"]),
                           observe_time=int(self.parameters["ObserveTime"]),
                           site_assess_time=int(self.parameters["SiteAssessTime"]),
-                          piping_time=int(self.parameters["PipingTime"]))
+                          piping_time=int(self.parameters["PipingTime"]))'''
+            agent = Agent(agent_id, Exploring(None), self.hub, self.parameters,
+                          count = int(self.parameters["ExploreTime"]))
             #agent.state = Exploring(agent)
             self.agents[agent_id] = agent
             # self.states[Exploring().__class__].append(agent_id)
 
         for y in range(rest_num):
             agent_id = str(x + 1 + y)
-
-            agent = Agent(agent_id, Resting(None), self.hub, count=int(self.parameters["RestTime"]),
-                          piping_threshold=int(self.parameters["PipingThreshold"]),
-                          global_velocity=float(self.parameters["Velocity"]),
-                          explore_time=float(self.parameters["ExploreTime"]),
-                          rest_time=int(self.parameters["RestTime"]),
-                          dance_time=int(self.parameters["DanceTime"]),
-                          observe_time=int(self.parameters["ObserveTime"]),
-                          site_assess_time=int(self.parameters["SiteAssessTime"]),
-                          piping_time=int(self.parameters["PipingTime"]))
+            agent = Agent(agent_id, Resting(None), self.hub, self.parameters,count=int(self.parameters["RestTime"]))
             self.agents[agent_id] = agent
 
     def reset_sim(self):

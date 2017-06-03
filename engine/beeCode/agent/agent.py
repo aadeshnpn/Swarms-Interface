@@ -70,9 +70,10 @@ class Agent(StateMachine):
             }
         }
 
-    def __init__(self, agentId, initialstate, hub, count = 1000, piping_threshold=40, piping_time=1200, global_velocity=2,
-                 explore_time=3625, rest_time=2000, dance_time=1150, observe_time=2000,
-                 site_assess_time=250):
+    #def __init__(self, agentId, initialstate, hub, count = 1000, piping_threshold=40, piping_time=1200, global_velocity=2,
+     #            explore_time=3625, rest_time=2000, dance_time=1150, observe_time=2000,
+      #           site_assess_time=250):
+    def __init__(self, agentId, initialstate, hub, params, count=1000):
         self.state = initialstate
         exp = np.random.normal(1, .5, 1)
         while exp < 0:
@@ -83,14 +84,15 @@ class Agent(StateMachine):
             exp = np.random.normal(1, .05, 1)
         self.exp =exp
         # These parameters may be modified at run-time
-        self.parameters =  {"PipingThreshold":       piping_threshold,
+        '''self.parameters =  {"PipingThreshold":       piping_threshold,
                             "Velocity":              global_velocity,
                             "ExploreTime":           explore_time,
                             "RestTime":              rest_time,
                             "DanceTime":             dance_time,
                             "ObserveTime":           observe_time,
                             "SiteAssessTime":        site_assess_time,
-                            "PipingTime":            piping_time}
+                            "PipingTime":            piping_time}'''
+        self.parameters = params
 
         # This time-stamp should be updated whenever the bee receives new parameters
         self.param_time_stamp = 0
