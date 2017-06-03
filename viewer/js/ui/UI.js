@@ -20,7 +20,9 @@ class UI
       this.documentElems.push( new UIParams			  (this) );
       this.documentElems.push( new SitePriorityMeters(this) );
       this.documentElems.push( new DebugTable        (this) );
-      this.documentElems.push(new beeCounter        (this))
+      this.documentElems.push(new beeCounter        (this));
+      this.documentElems.push(new chatRoom(this));
+
       this.activeCursor = cursors.default.activate();
 
       this.register('restart', this.reset.bind(this));

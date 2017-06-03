@@ -95,6 +95,8 @@ class Environment:
         # json aux
         self.previousMetaJson = None
 
+        self.chat_history = ""
+
     def countUpdate(self, state1, state2):
         pass
 
@@ -364,6 +366,14 @@ class Environment:
     def getParams(self, data):
         print(self.parametersToJson())
 
+    def processMessage(self, data):
+        self.chat_history += data['message'] + '\n'
+        eprint(self.chat_history)
+        print(json.dumps({
+            "type" : "updateChat",
+            "data" : self.chat_history
+        }))
+
     # Move all of the agents
     def run(self):
 
@@ -379,6 +389,8 @@ class Environment:
             self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
             self.inputEventManager.subscribe('requestStates', self.getUiStates)
             self.inputEventManager.subscribe('requestParams', self.getParams)
+
+            self.inputEventManager.subscribe('message', self.processMessage)
 
             world.to_json()
             self.getParams(None)  # this is a shortcut for letting the client know what the initial parameters are.
