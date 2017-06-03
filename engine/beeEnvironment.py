@@ -57,20 +57,19 @@ class Environment:
         self.stats["parameters"] = {"environment": {}, "agent": {}}
 
         #  environment parameters
-        self.number_of_agents = 120
+        self.number_of_agents = 500
         self.frames_per_sec = 600
 
         self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
 
         #  bee parameters
-        self.parameters = {"PipingThreshold": int(self.number_of_agents * .12),
+        self.parameters = {"PipingThreshold": int(self.number_of_agents * .15),
                            "Velocity": 1.25,
                            "ExploreTime": 2000,
                            "RestTime": 1000,
                            "DanceTime": 1150,
                            "ObserveTime": 2000,
                            "SiteAssessTime": 250,
-                           "SiteAssessRadius": 9,
                            "PipingTime": 1200}
 
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
@@ -321,17 +320,17 @@ class Environment:
         self.parameters["DanceTime"] = int(params['beeDanceTime'])
         self.parameters["ObserveTime"] = int(params['beeObserveTime'])
         self.parameters["SiteAssessTime"] = int(params['beeSiteAccessTime'])
-        self.parameters["SiteAssessRadius"] = int(params['beeSiteAccessRadius'])
         self.parameters["PipingTime"] = int(params['beePipingTimer'])
         self.number_of_agents = int(params['numberOfAgents'])
 
         self.change_agent_params = True
         eprint("New velocity =", params["beeGlobalVelocity"])
 
+        self.hubController.emitUpdateParams(self.parameters)
         # echo the change out for any other connected clients
         print(self.parametersToJson())
 
-    def updateAgentParameters(self, agent):
+    '''def updateAgentParameters(self, agent):
         #TODO get rid of site Access Radius
         agent.parameters["PipingThreshold"] = int(self.parameters["PipingThreshold"])
         agent.velocity = float(self.parameters["Velocity"])
@@ -340,9 +339,9 @@ class Environment:
         agent.parameters["DanceTime"] = int(self.parameters["DanceTime"])
         agent.parameters["ObserveTime"] = int(self.parameters["ObserveTime"])
         agent.parameters["SiteAssessTime"] = int(self.parameters["SiteAssessTime"])
-        agent.parameters["SiteAssessRadius"] = int(self.parameters["SiteAssessRadius"])
+        #agent.parameters["SiteAssessRadius"] = int(self.parameters["SiteAssessRadius"])
         agent.parameters["PipingTimer"] = int(self.parameters["PipingTime"])
-        #agent.reset_trans_table()
+        #agent.reset_trans_table()'''
 
     def updateUIParameters(self, json):
         params = json['params']
@@ -425,11 +424,9 @@ class Environment:
 
                     self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
 
-                    # if agent_id == "500":
-                    #     self.change_agent_params = True
 
-                    if self.change_agent_params:
-                        self.updateAgentParameters(self.agents[agent_id])
+                    #if self.change_agent_params:
+                    #    self.updateAgentParameters(self.agents[agent_id])
 
                     # is this faster?
                     self.agents[agent_id].act()
@@ -449,8 +446,8 @@ class Environment:
 
                 self.hubController.hiveAdjust(self.agents)
 
-                if self.change_agent_params:
-                    self.change_agent_params = False
+                '''if self.change_agent_params:
+                    self.change_agent_params = False'''
 
                 if not args.no_viewer:
                     print(json.dumps({
@@ -496,14 +493,14 @@ class Environment:
             self.info_stations.append(InfoStation(self.parameters))
 
     def add_agents(self):
-        rest_num = int(.5 * np.sqrt(self.number_of_agents))
+        rest_num = int(.1 * np.sqrt(self.number_of_agents))
         for x in range(self.number_of_agents - rest_num):
             agent_id = str(x)
             # if self.useDefaultParams:
             #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
             # agent = Agent(agent_id,Observing())
             # else:
-            agent = Agent(agent_id, Exploring(None), self.hub, count=int(self.parameters["ExploreTime"]),
+            '''agent = Agent(agent_id, Exploring(None), self.hub, count=int(self.parameters["ExploreTime"]),
                           piping_threshold=int(self.parameters["PipingThreshold"]),
                           global_velocity=float(self.parameters["Velocity"]),
                           explore_time=float(self.parameters["ExploreTime"]),
@@ -511,25 +508,16 @@ class Environment:
                           dance_time=int(self.parameters["DanceTime"]),
                           observe_time=int(self.parameters["ObserveTime"]),
                           site_assess_time=int(self.parameters["SiteAssessTime"]),
-                          site_assess_radius=int(self.parameters["SiteAssessRadius"]),
-                          piping_time=int(self.parameters["PipingTime"]))
+                          piping_time=int(self.parameters["PipingTime"]))'''
+            agent = Agent(agent_id, Exploring(None), self.hub, self.parameters,
+                          count = int(self.parameters["ExploreTime"]))
             #agent.state = Exploring(agent)
             self.agents[agent_id] = agent
             # self.states[Exploring().__class__].append(agent_id)
 
         for y in range(rest_num):
             agent_id = str(x + 1 + y)
-
-            agent = Agent(agent_id, Resting(None), self.hub, count=int(self.parameters["RestTime"]),
-                          piping_threshold=int(self.parameters["PipingThreshold"]),
-                          global_velocity=float(self.parameters["Velocity"]),
-                          explore_time=float(self.parameters["ExploreTime"]),
-                          rest_time=int(self.parameters["RestTime"]),
-                          dance_time=int(self.parameters["DanceTime"]),
-                          observe_time=int(self.parameters["ObserveTime"]),
-                          site_assess_time=int(self.parameters["SiteAssessTime"]),
-                          site_assess_radius=int(self.parameters["SiteAssessRadius"]),
-                          piping_time=int(self.parameters["PipingTime"]))
+            agent = Agent(agent_id, Resting(None), self.hub, self.parameters,count=int(self.parameters["RestTime"]))
             self.agents[agent_id] = agent
 
     def reset_sim(self):
@@ -634,7 +622,6 @@ class Environment:
                             "beeDanceTime": self.parameters["DanceTime"],
                             "beeObserveTime": self.parameters["ObserveTime"],
                             "beeSiteAccessTime": self.parameters["SiteAssessTime"],
-                            "beeSiteAccessRadius": self.parameters["SiteAssessRadius"],
                             "beePipingTimer": self.parameters["PipingTime"],
                             "numberOfAgents": self.number_of_agents
                         }
