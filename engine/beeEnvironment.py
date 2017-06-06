@@ -57,7 +57,7 @@ class Environment:
         self.stats["parameters"] = {"environment": {}, "agent": {}}
 
         #  environment parameters
-        self.number_of_agents = 500
+        self.number_of_agents = 100
         self.frames_per_sec = 600
 
         self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
@@ -186,6 +186,7 @@ class Environment:
                     self.info_stations[i].bee_count += 1
                     agent.atSite = True
                     agent.siteIndex = i
+                    #TODO: move this to agents, which would be faster
                     if info.check_for_changes(agent.parameters, agent.param_time_stamp):
                         agent.update_params(info.parameters)
                         agent.param_time_stamp = info.last_update
@@ -197,10 +198,10 @@ class Environment:
                     "q": site["q_value"] - (tot_dif / site["radius"] * .25 * site["q_value"]) #gradient!
                 }
 
-        if agent.atSite:
+        '''if agent.atSite:
             if self.info_stations[agent.siteIndex].check_for_changes(agent.parameters, agent.param_time_stamp):
                 agent.update_params(self.info_stations[agent.siteIndex].parameters)
-                agent.param_time_stamp = self.info_stations[agent.siteIndex].last_update
+                agent.param_time_stamp = self.info_stations[agent.siteIndex].last_update'''
                 # agent.atSite = False
 
         return {"radius": -1, "q": 0}
@@ -325,8 +326,7 @@ class Environment:
 
         self.change_agent_params = True
         eprint("New velocity =", params["beeGlobalVelocity"])
-
-        self.hubController.emitUpdateParams(self.parameters)
+        self.hubController.emitUpdateParams(self.parameters,time.time())
         # echo the change out for any other connected clients
         print(self.parametersToJson())
 

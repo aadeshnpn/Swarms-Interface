@@ -27,6 +27,10 @@ def distance(a,b):
 
 class Agent(StateMachine):
 
+    def updateParams(self, params,timeStamp):
+        self.parameters = params
+        self.velocity = self.parameters["Velocity"]
+        self.param_time_stamp = timeStamp
     def sense(self, environment):
         self.state.sense(self, environment)
 
@@ -50,6 +54,7 @@ class Agent(StateMachine):
             exp = np.random.normal(1, .05, 1)'''
         self.counter = self.parameters["ExploreTime"]*self.exp
     def siteAssessTransition(self):
+
         self.counter = self.parameters["SiteAssessTime"]
     def pipingTransition(self):
         self.counter = self.parameters["PipingTime"]
@@ -397,13 +402,13 @@ class Observing(State):
             bee = environment.hubController.observersCheck()
             if isinstance(bee.state, Piping().__class__):
                 self.seesPiper = True
-                agent.velocity = agent.parameters["Velocity"]
+                #agent.velocity = agent.parameters["Velocity"]
                 agent.potential_site = bee.potential_site
                 environment.hubController.newPiper()
             if isinstance(bee.state, Dancing().__class__):
                 if np.random.random()<(bee.q_value*np.sqrt(bee.q_value)*.02):#maybe get rid of the second part
                     self.seesDancer = True
-                    agent.velocity = agent.parameters["Velocity"]
+                    #agent.velocity = agent.parameters["Velocity"]
                     agent.potential_site = bee.potential_site
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
                 and agent.inHub is False:
@@ -414,8 +419,8 @@ class Observing(State):
     def act(self, agent):
         if agent.inHub:
             agent.counter -= 1
-            if agent.counter == 0:
-                agent.velocity = agent.parameters["Velocity"]
+            '''if agent.counter == 0:
+                agent.velocity = agent.parameters["Velocity"]'''
             self.wander(agent)
         else:
             # if not at hub, more towards it
@@ -424,7 +429,7 @@ class Observing(State):
                 # 1.1 prevents moving back and forth around origin
                 agent.inHub = True
                 agent.direction += -89 + 179 * np.random.random()
-                agent.velocity = agent.parameters["Velocity"]
+                #agent.velocity = agent.parameters["Velocity"]
 
     def update(self, agent):
         if self.seesPiper is True:

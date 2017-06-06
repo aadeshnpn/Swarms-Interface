@@ -4,6 +4,7 @@ from randomdict import RandomDict
 import copy
 from .agent.agent import *
 from utils.debug import *
+import time
 
 
 class beeInfo:
@@ -67,7 +68,7 @@ class hubController:
         inAngle = (bee.direction - np.pi) % (2 * np.pi)
         inAngle = int(int(inAngle * (180 / np.pi)) / 5)
 
-        bee.parameters = copy.copy(self.environment.parameters)
+        bee.updateParams(copy.copy(self.environment.parameters),self.time)
 
         #updating hub info and agents
         self.directions[exitAngle] = self.directions[exitAngle] - 1
@@ -96,10 +97,10 @@ class hubController:
         angle = int(int(direction % 360) / 5)  # converting to fit in the array
 
         self.directionParams[angle] = int(newValue)
-    def emitUpdateParams(self, params):
+    def emitUpdateParams(self, params,time):
+        self.time = time
         for id,bee in self.agentsInHub.items():
-            bee.parameters = copy.copy(params)
-            bee.velocity = params["Velocity"]
+            bee.updateParams(copy.copy(params),self.time)
     def observersCheck(self):
         return self.agentsInHub.random_value()
 
@@ -140,7 +141,6 @@ class hubController:
                     if bee.state.__class__ == Observing().__class__ and bee.inHub is True:
                         if np.random.random() > 0.05:  # this gives a 5% chance of it happening
                             break
-
                         #updating bee info
                         bee.state = Exploring(bee)
                         bee.exploreTransition()
@@ -202,6 +202,7 @@ class hubController:
         self.exploreTime = int(exploreTime)
         self.exploreCounter = int(exploreTime * 1.2)
         self.deadBees = 0
+        self.time = 0
 
     def convertToIndex(self, degrees):
         int(int(degrees % 360) / 5)
