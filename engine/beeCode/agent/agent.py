@@ -62,6 +62,8 @@ class Agent(StateMachine):
         self.counter = self.parameters["RestTime"] * self.exp
     def observeTransition(self):
         self.counter = self.parameters["ObserveTime"]
+    def finishAssess(self):
+        self.infoStation.beeLeave(self)
 
 
     def getUiRepresentation(self):
@@ -118,6 +120,7 @@ class Agent(StateMachine):
         self.siteIndex = None
         self.goingToSite = True
         self.quadrant = []
+        self.infoStation = None
 
         # create table here.
         dict = {(Exploring(self).__class__, input.nestFound): [self.siteAssessTransition, SiteAssess(self)],
@@ -128,7 +131,7 @@ class Agent(StateMachine):
                 (Observing(self).__class__, input.quit): [self.restingTransition, Resting(self)],
                 (Assessing(self).__class__, input.siteFound): [self.danceTransition, Dancing(self)], # self.danceTransition()
                 (Assessing(self).__class__, input.siteAssess): [self.siteAssessTransition, SiteAssess(self)],
-                (SiteAssess(self).__class__, input.finAssess): [None, Assessing(self)],
+                (SiteAssess(self).__class__, input.finAssess): [self.finishAssess, Assessing(self)],
                 (SiteAssess(self).__class__, input.startPipe): [self.pipingTransition, Piping(self)],
                 (Dancing(self).__class__, input.tiredDance): [self.restingTransition, Resting(self)],
                 (Dancing(self).__class__, input.notTiredDance): [None, Assessing(self)],

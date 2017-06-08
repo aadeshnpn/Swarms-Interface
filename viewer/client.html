@@ -16,7 +16,13 @@
       <div id="canvasDiv" class="canvas">
          <canvas id="canvas"></canvas>
       </div>
-
+      <div style="float: right">
+      <p> <b>Chatroom </b></p>
+      <textarea id="chatwindow" rows="10" cols="80" readonly></textarea><br>
+      <input id="chatmsg" type="text" size="80" maxlength="80" onkeyup="" placeholder="message">
+      <button id="buttonSend" style="cursor:pointer;border:1px solid gray;">Send</button><br>
+      </div>
+      <hr/>
       <button id="buttonBugBait">Bug Bait</button>
       <button id="buttonBugBomb">Bug Bomb</button>
       <div id="sitePriorityControls">
@@ -26,11 +32,7 @@
          <label>Low site quality Preference<input name="qVal"     type="range" min="-1" max="1" step="0.01" value="0">Need high site quality </label>
       </div>
       <p id="deadBees">Estimated Dead: 0 </p>
-      <p> <b>Chatroom </b></p>
-      <textarea id="chatwindow" rows="10" cols="80" readonly></textarea><br>
-      <input id="chatmsg" type="text" size="80" maxlength="80" onkeyup="" placeholder="message">
-      <button id="buttonSend" style="cursor:pointer;border:1px solid gray;">Send</button><br>
-      <hr/>
+
 
       <label>Debug mode<input id="checkboxDebug" type="checkbox" checked></label>
       <label class="debug">Show agent states <input id="checkboxStates" type="checkbox"></label>

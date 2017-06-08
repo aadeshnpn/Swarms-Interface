@@ -17,7 +17,7 @@ class InfoStation:
     def check_for_changes(self, bee, new_parameters, time_stamp):
         self.agents[bee.id] = bee
         if time_stamp < self.last_update:
-            return True
+            bee.updateParams(copy.copy(self.parameters),self.last_update)
         elif time_stamp == self.last_update:
             return False
         self.parameters = new_parameters
@@ -25,7 +25,8 @@ class InfoStation:
         self.emitChanges()
         return False
     def beeLeave(self,bee):
+        self.bee_count-=1
         del self.agents[bee.id]
     def emitChanges(self):
-        for id, bee in self.agents:
+        for id, bee in self.agents.items():
             bee.updateParams(copy.copy(self.parameters),self.last_update)

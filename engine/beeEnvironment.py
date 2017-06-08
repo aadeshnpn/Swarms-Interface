@@ -78,7 +78,6 @@ class Environment:
 
         # self.useDefaultParams = True
         self.restart_simulation = False
-        self.change_agent_params = False
 
         self.add_agents()
 
@@ -144,15 +143,6 @@ class Environment:
         else:
             return None
 
-    '''def randomizeSites(self, flag=True):
-        # Foe each site randomize the values
-        for site in self.sites:
-            site['q_value'] = round(np.random.random(), 2)
-            site['x'] = np.random.randint(-self.x_limit, self.x_limit)
-            site['y'] = np.random.randint(-self.y_limit, self.y_limit)
-            site['radius'] = np.random.normal(30,10)
-            site['food_unit'] = np.power(site['radius'], 3)'''
-
     def updateFlowControllers(self):
 
         new_attractor_list = []
@@ -187,9 +177,8 @@ class Environment:
                     agent.atSite = True
                     agent.siteIndex = i
                     #TODO: move this to agents, which would be faster
-                    if info.check_for_changes(agent.parameters, agent.param_time_stamp):
-                        agent.update_params(info.parameters)
-                        agent.param_time_stamp = info.last_update
+                    info.check_for_changes(agent,agent.parameters, agent.param_time_stamp)
+                    agent.infoStation = info
 
                 # return the q_value as a linear gradient. The center of the site will return 100% of the q_value,
                 # the edge will return 75% of the q_value
@@ -323,25 +312,10 @@ class Environment:
         self.parameters["SiteAssessTime"] = int(params['beeSiteAccessTime'])
         self.parameters["PipingTime"] = int(params['beePipingTimer'])
         self.number_of_agents = int(params['numberOfAgents'])
-
-        self.change_agent_params = True
         eprint("New velocity =", params["beeGlobalVelocity"])
         self.hubController.emitUpdateParams(self.parameters,time.time())
         # echo the change out for any other connected clients
         print(self.parametersToJson())
-
-    '''def updateAgentParameters(self, agent):
-        #TODO get rid of site Access Radius
-        agent.parameters["PipingThreshold"] = int(self.parameters["PipingThreshold"])
-        agent.velocity = float(self.parameters["Velocity"])
-        agent.parameters["ExploreTime"] = float(self.parameters["ExploreTime"])
-        agent.parameters["RestTime"] = int(self.parameters["RestTime"])
-        agent.parameters["DanceTime"] = int(self.parameters["DanceTime"])
-        agent.parameters["ObserveTime"] = int(self.parameters["ObserveTime"])
-        agent.parameters["SiteAssessTime"] = int(self.parameters["SiteAssessTime"])
-        #agent.parameters["SiteAssessRadius"] = int(self.parameters["SiteAssessRadius"])
-        agent.parameters["PipingTimer"] = int(self.parameters["PipingTime"])
-        #agent.reset_trans_table()'''
 
     def updateUIParameters(self, json):
         params = json['params']
@@ -416,38 +390,19 @@ class Environment:
 
                 keys = list(self.agents.keys())  # deleting a key mid-iteration (suggest_new_direction())
                 # makes python mad...
+                #AGENT RUN LOOP
                 for agent_id in keys:
-
-
                     if self.agents[agent_id].state.name not in self.stats["stateCounts"]:
                         self.stats["stateCounts"][self.agents[agent_id].state.name] = 0
-
                     self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
-
-
-                    #if self.change_agent_params:
-                    #    self.updateAgentParameters(self.agents[agent_id])
-
                     # is this faster?
                     self.agents[agent_id].act()
                     self.agents[agent_id].sense(self)
-
-                    atSite = False
-                    if self.agents[agent_id].atSite:
-                        atSite = True
-
                     self.agents[agent_id].update(self)
-
-                    if atSite and not self.agents[agent_id].atSite:
-                        self.info_stations[self.agents[agent_id].siteIndex].bee_count -= 1
-                        self.agents[agent_id].siteIndex = None
-
                     self.suggest_new_direction(agent_id)
 
                 self.hubController.hiveAdjust(self.agents)
 
-                '''if self.change_agent_params:
-                    self.change_agent_params = False'''
 
                 if not args.no_viewer:
                     print(json.dumps({
