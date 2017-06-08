@@ -57,7 +57,7 @@ class Environment:
         self.stats["parameters"] = {"environment": {}, "agent": {}}
 
         #  environment parameters
-        self.number_of_agents = 100
+        self.number_of_agents = 500
         self.frames_per_sec = 600
 
         self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
@@ -402,8 +402,6 @@ class Environment:
                     self.suggest_new_direction(agent_id)
 
                 self.hubController.hiveAdjust(self.agents)
-
-
                 if not args.no_viewer:
                     print(json.dumps({
                         "type": "stateCounts",

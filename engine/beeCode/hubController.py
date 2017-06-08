@@ -137,7 +137,8 @@ class hubController:
                 pass # too many bees, just keep stopping them from leaving
             elif self.directionParams[angle] > self.directions[angle]:  # not enough bees send out more! from observers
 
-                for id, bee in bees.items():  # TODO to speed up use the in hub agents
+                #for id, bee in bees.items():  # TODO to speed up use the in hub agents
+                for id, bee in self.agentsInHub:
                     if bee.state.__class__ == Observing().__class__ and bee.inHub is True:
                         if np.random.random() > 0.05:  # this gives a 5% chance of it happening
                             break

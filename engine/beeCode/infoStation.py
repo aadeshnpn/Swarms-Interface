@@ -16,6 +16,9 @@ class InfoStation:
     # False, otherwise return True so the bee knows it needs to update its params.
     def check_for_changes(self, bee, new_parameters, time_stamp):
         self.agents[bee.id] = bee
+        if len(self.agents) < 2: #only update if there are other agents in the site (communication)
+            return False
+
         if time_stamp < self.last_update:
             bee.updateParams(copy.copy(self.parameters),self.last_update)
         elif time_stamp == self.last_update:
