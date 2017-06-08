@@ -318,6 +318,7 @@ class Dancing(State):
         if agent.counter < 1:
             agent.assessments += 1
             agent.q_value = 0
+            agent.goingToSite=True
             return input.notTiredDance
 
         else:
@@ -375,6 +376,7 @@ class Observing(State):
         if self.seesPiper is True:
             return input.startPipe
         if self.seesDancer is True:
+            agent.goingToSite = True
             return input.dancerFound
         elif agent.counter < 1:
             if np.random.uniform(0, 1) < 0.1:  # 10% chance a bee goes back to rest after observing
