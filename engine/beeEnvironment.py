@@ -57,7 +57,7 @@ class Environment:
         self.stats["parameters"] = {"environment": {}, "agent": {}}
 
         #  environment parameters
-        self.number_of_agents = 500
+        self.number_of_agents = 100
         self.frames_per_sec = 600
 
         self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
@@ -179,19 +179,12 @@ class Environment:
                     #TODO: move this to agents, which would be faster
                     info.check_for_changes(agent,agent.parameters, agent.param_time_stamp)
                     agent.infoStation = info
-
                 # return the q_value as a linear gradient. The center of the site will return 100% of the q_value,
                 # the edge will return 75% of the q_value
                 return {
                     "radius": site["radius"],
                     "q": site["q_value"] - (tot_dif / site["radius"] * .25 * site["q_value"]) #gradient!
                 }
-
-        '''if agent.atSite:
-            if self.info_stations[agent.siteIndex].check_for_changes(agent.parameters, agent.param_time_stamp):
-                agent.update_params(self.info_stations[agent.siteIndex].parameters)
-                agent.param_time_stamp = self.info_stations[agent.siteIndex].last_update'''
-                # agent.atSite = False
 
         return {"radius": -1, "q": 0}
 
@@ -217,18 +210,6 @@ class Environment:
                 return -1
 
         return 0
-
-    def get_nearby_agents(self, agent_id, radius):
-        nearby = []
-        for other_id in self.agents:
-            if other_id != agent_id:
-                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0]) ** 2 + (
-                            self.agents[other_id].location[1] - self.agents[agent_id].location[
-                            1]) ** 2) ** .5 <= radius:
-                    # nearby.append([self.agents[other_id].site_location, self.agents[other_id].q_found])
-                    nearby.append(self.agents[other_id])
-        return nearby
-
     # agent asks to go in a direction at a certain velocity, use vector addition, updates location
     def suggest_new_direction(self, agentId):
         agent = self.agents[agentId]
@@ -279,13 +260,17 @@ class Environment:
 
         # If the agent goes outside of the limits, it re-enters on the opposite side.
         if agent.location[0] > self.x_limit:
-            agent.location[0] -= 2 * self.x_limit
+            #agent.location[0] -= 2 * self.x_limit
+            agent.direction += np.pi
         elif agent.location[0] < self.x_limit * -1:
-            agent.location[0] += 2 * self.x_limit
+            #agent.location[0] += 2 * self.x_limit
+            agent.direction += np.pi
         if agent.location[1] > self.y_limit:
-            agent.location[1] -= 2 * self.y_limit
+            #agent.location[1] -= 2 * self.y_limit
+            agent.direction += np.pi
         elif agent.location[1] < self.y_limit * -1:
-            agent.location[1] += 2 * self.y_limit
+            #agent.location[1] += 2 * self.y_limit
+            agent.direction += np.pi
 
     def pause(self, json):
         self.isPaused = True
@@ -392,9 +377,9 @@ class Environment:
                 # makes python mad...
                 #AGENT RUN LOOP
                 for agent_id in keys:
-                    if self.agents[agent_id].state.name not in self.stats["stateCounts"]:
-                        self.stats["stateCounts"][self.agents[agent_id].state.name] = 0
-                    self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
+                    '''if self.agents[agent_id].state.name not in self.stats["stateCounts"]:
+                        self.stats["stateCounts"][self.agents[agent_id].state.name] = 0'''
+                    #self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
                     # is this faster?
                     self.agents[agent_id].act()
                     self.agents[agent_id].sense(self)
@@ -435,8 +420,6 @@ class Environment:
         self.agents.clear()
         self.attractors.clear()
         self.repulsors.clear()
-        '''for state in self.states:
-            self.states[state].clear()'''
         self.dead_agents.clear()
         self.info_stations.clear()
         self.create_infoStations()
@@ -449,24 +432,9 @@ class Environment:
         rest_num = int(.1 * np.sqrt(self.number_of_agents))
         for x in range(self.number_of_agents - rest_num):
             agent_id = str(x)
-            # if self.useDefaultParams:
-            #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
-            # agent = Agent(agent_id,Observing())
-            # else:
-            '''agent = Agent(agent_id, Exploring(None), self.hub, count=int(self.parameters["ExploreTime"]),
-                          piping_threshold=int(self.parameters["PipingThreshold"]),
-                          global_velocity=float(self.parameters["Velocity"]),
-                          explore_time=float(self.parameters["ExploreTime"]),
-                          rest_time=int(self.parameters["RestTime"]),
-                          dance_time=int(self.parameters["DanceTime"]),
-                          observe_time=int(self.parameters["ObserveTime"]),
-                          site_assess_time=int(self.parameters["SiteAssessTime"]),
-                          piping_time=int(self.parameters["PipingTime"]))'''
             agent = Agent(agent_id, Exploring(None), self.hub, self.parameters,
                           count = int(self.parameters["ExploreTime"]))
-            #agent.state = Exploring(agent)
             self.agents[agent_id] = agent
-            # self.states[Exploring().__class__].append(agent_id)
 
         for y in range(rest_num):
             agent_id = str(x + 1 + y)

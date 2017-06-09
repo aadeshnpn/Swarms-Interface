@@ -100,7 +100,7 @@ class Environment:
         self.create_potential_fields()
 
         self.create_infoStations()
-    
+
     def randomizeSites(self,flag=True):
         #For each site randomize the values
         for site in self.sites:
@@ -234,25 +234,10 @@ class Environment:
 
         return 0
 
-    def get_nearby_agents(self, agent_id, radius):
-        nearby = []
-        for other_id in self.agents:
-            if other_id != agent_id:
-                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0])**2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1])**2)**.5 <= radius:
-                    #nearby.append([self.agents[other_id].site_location, self.agents[other_id].q_found])
-                    nearby.append(self.agents[other_id])
-        return nearby
-
     # agent asks to go in a direction at a certain velocity, use vector addition, updates location
     def suggest_new_direction(self, agentId):
         agent = self.agents[agentId]
-
         # Check the effects of moving in the suggested direction
-        '''potential_field_effect = self.potential_field_sum(agent.location)
-        potential_field_v = np.sqrt(potential_field_effect[0] ** 2 + potential_field_effect[1] ** 2)
-        potential_field_d = np.arctan2(potential_field_effect[1], potential_field_effect[0])'''
-
-        # eprint(agent.GlobalVelocity)
         proposed_x = agent.location[0] + np.cos(agent.direction) * agent.velocity #+ np.cos(potential_field_d) * potential_field_v
         proposed_y = agent.location[1] + np.sin(agent.direction) * agent.velocity #+ np.sin(potential_field_d) * potential_field_v
 
@@ -482,7 +467,7 @@ class Environment:
         return agent_state_count,total_agent_hub,agent_state_site
     #def agent_to_follow(self,state):
         #agent_state_list = [(self.agents[agent].siteIndex,agent) for agent in self.agents if self.agents[agent].inHub and self.agents[agen].state==state]
-        #agentidnp.random.choice(agent_state_list)            
+        #agentidnp.random.choice(agent_state_list)
     def add_agents(self):
         #Start agents in searching, resting and waiting state
         #rest_num = int(.1*self.number_of_agents)
@@ -496,7 +481,7 @@ class Environment:
             #else:
             agent = Agent(agent_id, self.hub, Waiting())
             #agent = Agent(agent_id, self.hub, Resting())
-            self.agents[agent_id] = agent            
+            self.agents[agent_id] = agent
         for y in range(self.number_of_agents-wait_num):
             agent_id = str(x + y + 1)
             #if self.useDefaultParams:
@@ -505,7 +490,7 @@ class Environment:
             #else:
             agent = Agent(agent_id, self.hub, Searching())
             #agent = Agent(agent_id, self.hub, Resting())
-            self.agents[agent_id] = agent                        
+            self.agents[agent_id] = agent
 
 
     def reset_sim(self):
