@@ -58,7 +58,7 @@ class Environment:
 
         #  environment parameters
         self.number_of_agents = 100
-        self.frames_per_sec = 600
+        self.frames_per_sec = 100
 
         self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
 
@@ -432,13 +432,13 @@ class Environment:
         rest_num = int(.1 * np.sqrt(self.number_of_agents))
         for x in range(self.number_of_agents - rest_num):
             agent_id = str(x)
-            agent = Agent(agent_id, Exploring(None), self.hub, self.parameters,
+            agent = Agent(self, agent_id, Exploring(None), self.hub, self.parameters,
                           count = int(self.parameters["ExploreTime"]))
             self.agents[agent_id] = agent
 
         for y in range(rest_num):
             agent_id = str(x + 1 + y)
-            agent = Agent(agent_id, Resting(None), self.hub, self.parameters,count=int(self.parameters["RestTime"]))
+            agent = Agent(self, agent_id, Resting(None), self.hub, self.parameters,count=int(self.parameters["RestTime"]))
             self.agents[agent_id] = agent
 
     def reset_sim(self):
