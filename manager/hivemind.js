@@ -100,7 +100,7 @@ app.post('/startSimBatch', function(req, res)
           // -s puts the engine in stats mode which runs the entire sim and then dumps
           // stats at the end
           // still using jsonStreamParser in case output is huge
-          let sim = spawn('python3.5', [path.join(__dirname, "../engine/beeEnvironment.py"), "-n", "-s", "-c", "-t", "10000"], {stdio: ['pipe', 'pipe', process.stderr]});
+          let sim = spawn('python3.5', [path.join(__dirname, "../engine/beeEnvironment.py"), "-n", "-s", "-c", "-t", "10000", "-l", "recording.sim"], {stdio: ['pipe', 'pipe', process.stderr]});
           let jsonStreamParser = JSONStream.parse();
 
           // WARNING

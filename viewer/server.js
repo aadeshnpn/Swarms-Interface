@@ -86,10 +86,13 @@ class Client
          //       and pass a flag into the python instead
          var typeDir = (process.argv[2] === "ants") ? ('../engine/antEnvironment.py') : ('../engine/beeEnvironment.py');
          var args = [];
-         args.push(path.join(__dirname,typeDir));
-         if(process.argv[2] == "-r"){
+         args.push(path.join(__dirname, typeDir));
+
+         if(process.argv[2] == "-r")
+         {
             args.push("-r");
          }
+
          //var typeDir = (process.argv[2] === "-r") ? ([typeDir ])
          const engine = spawn(executable, args, {stdio: ['pipe', 'pipe', process.stderr]});
          engine.on('error', (err) => { console.error("[!] Unable to start engine process: " + err)});
@@ -156,6 +159,11 @@ app.get( '/', function( req, res )
       root: __dirname
    } );
 } );
+
+app.get('/sims/:id', function(req, res)
+{
+
+});
 
 // On a request for 'client.js', minify and concat all the relevant scripts, then
 // serve it
