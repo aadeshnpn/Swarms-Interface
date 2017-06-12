@@ -53,7 +53,7 @@ class Agent(StateMachine):
                     return True
         return False
     def checkAgentReturn(self):
-        if (((self.hub[0] - self.location[0]) ** 2 + (self.hub[1] - self.location[1])** 2)** .5 < self.hubRadius+1.251):
+        if (((self.hub[0] - self.location[0]) ** 2 + (self.hub[1] - self.location[1])** 2)** .5 < self.hubRadius):
             if not self.inHub: #if probs check if not agent.goingToSite
                 self.environment.hubController.beeCheckIn(self)
                 self.inHub = True
@@ -231,8 +231,8 @@ class Assessing(State):
         self.siteFound = False
 
     def sense(self, agent, environment):
-        agent.checkAgentLeave() #if probs check if agent.goingToSite
-        self.siteFound = agent.checkAgentReturn() #if probs, check if not agent.goingToSite
+        if not agent.checkAgentLeave(): #if probs check if agent.goingToSite
+            self.siteFound = agent.checkAgentReturn() #if probs, check if not agent.goingToSite
     #TODO TODO repeated code in sense and update????
     def act(self, agent):
         if agent.goingToSite:
