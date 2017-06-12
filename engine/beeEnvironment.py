@@ -57,8 +57,9 @@ class Environment:
         self.stats["parameters"] = {"environment": {}, "agent": {}}
 
         #  environment parameters
-        self.number_of_agents = 100
+        self.number_of_agents = 500
         self.frames_per_sec = 100
+        self.numberOfSwarms = 2
 
         self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
 
@@ -236,10 +237,6 @@ class Environment:
             agent.live = False
             self.dead_agents.append(agent)
             self.stats["deadAgents"] += 1
-            '''for state in self.states:
-                if self.states[state].count(agentId) > 0:
-                    self.states[state].remove(agentId)
-                    break'''
             #eprint("dead: ", self.stats["deadAgents"])
             del self.agents[agentId]
             return

@@ -1,6 +1,6 @@
 class Handle
 {
-   constructor(angle, {interactive = true, colour = RadialControl.LINE_COLOUR} = {})
+   constructor(angle, hub, {interactive = true, colour = RadialControl.LINE_COLOUR} = {})
    {
       this.interactive = interactive;
       this.colour = colour;
@@ -15,6 +15,8 @@ class Handle
       this.prev = null;
       this.next = null;
       this.isRequesting = false;
+      //world.hub.x =hub.x;
+      //world.hub.y=hub.y;
    }
 
    setPrev(handle)
@@ -31,16 +33,16 @@ class Handle
    {
       this.isRequesting = true;
       this.requested = value;
-      this.requestedX = Math.cos(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value));
-      this.requestedY = Math.sin(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value));
+      this.requestedX = Math.cos(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value))+world.hub.x;
+      this.requestedY = Math.sin(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value))-world.hub.y;
    }
 
    updateActual(value = 0)
    {
       this.actual = value;
 
-      this.actualX = Math.cos(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value));
-      this.actualY = Math.sin(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value));
+      this.actualX = (Math.cos(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value)))+world.hub.x;
+      this.actualY = (Math.sin(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value)))-world.hub.y;
 
       if (this.isRequesting && value == this.requested)
       {
@@ -132,10 +134,11 @@ class RadialControl
       this.handles = [];
       this.drag = {active: false, handle: null};
       this.hover = {active: true, handle: null};
+      //this.hub = {x: world.hub.x, y: world.hub.y}
 
       for (let i = 0; i < (360 / 5); i++)
       {
-         this.handles.push( new Handle(i * 5, {interactive: this.interactive, colour: this.colour}) ); // we're doing it this way so eventually we can paramaterise the 5
+         this.handles.push(new Handle(i * 5, this.hub, {interactive: this.interactive, colour: this.colour}) ); // we're doing it this way so eventually we can paramaterise the 5
       }
 
       this.handles[0].setPrev(this.handles[this.handles.length - 1])
@@ -179,7 +182,6 @@ class RadialControl
    startHandleHover(e)
    {
       let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
-
       for (let h of this.handles)
          if (h.isHovered(worldRelative.x, worldRelative.y))
          {
@@ -209,6 +211,8 @@ class RadialControl
    onMouseMove(e)
    {
       let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+      worldRelative.x -= world.hub.x;
+      worldRelative.y += world.hub.y;
 
       if (!this.drag.active)
       {
