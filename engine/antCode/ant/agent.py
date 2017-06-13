@@ -199,6 +199,7 @@ class Exploiting(State):  # like site assess
         elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (
             agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
             agent.goingToSite = False
+        #if agent.goingToSite is True and agent.inHub is False:
         if agent.goingToSite is True and agent.inHub is False:
             # x = int(int(agent.location[0] + environment.x_limit)/3)
             x, y = environment.worldToPher(agent.location[0], agent.location[1])

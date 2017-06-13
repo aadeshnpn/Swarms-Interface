@@ -88,16 +88,16 @@ class Environment:
         self.parameters = {#"PipingThreshold":       2,
                            "Velocity":              2,
                            "SearchTime":            2000,
-                           "WaitingTime":           2000,
-                           "FollowingTime":         10,
-                           "RecuritingTime":        50,
+                           "WaitingTime":           1000,
+                           "FollowingTime":         60,
+                           "RecuritingTime":        60,
                            #"SiteAssessTime":       250,
                            "SiteAssessRadius":      15,
                            #"PipingTime":           1200,
-                           "PheromoneStrength":     6,
+                           "PheromoneStrength":     25,
                            "DiffusionRate":         3,
                            "Strength":              2,
-                           "EvaporationRate":       0.01}
+                           "EvaporationRate":       0.1}
 
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
         #self.randomizeSites()
@@ -303,7 +303,7 @@ class Environment:
         upperY = self.smellRange + y
 
         sub_set = self.pheromoneList[lowX:upperX,lowY:upperY]
-        p_x,p_y = np.gradient(sub_set)
+        p_x,p_y = np.gradient(sub_set*10)
         direction = np.arctan2(p_y,p_x)
         #Get a approx direction to hub
         #dx = self.hub["x"] - location[0]
