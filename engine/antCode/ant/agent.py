@@ -4,7 +4,6 @@ from .StateMachine import StateMachine
 from .state import State
 import numpy as np
 from ..debug import *
-from .pheromone import Pheromone
 
 input = Enum('input', 'startFollowing getLost1 getLost2 startSearching stopSearching discover join retire arrive stopRecruiting startRecruiting startAssess finAssess')
 
