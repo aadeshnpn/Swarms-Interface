@@ -74,7 +74,8 @@ class Agent(StateMachine):
         '''
         dict = {(Waiting(self).__class__, input.startSearching): [None, Searching(self)],
                 (Waiting(self).__class__, input.join): [None, Exploiting(self)],
-                (Waiting(self).__class__, input.startFollowing): [None, Following(self)],
+                (Waiting(self).__class__, input.startFollowing): [None, Following1(self)],
+                (Following1(self).__class__, input.arrive): [None, Exploiting(self)],
                 #(Searching(self).__class__, input.discover): [None, Exploiting(self)],
                 (Searching(self).__class__, input.stopSearching): [None, Waiting(self)],
                 (Searching(self).__class__, input.startFollowing): [None, Following(self)],                
@@ -209,7 +210,7 @@ class Exploiting(State):  # like site assess
             environment.pheromoneList[x, y] += agent.parameters["PheromoneStrength"] * np.sqrt(agent.q_value)
             ##Need diffusion logic as well
             ##Difussed to neared 3 cells
-            #environment.pheromoneList[x-6:x+6,y-6:y+6] += 2 * np.sqrt(agent.q_value)
+            environment.pheromoneList[x-3:x+3,y-3:y+3] += 2 * np.sqrt(agent.q_value)
             if np.random.random() < .2:
                 environment.pheromoneView[x, y] += agent.parameters["PheromoneStrength"] * np.sqrt(agent.q_value)
                 #environment.pheromoneView[x-3:x+3,y-3:y+3] += 2 * np.sqrt(agent.q_value)                
@@ -273,8 +274,47 @@ class Following(State):
     def act(self,agent):
         dx = self.next[0] - agent.location[0]
         dy = self.next[1] - agent.location[1]
-        agent.direction = np.arctan2(dy, dx)
+        #agent.direction = np.arctan2(dy, dx)
+        calc_direction = np.arctan2(dy, dx)
+        hub_dx = agent.hub[0] - agent.location[0]
+        hub_dy = agent.hub[1] - agent.location[1]        
+        ##Reversing the angle towards hub to get angel towards site
+        hub_direction = np.pi + np.arctan2(hub_dy,hub_dx)
+        #eprint (calc_direction,hub_direction)
+        if calc_direction - hub_direction > np.pi/2:
+            agent.direction = hub_direction
+        else:
+            agent.direction = calc_direction
+        #agent.direction = calc_direction
         return
+
+class Following1(State):
+    def __init__(self,agent=None,time=None):
+        self.name = 'following1'
+        #self.following = None
+        self.following_lost_time = agent.parameters["FollowingTime"]
+        #self.next = [np.random.choice([-1,1])]
+
+    def sense(self,agent,environment):
+        new_q = environment.get_q(agent)["q"]  
+        agent.q_value = new_q      
+        #pass
+
+    def update(self,agent,environment):
+        if agent.q_value > 0 :
+            agent.potential_site = [agent.location[0], agent.location[1]]
+            #eprint(agent.potential_site, "searching")
+            return input.arrive        
+        elif int(agent.potential_site[0]) == int(agent.location[0]) and int(agent.potential_site[1]) == int(agent.location[1]):
+            return input.arrive
+        else:
+            pass
+
+    def act(self,agent):
+        dx = agent.potential_site[0] - agent.location[0]
+        dy = agent.potential_site[1] - agent.location[1]
+        agent.direction = np.arctan2(dy, dx)
+        return        
 
 class Searching(State): #basically the same as explorer..
     def __init__(self,agent=None,time=None):
@@ -417,7 +457,14 @@ class Waiting(State):  # like observing
 
     def sense(self, agent, environment):
         if self.atHub:
-            self.pheromone = environment.get_pheromone(agent)
+            ant = environment.hubController.observersCheck()
+            if isinstance(ant.state, Recruiting().__class__):
+                if environment.recuriting_agents_at_hub/len(environment.hubController.agentsInHub) > 2*np.random.random():
+                    self.seesRecuriter = True
+                    agent.potential_site = ant.potential_site
+            #environment.hubController.newPiper()            
+            #self.pheromone = environment.get_pheromone(agent)
+            #environment.
 
         if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
                 and agent.inHub is False:
@@ -426,13 +473,14 @@ class Waiting(State):  # like observing
             return
 
     def update(self, agent, environment):
-        if self.pheromone > 0:
+        #if self.pheromone > 0:
+        if self.seesRecuriter:
             return input.startFollowing
+
         if self.waitingtime < 1:
             if environment.max_hub_capacity > environment.food_deposite:
                 return input.startSearching
 
-            # pass
 
     def act(self, agent):
         if self.atHub:
@@ -465,7 +513,10 @@ class Waiting(State):  # like observing
 class Recruiting(State): #like dancing
     def __init__(self,agent=None,time=None):
         self.name = 'recruiting'
-        self.recruitmentTime = agent.parameters["RecuritingTime"]
+        if agent:
+            self.recruitmentTime = agent.parameters["RecuritingTime"]
+        else:
+            self.recruitmentTime = 60
 
     def sense(self,agent,environment):
         pass

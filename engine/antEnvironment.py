@@ -136,9 +136,13 @@ class Environment:
         ##Dead Pehromones
         self.dead_pheromoneList = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])
         #self.dead_pheromoneView = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])        
-        self.smellRange = 5
+        self.smellRange = 10
         #json aux
         self.previousMetaJson = None
+        #Keep track of no of recutures
+        self.recuriting_agents_at_hub = 0 
+
+
     # Function to initialize data on the environment from a json file
     def build_json_environment(self):
         json_data = open(self.file_name).read()
@@ -514,6 +518,8 @@ class Environment:
 
                 keys = list(self.agents.keys())  # deleting a key mid-iteration (suggest_new_direction())
                                                         # makes python mad...
+                #eprint (stateCounts) 
+                self.recuriting_agents_at_hub = 0
                 for agent_id in keys:
 
 
@@ -521,12 +527,13 @@ class Environment:
                         stateCounts[self.agents[agent_id].state.name] = 0
 
                     stateCounts[self.agents[agent_id].state.name] += 1
-
+                    if "recruiting" in stateCounts.keys():
+                        self.recuriting_agents_at_hub = stateCounts["recruiting"]
 
                     if self.change_agent_params:
                         self.updateAgentParameters(self.agents[agent_id])
 
-
+                    #eprint(stateCounts)
                     # is this faster?
                     self.agents[agent_id].act()
                     self.agents[agent_id].sense(self)

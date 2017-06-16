@@ -107,6 +107,7 @@ class hubController:
         self.time = time
         for id,bee in self.agentsInHub.items():
             bee.updateParams(copy.copy(params),self.time)
+    
     def observersCheck(self):
         return self.agentsInHub.random_value()
 
