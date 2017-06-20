@@ -405,13 +405,13 @@ class Environment:
 
         self.stats["committedSites"] = []
 
-        for id in self.agents:
-            if self.agents[id].potential_site != None:
-                self.stats["committedSites"].append(
-                    {"x": self.agents[id].potential_site[0], "y": self.agents[id].potential_site[1]})
+        # for id in self.agents:
+        #     if self.agents[id].potential_site != None:
+        #         self.stats["committedSites"].append(
+        #             {"x": self.agents[id].potential_site[0], "y": self.agents[id].potential_site[1]})
 
-        self.stats["committedSites"] = list(
-            dict(y) for y in set(tuple(x.items()) for x in self.stats["committedSites"]))
+        # self.stats["committedSites"] = list(
+        #     dict(y) for y in set(tuple(x.items()) for x in self.stats["committedSites"]))
 
     def clear_for_reset(self):
         self.agents.clear()
