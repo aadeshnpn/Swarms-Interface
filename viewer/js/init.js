@@ -35,7 +35,7 @@ var finishedDrawing = true;
 // established a connection
 socket.on('connect', function()
 {
-   var idx = document.cookie.indexOf("clientId");
+   var idx = document.cookie.indexOf("simId");
    var endIdx = document.cookie.indexOf(";", idx);
 
    if (endIdx == -1)
@@ -43,9 +43,9 @@ socket.on('connect', function()
       endIdx = undefined;
    }
 
-   clientId = document.cookie.slice(idx, endIdx).split("=").pop();
+   simId = document.cookie.slice(idx, endIdx).split("=").pop();
 
-   socket.emit('clientId', clientId);
+   socket.emit('simId', simId);
 });
 
 // This is where the magic happens. When we emit an "update" event from the

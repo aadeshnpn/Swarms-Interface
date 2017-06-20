@@ -1,0 +1,77 @@
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="css/default.css" />
+    <link rel="stylesheet" type="text/css" href="css/index.css" />
+  </head>
+  <body>
+    <div id="content">
+      <div id="activeSims">
+        <h1>Active Sims</h1>
+        <table id="simList">
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Connected</th>
+            <th>Link</th>
+          </tr>
+        </table>
+      </div>
+      <div id="newSim">
+        <h1>New Sim</h1>
+        <form id="newSim">
+          <label>Name: <input type="text" name="name"></label>
+          <label>Type: <select name="model"><option>bee</option><option>ant</option></select></label>
+          <label>Random? <input type="checkbox" name="random"></label>
+          <button id="createNewSim" type="submit">Create</button>
+        </form>
+      </div>
+    </div>
+
+    <script
+      src="https://code.jquery.com/jquery-3.2.1.min.js"
+      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+      crossorigin="anonymous">
+    </script>
+
+    <script type="text/javascript">
+
+      getSims();
+
+      window.setInterval(getSims, 5000);
+
+      $('#createNewSim').on('click', function(event)
+      {
+        event.preventDefault();
+
+        var data = {};
+
+        var form = $("form").serializeArray();
+        for (var i = 0; i < form.length; i++)
+        {
+          data[form[i].name] = form[i].value;
+        }
+
+        $.post("/sims/", data, res =>
+        {
+          //console.log(res);
+          //$('#activeSims').append(`<a href="${res}">Join</a>`);
+          getSims();
+        });
+      });
+
+      function getSims()
+      {
+        $.get("/simlist", json =>
+        {
+          $('#simList').find("tr:gt(0)").remove();
+
+          for (sim of json)
+          {
+            $('#simList').append(`<tr><td>${sim.id}</td><td>?</td><td>${sim.connected}</td><td><a href='/sims/${sim.id}'>Join</a></td></tr>`);
+          }
+        });
+      }
+
+      </script>
+  </body>
+</html>
