@@ -198,7 +198,7 @@ class Simulation
     // clean up our redis info
     redisClient.delAsync(`sim:${this.simId}:info`)
       .then( () => {
-        redisClient.srem("activeSimKeys", `${this.simId}`);
+        redisClient.srem("activeSims", this.simId);
       });
   }
 }
@@ -233,11 +233,12 @@ class Client
               //       and auto-stop like we do now, but also have the sim
               //       run independently if we want
               this.userInputBroadcaster.publish(this.channels.start, "first");
-              this.engineOutputListener.subscribe(this.channels.output);
-              this.engineOutputListener.on("message", this.sendUpdate.bind(this));
+
             }
           });
 
+        this.engineOutputListener.subscribe(this.channels.output);
+        this.engineOutputListener.on("message", this.sendUpdate.bind(this));
         this.socket.on('disconnect', this.disconnect.bind(this));
         this.socket.on('input', this.userInput.bind(this));
       });
@@ -322,10 +323,31 @@ app.get('/sims/:id', function(req, res)
 
 // Route for getting the list of available sims
 // TODO: finish
-app.get('/sims/list', function(req, res)
+app.get('/simlist', function(req, res)
 {
-  redisClient.getAsync('activeSimList')
-    .then(simList => res.json(simList));
+  let simInfo = [];
+
+  redisClient.smembersAsync('activeSims')
+    .then(simList =>
+      {
+        //console.log(simList);
+        let promises = [];
+
+        if (!simList)
+        {
+          res.json([]);
+          return;
+        }
+
+        for (sim of simList)
+        {
+          promises.push( redisClient.getAsync(`sim:${sim}:connectedCount`)
+            .then(count => simInfo.push({id: sim, connected: count})) );
+        }
+
+        bluebird.all(promises)
+          .then( () => res.json(simInfo) );
+      });
 });
 
 // On a request for 'client.js', minify and concat all the relevant scripts, then
@@ -389,10 +411,14 @@ function exitHandler(opts, err)
     child.kill();
   }
 
-  if (opts.exit)
-  {
-    process.exit();
-  }
+  redisClient.flushallAsync()
+    .then( () =>
+    {
+      if (opts.exit)
+      {
+        process.exit();
+      }
+    });
 }
 
 process.on('SIGTERM', exitHandler.bind(null, {exit: true}));
