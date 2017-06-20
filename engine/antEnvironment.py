@@ -8,7 +8,7 @@ from InputEventManager import InputEventManager
 #from beeCode.agent.agent import *
 from antCode.ant.agent import *
 from antCode.hubController import hubController
-from beeCode.infoStation import InfoStation
+from antCode.infoStation import InfoStation
 from utils.potentialField import PotentialField
 import sys, os
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))

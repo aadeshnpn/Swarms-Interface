@@ -194,6 +194,8 @@ class Simulation
   {
     // kill the subprocess
     this.world.engine.kill();
+    this.inputListener.quit();
+    this.outputBroadcaster.quit();
 
     // clean up our redis info
     redisClient.delAsync(`sim:${this.simId}:info`)
@@ -266,6 +268,9 @@ class Client
           redisClient.delAsync(`sim:${this.simId}:connectedCount`);
         }
       });
+
+    this.engineOutputListener.quit();
+    this.userInputBroadcaster.quit();
   }
 }
 
@@ -419,6 +424,8 @@ function exitHandler(opts, err)
         process.exit();
       }
     });
+
+  redisClient.quit();
 }
 
 process.on('SIGTERM', exitHandler.bind(null, {exit: true}));
