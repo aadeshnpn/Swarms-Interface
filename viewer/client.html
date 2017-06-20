@@ -8,7 +8,8 @@
       <!-- This is what enables socket communication with the server. -->
       <script src="/socket.io/socket.io.js"></script>
 
-      <link rel="stylesheet" type="text/css" href="css/default.css" />
+      <link rel="stylesheet" type="text/css" href="/css/default.css" />
+      <link rel="stylesheet" type="text/css" href="/css/viewer.css" />
    </head>
 
    <body>
@@ -16,16 +17,23 @@
       <div id="canvasDiv" class="canvas">
          <canvas id="canvas"></canvas>
       </div>
-
+      <div style="float: right">
+      <p> <b>Chatroom </b></p>
+      <textarea id="chatwindow" rows="10" cols="80" readonly></textarea><br>
+      <input id="chatmsg" type="text" size="80" maxlength="80" onkeyup="" placeholder="message">
+      <button id="buttonSend" style="cursor:pointer;border:1px solid gray;">Send</button><br>
+      </div>
+      <hr/>
       <button id="buttonBugBait">Bug Bait</button>
       <button id="buttonBugBomb">Bug Bomb</button>
       <div id="sitePriorityControls">
         <h4>Site Preferences</h4>
          <label>Prefer Close<input name="distance" type="range" min="-1" max="1" step="0.01" value="0">Prefer Far  </label><br/>
-         <label>Prefer Small<input name="size"     type="range" min="-1" max="1" step="0.01" value="0">Prefer Large</label>
+         <label>Prefer Small<input name="size"     type="range" min="-1" max="1" step="0.01" value="0">Prefer Large</label><br/>
+         <label>Low site quality Preference<input name="qVal"     type="range" min="-1" max="1" step="0.01" value="0">Need high site quality </label>
       </div>
       <p id="deadBees">Estimated Dead: 0 </p>
-      <hr/>
+
 
       <label>Debug mode<input id="checkboxDebug" type="checkbox" checked></label>
       <label class="debug">Show agent states <input id="checkboxStates" type="checkbox"></label>
@@ -63,11 +71,11 @@
       </div>
 
       <div style="display: none">
-         <!--<img id="bee"      src="img/bee-transparent-small.png">-->
-         <img id="bee"      src="img/dot.png">
-         <img id="bee-dead"      src="img/bee-dead-transparent-small.png">
+         <img id="bee"      src="/img/bee-transparent-small.png">
+         <!--<img id="bee"      src="img/dot.png">-->
+         <img id="bee-dead"      src="/img/bee-dead-transparent-small.png">
          <!--<img id="bee-dead" src="img/bee-dead-transparent-small.png">-->
-         <img id="obstacle" src="img/boulder.png">
+         <img id="obstacle" src="/img/boulder.png">
       </div>
 
    </body>
@@ -77,7 +85,7 @@
      integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
      crossorigin="anonymous">
      </script>
-   <script src="client.js">
+   <script src="/client.js">
      </script>
 
 </html>

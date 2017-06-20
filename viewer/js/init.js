@@ -35,7 +35,7 @@ var finishedDrawing = true;
 // established a connection
 socket.on('connect', function()
 {
-   var idx = document.cookie.indexOf("clientId");
+   var idx = document.cookie.indexOf("simId");
    var endIdx = document.cookie.indexOf(";", idx);
 
    if (endIdx == -1)
@@ -43,9 +43,9 @@ socket.on('connect', function()
       endIdx = undefined;
    }
 
-   clientId = document.cookie.slice(idx, endIdx).split("=").pop();
+   simId = document.cookie.slice(idx, endIdx).split("=").pop();
 
-   socket.emit('clientId', clientId);
+   socket.emit('simId', simId);
 });
 
 // This is where the magic happens. When we emit an "update" event from the
@@ -111,7 +111,7 @@ function draw()
    //window.requestAnimationFrame(draw);
 }
 
-// TODO: I don't like where this is going, I should be able to make one subscription
+// TODO: I don't like where this is going, (me neither - John) I should be able to make one subscription
 //       to the socket and let the UI class sort out all the details
 
 socket.on('updateMission', function(data)
@@ -126,3 +126,5 @@ socket.on('updateUIParams'      , function(data) { ui.on(data) });
 socket.on('updateSitePriorities', function(data) { ui.on(data) });
 socket.on('setStates'           , function(data) { ui.on(data) });
 socket.on('stateCounts'         , function(data) { ui.on(data) });
+
+socket.on('updateChat'          , function(data) { console.log(data); ui.on(data) });

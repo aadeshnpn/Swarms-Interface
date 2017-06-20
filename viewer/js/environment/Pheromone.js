@@ -3,12 +3,11 @@ class Pheromone
   constructor(pheromonesJson)
   {
     this.pheromones = pheromonesJson;
-    //for (var pheromone of pheromonesJson)   { this.pheromones .push(pheromone); }
   }
 
   draw(ctx, debug = false)
   {
-    if (!debug)
+    if (!debug || !this.pheromones)
         return;
 
     ctx.save();
@@ -19,8 +18,6 @@ class Pheromone
 
     //var count = 0;
 
-    console.log(this.pheromones)
-
     for (var pheromone of this.pheromones)
     {
         //ctx.save();
@@ -29,7 +26,8 @@ class Pheromone
         //count += 1;
         //ctx.translate(pheromone.x-1.5, -pheromone.y-1.5);
 
-        ctx.rect(pheromone.x-1.5, -pheromone.y-1.5, 6, 6);
+        ctx.rect(pheromone.x - 3, -pheromone.y - 3, 9, 9);
+
         ctx.fill();
         //ctx.stroke();
         //ctx.restore();

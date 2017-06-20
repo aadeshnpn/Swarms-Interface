@@ -1,9 +1,10 @@
 import json
 
 from randomdict import RandomDict
-
+import copy
 from .agent.agent import *
 from utils.debug import *
+import time
 
 
 class beeInfo:
@@ -16,11 +17,13 @@ class beeInfo:
         self.dead = False
         self.id= id
         # include a variable projecting at what time it left the hub? (add later)
-    def checkOut(self, direction):
+    def checkOut(self, direction, state):
+        self.state = state
         self.direction = direction
         self.atHub =0
         self.returnedToHub = False
-    def checkIn(self, direction):
+    def checkIn(self, direction, state):
+        self.state = state
         self.direction = direction
         self.atHub = 1
         self.returnedToHub = True
@@ -35,6 +38,14 @@ class hubController:
         self.no_viewer = environment.args.no_viewer
 
         environment.inputEventManager.subscribe('priorityUpdate', self.handlePriorityUpdate)
+    def agentLeave(self,angle,id):
+        self.directions[angle] += 1
+        agent = self.agentList[id]
+        if agent.direction is not None:
+            self.incoming[int(agent.direction / 5)] -= 1
+        agent.checkOut(angle * 5, self.agentsInHub[id].state)
+        self.agentsInHub[id].priorities = self.getSitePriorities()
+        del self.agentsInHub[id]
 
     def beeCheckOut(self, bee):
         angle = bee.direction % (2 * np.pi)
@@ -42,22 +53,20 @@ class hubController:
         agent = self.agentList[bee.id]
         if (self.directionParams[angle] == -1):  # No user input, all is well
             self.agentLeave(angle, bee.id)
-
         elif self.directionParams[angle] < self.directions[angle]:  # too many bees, stop it!
             bee.state = Observing(bee)
-
+            bee.observeTransition()
         elif (self.directionParams[angle] > self.directions[angle]):  # there needs to be more bees in that direction
             self.agentLeave(angle,bee.id)
-
         elif self.directionParams[angle] == self.directions[angle]:  # perfect amount of bees, stop it
             bee.state = Observing(bee)
-
+            bee.observeTransition()
         agent.state = bee.state
         return agent.atHub
         # TODO if explorer set a timer for it, if assessor calculate projected time
 
     def beeCheckIn(self,bee):
-        # TODO check if they are coming in from a weird angle if they're assessors, which can be a 'red flag'
+        # TODO check a map of where they've been to figure out where traps are.
         #eprint("checking in:", id, " Initial direction:", self.agentList[id].direction, " from:", int(dir*(180/np.pi))+180)
 
         #angle calculations
@@ -65,11 +74,14 @@ class hubController:
         inAngle = (bee.direction - np.pi) % (2 * np.pi)
         inAngle = int(int(inAngle * (180 / np.pi)) / 5)
 
+        bee.updateParams(copy.copy(self.environment.parameters),self.time)
+
         #updating hub info and agents
         self.directions[exitAngle] = self.directions[exitAngle] - 1
         self.incoming[inAngle] += 1
-        self.agentList[bee.id].checkIn(inAngle*5)
+        self.agentList[bee.id].checkIn(inAngle*5, bee.state)
         self.agentsInHub[bee.id] = bee
+
 
         if self.agentList[bee.id].dead:
             self.agentList[bee.id].dead = False
@@ -81,6 +93,7 @@ class hubController:
             print(json.dumps({"type": "updateMission",
                               "data": {"x": bee.potential_site[0], "y": bee.potential_site[1], "q": bee.q_value}}))
 
+
     def handleRadialControl(self, jsonInput):
         jsonDict = jsonInput['state']  # id, dictionary(r:radian, deg: degrees, val: 1-30)
         self.directionInput(jsonDict['deg'], jsonDict['val'])
@@ -91,7 +104,10 @@ class hubController:
         angle = int(int(direction % 360) / 5)  # converting to fit in the array
 
         self.directionParams[angle] = int(newValue)
-
+    def emitUpdateParams(self, params,time):
+        self.time = time
+        for id,bee in self.agentsInHub.items():
+            bee.updateParams(copy.copy(params),self.time)
     def observersCheck(self):
         return self.agentsInHub.random_value()
 
@@ -106,6 +122,7 @@ class hubController:
     def hiveAdjust(self, bees):
         # sortedParams = sorted(self.directionParams, operator.getitem(1), Reverse=True)
 
+        #This code is checking for the dead bees
         if self.exploreCounter < 1 and not self.piperCheck():
             for id, beeInf in self.agentList.items():
                 if beeInf.returnedToHub:
@@ -113,7 +130,7 @@ class hubController:
                 elif beeInf.dead is False:
                     beeInf.dead = True
                     self.deadBees += 1
-                    self.exploreCounter = self.exploreTime * 1.2
+            self.exploreCounter = self.exploreTime * 1.5
                     # self.environment.parameter[""]# how to change the parameters?????
                     # TODO change the parameters based on how many dead bees
         else:
@@ -127,15 +144,16 @@ class hubController:
                 pass # too many bees, just keep stopping them from leaving
             elif self.directionParams[angle] > self.directions[angle]:  # not enough bees send out more! from observers
 
-                for id, bee in bees.items():  # TODO to speed up use the in hub agents
+                #for id, bee in bees.items():  # TODO to speed up use the in hub agents
+                for id, bee in self.agentsInHub.items():
                     if bee.state.__class__ == Observing().__class__ and bee.inHub is True:
                         if np.random.random() > 0.05:  # this gives a 5% chance of it happening
                             break
-
                         #updating bee info
                         bee.state = Exploring(bee)
+                        bee.exploreTransition()
                         bee.state.inputExplore = True
-                        bee.state.exploretime *= 0.35  # since the bees are going out in an almost straight line: less exploretime
+                        bee.counter *= 0.35  # since the bees are going out in an almost straight line: less exploretime
                         bee.direction = ((angle * 5) / 180) * np.pi
                         bee.inHub = False
 
@@ -161,13 +179,7 @@ class hubController:
         if not self.no_viewer:
             print(json.dumps(radialJson))
 
-    def agentLeave(self,angle,id):
-        self.directions[angle] += 1
-        agent = self.agentList[id]
-        if agent.direction is not None:
-            self.incoming[int(agent.direction / 5)] -= 1
-        agent.checkOut(angle * 5)
-        del self.agentsInHub[id]
+
 
     def reset(self, radius, agents, environment, exploreTime):
         self.incoming = [None] * 72
@@ -192,6 +204,8 @@ class hubController:
         self.exploreTime = int(exploreTime)
         self.exploreCounter = int(exploreTime * 1.2)
         self.deadBees = 0
+        self.time = 0
+        self.stateCounts ={"searching": 0, "assessing": 0, "commit": 0 }
 
     def convertToIndex(self, degrees):
         int(int(degrees % 360) / 5)

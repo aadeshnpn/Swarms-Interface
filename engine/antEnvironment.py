@@ -10,7 +10,7 @@ from antCode.ant.agent import *
 from antCode.hubController import hubController
 from beeCode.infoStation import InfoStation
 from utils.potentialField import PotentialField
-
+import sys, os
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #Set the seed to always set same random values
 #random.seed(123)
@@ -39,16 +39,16 @@ class Environment:
         #  environment parameters
 
         self.number_of_agents = 100
-        self.frames_per_sec = 60
+        self.frames_per_sec = 300
 
         #This should be working from angent class. Its not working. So using it over here
         self.following = {}
         #  bee parameters
-        self.parameters = {"PipingThreshold":       self.number_of_agents*.1,
+        self.parameters = {"PipingThreshold":       2,
                            "Velocity":              2,
-                           "ExploreTime":           3625,
+                           "ExploreTime":           2000,
                            "RestTime":              2000,
-                           "DanceTime":             1150,
+                           "DanceTime":             10,
                            "ObserveTime":           2000,
                            "SiteAssessTime":        250,
                            "SiteAssessRadius":      15,
@@ -70,10 +70,13 @@ class Environment:
         self.repulsors = [] #[flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
         #self.repulsors[0].time_ticks = 600
         #self.repulsors[1].time_ticks = 1800
-        x = int(np.ceil(int(self.x_limit*2)/3))
-        y = int(np.ceil(int(self.y_limit*2)/3))
-        self.pheromoneList = np.zeros([x,y])
+        #drawing the Pheromone list
+        #x = int(np.ceil(int(self.x_limit*2)/3))
+        #y = int(np.ceil(int(self.y_limit*2)/3))
+        self.pheromoneList = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])
+        self.pheromoneView = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])
 
+        self.smellRange = 2
         #json aux
         self.previousMetaJson = None
     # Function to initialize data on the environment from a json file
@@ -97,7 +100,7 @@ class Environment:
         self.create_potential_fields()
 
         self.create_infoStations()
-    
+
     def randomizeSites(self,flag=True):
         #For each site randomize the values
         for site in self.sites:
@@ -172,33 +175,41 @@ class Environment:
                     "q"     : site["q_value"] - (tot_dif / site["radius"] * .25 * site["q_value"])
                 }
 
-        #if agent.atSite:
-        #    if self.info_stations[agent.siteIndex].check_for_changes(agent.parameters, agent.param_time_stamp):
-        #        agent.update_params(self.info_stations[agent.siteIndex].parameters)
-        #        agent.param_time_stamp = self.info_stations[agent.siteIndex].last_update
-            # agent.atSite = False
-
         return {"radius": -1, "q": 0}
 
     def get_pheromone(self,agent):
-        ##Loop through all the pheromonelist
-        x=int(int(agent.location[0]+self.x_limit)/3)
-        y=int(int(agent.location[1]+self.y_limit)/3)
+        #x=int(int(agent.location[0]+self.x_limit)/3)
+        #y=int(int(agent.location[1]+self.y_limit)/3)
+        x,y = self.worldToPher(agent.location[0],agent.location[1])
         return self.pheromoneList[x,y]
+    def pherToWorld(self, x, y):
+        #x = int(int(x * 3 + 1) - self.x_limit) this is for 1/3 array
+        #y = int(int(y * 3 + 1) - self.y_limit)
+        x = int(x-self.x_limit)
+        y = int(y-self.y_limit)
+        return x,y
+    def worldToPher(self,x,y):
+        #x = int(int(x + self.x_limit) / 3) this is for 1/3 array
+        #y = int(int(y + self.y_limit) / 3)
+        x = int(x+self.x_limit)
+        y = int(y+self.y_limit)
+        return x,y
+    def smellNearby(self, location):
+        x,y = self.worldToPher(location[0], location[1])
+        first = self.pheromoneList[x,y]
+        lowest = first
+        lowX = -10
+        lowY = -10
+        for i in range(-self.smellRange, self.smellRange+1):
+            for j in range(-self.smellRange,self.smellRange+1):
+                x0 = x+i
+                y0 = y+j
+                if self.pheromoneList[x0,y0] > 0 and self.pheromoneList[x0,y0] < lowest and self.pheromoneList[x0,y0] < first+1:
+                    lowest = self.pheromoneList[x,y]
+                    lowX = x0
+                    lowY = y0
+        return lowX, lowY
 
-        '''if self.pheromoneList:
-            for pheromone in self.pheromoneList:
-                x_dif = agent.location[0] - pheromone.location[0]
-                y_dif = agent.location[1] - pheromone.location[1]
-                tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
-                #print('Calling get raidus',self.parameters["DiffusionTime"],self.parameters["Strength"])
-                if tot_dif <= pheromone.get_radius(self.parameters["DiffusionTime"],self.parameters["Strength"]):
-                    agent.atPheromone = True
-                    return tot_dif
-                else:
-                    return 0
-        else:
-            return 0'''
 
     # Returns 0 if terrain is clear, -1 if it is rough (slows velocity of agent to half-speed), -2 if there is an
     # obstacle, and -3 if there is a trap
@@ -223,88 +234,16 @@ class Environment:
 
         return 0
 
-    # Wind affects the whole environment except the hub.
-    def wind(self, direction, velocity):
-        for agent_id in self.agents:
-            agent = self.agents[agent_id]
-            if ((agent.location[0] - self.hub["x"]) ** 2 + (agent.location[1] - self.hub["y"]) ** 2) ** .5 > self.hub["radius"]:
-                proposed_x = agent.location[0] + np.cos(direction) * velocity
-                proposed_y = agent.location[1] + np.sin(direction) * velocity
-
-                terrain_value = self.check_terrain(proposed_x, proposed_y)
-
-                if terrain_value == 0:
-                    agent.location[0] = proposed_x
-                    agent.location[1] = proposed_y
-                elif terrain_value == -3:
-                    agent.location[0] = proposed_x
-                    agent.location[1] = proposed_y
-                    agent.live = False
-                    self.dead_agents.append(agent)
-                    #self.states[agent.state].remove(agent_id) also not using this currently
-                    del self.agents[agent_id]
-                    return
-                elif terrain_value == -2:
-                    pass
-                elif terrain_value == -1:  # If the agent is in rough terrain, it will move at half speed
-                    slow_down = .5
-                    agent.location[0] += np.cos(direction) * velocity * slow_down
-                    agent.location[1] += np.sin(direction) * velocity * slow_down
-
-            # If the agent goes outside of the limits, it re-enters on the opposite side.
-            if agent.location[0] > self.x_limit:
-                agent.location[0] -= 2 * self.x_limit
-            elif agent.location[0] < self.x_limit * -1:
-                agent.location[0] += 2 * self.x_limit
-            if agent.location[1] > self.y_limit:
-                agent.location[1] -= 2 * self.y_limit
-            elif agent.location[1] < self.y_limit * -1:
-                agent.location[1] += 2 * self.y_limit
-
-    '''def get_nearby_dancers(self, agent_id, radius):
-        nearby = []
-        for other_id in self.states[Dancing().__class__]:
-            if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0]) ** 2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1]) ** 2) ** .5 <= radius:
-                nearby.append(self.agents[other_id])
-        return nearby
-
-    def get_nearby_pipers(self, agent_id, radius):
-        nearby = []
-        for other_id in self.states[Piping().__class__]:
-            if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0]) ** 2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1]) ** 2) ** .5 <= radius:
-                nearby.append(self.agents[other_id])
-        return nearby
-
-    def get_nearby_site_assessors(self, agent_id, radius):
-        nearby = []
-        for other_id in self.states[SiteAssess().__class__]:
-            if other_id != agent_id:
-                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0]) ** 2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1]) ** 2) ** .5 <= radius:
-                    nearby.append(self.agents[other_id])
-        return nearby'''
-
-    def get_nearby_agents(self, agent_id, radius):
-        nearby = []
-        for other_id in self.agents:
-            if other_id != agent_id:
-                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0])**2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1])**2)**.5 <= radius:
-                    #nearby.append([self.agents[other_id].site_location, self.agents[other_id].q_found])
-                    nearby.append(self.agents[other_id])
-        return nearby
-
     # agent asks to go in a direction at a certain velocity, use vector addition, updates location
     def suggest_new_direction(self, agentId):
         agent = self.agents[agentId]
-
         # Check the effects of moving in the suggested direction
-        '''potential_field_effect = self.potential_field_sum(agent.location)
-        potential_field_v = np.sqrt(potential_field_effect[0] ** 2 + potential_field_effect[1] ** 2)
-        potential_field_d = np.arctan2(potential_field_effect[1], potential_field_effect[0])'''
-
-        # eprint(agent.GlobalVelocity)
         proposed_x = agent.location[0] + np.cos(agent.direction) * agent.velocity #+ np.cos(potential_field_d) * potential_field_v
         proposed_y = agent.location[1] + np.sin(agent.direction) * agent.velocity #+ np.sin(potential_field_d) * potential_field_v
 
+        if isinstance(agent.state,Following):
+            proposed_x = agent.location[0]
+            proposed_y = agent.location[1]
         terrain_value = self.check_terrain(proposed_x, proposed_y)
 
         if terrain_value == 0:
@@ -332,16 +271,6 @@ class Environment:
             slow_down = .5
             agent.location[0] += np.cos(agent.direction) * agent.velocity * slow_down #+ np.cos(potential_field_d) * potential_field_v
             agent.location[1] += np.sin(agent.direction) * agent.velocity * slow_down # + np.sin(potential_field_d) * potential_field_v
-
-        '''
-        This is computationally very expensive!
-        # add collision checking for other bees
-        for agent_id in self.agents:
-            if (self.agents[agent_id].location[:] == agent.location[:]) and (agentId != agent_id):
-                agent.location[0] -= np.cos(agent.direction) * agent.velocity
-                agent.location[1] -= np.sin(agent.direction) * agent.velocity
-                break
-        '''
 
         # If the agent goes outside of the limits, it re-enters on the opposite side.
         if agent.location[0] > self.x_limit:
@@ -380,6 +309,8 @@ class Environment:
         self.parameters["PipingTime"]       = int   (params['beePipingTimer'          ])
         self.number_of_agents               = int   (params['numberOfAgents'          ])
 
+        self.smellRange = int   (params['beePipingThreshold'      ])
+
         self.change_agent_params = True
         eprint("New velocity =", params["beeGlobalVelocity"])
 
@@ -396,7 +327,7 @@ class Environment:
         agent.SiteAssessTime        = int   (self.parameters["SiteAssessTime"   ])
         agent.SiteAssessRadius      = int   (self.parameters["SiteAssessRadius" ])
         agent.PipingTimer           = int   (self.parameters["PipingTime"       ])
-        agent.reset_trans_table()
+        #agent.reset_trans_table()
 
     def updateUIParameters(self, json):
         params = json['params']
@@ -446,30 +377,16 @@ class Environment:
                                                         # makes python mad...
                 for agent_id in keys:
 
-                    #agent = self.agents[agent_id]
-                    #agent.act()
-                    #agent.sense(self)
-                    #self.suggest_new_direction(agent.id)
-                    #wind_direction = 1  # in radians
-                    #wind_velocity = .01
-                    # uncomment the next line to add wind to the environment
-                    #self.wind(wind_direction, wind_velocity)
-                    #agent.update(self)
-
 
                     if self.agents[agent_id].state.name not in stateCounts:
                         stateCounts[self.agents[agent_id].state.name] = 0
 
                     stateCounts[self.agents[agent_id].state.name] += 1
 
-                    # if agent_id == "500":
-                    #     self.change_agent_params = True
 
                     if self.change_agent_params:
                         self.updateAgentParameters(self.agents[agent_id])
 
-                    '''if self.agents[agent_id].pheromoneList:
-                        self.pheromoneList[len(self.pheromoneList):] = self.agents[agent_id].pheromoneList'''
 
                     # is this faster?
                     self.agents[agent_id].act()
@@ -488,9 +405,11 @@ class Environment:
                     self.suggest_new_direction(agent_id)
 
                 self.hubController.hiveAdjust(self.agents)
-                evapRate = .05
-                self.pheromoneList[np.where(self.pheromoneList > 0)] = self.pheromoneList[np.where(self.pheromoneList  > 0)] - evapRate
-                self.pheromoneList[np.where(self.pheromoneList < 0)] = 0
+                evapRate = .02
+                self.pheromoneList = np.maximum(0,self.pheromoneList - evapRate)
+                #self.pheromoneList[np.where(self.pheromoneList < 0)] = 0
+                self.pheromoneView = np.maximum(0,self.pheromoneView - evapRate)
+                #self.pheromoneView[np.where(self.pheromoneView < 0)] = 0
                 if self.change_agent_params:
                     self.change_agent_params = False
                 #"""
@@ -548,7 +467,7 @@ class Environment:
         return agent_state_count,total_agent_hub,agent_state_site
     #def agent_to_follow(self,state):
         #agent_state_list = [(self.agents[agent].siteIndex,agent) for agent in self.agents if self.agents[agent].inHub and self.agents[agen].state==state]
-        #agentidnp.random.choice(agent_state_list)            
+        #agentidnp.random.choice(agent_state_list)
     def add_agents(self):
         #Start agents in searching, resting and waiting state
         #rest_num = int(.1*self.number_of_agents)
@@ -562,7 +481,7 @@ class Environment:
             #else:
             agent = Agent(agent_id, self.hub, Waiting())
             #agent = Agent(agent_id, self.hub, Resting())
-            self.agents[agent_id] = agent            
+            self.agents[agent_id] = agent
         for y in range(self.number_of_agents-wait_num):
             agent_id = str(x + y + 1)
             #if self.useDefaultParams:
@@ -571,37 +490,8 @@ class Environment:
             #else:
             agent = Agent(agent_id, self.hub, Searching())
             #agent = Agent(agent_id, self.hub, Resting())
-            self.agents[agent_id] = agent                        
-            """
-            agent = Agent(agent_id,  Exploring(ExploreTimeMultiplier=self.parameters["ExploreTime"]), self.hub,
-                          piping_threshold          = int   (self.parameters["PipingThreshold"  ]),
-                          global_velocity           = float (self.parameters["Velocity"         ]),
-                          explore_time_multiplier   = float (self.parameters["ExploreTime"      ]),
-                          rest_time                 = int   (self.parameters["RestTime"         ]),
-                          dance_time                = int   (self.parameters["DanceTime"        ]),
-                          observe_time              = int   (self.parameters["ObserveTime"      ]),
-                          site_assess_time          = int   (self.parameters["SiteAssessTime"   ]),
-                          site_assess_radius        = int   (self.parameters["SiteAssessRadius" ]),
-                          piping_time               = int   (self.parameters["PipingTime"       ]))
             self.agents[agent_id] = agent
-            #self.states[Exploring().__class__].append(agent_id)
-        
-        
-        for y in range(rest_num):
-            agent_id = str(x + 1 + y)
 
-            agent = Agent(agent_id, Resting(agent=None, rest_time=self.parameters["RestTime"]), self.hub,
-                          piping_threshold          = int   (self.parameters["PipingThreshold"]),
-                          global_velocity           = float (self.parameters["Velocity"]),
-                          explore_time_multiplier   = float (self.parameters["ExploreTime"]),
-                          rest_time                 = int   (self.parameters["RestTime"]),
-                          dance_time                = int   (self.parameters["DanceTime"]),
-                          observe_time              = int   (self.parameters["ObserveTime"]),
-                          site_assess_time          = int   (self.parameters["SiteAssessTime"]),
-                          site_assess_radius        = int   (self.parameters["SiteAssessRadius"]),
-                          piping_time               = int   (self.parameters["PipingTime"]))
-            self.agents[agent_id] = agent
-        """
 
     def reset_sim(self):
         self.clear_for_reset()
@@ -676,16 +566,14 @@ class Environment:
         #return ''
         pheromones = []
         #indicies [0] is X's, [1] are y's:
-        indicies = np.where(self.pheromoneList > 0)
+        indicies = np.where(self.pheromoneView > 0)
         for i in range(0,len(indicies[0])):
-            #try:
-            #pheromone_dict = {"x": indicies[0][i],
-                              #"y": indicies[1][i]}
+            #int(int(indicies[1][i]*3+1) -self.y_limit)
             pheromone_dict = {}
-            pheromone_dict["x"] = int(int(indicies[0][i]*3+1) -self.x_limit)
-            pheromone_dict["y"] = int(int(indicies[1][i]*3+1) -self.y_limit)
-            test = self.pheromoneList[indicies[0][i]][indicies[1][i]]
-            # TODO include the pheromone strength here, then figure out drawing that
+            x,y = self.pherToWorld(indicies[0][i],indicies[1][i])
+            pheromone_dict["x"] = x
+            pheromone_dict["y"] = y
+            #test = self.pheromoneList[indicies[0][i]][indicies[1][i]]
             pheromones.append(pheromone_dict)
         return pheromones
 
@@ -703,6 +591,7 @@ class Environment:
             agent_dict["potential_site"] = self.agents[agent_id].potential_site
             agent_dict["live"] = self.agents[agent_id].live
             agent_dict["qVal"] = self.agents[agent_id].q_value
+            agent_dict["pVal"] = self.agents[agent_id].atPheromone
             agents.append(agent_dict)
         return agents
 
@@ -713,7 +602,7 @@ class Environment:
             {
                 "parameters":
                 {
-                    "beePipingThreshold"      : self.parameters["PipingThreshold"],
+                    "beePipingThreshold"      : self.smellRange,
                     "beeGlobalVelocity"       : self.parameters["Velocity"],
                     "beeExploreTimeMultiplier": self.parameters["ExploreTime"],
                     "beeRestTime"             : self.parameters["RestTime"],
@@ -741,7 +630,6 @@ class Environment:
         }
 
         return json.dumps(parameterJson)
-
 file = "world.json"
 world = Environment(os.path.join(ROOT_DIR, file))
 world.run()

@@ -30,6 +30,7 @@ parser.add_argument("-t", "--tick-limit", type=int, help="Stop simulation after 
 parser.add_argument("-r", "--randomize", action="store_true", help="randomizes the environment")
 parser.add_argument("-l", "--log_file", type=str, help="Log input events to LOG_FILE")
 parser.add_argument("-e", "--seed", type=int, help="Run the simulation with the specified random seed")
+parser.add_argument("-p", "--pipe", type=str, help="Connect to the specified named pipe")
 
 args = parser.parse_args()
 
@@ -72,8 +73,6 @@ class Environment:
         self.dead_agents = []
         self.stats = {}
 
-        self.build_json_environment()  # Calls the function to read in the initialization data from a file
-
         self.stats["parameters"] = {"environment": {}, "agent": {}}
 
         #  environment parameters
@@ -83,21 +82,21 @@ class Environment:
         self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
 
         #  bee parameters
-        self.parameters = {"PipingThreshold": self.number_of_agents * .17,
-                           "Velocity": 2,
-                           "ExploreTime": 1400,
+        self.parameters = {"PipingThreshold": int(self.number_of_agents * .15),
+                           "Velocity": 1.25,
+                           "ExploreTime": 2000,
                            "RestTime": 1000,
                            "DanceTime": 1150,
                            "ObserveTime": 2000,
                            "SiteAssessTime": 250,
-                           "SiteAssessRadius": 15,
                            "PipingTime": 1200}
+
+        self.build_json_environment()  # Calls the function to read in the initialization data from a file
 
         self.stats["parameters"]["agent"] = self.parameters
 
         # self.useDefaultParams = True
         self.restart_simulation = False
-        self.change_agent_params = False
 
         self.add_agents()
 
@@ -112,6 +111,8 @@ class Environment:
 
         # json aux
         self.previousMetaJson = None
+
+        self.chat_history = ""
 
     def countUpdate(self, state1, state2):
         pass
@@ -161,15 +162,6 @@ class Environment:
         else:
             return None
 
-    '''def randomizeSites(self, flag=True):
-        # Foe each site randomize the values
-        for site in self.sites:
-            site['q_value'] = round(np.random.random(), 2)
-            site['x'] = np.random.randint(-self.x_limit, self.x_limit)
-            site['y'] = np.random.randint(-self.y_limit, self.y_limit)
-            site['radius'] = np.random.normal(30,10)
-            site['food_unit'] = np.power(site['radius'], 3)'''
-
     def updateFlowControllers(self):
 
         new_attractor_list = []
@@ -203,22 +195,15 @@ class Environment:
                     self.info_stations[i].bee_count += 1
                     agent.atSite = True
                     agent.siteIndex = i
-                    if info.check_for_changes(agent.parameters, agent.param_time_stamp):
-                        agent.update_params(info.parameters)
-                        agent.param_time_stamp = info.last_update
-
+                    #TODO: move this to agents, which would be faster
+                    info.check_for_changes(agent,agent.parameters, agent.param_time_stamp)
+                    agent.infoStation = info
                 # return the q_value as a linear gradient. The center of the site will return 100% of the q_value,
                 # the edge will return 75% of the q_value
                 return {
                     "radius": site["radius"],
-                    "q": site["q_value"] - (tot_dif / site["radius"] * .25 * site["q_value"])
+                    "q": site["q_value"] - (tot_dif / site["radius"] * .25 * site["q_value"]) #gradient!
                 }
-
-        if agent.atSite:
-            if self.info_stations[agent.siteIndex].check_for_changes(agent.parameters, agent.param_time_stamp):
-                agent.update_params(self.info_stations[agent.siteIndex].parameters)
-                agent.param_time_stamp = self.info_stations[agent.siteIndex].last_update
-                # agent.atSite = False
 
         return {"radius": -1, "q": 0}
 
@@ -244,80 +229,6 @@ class Environment:
                 return -1
 
         return 0
-
-    # Wind affects the whole environment except the hub.
-    def wind(self, direction, velocity):
-        for agent_id in self.agents:
-            agent = self.agents[agent_id]
-            if ((agent.location[0] - self.hub["x"]) ** 2 + (agent.location[1] - self.hub["y"]) ** 2) ** .5 > self.hub[
-                "radius"]:
-                proposed_x = agent.location[0] + np.cos(direction) * velocity
-                proposed_y = agent.location[1] + np.sin(direction) * velocity
-
-                terrain_value = self.check_terrain(proposed_x, proposed_y)
-
-                if terrain_value == 0:
-                    agent.location[0] = proposed_x
-                    agent.location[1] = proposed_y
-                elif terrain_value == -3:
-                    agent.location[0] = proposed_x
-                    agent.location[1] = proposed_y
-                    agent.live = False
-                    self.dead_agents.append(agent)
-                    self.stats["deadAgents"] += 1
-                    #eprint("dead: ", self.state["deadAgents"])
-                    # self.states[agent.state].remove(agent_id) also not using this currently
-                    del self.agents[agent_id]
-                    return
-                elif terrain_value == -2:
-                    pass
-                elif terrain_value == -1:  # If the agent is in rough terrain, it will move at half speed
-                    slow_down = .5
-                    agent.location[0] += np.cos(direction) * velocity * slow_down
-                    agent.location[1] += np.sin(direction) * velocity * slow_down
-
-            # If the agent goes outside of the limits, it re-enters on the opposite side.
-            if agent.location[0] > self.x_limit:
-                agent.location[0] -= 2 * self.x_limit
-            elif agent.location[0] < self.x_limit * -1:
-                agent.location[0] += 2 * self.x_limit
-            if agent.location[1] > self.y_limit:
-                agent.location[1] -= 2 * self.y_limit
-            elif agent.location[1] < self.y_limit * -1:
-                agent.location[1] += 2 * self.y_limit
-
-    '''def get_nearby_dancers(self, agent_id, radius):
-        nearby = []
-        for other_id in self.states[Dancing().__class__]:
-            if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0]) ** 2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1]) ** 2) ** .5 <= radius:
-                nearby.append(self.agents[other_id])
-        return nearby
-
-    def get_nearby_pipers(self, agent_id, radius):
-        nearby = []
-        for other_id in self.states[Piping().__class__]:
-            if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0]) ** 2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1]) ** 2) ** .5 <= radius:
-                nearby.append(self.agents[other_id])
-        return nearby
-
-    def get_nearby_site_assessors(self, agent_id, radius):
-        nearby = []
-        for other_id in self.states[SiteAssess().__class__]:
-            if other_id != agent_id:
-                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0]) ** 2 + (self.agents[other_id].location[1] - self.agents[agent_id].location[1]) ** 2) ** .5 <= radius:
-                    nearby.append(self.agents[other_id])
-        return nearby'''
-
-    def get_nearby_agents(self, agent_id, radius):
-        nearby = []
-        for other_id in self.agents:
-            if other_id != agent_id:
-                if ((self.agents[other_id].location[0] - self.agents[agent_id].location[0]) ** 2 + (
-                            self.agents[other_id].location[1] - self.agents[agent_id].location[
-                            1]) ** 2) ** .5 <= radius:
-                    # nearby.append([self.agents[other_id].site_location, self.agents[other_id].q_found])
-                    nearby.append(self.agents[other_id])
-        return nearby
 
     # agent asks to go in a direction at a certain velocity, use vector addition, updates location
     def suggest_new_direction(self, agentId):
@@ -367,25 +278,19 @@ class Environment:
             agent.location[1] += np.sin(
                 agent.direction) * agent.velocity * slow_down  # + np.sin(potential_field_d) * potential_field_v
 
-        '''
-        This is computationally very expensive!
-        # add collision checking for other bees
-        for agent_id in self.agents:
-            if (self.agents[agent_id].location[:] == agent.location[:]) and (agentId != agent_id):
-                agent.location[0] -= np.cos(agent.direction) * agent.velocity
-                agent.location[1] -= np.sin(agent.direction) * agent.velocity
-                break
-        '''
-
         # If the agent goes outside of the limits, it re-enters on the opposite side.
         if agent.location[0] > self.x_limit:
-            agent.location[0] -= 2 * self.x_limit
+            #agent.location[0] -= 2 * self.x_limit
+            agent.direction += np.pi
         elif agent.location[0] < self.x_limit * -1:
-            agent.location[0] += 2 * self.x_limit
+            #agent.location[0] += 2 * self.x_limit
+            agent.direction += np.pi
         if agent.location[1] > self.y_limit:
-            agent.location[1] -= 2 * self.y_limit
+            #agent.location[1] -= 2 * self.y_limit
+            agent.direction += np.pi
         elif agent.location[1] < self.y_limit * -1:
-            agent.location[1] += 2 * self.y_limit
+            #agent.location[1] += 2 * self.y_limit
+            agent.direction += np.pi
 
     def pause(self, json):
         self.isPaused = True
@@ -410,27 +315,12 @@ class Environment:
         self.parameters["DanceTime"] = int(params['beeDanceTime'])
         self.parameters["ObserveTime"] = int(params['beeObserveTime'])
         self.parameters["SiteAssessTime"] = int(params['beeSiteAccessTime'])
-        self.parameters["SiteAssessRadius"] = int(params['beeSiteAccessRadius'])
         self.parameters["PipingTime"] = int(params['beePipingTimer'])
         self.number_of_agents = int(params['numberOfAgents'])
-
-        self.change_agent_params = True
         eprint("New velocity =", params["beeGlobalVelocity"])
-
+        self.hubController.emitUpdateParams(self.parameters,time.time())
         # echo the change out for any other connected clients
         print(self.parametersToJson())
-
-    def updateAgentParameters(self, agent):
-        agent.PipingThreshold = int(self.parameters["PipingThreshold"])
-        agent.GlobalVelocity = float(self.parameters["Velocity"])
-        agent.ExploreTimeMultiplier = float(self.parameters["ExploreTime"])
-        agent.RestTime = int(self.parameters["RestTime"])
-        agent.DanceTime = int(self.parameters["DanceTime"])
-        agent.ObserveTime = int(self.parameters["ObserveTime"])
-        agent.SiteAssessTime = int(self.parameters["SiteAssessTime"])
-        agent.SiteAssessRadius = int(self.parameters["SiteAssessRadius"])
-        agent.PipingTimer = int(self.parameters["PipingTime"])
-        agent.reset_trans_table()
 
     def updateUIParameters(self, json):
         params = json['params']
@@ -445,7 +335,7 @@ class Environment:
         self.restart_simulation = True
 
     def getUiStates(self, data):
-        eprint("getting ui states")
+        #eprint("getting ui states")
         print(json.dumps({
             "type": "setStates",
             "data": list(self.agents.values())[0].getUiRepresentation()
@@ -453,6 +343,14 @@ class Environment:
 
     def getParams(self, data):
         print(self.parametersToJson())
+
+    def processMessage(self, data):
+        self.chat_history += data['message'] + '\n'
+        eprint(self.chat_history)
+        print(json.dumps({
+            "type" : "updateChat",
+            "data" : self.chat_history
+        }))
 
     # Move all of the agents
     def run(self):
@@ -469,6 +367,8 @@ class Environment:
             self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
             self.inputEventManager.subscribe('requestStates', self.getUiStates)
             self.inputEventManager.subscribe('requestParams', self.getParams)
+
+            self.inputEventManager.subscribe('message', self.processMessage)
 
             world.to_json()
             self.getParams(None)  # this is a shortcut for letting the client know what the initial parameters are.
@@ -496,50 +396,18 @@ class Environment:
 
                     keys = list(self.agents.keys())  # deleting a key mid-iteration (suggest_new_direction())
                     # makes python mad...
+                    #AGENT RUN LOOP
                     for agent_id in keys:
-                        '''
-                        agent = self.agents[agent_id]
-                        agent.act()
-                        agent.sense(self)
-                        self.suggest_new_direction(agent.id)
-                        # wind_direction = 1  # in radians
-                        # wind_velocity = .01
-                        # uncomment the next line to add wind to the environment
-                        #self.wind(wind_direction, wind_velocity)
-                        agent.update(self)
-                        '''
-
                         if self.agents[agent_id].state.name not in self.stats["stateCounts"]:
                             self.stats["stateCounts"][self.agents[agent_id].state.name] = 0
-
-                        self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
-
-                        # if agent_id == "500":
-                        #     self.change_agent_params = True
-
-                        if self.change_agent_params:
-                            self.updateAgentParameters(self.agents[agent_id])
-
+                        #self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
                         # is this faster?
                         self.agents[agent_id].act()
                         self.agents[agent_id].sense(self)
-
-                        atSite = False
-                        if self.agents[agent_id].atSite:
-                            atSite = True
-
                         self.agents[agent_id].update(self)
-
-                        if atSite and not self.agents[agent_id].atSite:
-                            self.info_stations[self.agents[agent_id].siteIndex].bee_count -= 1
-                            self.agents[agent_id].siteIndex = None
-
                         self.suggest_new_direction(agent_id)
 
                     self.hubController.hiveAdjust(self.agents)
-
-                    if self.change_agent_params:
-                        self.change_agent_params = False
 
                     if not args.no_viewer:
                         print(json.dumps({
@@ -547,16 +415,17 @@ class Environment:
                             "data": self.stats["stateCounts"]
                         }))
 
-                if (args.commit_stop and "commit" in self.stats["stateCounts"] and self.stats["stateCounts"][
-                    "commit"] + len(self.dead_agents) >= self.number_of_agents * .95):
-                    break
+                    if (args.commit_stop and "commit" in self.stats["stateCounts"] and self.stats["stateCounts"][
+                        "commit"] + len(self.dead_agents) >= self.number_of_agents * .95):
+                        break
 
-                self.updateFlowControllers()
+                    self.updateFlowControllers()
 
-                if (self.logfile):
-                    for event in self.inputEventManager.eventQueue:
+
+                for event in self.inputEventManager.eventQueue:
+                    if (self.logfile):
                         self.logfile.write(("%s\n" % json.dumps({"tick":self.stats["ticks"],"event":event})))
-                        self.inputEventManager.callbackEvent(event)
+                    self.inputEventManager.callbackEvent(event)
 
                 del self.inputEventManager.eventQueue[:]
 
@@ -587,50 +456,25 @@ class Environment:
         self.agents.clear()
         self.attractors.clear()
         self.repulsors.clear()
-        '''for state in self.states:
-            self.states[state].clear()'''
         self.dead_agents.clear()
         self.info_stations.clear()
         self.create_infoStations()
 
     def create_infoStations(self):
         for x in range(len(self.sites)):
-            self.info_stations.append(InfoStation())
+            self.info_stations.append(InfoStation(self.parameters))
 
     def add_agents(self):
-        rest_num = int(.5 * np.sqrt(self.number_of_agents))
+        rest_num = int(.1 * np.sqrt(self.number_of_agents))
         for x in range(self.number_of_agents - rest_num):
             agent_id = str(x)
-            # if self.useDefaultParams:
-            #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
-            # agent = Agent(agent_id,Observing())
-            # else:
-            agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.parameters["ExploreTime"]), self.hub,
-                          piping_threshold=int(self.parameters["PipingThreshold"]),
-                          global_velocity=float(self.parameters["Velocity"]),
-                          explore_time_multiplier=float(self.parameters["ExploreTime"]),
-                          rest_time=int(self.parameters["RestTime"]),
-                          dance_time=int(self.parameters["DanceTime"]),
-                          observe_time=int(self.parameters["ObserveTime"]),
-                          site_assess_time=int(self.parameters["SiteAssessTime"]),
-                          site_assess_radius=int(self.parameters["SiteAssessRadius"]),
-                          piping_time=int(self.parameters["PipingTime"]))
+            agent = Agent(self, agent_id, Exploring(None), self.hub, self.parameters,
+                          count = int(self.parameters["ExploreTime"]))
             self.agents[agent_id] = agent
-            # self.states[Exploring().__class__].append(agent_id)
 
         for y in range(rest_num):
             agent_id = str(x + 1 + y)
-
-            agent = Agent(agent_id, Resting(agent=None, rest_time=self.parameters["RestTime"]), self.hub,
-                          piping_threshold=int(self.parameters["PipingThreshold"]),
-                          global_velocity=float(self.parameters["Velocity"]),
-                          explore_time_multiplier=float(self.parameters["ExploreTime"]),
-                          rest_time=int(self.parameters["RestTime"]),
-                          dance_time=int(self.parameters["DanceTime"]),
-                          observe_time=int(self.parameters["ObserveTime"]),
-                          site_assess_time=int(self.parameters["SiteAssessTime"]),
-                          site_assess_radius=int(self.parameters["SiteAssessRadius"]),
-                          piping_time=int(self.parameters["PipingTime"]))
+            agent = Agent(self, agent_id, Resting(None), self.hub, self.parameters,count=int(self.parameters["RestTime"]))
             self.agents[agent_id] = agent
 
     def reset_sim(self):
@@ -685,7 +529,8 @@ class Environment:
                             "attractors": list(map(lambda a: a.toJson(), self.attractors)),
                             "repulsors": list(map(lambda r: r.toJson(), self.repulsors)),
                             "agents": self.agents_to_json(),
-                            "dead_agents": self.dead_agents_to_json()
+                            "dead_agents": self.dead_agents_to_json(),
+                            "pheromones": ""
                         }
                 })
         )
@@ -735,7 +580,6 @@ class Environment:
                             "beeDanceTime": self.parameters["DanceTime"],
                             "beeObserveTime": self.parameters["ObserveTime"],
                             "beeSiteAccessTime": self.parameters["SiteAssessTime"],
-                            "beeSiteAccessRadius": self.parameters["SiteAssessRadius"],
                             "beePipingTimer": self.parameters["PipingTime"],
                             "numberOfAgents": self.number_of_agents
                         }
@@ -761,9 +605,10 @@ class Environment:
         print(json.dumps(self.stats))
 
 
-file = "world.json"
-world = Environment(os.path.join(ROOT_DIR, file))
-world.run()
+if __name__ == "__main__":
+    file = "world.json"
+    world = Environment(os.path.join(ROOT_DIR, file))
+    world.run()
 
-if args.stats:
-    world.printStats()
+    if args.stats:
+        world.printStats()
