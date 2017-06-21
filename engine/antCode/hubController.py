@@ -103,13 +103,17 @@ class hubController:
         angle = int(int(direction % 360) / 5)  # converting to fit in the array
 
         self.directionParams[angle] = int(newValue)
+
     def emitUpdateParams(self, params,time):
         self.time = time
         for id,bee in self.agentsInHub.items():
             bee.updateParams(copy.copy(params),self.time)
     
     def observersCheck(self):
-        return self.agentsInHub.random_value()
+        try:
+            return self.agentsInHub.random_value()
+        except:
+            return None
 
     def piperCheck(self):
         if len(self.agentsInHub) <= self.piperCount:

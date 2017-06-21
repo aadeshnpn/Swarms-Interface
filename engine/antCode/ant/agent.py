@@ -27,6 +27,7 @@ class Agent(StateMachine):
         self.location = [hub["x"],hub["y"]]
         self.direction = 2*np.pi*np.random.random()
         self.velocity = 2
+        self.default_velocity = 2
         self.hub = [hub["x"],hub["y"]]
         self.potential_site = None
         self.q_value = 0
@@ -75,6 +76,7 @@ class Agent(StateMachine):
                 (Waiting(self).__class__, input.join): [None, Exploiting(self)],
                 (Waiting(self).__class__, input.startFollowing): [None, Following1(self)],
                 (Following1(self).__class__, input.arrive): [None, Exploiting(self)],
+                (Following1(self).__class__, input.getLost2): [None, Searching(self)],                
                 #(Searching(self).__class__, input.discover): [None, Exploiting(self)],
                 (Searching(self).__class__, input.stopSearching): [None, Waiting(self)],
                 (Searching(self).__class__, input.startFollowing): [None, Following(self)],                
@@ -218,6 +220,8 @@ class Exploiting(State):  # like site assess
     def act(self, agent):
         # if self.atsite:
         #    pass
+        ##For every state reset velocity to default
+        agent.velocity = agent.default_velocity
         if agent.goingToSite:
             dx = agent.potential_site[0] - agent.location[0]
             dy = agent.potential_site[1] - agent.location[1]
@@ -271,6 +275,7 @@ class Following(State):
         """
 
     def act(self,agent):
+        agent.velocity = 1.5 #agent.default_velocity        
         dx = self.next[0] - agent.location[0]
         dy = self.next[1] - agent.location[1]
         #agent.direction = np.arctan2(dy, dx)
@@ -292,6 +297,7 @@ class Following1(State):
         self.name = 'following1'
         #self.following = None
         self.following_lost_time = agent.parameters["FollowingTime"]
+        self.following1_confusion_time = 3000
         #self.next = [np.random.choice([-1,1])]
 
     def sense(self,agent,environment):
@@ -300,19 +306,32 @@ class Following1(State):
         #pass
 
     def update(self,agent,environment):
+        self.following1_confusion_time -= 1
         if agent.q_value > 0 :
             agent.potential_site = [agent.location[0], agent.location[1]]
             #eprint(agent.potential_site, "searching")
             return input.arrive        
-        elif int(agent.potential_site[0]) == int(agent.location[0]) and int(agent.potential_site[1]) == int(agent.location[1]):
-            return input.arrive
+        #elif int(agent.potential_site[0]) == int(agent.location[0]) and int(agent.potential_site[1]) == int(agent.location[1]):
+        #    return input.arrive
+        elif self.following1_confusion_time <= 0:
+            return input.getLost2
         else:
             pass
 
     def act(self,agent):
         dx = agent.potential_site[0] - agent.location[0]
         dy = agent.potential_site[1] - agent.location[1]
-        agent.direction = np.arctan2(dy, dx)
+        ##The problem with following1 is that the site decrease and it can no longer 
+        # find q value as pointed out by the agent it was following.
+        #if np.abs(dx) <= 5 or np.abs(dy) <= 5:
+        if np.sqrt(dx**2 + dy**2) < 5:
+            #eprint (dx,dy)
+            agent.direction = np.random.choice(np.arange(0,2*np.pi))
+            agent.velocity = 0.4 
+            self.following1_confusion_time -= 100           
+        else: 
+            agent.direction = np.arctan2(dy, dx)
+            agent.velocity = 1.5
         return        
 
 class Searching(State): #basically the same as explorer..
@@ -375,6 +394,7 @@ class Searching(State): #basically the same as explorer..
             environment.exploring_pheromoneList[x-5:x+5,y-5:y+5] += 2 * np.sqrt(5)
 
     def act(self,agent):
+        agent.velocity = agent.default_velocity        
         if(agent.attractor is not None and distance(agent.attractor, agent.location) < 40 and agent.attracted is True):
             angle = safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.attractor[0]-agent.location[0],agent.attractor[1]-agent.location[1]))
             angle = np.clip(angle, -np.pi/16, np.pi/16)
@@ -417,6 +437,7 @@ class SiteAssess(State):
             agent.q_value = siteInfo["q"]
 
     def act(self, agent):
+        agent.velocity = 1 #agent.default_velocity        
         self.move(agent)
 
     def update(self, agent, environment):
@@ -457,7 +478,7 @@ class Waiting(State):  # like observing
     def sense(self, agent, environment):
         if self.atHub:
             ant = environment.hubController.observersCheck()
-            if isinstance(ant.state, Recruiting().__class__):
+            if ant is not None and isinstance(ant.state, Recruiting().__class__):
                 if environment.recuriting_agents_at_hub/len(environment.hubController.agentsInHub) > 2*np.random.random():
                     self.seesRecuriter = True
                     agent.potential_site = ant.potential_site
@@ -482,6 +503,7 @@ class Waiting(State):  # like observing
 
 
     def act(self, agent):
+        agent.velocity = 1#agent.default_velocity        
         if self.atHub:
             self.waitingtime -= 1
             self.wander(agent)
@@ -530,6 +552,7 @@ class Recruiting(State): #like dancing
 
 
     def act(self,agent):
+        agent.velocity = agent.default_velocity        
         if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 >= agent.hubRadius:
             dx = agent.hub[0] - agent.location[0]
             dy = agent.hub[1] - agent.location[1]
