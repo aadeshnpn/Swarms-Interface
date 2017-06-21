@@ -56,11 +56,6 @@ bluebird.promisifyAll(redis.Multi.prototype);
 // The server's job should be essentially to grab world info from the simulation
 // engine and pass it on to the client, nothing else.
 
-// this is so each process can terminate its engine instances in an emergency
-// it doesn't need to be shared between cluster instances, so we're ok with
-// a global var
-var children = [];
-
 //------------------------------------------------------------------------------
 // Simulation represents a sim that can be attached to and observed by clients
 class Simulation
@@ -192,6 +187,9 @@ class Simulation
 
   stop()
   {
+    this.world.engine.stdout.unpipe(this.jsonStreamParser);
+    this.jsonStreamParser = null;
+
     // kill the subprocess
     this.world.engine.kill();
     this.inputListener.quit();
@@ -267,10 +265,12 @@ class Client
           this.userInputBroadcaster.publish(this.channels.kill, "done");
           redisClient.delAsync(`sim:${this.simId}:connectedCount`);
         }
+      })
+      .then(() =>
+      {
+        this.engineOutputListener.quit();
+        this.userInputBroadcaster.quit();
       });
-
-    this.engineOutputListener.quit();
-    this.userInputBroadcaster.quit();
   }
 }
 
@@ -330,7 +330,7 @@ app.get('/sims/:id', function(req, res)
 // TODO: finish
 app.get('/simlist', function(req, res)
 {
-  let simInfo = [];
+  let simInfo = {};
 
   redisClient.smembersAsync('activeSims')
     .then(simList =>
@@ -340,14 +340,17 @@ app.get('/simlist', function(req, res)
 
         if (!simList)
         {
-          res.json([]);
+          res.json({});
           return;
         }
 
         for (sim of simList)
         {
+          simInfo[sim] = {};
+          let thisSim = sim;
+
           promises.push( redisClient.getAsync(`sim:${sim}:connectedCount`)
-            .then(count => simInfo.push({id: sim, connected: count})) );
+            .then(count => simInfo[thisSim].connected = count) );
         }
 
         bluebird.all(promises)
@@ -411,26 +414,35 @@ io.on('connection', function(socket)
 // unified way of cleaning up all terminations
 function exitHandler(opts, err)
 {
-  for (child of children)
+  if (opts.clean)
   {
-    child.kill();
+    for (child of children)
+    {
+      child.kill();
+    }
   }
 
-  redisClient.flushallAsync()
-    .then( () =>
-    {
-      if (opts.exit)
+  if (opts.flush)
+  {
+    redisClient.flushallAsync()
+      .then( () =>
       {
-        process.exit();
-      }
-    });
+        redisClient.quit();
 
-  redisClient.quit();
+        if (opts.exit)
+        {
+          process.exit();
+        }
+      });
+  }
+  else
+  {
+    if (opts.exit)
+    {
+      process.exitCode = 0;
+    }
+  }
 }
-
-process.on('SIGTERM', exitHandler.bind(null, {exit: true}));
-process.on('SIGINT', exitHandler.bind(null, {exit: true}));
-process.on('exit', exitHandler);
 
 /*******************************************************************************
  * Server initialisation
@@ -447,8 +459,17 @@ if (!sticky.listen(http, process.env.PORT || 3000))
   {
     console.log(`Listening on ${(process.env.PORT || 3000)}`)
   });
+
+  process.on('SIGTERM', exitHandler.bind(null, {exit: true, flush: true}));
+  process.on('SIGINT', exitHandler.bind(null, {exit: true, flush: true}));
+  process.on('exit', exitHandler);
 }
 else
 {
-  // Worker code, if any becomes necessary
+  // this is so each process can terminate its engine instances in an emergency
+  // it doesn't need to be shared between cluster instances, so we're ok with
+  // a global var
+  var children = [];
+
+  process.on('exit', exitHandler.bind(null, {flush: false, clean: true}))
 }
