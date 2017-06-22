@@ -65,9 +65,12 @@
         {
           $('#simList').find("tr:gt(0)").remove();
 
-          for (sim of json)
+          let keysSorted = Object.keys(json).sort();
+
+          for (let key of keysSorted)
           {
-            $('#simList').append(`<tr><td>${sim.id}</td><td>?</td><td>${sim.connected}</td><td><a href='/sims/${sim.id}'>Join</a></td></tr>`);
+            let [sim, info] = [key, json[key]];
+            $('#simList').append(`<tr><td>${sim}</td><td>?</td><td>${info.connected}</td><td><a href='/sims/${sim}'>Join</a></td></tr>`);
           }
         });
       }
