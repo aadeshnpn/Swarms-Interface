@@ -57,7 +57,7 @@ class Environment:
         self.stats["parameters"] = {"environment": {}, "agent": {}}
 
         #  environment parameters
-        self.number_of_agents = 500
+        self.number_of_agents = 100
         self.frames_per_sec = 100
         self.numberOfSwarms = 2
 
@@ -258,16 +258,16 @@ class Environment:
         # If the agent goes outside of the limits, it re-enters on the opposite side.
         if agent.location[0] > self.x_limit:
             #agent.location[0] -= 2 * self.x_limit
-            agent.direction += np.pi
+            agent.direction *= -1
         elif agent.location[0] < self.x_limit * -1:
             #agent.location[0] += 2 * self.x_limit
-            agent.direction += np.pi
+            agent.direction *= -1
         if agent.location[1] > self.y_limit:
             #agent.location[1] -= 2 * self.y_limit
-            agent.direction += np.pi
+            agent.direction *= -1
         elif agent.location[1] < self.y_limit * -1:
             #agent.location[1] += 2 * self.y_limit
-            agent.direction += np.pi
+            agent.direction *= -1
 
     def pause(self, json):
         self.isPaused = True
