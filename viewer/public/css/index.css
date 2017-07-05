@@ -8,3 +8,36 @@
   border: 1px solid #e0e0e0;
   border-radius: 3px;
 }
+
+table
+{
+  border-collapse: collapse;
+}
+
+th, td
+{
+  text-align: center;
+}
+
+th
+{
+  min-width: 100px;
+  border-bottom: 1px solid #DDD;
+  padding-bottom: 5px;
+  cursor: pointer;
+}
+
+th:last-of-type
+{
+  cursor: auto;
+}
+
+td
+{
+  padding: 10px;
+}
+
+tr:nth-of-type(even) td
+{
+  background-color: rgb(197, 216, 247);
+}
