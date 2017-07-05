@@ -13,10 +13,10 @@ class worldGenerator:
             y=600
         self.dimensions = {"x_length": x, "y_length": y}
         hub_radius = 20
-        '''self.hub = {"x": random.randint(hub_radius/2, self.dimensions["x_length"] - hub_radius/2) - self.dimensions["x_length"]/2,
+        self.hub = {"x": random.randint(hub_radius/2, self.dimensions["x_length"] - hub_radius/2) - self.dimensions["x_length"]/2,
                     "y": random.randint(hub_radius/2, self.dimensions["y_length"] - hub_radius/2) - self.dimensions["y_length"]/2,
-                    "radius": hub_radius}'''
-        self.hub = {"x": 0, "y": 0, "radius": hub_radius}
+                    "radius": hub_radius}
+        #self.hub = {"x": 0, "y": 0, "radius": hub_radius}
         self.sites = []
         self.obstacles = []
         self.traps = []

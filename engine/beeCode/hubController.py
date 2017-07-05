@@ -169,6 +169,7 @@ class hubController:
                 {
                     "controller":
                         {
+                            "hub": self.environment.hub,
                             "agentDirections": self.directions,
                             "agentsIn": self.incoming,
                             "dead": self.deadBees

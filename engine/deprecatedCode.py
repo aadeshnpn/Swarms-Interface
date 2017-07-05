@@ -45,7 +45,7 @@ def get_nearby_dancers(self, agent_id, radius):
                     eprint("dead: ", self.state["deadAgents"])
                     # self.states[agent.state].remove(agent_id) also not using this currently
 '''
-#antEnvironment
+# antEnvironment
 '''
     def wind(self, direction, velocity):
         for agent_id in self.agents:

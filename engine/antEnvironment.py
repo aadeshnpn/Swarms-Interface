@@ -1,3 +1,6 @@
+from joblib import Parallel, delayed
+import multiprocessing
+
 import json
 import os
 import time
@@ -10,16 +13,64 @@ from antCode.ant.agent import *
 from antCode.hubController import hubController
 from antCode.infoStation import InfoStation
 from utils.potentialField import PotentialField
+import utils.flowController as flowController
+import utils.geomUtil as geomUtil
 import sys, os
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-m", "--model", choices=["ant", "bee"], help="Run an 'ant' or 'bee' simulation")
+parser.add_argument("-n", "--no-viewer", action="store_true", help="Don't output viewer world info")
+parser.add_argument("-s", "--stats", action="store_true", help="Output json stats after simulation")
+parser.add_argument("-c", "--commit-stop", action="store_true", help="Stop simulation after all agents have committed")
+parser.add_argument("-t", "--tick-limit", type=int, help="Stop simulation after TICK_LIMIT ticks")
+parser.add_argument("-r", "--randomize", action="store_true", help="randomizes the environment")
+
+args = parser.parse_args()
+
+
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #Set the seed to always set same random values
 #random.seed(123)
 #class Site:
 #    def __init__(self,location,radius,q_value):
 
+"""
+Function to be used for parallel processing
+"""
+def pherToWorld(self, x, y,x_limit,y_limit):
+    #x = int(int(x * 3 + 1) - self.x_limit) this is for 1/3 array
+    #y = int(int(y * 3 + 1) - self.y_limit)
+    x = int(x-x_limit)
+    y = int(y-y_limit)
+    return x,y
+
+def create_pheromone_dict(indices,i,x_limit,y_limit):
+    pheromone_dict = {}
+    x,y = pherToWorld(indicies[0][i],indicies[1][i],x_limit,y_limit)
+    pheromone_dict["x"] = x
+    pheromone_dict["y"] = y    
+    return pheromone_dict
+
+def create_agent_dict(agent):
+    agent_dict = {}
+    agent_dict["x"] = agent.location[0]
+    agent_dict["y"] = agent.location[1]
+    agent_dict["id"] = agent.id
+    agent_dict["state"] = agent.state.name
+    agent_dict["direction"] = agent.direction
+    agent_dict["potential_site"] = agent.potential_site
+    agent_dict["live"] = agent.live
+    agent_dict["qVal"] = agent.q_value
+    agent_dict["pVal"] = agent.atPheromone
+    #agents.append(agent_dict)    
+    return agent_dict
+"""
+"""
 class Environment:
 
     def __init__(self, file_name):
+        self.args = args        
         self.file_name = file_name
         self.x_limit = 0
         self.y_limit = 0
@@ -33,6 +84,20 @@ class Environment:
         self.info_stations = []
         self.agents = {}
         self.dead_agents = []
+        #  ants parameters
+        self.parameters = {#"PipingThreshold":       2,
+                           "Velocity":              2,
+                           "SearchTime":            2000,
+                           "WaitingTime":           1000,
+                           "FollowingTime":         60,
+                           "RecuritingTime":        60,
+                           #"SiteAssessTime":       250,
+                           "SiteAssessRadius":      15,
+                           #"PipingTime":           1200,
+                           "PheromoneStrength":     25,
+                           "DiffusionRate":         3,
+                           "Strength":              2,
+                           "EvaporationRate":       0.1}
 
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
         #self.randomizeSites()
@@ -40,31 +105,21 @@ class Environment:
 
         self.number_of_agents = 100
         self.frames_per_sec = 300
-
+        ##Threshold for controlling explorers
+        self.max_hub_capacity = self.number_of_agents * 10
+        self.food_deposite = 0
         #This should be working from angent class. Its not working. So using it over here
         self.following = {}
-        #  bee parameters
-        self.parameters = {"PipingThreshold":       2,
-                           "Velocity":              2,
-                           "ExploreTime":           2000,
-                           "RestTime":              2000,
-                           "DanceTime":             10,
-                           "ObserveTime":           2000,
-                           "SiteAssessTime":        250,
-                           "SiteAssessRadius":      15,
-                           "PipingTime":            1200,
-                           "DiffusionTime":         3,
-                           "Strength":              2}
-
 
         #self.useDefaultParams = True
         self.restart_simulation = False
         self.change_agent_params = False
 
         self.add_agents()
-
+        #print (self.agents['1'])
         self.inputEventManager = InputEventManager()
-        self.hubController = hubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self)
+        self.hubController = hubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self, self.parameters["SearchTime"])
+
         self.isPaused = False
         self.attractors = [] #[flowController.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
         self.repulsors = [] #[flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
@@ -73,12 +128,21 @@ class Environment:
         #drawing the Pheromone list
         #x = int(np.ceil(int(self.x_limit*2)/3))
         #y = int(np.ceil(int(self.y_limit*2)/3))
+        ##Following pehromones
         self.pheromoneList = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])
         self.pheromoneView = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])
-
-        self.smellRange = 2
+        ##Exploring Pheromones
+        self.exploring_pheromoneList = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])
+        ##Dead Pehromones
+        self.dead_pheromoneList = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])
+        #self.dead_pheromoneView = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])        
+        self.smellRange = 10
         #json aux
         self.previousMetaJson = None
+        #Keep track of no of recutures
+        self.recuriting_agents_at_hub = 0 
+
+
     # Function to initialize data on the environment from a json file
     def build_json_environment(self):
         json_data = open(self.file_name).read()
@@ -97,6 +161,7 @@ class Environment:
         self.obstacles = data["obstacles"]
         self.traps = data["traps"]
         self.rough = data["rough terrain"]
+        self.randomizeSites()
         self.create_potential_fields()
 
         self.create_infoStations()
@@ -104,8 +169,8 @@ class Environment:
     def randomizeSites(self,flag=True):
         #For each site randomize the values
         for site in self.sites:
-            site['q_value'] = round(random.random(),2)
-            site['x'] = random.randint(-self.x_limit,self.x_limit)
+            site['q_value'] = round(np.random.random(),2)
+            site['x'] = np.random.randint(-self.x_limit,self.x_limit)
             site['y'] = np.random.randint(-self.y_limit,self.y_limit)
             site['radius'] = site['q_value']*30
             site['food_unit'] = np.power(site['radius'],3)
@@ -182,6 +247,7 @@ class Environment:
         #y=int(int(agent.location[1]+self.y_limit)/3)
         x,y = self.worldToPher(agent.location[0],agent.location[1])
         return self.pheromoneList[x,y]
+
     def pherToWorld(self, x, y):
         #x = int(int(x * 3 + 1) - self.x_limit) this is for 1/3 array
         #y = int(int(y * 3 + 1) - self.y_limit)
@@ -194,22 +260,88 @@ class Environment:
         x = int(x+self.x_limit)
         y = int(y+self.y_limit)
         return x,y
+    
+    def mark_dead_pheromone(self,location):
+        x, y = self.worldToPher(location[0], location[1])
+        self.dead_pheromoneList[x, y] += 6 * np.sqrt(5)
+        self.dead_pheromoneList[x-5:x+5,y-5:y+5] += 2 * np.sqrt(5)
+        if np.random.random() < .2:
+            self.pheromoneView[x, y] += 6 * np.sqrt(5)   
+    
+    def smell_dead_agents(self,location):
+        x,y = self.worldToPher(location[0], location[1])
+        first = self.dead_pheromoneList[x,y]
+        lowest = first
+        ##Need to compute gradient using finite difference
+        lowX = -self.smellRange + x
+        upperX = self.smellRange + x
+        lowY = -self.smellRange + y
+        upperY = self.smellRange + y
+
+        sub_set = self.dead_pheromoneList[lowX:upperX,lowY:upperY]
+        #print (sub_set)
+        if np.shape(sub_set)[0] <= 3 or np.shape(sub_set)[1] <= 3:
+            return -10,-10
+        p_x,p_y = np.gradient(sub_set)
+        direction = np.arctan2(p_y,p_x)        
+
+        if direction.sum() == 0.0:
+            return -10,-10
+        else:
+            index = np.argmin(direction) + 1
+            gradient_x = lowX + (index // len(sub_set))
+            gradient_y = lowY + (index % len(sub_set))
+            return gradient_x,gradient_y            
+
+    ## this smell function for location pheromone
     def smellNearby(self, location):
         x,y = self.worldToPher(location[0], location[1])
         first = self.pheromoneList[x,y]
         lowest = first
-        lowX = -10
-        lowY = -10
+        #lowX = -10
+        #lowY = -10
+        ##Need to compute gradient using finite difference
+        lowX = -self.smellRange + x
+        upperX = self.smellRange + x
+        lowY = -self.smellRange + y
+        upperY = self.smellRange + y
+
+        sub_set = self.pheromoneList[lowX:upperX,lowY:upperY]
+        p_x,p_y = np.gradient(sub_set*10)
+        direction = np.arctan2(p_y,p_x)
+        #Get a approx direction to hub
+        #dx = self.hub["x"] - location[0]
+        #dy = self.hub["y"] - location[1]
+        #hub_direction = np.arctan2(dy, dx)        
+        #eprint (direction)
+        if direction.max() == 0.0:
+            return -10,-10
+        else:
+            #direction -= hub_direction
+            index = np.argmax(direction) + 1
+            gradient_x = lowX + (index // len(sub_set))
+            gradient_y = lowY + (index % len(sub_set))
+            #eprint (x,y,[gradient_x,gradient_y])
+            #eprint (x,y,lowX,lowY)
+            #if gradient_x == int(location[0]) and gradient_y == int()
+            return gradient_x,gradient_y
+
+        """
         for i in range(-self.smellRange, self.smellRange+1):
             for j in range(-self.smellRange,self.smellRange+1):
                 x0 = x+i
                 y0 = y+j
-                if self.pheromoneList[x0,y0] > 0 and self.pheromoneList[x0,y0] < lowest and self.pheromoneList[x0,y0] < first+1:
+                #if self.pheromoneList[x0,y0] > 0 and self.pheromoneList[x0,y0] < lowest and self.pheromoneList[x0,y0] < first+1:
+                if self.pheromoneList[x0,y0] > 0 #and self.pheromoneList[x0,y0] < lowest and self.pheromoneList[x0,y0] < first:                
                     lowest = self.pheromoneList[x,y]
                     lowX = x0
                     lowY = y0
         return lowX, lowY
+        """
 
+    def consume_food(self):
+        if self.food_deposite > 0:
+            self.food_deposite -= 0.5
 
     # Returns 0 if terrain is clear, -1 if it is rough (slows velocity of agent to half-speed), -2 if there is an
     # obstacle, and -3 if there is a trap
@@ -241,9 +373,9 @@ class Environment:
         proposed_x = agent.location[0] + np.cos(agent.direction) * agent.velocity #+ np.cos(potential_field_d) * potential_field_v
         proposed_y = agent.location[1] + np.sin(agent.direction) * agent.velocity #+ np.sin(potential_field_d) * potential_field_v
 
-        if isinstance(agent.state,Following):
-            proposed_x = agent.location[0]
-            proposed_y = agent.location[1]
+        #if isinstance(agent.state,Following):
+        #    proposed_x = agent.location[0]
+        #    proposed_y = agent.location[1]
         terrain_value = self.check_terrain(proposed_x, proposed_y)
 
         if terrain_value == 0:
@@ -253,6 +385,8 @@ class Environment:
             agent.location[0] = proposed_x
             agent.location[1] = proposed_y
             agent.live = False
+            ##Mark the location with dead pheromone and spread it
+            self.mark_dead_pheromone(agent.location)
             self.dead_agents.append(agent)
             '''for state in self.states:
                 if self.states[state].count(agentId) > 0:
@@ -289,24 +423,29 @@ class Environment:
         self.isPaused = False
 
     def newAttractor(self, json):
-        self.attractors.append(flowController.Attractor((json['x'], json['y'])))
+        self.attractors.append(flowController.Attractor((json['x'], json['y']),json['radius']))
 
     def newRepulsor(self, json):
-        self.repulsors.append(flowController.Repulsor((json['x'], json['y'])))
+        self.repulsors.append(flowController.Repulsor((json['x'], json['y']),json['radius']))
 
     def updateParameters(self, json):
         eprint("updateParameters")
         params = json['params']
 
-        self.parameters["PipingThreshold"]  = int   (params['beePipingThreshold'      ])
+        #self.parameters["PipingThreshold"]  = int   (params['beePipingThreshold'      ])
         self.parameters["Velocity"]         = float (params['beeGlobalVelocity'       ])
-        self.parameters["ExploreTime"]      = float (params['beeExploreTimeMultiplier'])
-        self.parameters["RestTime"]         = int   (params['beeRestTime'             ])
-        self.parameters["DanceTime"]        = int   (params['beeDanceTime'            ])
-        self.parameters["ObserveTime"]      = int   (params['beeObserveTime'          ])
-        self.parameters["SiteAssessTime"]   = int   (params['beeSiteAccessTime'       ])
+        self.parameters["SearchTime"]      = float (params['beeExploreTimeMultiplier'])
+        self.parameters["WaitingTime"]         = int   (params['beeRestTime'             ])
+        self.parameters["RecuritingTime"]        = int   (params['beeDanceTime'            ])
+        self.parameters["FollowingTime"]      = int   (params['beeObserveTime'          ])
+        #self.parameters["SiteAssessTime"]   = int   (params['beeSiteAccessTime'       ])
         self.parameters["SiteAssessRadius"] = int   (params['beeSiteAccessRadius'     ])
-        self.parameters["PipingTime"]       = int   (params['beePipingTimer'          ])
+        #self.parameters["PipingTime"]       = int   (params['beePipingTimer'          ])
+        ##Ants new parameters
+        #self.parameters["PheromoneStrength"]       = int   (params['beePipingTimer'          ])
+        #self.parameters["DiffuisionRate"]       = int   (params['beePipingTimer'          ])#self.
+        #self.parameters["EvaporationRate"]       = int   (params['beePipingTimer'          ])
+        #self.parameters["Strength"]       = int   (params['beePipingTimer'          ])        
         self.number_of_agents               = int   (params['numberOfAgents'          ])
 
         self.smellRange = int   (params['beePipingThreshold'      ])
@@ -318,15 +457,19 @@ class Environment:
         print(self.parametersToJson())
 
     def updateAgentParameters(self, agent):
-        agent.PipingThreshold       = int   (self.parameters["PipingThreshold"  ])
-        agent.GlobalVelocity        = float (self.parameters["Velocity"         ])
-        agent.ExploreTimeMultiplier = float (self.parameters["ExploreTime"      ])
-        agent.RestTime              = int   (self.parameters["RestTime"         ])
-        agent.DanceTime             = int   (self.parameters["DanceTime"        ])
-        agent.ObserveTime           = int   (self.parameters["ObserveTime"      ])
-        agent.SiteAssessTime        = int   (self.parameters["SiteAssessTime"   ])
-        agent.SiteAssessRadius      = int   (self.parameters["SiteAssessRadius" ])
-        agent.PipingTimer           = int   (self.parameters["PipingTime"       ])
+        #agent.PipingThreshold       = int   (self.parameters["PipingThreshold"  ])
+        agent.parameters["Velocity"]        = float (self.parameters["Velocity"         ])
+        agent.parameters["SearchTime"] = float (self.parameters["SearchTime"      ])
+        agent.parameters["WaitingTime"]              = int   (self.parameters["WaitingTime"         ])
+        agent.parameters["RecuritingTime"]             = int   (self.parameters["RecuritingTime"        ])
+        agent.parameters["FollowingTime"]           = int   (self.parameters["FollowingTime"      ])
+        #agent.SiteAssessTime        = int   (self.parameters["SiteAssessTime"   ])
+        agent.parameters["SiteAssessRadius"]      = int   (self.parameters["SiteAssessRadius" ])
+        #agent.PipingTimer           = int   (self.parameters["PipingTime"       ])
+        #agent.parameters["PheromoneStrength"]       = int   (params['beePipingTimer'          ])
+        #agent.parameters["DiffuisionRate"]       = int   (params['beePipingTimer'          ])#self.
+        #agent.parameters["EvaporationRate"]       = int   (params['beePipingTimer'          ])
+        #agent.parameters["Strength"]       = int   (params['beePipingTimer'          ])               
         #agent.reset_trans_table()
 
     def updateUIParameters(self, json):
@@ -375,6 +518,8 @@ class Environment:
 
                 keys = list(self.agents.keys())  # deleting a key mid-iteration (suggest_new_direction())
                                                         # makes python mad...
+                #eprint (stateCounts) 
+                self.recuriting_agents_at_hub = 0
                 for agent_id in keys:
 
 
@@ -382,12 +527,13 @@ class Environment:
                         stateCounts[self.agents[agent_id].state.name] = 0
 
                     stateCounts[self.agents[agent_id].state.name] += 1
-
+                    if "recruiting" in stateCounts.keys():
+                        self.recuriting_agents_at_hub = stateCounts["recruiting"]
 
                     if self.change_agent_params:
                         self.updateAgentParameters(self.agents[agent_id])
 
-
+                    #eprint(stateCounts)
                     # is this faster?
                     self.agents[agent_id].act()
                     self.agents[agent_id].sense(self)
@@ -405,11 +551,15 @@ class Environment:
                     self.suggest_new_direction(agent_id)
 
                 self.hubController.hiveAdjust(self.agents)
-                evapRate = .02
-                self.pheromoneList = np.maximum(0,self.pheromoneList - evapRate)
+                #evapRate = .02
+                #self.pheromoneList = np.maximum(0,self.pheromoneList - evapRate)
+                self.pheromoneList = np.maximum(0,self.pheromoneList - self.parameters["EvaporationRate"])
                 #self.pheromoneList[np.where(self.pheromoneList < 0)] = 0
-                self.pheromoneView = np.maximum(0,self.pheromoneView - evapRate)
+                #self.pheromoneView = np.maximum(0,self.pheromoneView - evapRate)
+                self.pheromoneView = np.maximum(0,self.pheromoneView - self.parameters["EvaporationRate"])
                 #self.pheromoneView[np.where(self.pheromoneView < 0)] = 0
+                #Consume food
+                self.consume_food()
                 if self.change_agent_params:
                     self.change_agent_params = False
                 #"""
@@ -438,7 +588,7 @@ class Environment:
 
     def create_infoStations(self):
         for x in range(len(self.sites)):
-            self.info_stations.append(InfoStation())
+            self.info_stations.append(InfoStation(self.parameters))
 
     # TODO the hubcontroller keeps track of who is in the hub (cheaper computationally)
     ## Using hubController now
@@ -465,9 +615,7 @@ class Environment:
                 agent_state_count += 1
 
         return agent_state_count,total_agent_hub,agent_state_site
-    #def agent_to_follow(self,state):
-        #agent_state_list = [(self.agents[agent].siteIndex,agent) for agent in self.agents if self.agents[agent].inHub and self.agents[agen].state==state]
-        #agentidnp.random.choice(agent_state_list)
+
     def add_agents(self):
         #Start agents in searching, resting and waiting state
         #rest_num = int(.1*self.number_of_agents)
@@ -475,28 +623,19 @@ class Environment:
         #for x in range(self.number_of_agents - rest_num):
         for x in range(wait_num):
             agent_id = str(x)
-            #if self.useDefaultParams:
-            #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
-                #agent = Agent(agent_id,Observing())
-            #else:
-            agent = Agent(agent_id, self.hub, Waiting())
+            agent = Agent(self, agent_id, Waiting(None), self.hub, self.parameters)
             #agent = Agent(agent_id, self.hub, Resting())
             self.agents[agent_id] = agent
         for y in range(self.number_of_agents-wait_num):
             agent_id = str(x + y + 1)
-            #if self.useDefaultParams:
-            #    agent = Agent(agent_id, Exploring(ExploreTimeMultiplier=self.beeExploreTimeMultiplier), self.hub)
-                #agent = Agent(agent_id,Observing())
-            #else:
-            agent = Agent(agent_id, self.hub, Searching())
+            agent = Agent(self, agent_id, Searching(None), self.hub, self.parameters)            
             #agent = Agent(agent_id, self.hub, Resting())
             self.agents[agent_id] = agent
-
 
     def reset_sim(self):
         self.clear_for_reset()
         self.add_agents()
-        self.hubController.reset([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self)
+        self.hubController.reset([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self, self.parameters["SearchTime"])
         # echo the restart for any other connected clients
         print(
             json.dumps(
@@ -564,6 +703,9 @@ class Environment:
 
     def pheromone_trails_to_json(self):
         #return ''
+        #indicies = np.where(self.pheromoneView > 0)        
+        #return Parallel(n_jobs=8)(delayed(create_pheromone_dict)(indicies,i,self.x_limit,self.y_limit) for i in range(0,len(indicies[0])))
+
         pheromones = []
         #indicies [0] is X's, [1] are y's:
         indicies = np.where(self.pheromoneView > 0)
@@ -578,6 +720,10 @@ class Environment:
         return pheromones
 
     def agents_to_json(self):
+        #return Parallel(n_jobs=8)(delayed(create_agent_dict)(self.agents['0']) for i in self.agents) 
+        #for i in self.agents:
+        #    print (self.agents[i])
+        #return [create_agent_dict(self.agents['0'])]
         agents = []
         for agent_id in self.agents:
             # would it not be better to initialize this dictionary all at once?
@@ -591,7 +737,7 @@ class Environment:
             agent_dict["potential_site"] = self.agents[agent_id].potential_site
             agent_dict["live"] = self.agents[agent_id].live
             agent_dict["qVal"] = self.agents[agent_id].q_value
-            agent_dict["pVal"] = self.agents[agent_id].atPheromone
+            agent_dict["pVal"] = self.agents[agent_id].p_value
             agents.append(agent_dict)
         return agents
 
@@ -604,13 +750,13 @@ class Environment:
                 {
                     "beePipingThreshold"      : self.smellRange,
                     "beeGlobalVelocity"       : self.parameters["Velocity"],
-                    "beeExploreTimeMultiplier": self.parameters["ExploreTime"],
-                    "beeRestTime"             : self.parameters["RestTime"],
-                    "beeDanceTime"            : self.parameters["DanceTime"],
-                    "beeObserveTime"          : self.parameters["ObserveTime"],
-                    "beeSiteAccessTime"       : self.parameters["SiteAssessTime"],
+                    "beeExploreTimeMultiplier": self.parameters["SearchTime"],
+                    "beeRestTime"             : self.parameters["WaitingTime"],
+                    "beeDanceTime"            : self.parameters["RecuritingTime"],
+                    "beeObserveTime"          : self.parameters["FollowingTime"],
+                    #"beeSiteAccessTime"       : self.parameters["SiteAssessTime"],
                     "beeSiteAccessRadius"     : self.parameters["SiteAssessRadius"],
-                    "beePipingTimer"          : self.parameters["PipingTime"] ,
+                    #"beePipingTimer"          : self.parameters["PipingTime"] ,
                     "numberOfAgents"          : self.number_of_agents
                 }
             }
