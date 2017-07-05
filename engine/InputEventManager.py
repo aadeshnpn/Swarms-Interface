@@ -7,6 +7,7 @@ class InputEventManager:
 
     def __init__(self):
         self.subscriptions = {}
+        self.eventQueue = []
         self.jsonStreamParser = JsonStreamParser()
 
     def start(self):
@@ -23,6 +24,9 @@ class InputEventManager:
         self.subscriptions[eventType].remove(callbackFunction)
 
     def inputEvent(self, jsonDict):
-        if jsonDict['type'] in self.subscriptions:
-            for callback in self.subscriptions[jsonDict['type']]:
-                callback(jsonDict)
+        self.eventQueue.append(jsonDict)
+
+    def callbackEvent(self, event):
+        if event['type'] in self.subscriptions:
+            for callback in self.subscriptions[event['type']]:
+                callback(event)

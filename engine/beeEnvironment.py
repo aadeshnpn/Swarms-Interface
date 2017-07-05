@@ -3,6 +3,7 @@
 import json
 import os
 import time
+from datetime import datetime
 import numpy as np
 # Json doesn't work with numpy type 64
 # import numpy as np
@@ -27,17 +28,35 @@ parser.add_argument("-s", "--stats", action="store_true", help="Output json stat
 parser.add_argument("-c", "--commit-stop", action="store_true", help="Stop simulation after all agents have committed")
 parser.add_argument("-t", "--tick-limit", type=int, help="Stop simulation after TICK_LIMIT ticks")
 parser.add_argument("-r", "--randomize", action="store_true", help="randomizes the environment")
+parser.add_argument("-l", "--log_file", type=str, help="Log input events to LOG_FILE")
+parser.add_argument("-e", "--seed", type=int, help="Run the simulation with the specified random seed")
+parser.add_argument("-p", "--pipe", type=str, help="Connect to the specified named pipe")
 
 args = parser.parse_args()
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-
-# Set the seed to always set same random values
-# random.seed(123)
-
 class Environment:
     def __init__(self, file_name):
+
+        if (not args.seed):
+            self.seed = np.random.randint(np.iinfo(np.uint32).max)
+        else:
+            self.seed = args.seed
+
+        np.random.seed(self.seed)
+        self.logfile = None
+        if (args.log_file):
+            base_fname = args.log_file
+            fname = base_fname
+            fname_id = 1
+            while (os.path.exists(fname)):
+                fname_id += 1
+                fname = base_fname + "-" + str(fname_id)
+
+            self.logfile = open(fname, "w+")
+            self.logfile.write("%s\n" % json.dumps({"seed":self.seed}))
+
         self.args = args
         self.file_name = file_name
         self.x_limit = 0
@@ -86,7 +105,7 @@ class Environment:
         self.hubController = hubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self,
                                            self.parameters["ExploreTime"])
         self.isPaused = False
-        self.attractors = []  # [flowController.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
+        self.attractors = []  # [.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
         self.repulsors = []  # [flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
         # self.repulsors[0].time_ticks = 600
         # self.repulsors[1].time_ticks = 1800
@@ -211,6 +230,7 @@ class Environment:
                 return -1
 
         return 0
+
     # agent asks to go in a direction at a certain velocity, use vector addition, updates location
     def suggest_new_direction(self, agentId):
         agent = self.agents[agentId]
@@ -312,7 +332,7 @@ class Environment:
         self.restart_simulation = True
 
     def getUiStates(self, data):
-        eprint("getting ui states")
+        #eprint("getting ui states")
         print(json.dumps({
             "type": "setStates",
             "data": list(self.agents.values())[0].getUiRepresentation()
@@ -351,57 +371,73 @@ class Environment:
             self.getParams(None)  # this is a shortcut for letting the client know what the initial parameters are.
 
         self.stats["ticks"] = 0
+        self.stats["tickData"] = []
         self.stats["deadAgents"] = 0
 
         while True:
+            try:
+                if args.tick_limit != None and self.stats["ticks"] >= args.tick_limit:
+                    self.stats["didNotFinish"] = True
+                    break
 
-            if args.tick_limit != None and self.ticks >= args.tick_limit:
-                self.stats["didNotFinish"] = True
-                break
+                self.stats["ticks"] = self.stats["ticks"] + 1
 
-            self.stats["ticks"] = self.stats["ticks"] + 1
+                if args.stats and self.stats["ticks"] % 100 == 0:
+                    print(json.dumps(self.stats))
 
-            if args.stats and self.stats["ticks"] % 100 == 0:
-                print(json.dumps(self.stats))
+                if not self.isPaused:
+                    if not args.no_viewer:
+                        world.to_json()
 
-            if not self.isPaused:
+                    self.stats["stateCounts"] = {}
+
+                    keys = list(self.agents.keys())  # deleting a key mid-iteration (suggest_new_direction())
+                    # makes python mad...
+                    #AGENT RUN LOOP
+                    for agent_id in keys:
+                        if self.agents[agent_id].state.name not in self.stats["stateCounts"]:
+                            self.stats["stateCounts"][self.agents[agent_id].state.name] = 0
+                        #self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
+                        # is this faster?
+                        self.agents[agent_id].act()
+                        self.agents[agent_id].sense(self)
+                        self.agents[agent_id].update(self)
+                        self.suggest_new_direction(agent_id)
+
+                    self.hubController.hiveAdjust(self.agents)
+
+                    if not args.no_viewer:
+                        print(json.dumps({
+                            "type": "stateCounts",
+                            "data": self.stats["stateCounts"]
+                        }))
+
+                    if (args.commit_stop and "commit" in self.stats["stateCounts"] and self.stats["stateCounts"][
+                        "commit"] + len(self.dead_agents) >= self.number_of_agents * .95):
+                        break
+
+                    self.updateFlowControllers()
+
+
+                for event in self.inputEventManager.eventQueue:
+                    if (self.logfile):
+                        self.logfile.write(("%s\n" % json.dumps({"tick":self.stats["ticks"],"event":event})))
+                    self.inputEventManager.callbackEvent(event)
+
+                del self.inputEventManager.eventQueue[:]
+
+                if self.restart_simulation:
+                    self.reset_sim()
+                    self.restart_simulation = False
+
                 if not args.no_viewer:
-                    world.to_json()
+                    time.sleep(1 / self.frames_per_sec)
 
-                self.stats["stateCounts"] = {}
-
-                keys = list(self.agents.keys())  # deleting a key mid-iteration (suggest_new_direction())
-                # makes python mad...
-                #AGENT RUN LOOP
-                for agent_id in keys:
-                    '''if self.agents[agent_id].state.name not in self.stats["stateCounts"]:
-                        self.stats["stateCounts"][self.agents[agent_id].state.name] = 0'''
-                    #self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
-                    # is this faster?
-                    self.agents[agent_id].act()
-                    self.agents[agent_id].sense(self)
-                    self.agents[agent_id].update(self)
-                    self.suggest_new_direction(agent_id)
-
-                self.hubController.hiveAdjust(self.agents)
-                if not args.no_viewer:
-                    print(json.dumps({
-                        "type": "stateCounts",
-                        "data": self.stats["stateCounts"]
-                    }))
-
-            if (args.commit_stop and "commit" in self.stats["stateCounts"] and self.stats["stateCounts"][
-                "commit"] + len(self.dead_agents) >= self.number_of_agents * .95):
-                break
-
-            self.updateFlowControllers()
-
-            if self.restart_simulation:
-                self.reset_sim()
-                self.restart_simulation = False
-
-            if not args.no_viewer:
-                time.sleep(1 / self.frames_per_sec)
+            except KeyboardInterrupt:
+                eprint("KeyboardInterrupt--Exiting")
+                if (self.logfile):
+                    self.logfile.close()
+                sys.exit()
 
         self.stats["committedSites"] = []
 
@@ -440,6 +476,7 @@ class Environment:
 
     def reset_sim(self):
         self.clear_for_reset()
+        np.random.seed(self.seed)
         self.add_agents()
         self.hubController.reset([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self,
                                  self.parameters["ExploreTime"])

@@ -1,0 +1,128 @@
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="css/default.css" />
+    <link rel="stylesheet" type="text/css" href="css/index.css" />
+  </head>
+  <body>
+    <div id="content">
+      <div id="activeSims">
+        <h1>Active Sims</h1>
+        <table id="simList">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Sim Type</th>
+              <th>World</th>
+              <th>Connected</th>
+              <th>Link</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
+      <div id="newSim">
+        <h1>New Sim</h1>
+        <form id="newSim">
+          <label>Name: <input type="text" name="name"></label>
+          <label>Type: <select name="model"><option>bee</option><option>ant</option></select></label>
+          <label>World
+            <select name="worldType">
+              <option>static</option>
+              <option>random</option>
+            </select>
+          </label>
+          <label>Limit users? <input type="checkbox" id="limitUsers" name="limitUsers" value="true"></label>
+          <label>User Limit <input type="number" name="maxUsers" min="1" value="10" disabled></label>
+          <button id="createNewSim" type="submit">Create</button>
+        </form>
+      </div>
+    </div>
+
+    <script
+      src="https://code.jquery.com/jquery-3.2.1.min.js"
+      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+      crossorigin="anonymous">
+    </script>
+
+    <script
+      type="text/javascript"
+      src="js/plugins/jquery.tablesorter.min.js">
+    </script>
+
+    <script type="text/javascript">
+      let currentSort = [[0, 0]]; // first column, descending
+
+      $(document).ready(() =>
+      {
+        getSims();
+
+        window.setInterval(getSims, 5000);
+
+        let simListTable = $('#simList');
+
+        let numHeaders = simListTable.children('th').length;
+
+        simListTable.tablesorter();
+        simListTable.bind("sortEnd", function(event) { currentSort = event.target.config.sortList; } );
+
+        // The last column should always be the link to the sim, and it doesn't
+        // make any sense to sort by that.
+        $('#simList thead th:last-of-type').data('sorter', false);
+
+        $('#createNewSim').on('click', function(event)
+        {
+          event.preventDefault();
+
+          var data = {};
+
+          var form = $("form").serializeArray();
+          for (var i = 0; i < form.length; i++)
+          {
+            data[form[i].name] = form[i].value;
+          }
+
+          $.post("/sims/", data, res =>
+          {
+            //console.log(res);
+            //$('#activeSims').append(`<a href="${res}">Join</a>`);
+            getSims();
+          });
+        });
+
+        $('#limitUsers').change((event) =>
+        {
+          $('#newSim input[name=maxUsers]').prop("disabled", !$(event.target).prop('checked'));
+        });
+
+      });
+
+      function getSims()
+      {
+        $.get("/simlist", json =>
+        {
+          $('#simList').find("tr:gt(0)").remove();
+
+          let keysSorted = Object.keys(json).sort();
+
+          for (let key of keysSorted)
+          {
+            let [sim, info] = [key, json[key]];
+            console.log(info);
+            $('#simList tbody').append(`
+              <tr>
+                <td>${sim}</td>
+                <td>${info.options.model}</td>
+                <td>${info.options.worldType}</td>
+                <td>${info.connected} / ${info.options.maxUsers}</td>
+                <td><a href='/sims/${sim}'>Join</a></td>
+              </tr>`);
+
+              $('#simList').trigger("update");
+          }
+        });
+      }
+
+      </script>
+  </body>
+</html>
