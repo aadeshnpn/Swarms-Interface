@@ -14,7 +14,7 @@
     "redis": "^2.7.1",
     "shortid": "2.2.6",
     "socket.io": "^1.5.1",
-    "sticky-cluster": "^0.3.1",
+    "sticky-cluster": "^0.3.1"
   },
   "devDependencies": {},
   "scripts": {
