@@ -301,24 +301,6 @@ class Environment:
     def newRepulsor(self, json):
         self.repulsors.append(flowController.Repulsor((json['x'], json['y']), json['radius']))
 
-    def updateParameters(self, json):
-        eprint("updateParameters")
-        params = json['params']
-
-        self.parameters["PipingThreshold"] = int(params['beePipingThreshold'])
-        self.parameters["Velocity"] = float(params['beeGlobalVelocity'])
-        self.parameters["ExploreTime"] = float(params['beeExploreTimeMultiplier'])
-        self.parameters["RestTime"] = int(params['beeRestTime'])
-        self.parameters["DanceTime"] = int(params['beeDanceTime'])
-        self.parameters["ObserveTime"] = int(params['beeObserveTime'])
-        self.parameters["SiteAssessTime"] = int(params['beeSiteAccessTime'])
-        self.parameters["PipingTime"] = int(params['beePipingTimer'])
-        self.number_of_agents = int(params['numberOfAgents'])
-        eprint("New velocity =", params["beeGlobalVelocity"])
-        self.hubController.emitUpdateParams(self.parameters,time.time())
-        # echo the change out for any other connected clients
-        print(self.parametersToJson())
-
     def updateUIParameters(self, json):
         params = json['params']
 
@@ -363,7 +345,7 @@ class Environment:
             self.inputEventManager.subscribe('restart', self.restart_sim)
             self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
             self.inputEventManager.subscribe('requestStates', self.getUiStates)
-            self.inputEventManager.subscribe('requestParams', self.getParams)
+            #self.inputEventManager.subscribe('requestParams', self.getParams)
 
             self.inputEventManager.subscribe('message', self.processMessage)
 
@@ -471,7 +453,7 @@ class Environment:
 
         for y in range(rest_num):
             agent_id = str(x + 1 + y)
-            agent = Agent(self, agent_id, Resting(None), self.hub, self.parameters,count=int(self.parameters["RestTime"]))
+            agent = Agent(self, agent_id, Resting(None), self.hub, self.parameters, count=int(self.parameters["RestTime"]))
             self.agents[agent_id] = agent
 
     def reset_sim(self):
@@ -564,25 +546,28 @@ class Environment:
         return agents
 
     def parametersToJson(self):
+        paramDict = {}
+        for paramKey, paramVal in self.parameters.items():
+            paramDict[paramKey] = paramVal
         parameterJson = {
             "type": "updateDebugParams",
             "data":
                 {
-                    "parameters":
-                        {
-                            "beePipingThreshold": self.parameters["PipingThreshold"],
-                            "beeGlobalVelocity": self.parameters["Velocity"],
-                            "beeExploreTimeMultiplier": self.parameters["ExploreTime"],
-                            "beeRestTime": self.parameters["RestTime"],
-                            "beeDanceTime": self.parameters["DanceTime"],
-                            "beeObserveTime": self.parameters["ObserveTime"],
-                            "beeSiteAccessTime": self.parameters["SiteAssessTime"],
-                            "beePipingTimer": self.parameters["PipingTime"],
-                            "numberOfAgents": self.number_of_agents
-                        }
+                    "parameters": paramDict
                 }
         }
         return json.dumps(parameterJson)
+
+    def updateParameters(self, json):
+        eprint("updateParameters")
+        params = json['params']
+        for paramKey, paramVal in self.parameters.items():
+            self.parameters[paramKey] = float(params[paramKey])
+
+        eprint("New params =", self.parameters)
+        self.hubController.emitUpdateParams(self.parameters, time.time())
+        # echo the change out for any other connected clients
+        print(self.parametersToJson())
 
     def UIParametersToJson(self):
         parameterJson = {
