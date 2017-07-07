@@ -94,7 +94,8 @@ class Environment:
                            "DanceTime": 1150,
                            "ObserveTime": 2000,
                            "SiteAssessTime": 250,
-                           "PipingTime": 1200}
+                           "PipingTime": 1200
+                           }
 
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
 
