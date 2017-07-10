@@ -23,11 +23,18 @@ from abc import ABC, abstractmethod
 #should be an abstract class
 class Agent(StateMachine): #we could use even more abstract classes... hub Agent
     #and non hub agent
-    def __init__(self, environment, agentId, initialstate, uiRepresentation):
+    def __init__(self, environment, agentId, initialstate, params, uiRepresentation):
         self.environment = environment
-        self.agentId = agentId
-        self.initialstate = initialstate
+        self.id = agentId
+        self.state = initialstate
         self.uiRepresentation = uiRepresentation
+
+        self.location = [0, 0]#[hub["x"], hub["y"]]
+        self.direction = 2*np.pi*np.random.random()  # should be initialized? potentially random?
+        self.parameters = params
+        # This time-stamp should be updated whenever the bee receives new parameters
+
+        self.neighbors = []
     def getUiRepresentation(self):
         return self.uiRepresentation
 
@@ -52,117 +59,16 @@ class UAV(Agent):
         super().act()
 
     def __init__(self, environment, agentId, initialstate, hub, params, count=1000):
-        super().__init__(environment, agentId, initialstate, {
+        super().__init__(environment, agentId, initialstate, params, {
             # these names should match the state.name property for each state
             "states": ["UAV_Searching"],
             "transitions": {"UAV_Searching" : []}
         })
-        self.state = initialstate
-        exp = np.random.normal(1, .5, 1)
-        while exp < 0:
-            exp = np.random.normal(1, .5, 1)
-        self.counter = int(count*exp)
-        exp = np.random.normal(1, .05, 1)
-        while exp < 0:
-            exp = np.random.normal(1, .05, 1)
-        self.exp =exp
-        # These parameters may be modified at run-time
-        '''self.parameters =  {"PipingThreshold":       piping_threshold,
-                            "Velocity":              global_velocity,
-                            "ExploreTime":           explore_time,
-                            "RestTime":              rest_time,
-                            "DanceTime":             dance_time,
-                            "ObserveTime":           observe_time,
-                            "SiteAssessTime":        site_assess_time,
-                            "PipingTime":            piping_time}'''
-        self.parameters = params
-        self.environment = environment
-        # This time-stamp should be updated whenever the bee receives new parameters
-        self.param_time_stamp = 0
 
-        # bee agent variables
         self.live = True
-        self.id = agentId  # for communication with environment
-        self.location = [-100, 0]#[hub["x"], hub["y"]]
-        self.direction = 2*np.pi*np.random.random()  # should be initialized? potentially random?
-        self.velocity = self.parameters["Velocity"]
-        self.hub = [hub["x"], hub["y"]]  # should be initialized?
-        self.potential_site = None  # array [x,y]
-        self.q_value = 0
-        self.assessments = 1
-        self.hubRadius = hub["radius"]
-        self.inHub = True
-        self.atSite = False
-        self.siteIndex = None
-        self.goingToSite = False
-        self.quadrant = [] #not sure if this is being used....
-        self.infoStation = None
-        self.assessCounter = 1 #makes sure that they assess at least once.
-        self.priorities = None
 
-        # create table here.
-
-        dict = {(Exploring(self).__class__, input.nestFound): [None, UAV_Searching(self)],
-                (Exploring(self).__class__, input.exploreTime): [None, Observing(self)],
-                (Observing(self).__class__, input.observeTime): [None, Exploring(self)],
-                (Observing(self).__class__, input.dancerFound): [None, Assessing(self)],
-                (Observing(self).__class__, input.startPipe): [None, Piping(self)],
-                (Observing(self).__class__, input.quit): [None, Resting(self)],
-                (Assessing(self).__class__, input.siteFound): [None, Dancing(self)], # self.danceTransition()
-                (Assessing(self).__class__, input.siteAssess): [None, SiteAssess(self)],
-                (SiteAssess(self).__class__, input.finAssess): [None, Assessing(self)],
-                (SiteAssess(self).__class__, input.startPipe): [None, Piping(self)],
-                (Dancing(self).__class__, input.tiredDance): [None, Resting(self)],
-                (Dancing(self).__class__, input.notTiredDance): [None, Assessing(self)],
-                (Dancing(self).__class__, input.startPipe): [None, Piping(self)],
-                (Resting(self).__class__, input.restingTime): [None, Observing(self)],
-                (Resting(self).__class__, input.startPipe): [None, Piping(self)],
-                (Piping(self).__class__, input.quorum): [None, Commit(self)]
-                }
-
-        self.transitionTable = dict
-
-        self.attractor = None
-        self.attracted = None
-
-        self.repulsor = None
-        self.ignore_repulsor = None
-
-        self.neighbors = []
-        '''
-        self.state = initialstate
-        # These parameters may be modified at run-time
-        self.parameters =  {"PipingThreshold":       piping_threshold,
-                            "Velocity":              global_velocity,
-                            "ExploreTime":           explore_time,
-                            "RestTime":              rest_time,
-                            "DanceTime":             dance_time,
-                            "ObserveTime":           observe_time,
-                            "SiteAssessTime":        site_assess_time,
-                            "PipingTime":            piping_time}
-        self.parameters = params
-        self.environment = environment
-        # This time-stamp should be updated whenever the bee receives new parameters
         self.param_time_stamp = 0
-
-        # bee agent variables
-        self.id = agentId  # for communication with environment
-        self.location = [hub["x"], hub["y"]]
-        self.direction = 2*np.pi*np.random.random()  # should be initialized? potentially random?
         self.velocity = self.parameters["Velocity"]
-        self.hub = [hub["x"], hub["y"]]  # should be initialized?
-        self.assessments = 1
-        self.hubRadius = hub["radius"]
-        self.inHub = True
-        self.quadrant = [] #not sure if this is being used....
-        self.priorities = None
-
-        # create table here.
-         TODO:
-        dict = {(UAV_Searching(self).__class__, input.targetFound): [None, UAV_Tracking(self)]
-                }
-        self.transitionTable = dict
-
 
         self.attractor = None
         self.attracted = None
@@ -171,7 +77,9 @@ class UAV(Agent):
         self.ignore_repulsor = None
 
         '''
-        #eprint("UAV init()")
+        dict = {(UAV_Searching(self).__class__, input.targetFound): [None, UAV_Tracking(self)]}
+        self.transitionTable = dict
+        '''
 
 class UAV_Searching(State):
     def __init__(self, agent=None):

@@ -453,27 +453,29 @@ class Environment:
     #could use create agent function
     def add_agents(self):
         rest_num = int(.1 * np.sqrt(self.number_of_agents))
-        eprint("Number of agents: " + str(self.number_of_agents))
-        eprint("Number of resters: " + str(rest_num))
-        for x in range(self.number_of_agents - rest_num - 1):
+        #eprint("Number of agents: " + str(self.number_of_agents))
+        #eprint("Number of resters: " + str(rest_num))
+        for x in range(self.number_of_agents - rest_num):
             agent_id = str(x)
             agent = Bee(self, agent_id, Exploring(None), self.hub, self.parameters,
                           count = int(self.parameters["ExploreTime"]))
             self.agents[agent_id] = agent
 
-        agent_id = str(x + 1)
-        eprint("Agent id: " + agent_id)
-        agent = UAV(self, agent_id, UAV_Searching(None), self.hub, self.parameters,  count = int(self.parameters["ExploreTime"]))
-        eprint("special agent is class: " + agent.__class__.__name__)
-        self.agents[agent_id] = agent
-        eprint("UAV added to self.agents")
-
         for y in range(rest_num):
-            agent_id = str(x + 2 + y)
-            eprint("rest_num = " + str(agent_id))
+            agent_id = str(x + 1 + y)
+            #eprint("rest_num = " + str(agent_id))
             agent = Bee(self, agent_id, Resting(None), self.hub, self.parameters, count=int(self.parameters["RestTime"]))
             self.agents[agent_id] = agent
 
+        #Below code is to add "tracking" UAV. not for use in bee simulator
+        '''
+        agent_id = str(x + y + 2)
+        #eprint("Agent id: " + agent_id)
+        agent = UAV(self, agent_id, UAV_Searching(None), self.hub, self.parameters,  count = int(self.parameters["ExploreTime"]))
+        #eprint("special agent is class: " + agent.__class__.__name__)
+        self.agents[agent_id] = agent
+        #eprint("UAV added to self.agents")
+        '''
 
 
     def reset_sim(self):
@@ -537,21 +539,25 @@ class Environment:
     def dead_agents_to_json(self):
         dead_agents = []
         for agent in self.dead_agents:
-            agent_dict = {"x": agent.location[0],
-                          "y": agent.location[1],
-                          "id": agent.id,
-                          "state": agent.state.name,
-                          "direction": agent.direction,
-                          "potential_site": agent.potential_site,
-                          "live": agent.live,
-                          "qVal": agent.q_value}
+            agent_id = agent.id
+            agent_dict = {}
+            agent_dict["x"] = agent.location[0]
+            agent_dict["y"] = agent.location[1]
+            agent_dict["id"] = agent.id
+            agent_dict["state"] = agent.state.name
+            agent_dict["direction"] = agent.direction
+            agent_dict["live"] = agent.live
+
+            if(agent.__class__.__name__ =="Bee"):
+                agent_dict["potential_site"] = agent.potential_site
+                agent_dict["qVal"] = agent.q_value
             dead_agents.append(agent_dict)
         return dead_agents
 
     def agents_to_json(self):
         agents = []
         for agent_id in self.agents:
-            # would it not be better to initialize this dictionary all at once?
+            # would it not be better to initialize this dictionary all at once? - idkmybffjill
             # dict = {"x":loc[0], "y":loc[1], "id":id, ..., "qVal":q_value}
             agent_dict = {}
             agent_dict["x"] = self.agents[agent_id].location[0]
@@ -559,9 +565,11 @@ class Environment:
             agent_dict["id"] = self.agents[agent_id].id
             agent_dict["state"] = self.agents[agent_id].state.name
             agent_dict["direction"] = self.agents[agent_id].direction
-            agent_dict["potential_site"] = self.agents[agent_id].potential_site
             agent_dict["live"] = self.agents[agent_id].live
-            agent_dict["qVal"] = self.agents[agent_id].q_value
+
+            if(self.agents[agent_id].__class__.__name__ =="Bee"):
+                agent_dict["potential_site"] = self.agents[agent_id].potential_site
+                agent_dict["qVal"] = self.agents[agent_id].q_value
             agents.append(agent_dict)
         return agents
 
