@@ -1,6 +1,6 @@
 import copy
-
-class StateMachine:
+from abc import ABC, abstractmethod
+class StateMachine(ABC):
     def __init__(self, initialState, tranTable, id):
         self.state = initialState
         self.transitionTable = tranTable
@@ -21,6 +21,7 @@ class StateMachine:
     # return a dictionary representing states that should be shown to the user
     # and transitions between them
     # all state machines should override this
+    #TODO: abstractmethod
     def getUiRepresentation(self):
         return {
             states: [],

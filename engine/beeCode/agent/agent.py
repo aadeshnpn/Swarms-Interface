@@ -19,7 +19,192 @@ def safe_angle(a, b):
 def distance(a,b):
 	return np.sqrt((b[0]-a[0])**2 + (b[1]-a[1])**2)
 
-class Agent(StateMachine):
+from abc import ABC, abstractmethod
+#should be an abstract class
+class Agent(StateMachine): #we could use even more abstract classes... hub Agent
+    #and non hub agent
+    def __init__(self, environment, agentId, initialstate, uiRepresentation):
+        self.environment = environment
+        self.agentId = agentId
+        self.initialstate = initialstate
+        self.uiRepresentation = uiRepresentation
+    def getUiRepresentation(self):
+        return self.uiRepresentation
+
+    def sense(self, environment):
+        self.state.sense(self, environment)
+
+    def act(self):
+        self.state.act(self)
+
+    def move(self, destination):
+        dx = destination[0] - self.location[0]
+        dy = destination[1] - self.location[1]
+        self.direction = np.arctan2(dy, dx)
+
+    def update(self, environment):
+        self.nextState(self.state.update(self))
+
+class UAV(Agent):
+
+    def act(self):
+        #eprint("UAV act() " + str(self.location[0]) + ", " + str(self.location[1]))
+        super().act()
+
+    def __init__(self, environment, agentId, initialstate, hub, params, count=1000):
+        super().__init__(environment, agentId, initialstate, {
+            # these names should match the state.name property for each state
+            "states": ["UAV_Searching"],
+            "transitions": {"UAV_Searching" : []}
+        })
+        self.state = initialstate
+        exp = np.random.normal(1, .5, 1)
+        while exp < 0:
+            exp = np.random.normal(1, .5, 1)
+        self.counter = int(count*exp)
+        exp = np.random.normal(1, .05, 1)
+        while exp < 0:
+            exp = np.random.normal(1, .05, 1)
+        self.exp =exp
+        # These parameters may be modified at run-time
+        '''self.parameters =  {"PipingThreshold":       piping_threshold,
+                            "Velocity":              global_velocity,
+                            "ExploreTime":           explore_time,
+                            "RestTime":              rest_time,
+                            "DanceTime":             dance_time,
+                            "ObserveTime":           observe_time,
+                            "SiteAssessTime":        site_assess_time,
+                            "PipingTime":            piping_time}'''
+        self.parameters = params
+        self.environment = environment
+        # This time-stamp should be updated whenever the bee receives new parameters
+        self.param_time_stamp = 0
+
+        # bee agent variables
+        self.live = True
+        self.id = agentId  # for communication with environment
+        self.location = [-100, 0]#[hub["x"], hub["y"]]
+        self.direction = 2*np.pi*np.random.random()  # should be initialized? potentially random?
+        self.velocity = self.parameters["Velocity"]
+        self.hub = [hub["x"], hub["y"]]  # should be initialized?
+        self.potential_site = None  # array [x,y]
+        self.q_value = 0
+        self.assessments = 1
+        self.hubRadius = hub["radius"]
+        self.inHub = True
+        self.atSite = False
+        self.siteIndex = None
+        self.goingToSite = False
+        self.quadrant = [] #not sure if this is being used....
+        self.infoStation = None
+        self.assessCounter = 1 #makes sure that they assess at least once.
+        self.priorities = None
+
+        # create table here.
+
+        dict = {(Exploring(self).__class__, input.nestFound): [None, UAV_Searching(self)],
+                (Exploring(self).__class__, input.exploreTime): [None, Observing(self)],
+                (Observing(self).__class__, input.observeTime): [None, Exploring(self)],
+                (Observing(self).__class__, input.dancerFound): [None, Assessing(self)],
+                (Observing(self).__class__, input.startPipe): [None, Piping(self)],
+                (Observing(self).__class__, input.quit): [None, Resting(self)],
+                (Assessing(self).__class__, input.siteFound): [None, Dancing(self)], # self.danceTransition()
+                (Assessing(self).__class__, input.siteAssess): [None, SiteAssess(self)],
+                (SiteAssess(self).__class__, input.finAssess): [None, Assessing(self)],
+                (SiteAssess(self).__class__, input.startPipe): [None, Piping(self)],
+                (Dancing(self).__class__, input.tiredDance): [None, Resting(self)],
+                (Dancing(self).__class__, input.notTiredDance): [None, Assessing(self)],
+                (Dancing(self).__class__, input.startPipe): [None, Piping(self)],
+                (Resting(self).__class__, input.restingTime): [None, Observing(self)],
+                (Resting(self).__class__, input.startPipe): [None, Piping(self)],
+                (Piping(self).__class__, input.quorum): [None, Commit(self)]
+                }
+
+        self.transitionTable = dict
+
+        self.attractor = None
+        self.attracted = None
+
+        self.repulsor = None
+        self.ignore_repulsor = None
+
+        self.neighbors = []
+        '''
+        self.state = initialstate
+        # These parameters may be modified at run-time
+        self.parameters =  {"PipingThreshold":       piping_threshold,
+                            "Velocity":              global_velocity,
+                            "ExploreTime":           explore_time,
+                            "RestTime":              rest_time,
+                            "DanceTime":             dance_time,
+                            "ObserveTime":           observe_time,
+                            "SiteAssessTime":        site_assess_time,
+                            "PipingTime":            piping_time}
+        self.parameters = params
+        self.environment = environment
+        # This time-stamp should be updated whenever the bee receives new parameters
+        self.param_time_stamp = 0
+
+        # bee agent variables
+        self.id = agentId  # for communication with environment
+        self.location = [hub["x"], hub["y"]]
+        self.direction = 2*np.pi*np.random.random()  # should be initialized? potentially random?
+        self.velocity = self.parameters["Velocity"]
+        self.hub = [hub["x"], hub["y"]]  # should be initialized?
+        self.assessments = 1
+        self.hubRadius = hub["radius"]
+        self.inHub = True
+        self.quadrant = [] #not sure if this is being used....
+        self.priorities = None
+
+        # create table here.
+         TODO:
+        dict = {(UAV_Searching(self).__class__, input.targetFound): [None, UAV_Tracking(self)]
+                }
+        self.transitionTable = dict
+
+
+        self.attractor = None
+        self.attracted = None
+
+        self.repulsor = None
+        self.ignore_repulsor = None
+
+        '''
+        #eprint("UAV init()")
+
+class UAV_Searching(State):
+    def __init__(self, agent=None):
+        self.name = "UAV_Searching"
+        self.inputExplore = False
+        #eprint("UAV_Searching init()")
+
+    def sense(self, agent, environment):
+        #eprint("UAV_Searching sense()")
+        agent.neighbors.clear()
+        for other_key in environment.agents.keys():
+            other = environment.agents[other_key]
+            if(distance(agent.location, other.location) < 100 and agent != other):
+                agent.neighbors.append(other)
+        for neighbor in agent.neighbors:
+            pass
+            #eprint(str(neighbor.location[0]) + " " + str(neighbor.location[1]))
+    def act(self, agent):
+        if(len(agent.neighbors) > 0):
+            other_loc = agent.neighbors[0].location
+            this_loc = agent.location
+            agent.direction = np.arctan2(other_loc[1] - this_loc[1], other_loc[0] - this_loc[0]) + np.pi/4
+        else:
+            agent.direction = np.random.normal(loc = agent.direction, scale = .3)
+        #eprint("UAV act()")
+
+    def update(self, agent):
+        #eprint("UAV update()")
+        return None
+
+
+
+class Bee(Agent):
 
     def updateParams(self, params,timeStamp):
         self.parameters = params

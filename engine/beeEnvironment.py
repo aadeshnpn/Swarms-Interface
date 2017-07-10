@@ -381,6 +381,13 @@ class Environment:
                             self.stats["stateCounts"][self.agents[agent_id].state.name] = 0
                         #self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
                         # is this faster?
+
+                        if(agent_id == "98"):
+                            #eprint(self.agents[agent_id].__class__.__name__)
+                            pass
+                        #eprint(self.agents[agent_id].__class__.__name__)
+                        #eprint(agent_id)
+
                         self.agents[agent_id].act()
                         self.agents[agent_id].sense(self)
                         self.agents[agent_id].update(self)
@@ -443,18 +450,31 @@ class Environment:
         for x in range(len(self.sites)):
             self.info_stations.append(InfoStation(self.parameters))
 
+    #could use create agent function
     def add_agents(self):
         rest_num = int(.1 * np.sqrt(self.number_of_agents))
-        for x in range(self.number_of_agents - rest_num):
+        eprint("Number of agents: " + str(self.number_of_agents))
+        eprint("Number of resters: " + str(rest_num))
+        for x in range(self.number_of_agents - rest_num - 1):
             agent_id = str(x)
-            agent = Agent(self, agent_id, Exploring(None), self.hub, self.parameters,
+            agent = Bee(self, agent_id, Exploring(None), self.hub, self.parameters,
                           count = int(self.parameters["ExploreTime"]))
             self.agents[agent_id] = agent
 
+        agent_id = str(x + 1)
+        eprint("Agent id: " + agent_id)
+        agent = UAV(self, agent_id, UAV_Searching(None), self.hub, self.parameters,  count = int(self.parameters["ExploreTime"]))
+        eprint("special agent is class: " + agent.__class__.__name__)
+        self.agents[agent_id] = agent
+        eprint("UAV added to self.agents")
+
         for y in range(rest_num):
-            agent_id = str(x + 1 + y)
-            agent = Agent(self, agent_id, Resting(None), self.hub, self.parameters, count=int(self.parameters["RestTime"]))
+            agent_id = str(x + 2 + y)
+            eprint("rest_num = " + str(agent_id))
+            agent = Bee(self, agent_id, Resting(None), self.hub, self.parameters, count=int(self.parameters["RestTime"]))
             self.agents[agent_id] = agent
+
+
 
     def reset_sim(self):
         self.clear_for_reset()
