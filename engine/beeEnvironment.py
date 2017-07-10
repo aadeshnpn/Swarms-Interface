@@ -31,6 +31,7 @@ parser.add_argument("-r", "--randomize", action="store_true", help="randomizes t
 parser.add_argument("-l", "--log_file", type=str, help="Log input events to LOG_FILE")
 parser.add_argument("-e", "--seed", type=int, help="Run the simulation with the specified random seed")
 parser.add_argument("-p", "--pipe", type=str, help="Connect to the specified named pipe")
+parser.add_argument("-a", "--agentNum", type=int, help="specifies number of agents")
 
 args = parser.parse_args()
 
@@ -57,6 +58,7 @@ class Environment:
             self.logfile = open(fname, "w+")
             self.logfile.write("%s\n" % json.dumps({"seed":self.seed}))
 
+
         self.args = args
         self.file_name = file_name
         self.x_limit = 0
@@ -79,6 +81,8 @@ class Environment:
         self.number_of_agents = 100
         self.frames_per_sec = 100
         self.numberOfSwarms = 2
+        if args.agentNum:
+            self.number_of_agents = args.agentNum
 
         self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
 
@@ -90,7 +94,8 @@ class Environment:
                            "DanceTime": 1150,
                            "ObserveTime": 2000,
                            "SiteAssessTime": 250,
-                           "PipingTime": 1200}
+                           "PipingTime": 1200
+                           }
 
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
 

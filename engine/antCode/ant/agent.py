@@ -56,22 +56,7 @@ class Agent(StateMachine):
         exp = np.random.normal(1, .05, 1)
         while exp < 0:
             exp = np.random.normal(1, .05, 1)
-        self.exp =exp        
-        '''
-        self.parameters =  {
-                           "Velocity":              2,
-                           "SearchTime":            2000,
-                           "WaitingTime":           1000,
-                           "FollowingTime":         90,
-                           "RecuritingTime":        6,
-                           #"SiteAssessTime":       250,
-                           "SiteAssessRadius":      15,
-                           #"PipingTime":           1200,
-                           "PheromoneStrength":     6,
-                           "DiffusionRate":         3,
-                           "Strength":              2,
-                           "EvaporationRate":       0.01 }  
-        '''
+        self.exp =exp
         dict = {(Waiting(self).__class__, input.startSearching): [None, Searching(self)],
                 (Waiting(self).__class__, input.join): [None, Exploiting(self)],
                 (Waiting(self).__class__, input.startFollowing): [None, Following1(self)],

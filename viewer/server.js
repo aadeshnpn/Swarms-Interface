@@ -132,6 +132,8 @@ require('sticky-cluster')(function (callback)
           case 'seed':
             args.push('--seed', val);
             break;
+          case 'agentNum':
+            args.push('--agentNum', val)
         }
       }
 
