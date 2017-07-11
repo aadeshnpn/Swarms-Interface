@@ -47,11 +47,23 @@ class Agent(StateMachine): #we could use even more abstract classes... hub Agent
 
     def update(self, environment):
         self.nextState(self.state.update(self))
-'''
+
+    def wander(self, place, radius):
+        if ((place[0] - self.location[0]) ** 2 + (place[1] - self.location[1]) ** 2)**.5 >= radius:
+            dx = place[0] - self.location[0]
+            dy = place[1] - self.location[1]
+            self.direction = np.arctan2(dy, dx)
+        else:
+            delta_d = np.random.normal(0, .3)
+            self.direction = (self.direction + delta_d) % (2 * np.pi)
+
 class HubAgent(Agent):
-    def__init__(self, environment, agentId, initialState, params, hub):
-        super.__init__(environment,agentId, initialState, params):
-        self.hub = hub
+    def __init__(self, environment, agentId, initialState, params, hub):
+        super().__init__(environment,agentId, initialState, params)
+        self.hub = [hub["x"], hub["y"]]
+        self.hubRadius = hub["radius"]
+        self.inHub = True
+
     def checkAgentLeave(self):
         if (((self.hub[0] - self.location[0]) ** 2 + (self.hub[1] - self.location[1]) ** 2) ** .5 > self.hubRadius) \
                         and self.inHub is True:
@@ -66,7 +78,7 @@ class HubAgent(Agent):
                 self.inHub = True
                 return True
         return False
-'''
+
 class UAV(Agent):
     def getUiRepresentation(self):
         return {
@@ -128,46 +140,12 @@ class UAV_Searching(State):
 
 
 
-class Bee(Agent):
+class Bee(HubAgent):
 
     def updateParams(self, params,timeStamp):
         self.parameters = params
         self.velocity = self.parameters["Velocity"]
         self.param_time_stamp = timeStamp
-    def sense(self, environment):
-        self.state.sense(self, environment)
-
-    def act(self):
-        self.state.act(self)
-
-    def update(self, environment):
-        self.nextState(self.state.update(self))
-    def move(self, destination):
-        dx = destination[0] - self.location[0]
-        dy = destination[1] - self.location[1]
-        self.direction = np.arctan2(dy, dx)
-    def wander(self, place, radius):
-        if ((place[0] - self.location[0]) ** 2 + (place[1] - self.location[1]) ** 2)**.5 >= radius:
-            dx = place[0] - self.location[0]
-            dy = place[1] - self.location[1]
-            self.direction = np.arctan2(dy, dx)
-        else:
-            delta_d = np.random.normal(0, .3)
-            self.direction = (self.direction + delta_d) % (2 * np.pi)
-    def checkAgentLeave(self):
-        if (((self.hub[0] - self.location[0]) ** 2 + (self.hub[1] - self.location[1]) ** 2) ** .5 > self.hubRadius) \
-                        and self.inHub is True:
-                if self.environment.hubController.beeCheckOut(self) == 0:
-                    self.inHub = False
-                    return True
-        return False
-    def checkAgentReturn(self):
-        if (((self.hub[0] - self.location[0]) ** 2 + (self.hub[1] - self.location[1])** 2)** .5 < self.hubRadius):
-            if not self.inHub: #if probs check if not agent.goingToSite
-                self.environment.hubController.beeCheckIn(self)
-                self.inHub = True
-                return True
-        return False
 
     def getUiRepresentation(self):
         return {
@@ -181,7 +159,8 @@ class Bee(Agent):
         }
 
     def __init__(self, environment, agentId, initialstate, hub, params, count=1000):
-        self.state = initialstate
+        super().__init__(environment, agentId, initialstate, params, hub)
+
         exp = np.random.normal(1, .5, 1)
         while exp < 0:
             exp = np.random.normal(1, .5, 1)
@@ -199,23 +178,18 @@ class Bee(Agent):
                             "ObserveTime":           observe_time,
                             "SiteAssessTime":        site_assess_time,
                             "PipingTime":            piping_time}'''
-        self.parameters = params
-        self.environment = environment
+
         # This time-stamp should be updated whenever the bee receives new parameters
         self.param_time_stamp = 0
 
         # bee agent variables
         self.live = True
-        self.id = agentId  # for communication with environment
         self.location = [hub["x"], hub["y"]]
-        self.direction = 2*np.pi*np.random.random()  # should be initialized? potentially random?
         self.velocity = self.parameters["Velocity"]
-        self.hub = [hub["x"], hub["y"]]  # should be initialized?
         self.potential_site = None  # array [x,y]
         self.q_value = 0
         self.assessments = 1
-        self.hubRadius = hub["radius"]
-        self.inHub = True
+
         self.atSite = False
         self.siteIndex = None
         self.goingToSite = False
@@ -225,7 +199,7 @@ class Bee(Agent):
         self.priorities = None
 
         # create table here.
-        dict = {(Exploring(self).__class__, input.nestFound): [self.siteAssessTransition, SiteAssess(self)],
+        self.transitionTable = {(Exploring(self).__class__, input.nestFound): [self.siteAssessTransition, SiteAssess(self)],
                 (Exploring(self).__class__, input.exploreTime): [self.observeTransition, Observing(self)],
                 (Observing(self).__class__, input.observeTime): [self.exploreTransition, Exploring(self)],
                 (Observing(self).__class__, input.dancerFound): [None, Assessing(self)],
@@ -242,7 +216,6 @@ class Bee(Agent):
                 (Resting(self).__class__, input.startPipe): [self.pipingTransition, Piping(self)],
                 (Piping(self).__class__, input.quorum): [None, Commit(self)]
                 }
-        self.transitionTable = dict
 
         self.attractor = None
         self.attracted = None
