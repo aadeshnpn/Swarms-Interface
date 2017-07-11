@@ -22,6 +22,7 @@ class StateMachine(ABC):
     # and transitions between them
     # all state machines should override this
     #TODO: abstractmethod
+    @abstractmethod
     def getUiRepresentation(self):
         return {
             states: [],

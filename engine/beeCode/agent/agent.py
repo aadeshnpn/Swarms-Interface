@@ -19,15 +19,13 @@ def safe_angle(a, b):
 def distance(a,b):
 	return np.sqrt((b[0]-a[0])**2 + (b[1]-a[1])**2)
 
-from abc import ABC, abstractmethod
-#should be an abstract class
+#doesn't implement getUiRepresentation, therefore is also abstract
 class Agent(StateMachine): #we could use even more abstract classes... hub Agent
     #and non hub agent
-    def __init__(self, environment, agentId, initialstate, params, uiRepresentation):
+    def __init__(self, environment, agentId, initialstate, params):#, uiRepresentation):
         self.environment = environment
         self.id = agentId
         self.state = initialstate
-        self.uiRepresentation = uiRepresentation
 
         self.location = [0, 0]#[hub["x"], hub["y"]]
         self.direction = 2*np.pi*np.random.random()  # should be initialized? potentially random?
@@ -35,8 +33,6 @@ class Agent(StateMachine): #we could use even more abstract classes... hub Agent
         # This time-stamp should be updated whenever the bee receives new parameters
 
         self.neighbors = []
-    def getUiRepresentation(self):
-        return self.uiRepresentation
 
     def sense(self, environment):
         self.state.sense(self, environment)
@@ -51,19 +47,39 @@ class Agent(StateMachine): #we could use even more abstract classes... hub Agent
 
     def update(self, environment):
         self.nextState(self.state.update(self))
-
+'''
+class HubAgent(Agent):
+    def__init__(self, environment, agentId, initialState, params, hub):
+        super.__init__(environment,agentId, initialState, params):
+        self.hub = hub
+    def checkAgentLeave(self):
+        if (((self.hub[0] - self.location[0]) ** 2 + (self.hub[1] - self.location[1]) ** 2) ** .5 > self.hubRadius) \
+                        and self.inHub is True:
+                if self.environment.hubController.beeCheckOut(self) == 0:
+                    self.inHub = False
+                    return True
+        return False
+    def checkAgentReturn(self):
+        if (((self.hub[0] - self.location[0]) ** 2 + (self.hub[1] - self.location[1])** 2)** .5 < self.hubRadius):
+            if not self.inHub: #if probs check if not agent.goingToSite
+                self.environment.hubController.beeCheckIn(self)
+                self.inHub = True
+                return True
+        return False
+'''
 class UAV(Agent):
-
-    def act(self):
-        #eprint("UAV act() " + str(self.location[0]) + ", " + str(self.location[1]))
-        super().act()
-
-    def __init__(self, environment, agentId, initialstate, hub, params, count=1000):
-        super().__init__(environment, agentId, initialstate, params, {
+    def getUiRepresentation(self):
+        return {
             # these names should match the state.name property for each state
             "states": ["UAV_Searching"],
             "transitions": {"UAV_Searching" : []}
-        })
+        }
+
+    def act(self):
+        super().act()
+
+    def __init__(self, environment, agentId, initialstate, hub, params, count=1000):
+        super().__init__(environment, agentId, initialstate, params)
 
         self.live = True
 
