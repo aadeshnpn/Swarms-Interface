@@ -64,6 +64,72 @@ class HubAgent(Agent):
         self.hubRadius = hub["radius"]
         self.inHub = True
 
+        #hub agent can interface with attractor / repulsor
+        self.attractor = None
+        self.attracted = None
+
+        self.repulsor = None
+        self.ignore_repulsor = None
+
+    def isAttracted(self):
+        if(self.attracted is True):
+            return True
+        return False
+    def isInRangeOfNearestAttractor(self):
+        assert(self.attractor is not None)
+        return distance(self.attractor.point, self.location) < self.attractor.radius
+
+    def isInfluencedByNearestAttractor(self):
+        return self.isAttracted() and self.isInRangeOfNearestAttractor()
+
+    #if(agent.attractor is not None and distance(agent.attractor.point, agent.location) < agent.attractor.radius and agent.attracted is True):
+    def orientTowardsNearestAttractor(self):
+        assert(self.attractor is not None)
+        angle = safe_angle((np.cos(self.direction),np.sin(self.direction)), (self.attractor.x-self.location[0],self.attractor.y-self.location[1]))
+        angle = np.clip(angle, -np.pi/16, np.pi/16)
+        error = np.random.normal(0, .3)
+        self.direction += angle + error
+        self.direction = self.direction % (2 *np.pi)
+
+    #elif(agent.repulsor is not None and distance(agent.repulsor.point, agent.location) < agent.repulsor.radius and agent.ignore_repulsor is False):
+    def isRepulsed(self):
+        if(self.ignore_repulsor is False): #yeah ignore_repulsor should be "repulsed" or something affirmative instead of negative
+            return True
+        return False
+
+    def isInRangeOfNearestRepulsor(self):
+        assert(self.repulsor is not None)
+        return distance(self.repulsor.point, self.location) < self.repulsor.radius
+
+    def isRepulsedByNearestRepulsor(self):
+        return self.isRepulsed() and self.isInRangeOfNearestRepulsor()
+
+    def avoidNearestRepulsor(self):
+        assert(self.repulsor is not None)
+        angle = - safe_angle((np.cos(self.direction),np.sin(self.direction)), (self.repulsor.x-self.location[0],self.repulsor.y-self.location[1]))
+        angle = np.clip(angle, -np.pi/16, np.pi/16)
+        if(angle >= 0):
+            self.direction += .3
+        else:
+            self.direction -= .3
+        self.direction %= 2 * np.pi
+
+    def senseAndProcessAttractor(self, environment):
+        self.attractor = environment.getAttractor(self.location)
+        if(self.attractor is not None and self.attracted is None):
+            if(np.random.random () > .2):
+                self.attracted = True
+            else:
+                self.attracted = False
+
+    def senseAndProcessRepulsor(self, environment):
+        self.repulsor = environment.getRepulsor(self.location)
+        if(self.repulsor is not None and self.ignore_repulsor is None):
+            if(np.random.random() >.9):
+                 self.ignore_repulsor = True
+            else:
+                 self.ignore_repulsor = False
+
     def checkAgentLeave(self):
         if (((self.hub[0] - self.location[0]) ** 2 + (self.hub[1] - self.location[1]) ** 2) ** .5 > self.hubRadius) \
                         and self.inHub is True:
@@ -252,43 +318,19 @@ class Exploring(State):
         self.inputExplore = False
 
     def sense(self, agent, environment):
-
         agent.checkAgentLeave()
 
         new_q = environment.get_q(agent)["q"]
         agent.q_value = new_q
-        agent.attractor = environment.getAttractor(agent.location)
-        if(agent.attractor is not None and agent.attracted is None):
-            if(np.random.random () > .2):
-                agent.attracted = True
-            else:
-                agent.attracted = False
 
-
-        agent.repulsor = environment.getRepulsor(agent.location)
-        if(agent.repulsor is not None and agent.ignore_repulsor is None):
-            if(np.random.random() >.9):
-                 agent.ignore_repulsor = True
-            else:
-                 agent.ignore_repulsor = False
+        agent.senseAndProcessAttractor(environment)
+        agent.senseAndProcessRepulsor(environment)
 
     def act(self, agent):
-        if(agent.attractor is not None and distance(agent.attractor.point, agent.location) < agent.attractor.radius and agent.attracted is True):
-                angle = safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.attractor.x-agent.location[0],agent.attractor.y-agent.location[1]))
-                angle = np.clip(angle, -np.pi/16, np.pi/16)
-                error = np.random.normal(0, .3)
-                agent.direction += angle + error
-                agent.direction = agent.direction % (2 *np.pi)
-
-        elif(agent.repulsor is not None and distance(agent.repulsor.point, agent.location) < agent.repulsor.radius and agent.ignore_repulsor is False):
-             angle = - safe_angle((np.cos(agent.direction),np.sin(agent.direction)), (agent.repulsor.x-agent.location[0],agent.repulsor.y-agent.location[1]))
-             angle = np.clip(angle, -np.pi/16, np.pi/16)
-             if(angle >= 0):
-                      agent.direction += .3
-             else:
-                      agent.direction -= .3
-             agent.direction %= 2 * np.pi
-
+        if(agent.isInfluencedByNearestAttractor()):
+            agent.orientTowardsNearestAttractor()
+        elif(agent.isRepulsedByNearestRepulsor()):
+            agent.avoidNearestRepulsor()
         elif self.inputExplore: #this is for when the user has requested more bees
             delta_d = np.random.normal(0, .005) # this will assure that the bee moves less erratically, it can be decreased a little as well
             agent.direction = (agent.direction + delta_d) % (2 * np.pi)
