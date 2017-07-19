@@ -68,61 +68,36 @@ class Environment(ABC):
         self.y_limit = 0
         self.hub = {}
         self.hubController = None
-        self.sites = []
         self.obstacles = []
         self.potential_fields = []
         self.traps = []
         self.rough = []
-        #self.info_stations = []
         self.agents = {}
         self.dead_agents = []
-        self.stats = {}
-
-        self.stats["parameters"] = {"environment": {}, "agent": {}}
-
-        #  environment parameters
-        self.number_of_agents = 100
         self.frames_per_sec = 100
         self.numberOfSwarms = 2
-        if args.agentNum:
-            self.number_of_agents = args.agentNum
 
-        self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
-
-        #  bee parameters
-        self.parameters = {"PipingThreshold": int(self.number_of_agents * .15),
-                           "Velocity": 1.25,
-                           "ExploreTime": 2000,
-                           "RestTime": 1000,
-                           "DanceTime": 1150,
-                           "ObserveTime": 2000,
-                           "SiteAssessTime": 250,
-                           "PipingTime": 1200
-                           }
-
+        self.init_parameters()
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
 
         self.stats["parameters"]["agent"] = self.parameters
-
-        # self.useDefaultParams = True
         self.restart_simulation = False
-
         self.initialize_agents()
-
         self.inputEventManager = InputEventManager()
         self.hubController = hubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self,
                                            self.parameters["ExploreTime"])
         self.isPaused = False
-        self.attractors = []  # [.Attractor((0, 100)), flowController.Attractor((-100, 0)), flowController.Attractor((100,0))]
-        self.repulsors = []  # [flowController.Repulsor((60, -60)), flowController.Repulsor((-40,-40))]
-        # self.repulsors[0].time_ticks = 600
-        # self.repulsors[1].time_ticks = 1800
+        self.attractors = []
+        self.repulsors = []
 
         # json aux
         self.previousMetaJson = None
 
         self.chat_history = ""
 
+    @abstractmethod
+    def init_parameters(self):
+        pass
     def countUpdate(self, state1, state2):
         pass
 
@@ -406,14 +381,7 @@ class Environment(ABC):
     @abstractmethod
     def initialize_agents(self):
         pass
-        '''
-        rest_num = int(.1 * np.sqrt(self.number_of_agents))
-        for x in range(self.number_of_agents - rest_num):
-            self.create_explorer(x)
 
-        for y in range(rest_num):
-            self.create_rester(x + 1 + y)
-        '''
         #Below code is to add "tracking" UAV. not for use in bee simulator
         '''
         agent_id = str(x + y + 2)

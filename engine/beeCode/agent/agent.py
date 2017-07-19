@@ -4,6 +4,7 @@ import numpy as np
 from .stateMachine.StateMachine import StateMachine
 from .stateMachine.state import State
 from .debug import *
+from abc import abstractmethod
 
 input = Enum('input', 'nestFound exploreTime observeTime dancerFound siteFound tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
 
@@ -26,6 +27,7 @@ class Agent(StateMachine): #we could use even more abstract classes... hub Agent
         self.environment = environment
         self.id = agentId
         self.state = initialstate
+        self.live = True
 
         self.location = [0, 0]#[hub["x"], hub["y"]]
         self.direction = 2*np.pi*np.random.random()  # should be initialized? potentially random?
@@ -33,6 +35,18 @@ class Agent(StateMachine): #we could use even more abstract classes... hub Agent
         # This time-stamp should be updated whenever the bee receives new parameters
 
         self.neighbors = []
+
+    @abstractmethod
+    def to_json(self):
+        agent_dict = {}
+        agent_dict["x"] = self.location[0]
+        agent_dict["y"] = self.location[1]
+        agent_dict["id"] = self.id
+        agent_dict["state"] = self.state.name
+        agent_dict["direction"] = self.direction
+        agent_dict["live"] = self.live
+        return agent_dict
+
 
     def sense(self, environment):
         self.state.sense(self, environment)
@@ -159,7 +173,7 @@ class UAV(Agent):
     def __init__(self, environment, agentId, initialstate, hub, params, count=1000):
         super().__init__(environment, agentId, initialstate, params)
 
-        self.live = True
+        #self.live = True
 
         self.param_time_stamp = 0
         self.velocity = self.parameters["Velocity"]
@@ -310,6 +324,11 @@ class Bee(HubAgent):
     def finishAssess(self):
         self.assessCounter -=1
         self.infoStation.beeLeave(self)
+    def to_json(self):
+        agent_dict = super().to_json()
+        agent_dict["potential_site"] = self.potential_site
+        agent_dict["qVal"] = self.q_value
+        return agent_dict
 
     # so, the exploring part needs to give the input..
 class Exploring(State):

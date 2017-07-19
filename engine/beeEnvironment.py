@@ -3,7 +3,28 @@ from Environment import *
 class BeeEnvironment(Environment):
     def __init__(self, file_name):
         self.info_stations = []
+        self.number_of_agents = 100
+        self.sites = []
+        if args.agentNum:
+            self.number_of_agents = args.agentNum
+
         super().__init__(file_name)
+
+    def init_parameters(self):
+        self.stats = {}
+        self.stats["parameters"] = {"environment": {}, "agent": {}}
+        self.stats["parameters"]["environment"]["numberOfAgents"] = self.number_of_agents
+
+        #  bee parameters
+        self.parameters = {"PipingThreshold": int(self.number_of_agents * .15),
+                               "Velocity": 1.25,
+                               "ExploreTime": 2000,
+                               "RestTime": 1000,
+                               "DanceTime": 1150,
+                               "ObserveTime": 2000,
+                               "SiteAssessTime": 250,
+                               "PipingTime": 1200
+                               }
 
     def initialize_agents(self):
         rest_num = int(.1 * np.sqrt(self.number_of_agents))
@@ -86,38 +107,13 @@ class BeeEnvironment(Environment):
     def dead_agents_to_json(self):
         dead_agents = []
         for agent in self.dead_agents:
-            agent_id = agent.id
-            agent_dict = {}
-            agent_dict["x"] = agent.location[0]
-            agent_dict["y"] = agent.location[1]
-            agent_dict["id"] = agent.id
-            agent_dict["state"] = agent.state.name
-            agent_dict["direction"] = agent.direction
-            agent_dict["live"] = agent.live
-
-            if(agent.__class__.__name__ =="Bee"):
-                agent_dict["potential_site"] = agent.potential_site
-                agent_dict["qVal"] = agent.q_value
-            dead_agents.append(agent_dict)
+            dead_agents.append(agent.to_json())
         return dead_agents
 
     def agents_to_json(self):
         agents = []
         for agent_id in self.agents:
-            # would it not be better to initialize this dictionary all at once? - idkmybffjill
-            # dict = {"x":loc[0], "y":loc[1], "id":id, ..., "qVal":q_value}
-            agent_dict = {}
-            agent_dict["x"] = self.agents[agent_id].location[0]
-            agent_dict["y"] = self.agents[agent_id].location[1]
-            agent_dict["id"] = self.agents[agent_id].id
-            agent_dict["state"] = self.agents[agent_id].state.name
-            agent_dict["direction"] = self.agents[agent_id].direction
-            agent_dict["live"] = self.agents[agent_id].live
-
-            if(self.agents[agent_id].__class__.__name__ =="Bee"):
-                agent_dict["potential_site"] = self.agents[agent_id].potential_site
-                agent_dict["qVal"] = self.agents[agent_id].q_value
-            agents.append(agent_dict)
+            agents.append(self.agents[agent_id].to_json())
         return agents
 
     def build_json_environment(self):
