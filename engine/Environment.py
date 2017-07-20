@@ -102,10 +102,27 @@ class Environment(ABC):
         pass
 
     # Function to initialize data on the environment from a json file
-    '''
+    @abstractmethod
     def build_json_environment(self):
-        pass
-    '''
+        if self.args.randomize:
+            generator = worldGenerator()
+            js = generator.to_json()
+            data = json.loads(js)
+        else:
+            json_data = open(self.file_name).read()
+            data = json.loads(json_data)
+
+        self.stats["world"] = data
+
+        self.x_limit = data["dimensions"]["x_length"] / 2
+        self.y_limit = data["dimensions"]["y_length"] / 2
+        self.hub = data["hub"]
+        self.sites = data["sites"]
+        self.obstacles = data["obstacles"]
+        self.traps = data["traps"]
+        self.rough = data["rough terrain"]
+        self.create_potential_fields()
+    
     def getClosestFlowController(self, flowControllers, agent_location):
         if (len(flowControllers) == 0):
             raise ValueError('flowControllers list must not be empty.')
@@ -270,6 +287,10 @@ class Environment(ABC):
             "data" : self.chat_history
         }))
 
+    @abstractmethod
+    def isFinished(self):
+        pass
+
     # Move all of the agents
     def run(self):
 
@@ -288,7 +309,7 @@ class Environment(ABC):
 
             self.inputEventManager.subscribe('message', self.processMessage)
 
-            self.to_json()
+            print(self.to_json())
             self.getParams(None)  # this is a shortcut for letting the client know what the initial parameters are.
 
         self.stats["ticks"] = 0
@@ -308,7 +329,7 @@ class Environment(ABC):
 
                 if not self.isPaused:
                     if not args.no_viewer:
-                        self.to_json()
+                        print(self.to_json())
 
                     self.stats["stateCounts"] = {}
 
@@ -333,8 +354,10 @@ class Environment(ABC):
                             "data": self.stats["stateCounts"]
                         }))
 
-                    if (args.commit_stop and "commit" in self.stats["stateCounts"] and self.stats["stateCounts"][
-                        "commit"] + len(self.dead_agents) >= self.number_of_agents * .95):
+                    #if (args.commit_stop and "commit" in self.stats["stateCounts"] and self.stats["stateCounts"][
+                    #    "commit"] + len(self.dead_agents) >= self.number_of_agents * .95):
+                    if(self.isFinished()):
+                        eprint("Simulation terminated")
                         break
 
                     self.updateFlowControllers()
@@ -370,7 +393,6 @@ class Environment(ABC):
         # self.stats["committedSites"] = list(
         #     dict(y) for y in set(tuple(x.items()) for x in self.stats["committedSites"]))
 
-    #@abstractmethod
     def clear_for_reset(self):
         self.agents.clear()
         self.attractors.clear()
@@ -427,16 +449,23 @@ class Environment(ABC):
 
     def change_state(self, agent_id, new_state):
         self.agents[agent_id].state = new_state
-    '''
+
+    @abstractmethod
     def to_json(self):
         pass
 
     def dead_agents_to_json(self):
-        pass
+        dead_agents = []
+        for agent in self.dead_agents:
+            dead_agents.append(agent.to_json())
+        return dead_agents
 
     def agents_to_json(self):
-        pass
-    '''
+        agents = []
+        for agent_id in self.agents:
+            agents.append(self.agents[agent_id].to_json())
+        return agents
+
     def parametersToJson(self):
         paramDict = {}
         for paramKey, paramVal in self.parameters.items():

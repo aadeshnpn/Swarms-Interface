@@ -10,6 +10,11 @@ class BeeEnvironment(Environment):
 
         super().__init__(file_name)
 
+    def isFinished(self):
+        return (args.commit_stop and "commit" in self.stats["stateCounts"] and
+                self.stats["stateCounts"]["commit"] + len(self.dead_agents) >=
+                self.number_of_agents * .95)
+
     def init_parameters(self):
         self.stats = {}
         self.stats["parameters"] = {"environment": {}, "agent": {}}
@@ -80,8 +85,9 @@ class BeeEnvironment(Environment):
                 }
 
         return {"radius": -1, "q": 0}
+
     def to_json(self):
-        print(
+        return(
             json.dumps(
                 {
                     "type": "update",
@@ -103,42 +109,9 @@ class BeeEnvironment(Environment):
                 })
         )
 
-
-    def dead_agents_to_json(self):
-        dead_agents = []
-        for agent in self.dead_agents:
-            dead_agents.append(agent.to_json())
-        return dead_agents
-
-    def agents_to_json(self):
-        agents = []
-        for agent_id in self.agents:
-            agents.append(self.agents[agent_id].to_json())
-        return agents
-
     def build_json_environment(self):
-        if self.args.randomize:
-            generator = worldGenerator()
-            js = generator.to_json()
-            data = json.loads(js)
-        else:
-            json_data = open(self.file_name).read()
-            data = json.loads(json_data)
-
-        self.stats["world"] = data
-
-        self.x_limit = data["dimensions"]["x_length"] / 2
-        self.y_limit = data["dimensions"]["y_length"] / 2
-        self.hub = data["hub"]
-        self.sites = data["sites"]
-        self.obstacles = data["obstacles"]
-        self.traps = data["traps"]
-        self.rough = data["rough terrain"]
-        self.create_potential_fields()
-
+        super().build_json_environment()
         self.create_infoStations()
-
-
 
 if __name__ == "__main__":
     file = "world.json"
