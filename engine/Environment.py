@@ -86,9 +86,10 @@ class Environment(ABC):
         self.inputEventManager = InputEventManager()
         self.hubController = hubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self,
                                            self.parameters["ExploreTime"])
+        self.flowController = flowController.FlowController()
         self.isPaused = False
-        self.attractors = []
-        self.repulsors = []
+        #self.attractors = []
+        #self.repulsors = []
 
         # json aux
         self.previousMetaJson = None
@@ -122,47 +123,6 @@ class Environment(ABC):
         self.traps = data["traps"]
         self.rough = data["rough terrain"]
         self.create_potential_fields()
-    
-    def getClosestFlowController(self, flowControllers, agent_location):
-        if (len(flowControllers) == 0):
-            raise ValueError('flowControllers list must not be empty.')
-        closest = flowControllers[0]
-        for flowController in flowControllers:
-            if (geomUtil.point_distance(agent_location, flowController.point) < geomUtil.point_distance(agent_location,
-                                                                                                        closest.point)):
-                closest = flowController
-        return closest
-
-    def getAttractor(self, agent_location):
-        if (len(self.attractors) > 0):
-            return self.getClosestFlowController(self.attractors, agent_location)
-        else:
-            return None
-
-    def getRepulsor(self, agent_location):
-        if (len(self.repulsors) > 0):
-            return self.getClosestFlowController(self.repulsors, agent_location)
-        else:
-            return None
-
-    def updateFlowControllers(self):
-
-        new_attractor_list = []
-
-        for attractor in self.attractors:
-            attractor.time_ticks -= 1
-            if (attractor.time_ticks > 0):
-                new_attractor_list.append(attractor)
-        self.attractors = new_attractor_list
-
-        new_repulsor_list = []
-
-        for repulsor in self.repulsors:
-            repulsor.time_ticks -= 1
-            if (repulsor.time_ticks > 0):
-                new_repulsor_list.append(repulsor)
-        self.repulsors = new_repulsor_list
-
 
     # Returns 0 if terrain is clear, -1 if it is rough (slows velocity of agent to half-speed), -2 if there is an
     # obstacle, and -3 if there is a trap
@@ -251,12 +211,6 @@ class Environment(ABC):
     def play(self, json):
         self.isPaused = False
 
-    def newAttractor(self, json):
-        self.attractors.append(flowController.Attractor((json['x'], json['y']), json['radius']))
-
-    def newRepulsor(self, json):
-        self.repulsors.append(flowController.Repulsor((json['x'], json['y']), json['radius']))
-
     def updateUIParameters(self, json):
         params = json['params']
 
@@ -298,8 +252,8 @@ class Environment(ABC):
             self.inputEventManager.start()
             self.inputEventManager.subscribe('pause', self.pause)
             self.inputEventManager.subscribe('play', self.play)
-            self.inputEventManager.subscribe('attractor', self.newAttractor)
-            self.inputEventManager.subscribe('repulsor', self.newRepulsor)
+            self.inputEventManager.subscribe('attractor', self.flowController.newAttractor)
+            self.inputEventManager.subscribe('repulsor', self.flowController.newRepulsor)
             self.inputEventManager.subscribe('parameterUpdate', self.updateParameters)
             self.inputEventManager.subscribe('UIParameterUpdate', self.updateUIParameters)
             self.inputEventManager.subscribe('restart', self.restart_sim)
@@ -360,7 +314,7 @@ class Environment(ABC):
                         eprint("Simulation terminated")
                         break
 
-                    self.updateFlowControllers()
+                    self.flowController.updateFlowControllers()
 
 
                 for event in self.inputEventManager.eventQueue:
@@ -395,8 +349,9 @@ class Environment(ABC):
 
     def clear_for_reset(self):
         self.agents.clear()
-        self.attractors.clear()
-        self.repulsors.clear()
+        self.flowController.clear()
+        #self.attractors.clear()
+        #self.repulsors.clear()
         self.dead_agents.clear()
 
     #could use create agent function

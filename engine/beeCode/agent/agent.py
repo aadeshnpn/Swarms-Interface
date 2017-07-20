@@ -36,6 +36,7 @@ class Agent(StateMachine): #we could use even more abstract classes... hub Agent
 
         self.neighbors = []
 
+    #TODO: Change to to_dict instead? this isn't json
     @abstractmethod
     def to_json(self):
         agent_dict = {}
@@ -129,7 +130,7 @@ class HubAgent(Agent):
         self.direction %= 2 * np.pi
 
     def senseAndProcessAttractor(self, environment):
-        self.attractor = environment.getAttractor(self.location)
+        self.attractor = environment.flowController.getAttractor(self.location)
         if(self.attractor is not None and self.attracted is None):
             if(np.random.random () > .2):
                 self.attracted = True
@@ -137,7 +138,7 @@ class HubAgent(Agent):
                 self.attracted = False
 
     def senseAndProcessRepulsor(self, environment):
-        self.repulsor = environment.getRepulsor(self.location)
+        self.repulsor = environment.flowController.getRepulsor(self.location)
         if(self.repulsor is not None and self.ignore_repulsor is None):
             if(np.random.random() >.9):
                  self.ignore_repulsor = True

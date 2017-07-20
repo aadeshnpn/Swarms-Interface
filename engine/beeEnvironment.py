@@ -100,8 +100,8 @@ class BeeEnvironment(Environment):
                             "obstacles": self.obstacles,
                             "traps": self.traps,
                             "rough": self.rough,
-                            "attractors": list(map(lambda a: a.toJson(), self.attractors)),
-                            "repulsors": list(map(lambda r: r.toJson(), self.repulsors)),
+                            "attractors": list(map(lambda a: a.toJson(), self.flowController.attractors)),
+                            "repulsors": list(map(lambda r: r.toJson(), self.flowController.repulsors)),
                             "agents": self.agents_to_json(),
                             "dead_agents": self.dead_agents_to_json(),
                             "pheromones": ""
