@@ -1,5 +1,5 @@
 from Environment import *
-
+from beeCode.agent.uav import * 
 class BeeEnvironment(Environment):
     def __init__(self, file_name):
         eprint("file_name = " + str(file_name))
@@ -33,12 +33,16 @@ class BeeEnvironment(Environment):
                                }
 
     def initialize_agents(self):
-        rest_num = int(.1 * np.sqrt(self.number_of_agents))
-        for x in range(self.number_of_agents - rest_num):
-            self.create_explorer(x)
+        for x in range(0, 5):
+            self.create_uav(x)
+        #for y in range(5, 10):
+        #    self.create_explorer(y)
 
-        for y in range(rest_num):
-            self.create_rester(x + 1 + y)
+    #could use one more layer of abstraction, create_agent which accepts reference to newly created object
+    def create_uav(self, agentId):
+        agent_id = str(agentId)
+        agent = UAV(self, agent_id, UAV_Refueling(None), self.hub, self.parameters,  count = int(self.parameters["ExploreTime"]))
+        self.agents[agent_id] = agent
 
     #agent_id could use improvement
     def create_explorer(self, agentId):
@@ -109,10 +113,13 @@ class BeeEnvironment(Environment):
                         }
                 })
         )
+    def build_patrolRoutes(self, data):
+        self.patrol_routes = data['patrol_routes']
 
     def build_json_environment(self):
-        super().build_json_environment()
+        data = super().build_json_environment()
         self.create_infoStations()
+        self.build_patrolRoutes(data)
 
 if __name__ == "__main__":
     file = "world.json"

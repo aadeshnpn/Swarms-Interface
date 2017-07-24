@@ -28,16 +28,31 @@ class beeInfo:
         self.atHub = 1
         self.returnedToHub = True
 
-
+import numpy as np
 class hubController:
     def __init__(self, radius, agents, environment, exploreTime):
         self.reset(radius, agents, environment, exploreTime)
         self.siteDistancePriority = 0
         self.siteSizePriority = 0
+        self.patrol_routes =  [ {
+                "x0" : 400,
+                "y0" : 200,
+                "x1" : 300,
+                "y1" : 200
+            },
+            {
+                    "x0" : 400,
+                    "y0" : -200,
+                    "x1" : 300,
+                    "y1" : -200
+                } ]
 
         self.no_viewer = environment.args.no_viewer
 
         environment.inputEventManager.subscribe('priorityUpdate', self.handlePriorityUpdate)
+
+    def getNextPatrolRoute(self):
+        return self.patrol_routes[np.random.randint(len(self.patrol_routes))]
     def agentLeave(self,angle,id):
         self.directions[angle] += 1
         agent = self.agentList[id]

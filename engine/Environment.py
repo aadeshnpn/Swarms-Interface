@@ -123,6 +123,7 @@ class Environment(ABC):
         self.traps = data["traps"]
         self.rough = data["rough terrain"]
         self.create_potential_fields()
+        return data
 
     # Returns 0 if terrain is clear, -1 if it is rough (slows velocity of agent to half-speed), -2 if there is an
     # obstacle, and -3 if there is a trap

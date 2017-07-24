@@ -109,7 +109,7 @@ require('sticky-cluster')(function (callback)
       var python = config.has(`pythonExecutable.${os.platform()}`) ? config.get(`pythonExecutable.${os.platform()}`) : config.get("pythonExecutable.default");
 
       var args = [];
-      var simEnv = this.options.model === "ant" ? '../engine/antEnvironment.py' : '../engine/beeEnvironment.py';
+      var simEnv = this.options.model === "ant" ? '../engine/antEnvironment.py' : '../engine/uavEnvironment.py';
 
       // TODO: consolidate environments
       args.push(path.join(__dirname, simEnv));
