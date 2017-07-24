@@ -5,7 +5,7 @@ from enum import Enum
 import numpy as np
 def distance(a,b):
 	return np.sqrt((b[0]-a[0])**2 + (b[1]-a[1])**2)
-uavInput = Enum('uavInput', 'targetFound targetLost reachedRallyPoint refueled')
+uavInput = Enum('uavInput', 'targetFound targetLost reachedRallyPoint refueled refuelRequired')
 class UAV(HubAgent):
     def getUiRepresentation(self):
         return {
@@ -24,7 +24,7 @@ class UAV(HubAgent):
         super().__init__(environment, agentId, initialstate, params, hub)
 
         #self.live = True
-        self.counter = 10
+        self.counter = 100
 
         self.param_time_stamp = 0
         self.velocity = self.parameters["Velocity"] * .95
@@ -43,10 +43,13 @@ class UAV(HubAgent):
             (UAV_Tracking(self).__class__, uavInput.targetLost): [None, UAV_Searching(self)],
             (UAV_MovingToRally(self).__class__, uavInput.targetFound): [None, UAV_Tracking(self)],
             (UAV_MovingToRally(self).__class__, uavInput.reachedRallyPoint): [None, UAV_Patrolling(self)],
-            (UAV_Refueling(self).__class__, uavInput.refueled): [self.refuelPatrolTransition, UAV_Patrolling(self)]
+            (UAV_Refueling(self).__class__, uavInput.refueled): [self.refuelPatrolTransition, UAV_Patrolling(self)],
+            (UAV_Patrolling(self).__class__, uavInput.refuelRequired): [self.refuelPatrolTransition, UAV_Refueling(self)]
         }
 
     def refuelPatrolTransition(self):
+        self.counter = 1000
+        #eprint('austin')
         patrol_route = self.environment.hubController.getNextPatrolRoute()
         self.patrolPointA = [patrol_route["x0"], patrol_route["y0"]]
         self.patrolPointB = [patrol_route["x1"], patrol_route["y1"]]
@@ -194,6 +197,8 @@ class UAV_Patrolling(State):
             #eprint(str(neighbor.location[0]) + " " + str(neighbor.location[1]))
     #TODO: STEER TOWARDS METHOD
     def act(self, agent):
+        agent.counter -= 1
+        agent.inHub = False
         self.beginning = agent.patrolPointA
         self.end = agent.patrolPointB
         if(distance(agent.location, self.beginning) < 10):
@@ -214,4 +219,6 @@ class UAV_Patrolling(State):
             self.target = self.beginning
 
     def update(self, agent):
+        if agent.counter < 1:
+            return uavInput.refuelRequired
         return None
