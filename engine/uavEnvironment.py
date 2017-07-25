@@ -1,5 +1,5 @@
 from Environment import *
-from beeCode.agent.uav import * 
+from beeCode.agent.uav import *
 class BeeEnvironment(Environment):
     def __init__(self, file_name):
         eprint("file_name = " + str(file_name))
@@ -33,7 +33,7 @@ class BeeEnvironment(Environment):
                                }
 
     def initialize_agents(self):
-        for x in range(0, 5):
+        for x in range(0, 2):
             self.create_uav(x)
         #for y in range(5, 10):
         #    self.create_explorer(y)

@@ -36,10 +36,16 @@ class hubController:
         self.siteSizePriority = 0
 
         self.patrol_routes = [{
-            "x" : [100,150, 200, 250],
-            "y" : [100,150, 150, 250],
+            "x" : [100, 400],
+            "y" : [100, 100],
             "ids" : []
         }]
+        ''',
+        {
+            "x" : [-400,-50, 0, 30],
+            "y" : [100,100, 100, 100],
+            "ids" : []
+        }]'''
         '''
         self.patrol_routes =  [ {
                 "x0" : 400,

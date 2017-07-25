@@ -3,6 +3,8 @@ from .stateMachine.StateMachine import StateMachine
 from .stateMachine.state import State
 from enum import Enum
 import numpy as np
+
+from .debug import *
 def distance(a,b):
 	return np.sqrt((b[0]-a[0])**2 + (b[1]-a[1])**2)
 uavInput = Enum('uavInput', 'targetFound targetLost reachedRallyPoint refueled refuelRequired')
@@ -182,11 +184,11 @@ class UAV_MovingToRally(State):
 
 class UAV_Patrolling(State):
     def __init__(self, agent=None):
-        self.name = "UAV_Tracking"
+        self.name = "UAV_Patrolling"
         self.inputExplore = False
         self.target = None
         self.waypoint_index = 0
-        self.path_direction = 1
+        self.forward = True
         self.dispersing = False
         #eprint("UAV_Searching init()")
 
@@ -201,11 +203,42 @@ class UAV_Patrolling(State):
             pass
             #eprint(str(neighbor.location[0]) + " " + str(neighbor.location[1]))
 
+    def reverse(self, agent):
+        self.forward = not self.forward
+        if(self.forward is True):
+            self.waypoint_index += 1
+        else:
+            self.waypoint_index -= 1
+        self.waypoint_index = np.clip(self.waypoint_index, 0,  len(agent.patrol_route["x"])-1)
+
     def act(self, agent):
         agent.counter -= 1
         agent.inHub = False
 
         destination = [agent.patrol_route["x"][self.waypoint_index], agent.patrol_route["y"][self.waypoint_index]]
+
+        for n in agent.neighbors:
+            if(n.state.__class__.__name__ == "UAV_Patrolling" and agent.id < n.id):
+                #other_destination = [n.patrol_route["x"][n.state.waypoint_index], n.patrol_route["y"][n.state.waypoint_index]]
+                #else:
+                if(self.forward is not n.state.forward and distance(agent.location, destination) >= distance(destination, n.location)):
+                    eprint("Las chicas no me dehan solo... heh heh heh")
+                    eprint(agent.patrol_route)
+                    eprint(n.patrol_route)
+                    eprint(str(self.waypoint_index))
+                    eprint(str(n.state.waypoint_index))
+                    self.reverse(agent)
+                    n.state.reverse(n)
+                    eprint("agent #" +str(agent.id) + ": " + str(self.forward) +" , "+ str(np.array([agent.patrol_route["x"][self.waypoint_index],agent.patrol_route["y"][self.waypoint_index]])))
+                    eprint("agent #" +str(n.id) + ": " + str(n.state.forward) +" , "+str(np.array([n.patrol_route["x"][n.state.waypoint_index],n.patrol_route["y"][n.state.waypoint_index]])))
+                    eprint(str(self.waypoint_index))
+                    eprint(str(n.state.waypoint_index))
+                    eprint(str(agent.direction))
+                    eprint(str(n.direction))
+        destination = [agent.patrol_route["x"][self.waypoint_index], agent.patrol_route["y"][self.waypoint_index]]
+
+
+
         agent.steerTowardsPoint(destination)
         if(distance(agent.location, destination) < 10):
             if(self.waypoint_index == 0):
@@ -217,6 +250,42 @@ class UAV_Patrolling(State):
                 self.waypoint_index += 1
             else:
                 self.waypoint_index -= 1
+
+
+
+
+
+            '''
+            if(n.__class__.__name__ == "UAV" and n.id > agent.id):
+                self.forward = not self.forward
+                if(self.forward is True):
+                    self.waypoint_index += 1
+                else:
+                    self.waypoint_index -= 1
+
+                self.waypoint_index = np.clip(self.waypoint_index, 0,  len(agent.patrol_route["x"])-1)
+
+                if(n.state.__class__.__name__ == "UAV_Patrolling" and n.state.forward is not self.forward and distance(destination, n.location) < distance(destination, agent.location)):
+                    n.state.forward = not n.state.forward
+                    if(n.state.forward is True):
+                        n.state.waypoint_index += 1
+                    else:
+                        n.state.waypoint_index -= 1
+                    n.state.waypoint_index = np.clip(self.waypoint_index, 0,  len(agent.patrol_route["x"])-1)
+                break
+            '''
+
+        '''
+        for n in agent.neighbors:
+            if(n.__class__.__name__ == "UAV" and distance(n.location, agent.location) < 2 and np.random.random() > .5):
+                self.forward = not self.forward
+                if(self.forward is True):
+                    self.waypoint_index += 1
+                else:
+                    self.waypoint_index -= 1
+                self.waypoint_index %= len(agent.patrol_route["x"])-1 # = np.clip(self.waypoint_index, 0,  len(agent.patrol_route["x"])-1)
+                #agent.velocity *= .999
+        '''
 
         '''
         num_uav_neighbors = 0
