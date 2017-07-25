@@ -38,21 +38,40 @@ class hubController:
                 "x0" : 400,
                 "y0" : 200,
                 "x1" : 300,
-                "y1" : 200
+                "y1" : 200,
+                "ids": []
             },
             {
                     "x0" : 400,
                     "y0" : -200,
                     "x1" : 300,
-                    "y1" : -200
+                    "y1" : -200,
+                    "ids" : []
                 } ]
 
         self.no_viewer = environment.args.no_viewer
 
         environment.inputEventManager.subscribe('priorityUpdate', self.handlePriorityUpdate)
 
-    def getNextPatrolRoute(self):
-        return self.patrol_routes[np.random.randint(len(self.patrol_routes))]
+    def checkOutPatrolRoute(self, agent):
+        eprint(str(agent.id) + "checking out")
+        min_ind = 0
+        for i in range(0, len(self.patrol_routes)):
+            if(len(self.patrol_routes[i]["ids"]) < len(self.patrol_routes[min_ind]["ids"])):
+                min_ind = i
+        self.patrol_routes[min_ind]["ids"].append(agent.id)
+        eprint(self.patrol_routes[min_ind])
+        return self.patrol_routes[min_ind]
+        #return self.patrol_routes[np.random.randint(len(self.patrol_routes))]
+    def checkInPatrolRoute(self, agent):
+        eprint(str(agent.id) + "checking in")
+        for p in self.patrol_routes:
+            if agent.id in p["ids"]:
+                p["ids"].remove(agent.id)
+                break
+        eprint(self.patrol_routes)
+        #assert(False)
+
     def agentLeave(self,angle,id):
         self.directions[angle] += 1
         agent = self.agentList[id]

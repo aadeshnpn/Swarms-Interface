@@ -43,14 +43,17 @@ class UAV(HubAgent):
             (UAV_Tracking(self).__class__, uavInput.targetLost): [None, UAV_Searching(self)],
             (UAV_MovingToRally(self).__class__, uavInput.targetFound): [None, UAV_Tracking(self)],
             (UAV_MovingToRally(self).__class__, uavInput.reachedRallyPoint): [None, UAV_Patrolling(self)],
-            (UAV_Refueling(self).__class__, uavInput.refueled): [self.refuelPatrolTransition, UAV_Patrolling(self)],
-            (UAV_Patrolling(self).__class__, uavInput.refuelRequired): [self.refuelPatrolTransition, UAV_Refueling(self)]
+            (UAV_Refueling(self).__class__, uavInput.refueled): [self.refuelToPatrolTransition, UAV_Patrolling(self)],
+            (UAV_Patrolling(self).__class__, uavInput.refuelRequired): [self.patrolToRefuelTransition, UAV_Refueling(self)]
         }
 
-    def refuelPatrolTransition(self):
-        self.counter = 1000
+    def patrolToRefuelTransition(self):
+        self.counter = 500 * int(self.id) + 100
+
+    def refuelToPatrolTransition(self):
+        self.counter = 1000* int(self.id) + 1000
         #eprint('austin')
-        patrol_route = self.environment.hubController.getNextPatrolRoute()
+        patrol_route = self.environment.hubController.checkOutPatrolRoute(self)
         self.patrolPointA = [patrol_route["x0"], patrol_route["y0"]]
         self.patrolPointB = [patrol_route["x1"], patrol_route["y1"]]
 
@@ -71,6 +74,7 @@ class UAV_Refueling(State):
             agent.move(agent.hub)
             if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <= 1:
                 agent.velocity = 0
+                agent.environment.hubController.checkInPatrolRoute(agent)
                 agent.inHub = True
 
     def update(self, agent):
