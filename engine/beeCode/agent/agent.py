@@ -73,7 +73,7 @@ class Agent(StateMachine): #we could use even more abstract classes... hub Agent
             self.direction = (self.direction + delta_d) % (2 * np.pi)
 
     def steerTowardsPoint(self, destination):
-        agent.direction = np.arctan2(destination[1] - self.location[1], destination[0] - self.location[0])
+        self.direction = np.arctan2(destination[1] - self.location[1], destination[0] - self.location[0])
 
 class HubAgent(Agent):
     def __init__(self, environment, agentId, initialState, params, hub):

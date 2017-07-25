@@ -53,9 +53,9 @@ class UAV(HubAgent):
     def refuelToPatrolTransition(self):
         self.counter = 1000* int(self.id) + 1000
         #eprint('austin')
-        patrol_route = self.environment.hubController.checkOutPatrolRoute(self)
-        self.patrolPointA = [patrol_route["x0"], patrol_route["y0"]]
-        self.patrolPointB = [patrol_route["x1"], patrol_route["y1"]]
+        self.patrol_route = self.environment.hubController.checkOutPatrolRoute(self)
+        #self.patrolPointA = [patrol_route["x0"], patrol_route["y0"]]
+        #self.patrolPointB = [patrol_route["x1"], patrol_route["y1"]]
 
 class UAV_Refueling(State):
     def __init__(self, agent=None):
@@ -184,9 +184,10 @@ class UAV_Patrolling(State):
     def __init__(self, agent=None):
         self.name = "UAV_Tracking"
         self.inputExplore = False
-        self.beginning = [-400,400]
-        self.end = [-200,400]
         self.target = None
+        self.waypoint_index = 0
+        self.path_direction = 1
+        self.dispersing = False
         #eprint("UAV_Searching init()")
 
     def sense(self, agent, environment):
@@ -199,12 +200,49 @@ class UAV_Patrolling(State):
         for neighbor in agent.neighbors:
             pass
             #eprint(str(neighbor.location[0]) + " " + str(neighbor.location[1]))
-    #TODO: STEER TOWARDS METHOD
+
     def act(self, agent):
         agent.counter -= 1
         agent.inHub = False
-        self.beginning = agent.patrolPointA
-        self.end = agent.patrolPointB
+
+        destination = [agent.patrol_route["x"][self.waypoint_index], agent.patrol_route["y"][self.waypoint_index]]
+        agent.steerTowardsPoint(destination)
+        if(distance(agent.location, destination) < 10):
+            if(self.waypoint_index == 0):
+                self.forward = True
+            elif(self.waypoint_index == len(agent.patrol_route["x"]) - 1):
+                self.forward = False
+
+            if(self.forward is True):
+                self.waypoint_index += 1
+            else:
+                self.waypoint_index -= 1
+
+        '''
+        num_uav_neighbors = 0
+        average_pos = [0,0]
+        for n in agent.neighbors:
+            if(n.__class__.__name__ == "UAV" and distance(n.location, agent.location) < 1 ):
+                average_pos[0] += n.location[0]
+                average_pos[1] += n.location[1]
+                num_uav_neighbors += 1
+        if(num_uav_neighbors != 0):
+            average_pos[0]/=num_uav_neighbors
+            average_pos[1]/=num_uav_neighbors
+            agent.steerTowardsPoint(average_pos)
+            agent.direction *= -1
+
+            self.forward = not self.forward
+            if(self.waypoint_index != 0 and self.waypoint_index != len(agent.patrol_route["x"]) - 1):
+                if(self.forward is True):
+                    self.waypoint_index += 1
+                else:
+                    self.waypoint_index -= 1
+                agent.direction = np.random.normal(agent.direction)
+                self.dispersing = True
+        '''
+
+        '''
         if(distance(agent.location, self.beginning) < 10):
             other_loc = self.end
             this_loc = agent.location
@@ -221,7 +259,7 @@ class UAV_Patrolling(State):
             agent.direction = np.arctan2(other_loc[1] - this_loc[1], other_loc[0] - this_loc[0])
         else:
             self.target = self.beginning
-
+        '''
     def update(self, agent):
         if agent.counter < 1:
             return uavInput.refuelRequired

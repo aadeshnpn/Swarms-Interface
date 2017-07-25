@@ -34,6 +34,13 @@ class hubController:
         self.reset(radius, agents, environment, exploreTime)
         self.siteDistancePriority = 0
         self.siteSizePriority = 0
+
+        self.patrol_routes = [{
+            "x" : [100,150, 200, 250],
+            "y" : [100,150, 150, 250],
+            "ids" : []
+        }]
+        '''
         self.patrol_routes =  [ {
                 "x0" : 400,
                 "y0" : 200,
@@ -48,7 +55,7 @@ class hubController:
                     "y1" : -200,
                     "ids" : []
                 } ]
-
+        '''
         self.no_viewer = environment.args.no_viewer
 
         environment.inputEventManager.subscribe('priorityUpdate', self.handlePriorityUpdate)
