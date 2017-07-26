@@ -1,5 +1,6 @@
 from Environment import *
 from beeCode.agent.uav import *
+from beeCode.agent.evader import *
 class BeeEnvironment(Environment):
     def __init__(self, file_name):
         eprint("file_name = " + str(file_name))
@@ -33,10 +34,17 @@ class BeeEnvironment(Environment):
                                }
 
     def initialize_agents(self):
-        for x in range(0, 2):
+        for x in range(0, 5):
             self.create_uav(x)
+        for y in range(5, 31):
+            self.create_evader(y)
         #for y in range(5, 10):
         #    self.create_explorer(y)
+
+    def create_evader(self, agentId):
+        agent_id = str(agentId)
+        evader = Evader(self, agent_id, Evading(None), self.parameters)
+        self.agents[agent_id] = evader
 
     #could use one more layer of abstraction, create_agent which accepts reference to newly created object
     def create_uav(self, agentId):

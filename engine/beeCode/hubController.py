@@ -36,10 +36,27 @@ class hubController:
         self.siteSizePriority = 0
 
         self.patrol_routes = [{
-            "x" : [100, 400],
+            "x" : [-390, -210],
+            "y" : [100, 100],
+            "ids" : []
+        },
+        {
+            "x" : [-190, -10],
+            "y" : [100, 100],
+            "ids" : []
+        },
+        {
+            "x" : [10, 190],
+            "y" : [100, 100],
+            "ids" : []
+        },
+
+        {
+            "x" : [210, 390],
             "y" : [100, 100],
             "ids" : []
         }]
+        
         ''',
         {
             "x" : [-400,-50, 0, 30],
@@ -66,12 +83,26 @@ class hubController:
 
         environment.inputEventManager.subscribe('priorityUpdate', self.handlePriorityUpdate)
 
+    def isCheckOutNeeded(self):
+        for p in self.patrol_routes:
+            if(len(p["ids"]) == 0):
+                return True
+        return False
+
     def checkOutPatrolRoute(self, agent):
         eprint(str(agent.id) + "checking out")
+        min_sum = 100000000
         min_ind = 0
         for i in range(0, len(self.patrol_routes)):
-            if(len(self.patrol_routes[i]["ids"]) < len(self.patrol_routes[min_ind]["ids"])):
+            s = 0
+            for uav_id in self.patrol_routes[i]["ids"]:
+                if(agent.environment.agents[uav_id].state.__class__.__name__ == "UAV_Patrolling"):
+                    s += agent.environment.agents[uav_id].counter
+            if(s < min_sum):
+                min_sum = s
                 min_ind = i
+            #if(len(self.patrol_routes[i]["ids"]) < len(self.patrol_routes[min_ind]["ids"])):
+            #    min_ind = i
         self.patrol_routes[min_ind]["ids"].append(agent.id)
         eprint(self.patrol_routes[min_ind])
         return self.patrol_routes[min_ind]

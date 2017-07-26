@@ -80,7 +80,7 @@ class UAV_Refueling(State):
                 agent.inHub = True
 
     def update(self, agent):
-        if agent.counter < 1:
+        if agent.counter < 1 and agent.environment.hubController.isCheckOutNeeded():
             agent.velocity = agent.parameters["Velocity"]
             return uavInput.refueled
 
@@ -218,7 +218,9 @@ class UAV_Patrolling(State):
         destination = [agent.patrol_route["x"][self.waypoint_index], agent.patrol_route["y"][self.waypoint_index]]
 
         for n in agent.neighbors:
-            if(n.state.__class__.__name__ == "UAV_Patrolling" and agent.id < n.id):
+            if(n.__class__.__name__ == "Evader"):
+                n.caught()
+            elif(n.state.__class__.__name__ == "UAV_Patrolling" and agent.id < n.id):
                 #other_destination = [n.patrol_route["x"][n.state.waypoint_index], n.patrol_route["y"][n.state.waypoint_index]]
                 #else:
                 if(self.forward is not n.state.forward and distance(agent.location, destination) >= distance(destination, n.location)):
