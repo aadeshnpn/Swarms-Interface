@@ -6,7 +6,11 @@ import numpy as np
 
 from .debug import *
 def distance(a,b):
-	return np.sqrt((b[0]-a[0])**2 + (b[1]-a[1])**2)
+    a[0] = (float)(a[0])
+    a[1] = (float)(a[1])
+    b[0] = (float)(b[0])
+    b[1] = (float)(b[1])
+    return np.sqrt((b[0]-a[0])**2 + (b[1]-a[1])**2)
 uavInput = Enum('uavInput', 'targetFound targetLost reachedRallyPoint refueled refuelRequired')
 class UAV(HubAgent):
     def getUiRepresentation(self):
@@ -182,8 +186,66 @@ class UAV_MovingToRally(State):
                     return uavInput.targetFound
         return None
 
+from sympy.geometry import *
+class UAV_Patrolling_Rect(State):
+    def __init__(self, rect = None, agent = None):
+        self.name = self.__class__.__name__
+        self.rect = Polygon(Point2D(100,100),Point2D(100,300),Point2D(300,300),Point2D(300,100))
+        self.waypoint = [self.rect.vertices[0][0], self.rect.vertices[0][1]]
+        #eprint(self.rect.bounds)
+
+
+    def sense(self, agent, environment):
+        agent.neighbors.clear()
+        for other_key in environment.agents.keys():
+            other = environment.agents[other_key]
+            if(distance(agent.location, other.location) < 50 and agent != other):
+                agent.neighbors.append(other)
+        #eprint(agent.neighbors)
+
+    def act(self, agent):
+        agent.counter -= 0
+        agent.inHub = False
+
+        if(distance(agent.location, self.waypoint) < 1):
+            new_waypoint = [None,None]
+            if(self.waypoint[0] == self.rect.bounds[0]):
+                new_waypoint[0] = self.rect.bounds[2]
+            else:
+                new_waypoint[0] = self.rect.bounds[0]
+            agent.direction %= 2*np.pi
+            eprint(self.rect.bounds)
+            if((self.waypoint[1] < self.rect.bounds[1] and np.pi < agent.direction) or (self.waypoint[1] > self.rect.bounds[3] and np.pi > agent.direction)):
+                agent.direction *= -1
+
+            agent.direction %= 2*np.pi
+            if(np.pi > agent.direction and agent.direction > 0):
+                new_waypoint[1] = self.waypoint[1] + 25
+            else:
+                new_waypoint[1] = self.waypoint[1] - 25
+            #eprint(new_waypoint)
+            self.waypoint = new_waypoint
+        else:
+            agent.steerTowardsPoint(self.waypoint)
+
+        for neighbor in agent.neighbors: #of course, this could use improvement. A malicious UAV could broadcast - hey. I've been out the longest. Follow me! - and lead the other UAVS astray
+            if(neighbor.state.__class__.__name__ == agent.state.__class__.__name__ and neighbor.id < agent.id):
+                self.waypoint[0] = neighbor.state.waypoint[0]
+                self.waypoint[1] = neighbor.state.waypoint[1]
+                self.waypoint[1] += 50
+                break
+
+        eprint(self.waypoint)
+
+        #else:
+        #    agent.velocity = 0.0
+    def update(self, agent):
+        return None
+
+
 class UAV_Patrolling(State):
     def __init__(self, agent=None):
+    #TODO: self.name not necessary - we may use .__class__.__name__ instead
         self.name = "UAV_Patrolling"
         self.inputExplore = False
         self.target = None
@@ -224,19 +286,23 @@ class UAV_Patrolling(State):
                 #other_destination = [n.patrol_route["x"][n.state.waypoint_index], n.patrol_route["y"][n.state.waypoint_index]]
                 #else:
                 if(self.forward is not n.state.forward and distance(agent.location, destination) >= distance(destination, n.location)):
+                    '''
                     eprint("Las chicas no me dehan solo... heh heh heh")
                     eprint(agent.patrol_route)
                     eprint(n.patrol_route)
                     eprint(str(self.waypoint_index))
                     eprint(str(n.state.waypoint_index))
+                    '''
                     self.reverse(agent)
                     n.state.reverse(n)
+                    '''
                     eprint("agent #" +str(agent.id) + ": " + str(self.forward) +" , "+ str(np.array([agent.patrol_route["x"][self.waypoint_index],agent.patrol_route["y"][self.waypoint_index]])))
                     eprint("agent #" +str(n.id) + ": " + str(n.state.forward) +" , "+str(np.array([n.patrol_route["x"][n.state.waypoint_index],n.patrol_route["y"][n.state.waypoint_index]])))
                     eprint(str(self.waypoint_index))
                     eprint(str(n.state.waypoint_index))
                     eprint(str(agent.direction))
                     eprint(str(n.direction))
+                    '''
         destination = [agent.patrol_route["x"][self.waypoint_index], agent.patrol_route["y"][self.waypoint_index]]
 
 

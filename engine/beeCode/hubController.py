@@ -28,7 +28,9 @@ class beeInfo:
         self.atHub = 1
         self.returnedToHub = True
 
+#TODO: move import statements to top of file
 import numpy as np
+from sympy.geometry import *
 class hubController:
     def __init__(self, radius, agents, environment, exploreTime):
         self.reset(radius, agents, environment, exploreTime)
@@ -56,7 +58,10 @@ class hubController:
             "y" : [100, 100],
             "ids" : []
         }]
-        
+
+        self.patrol_rects = [
+            Polygon(Point2D(100,100),Point2D(100,300),Point2D(300,300),Point2D(300,100))
+        ]
         ''',
         {
             "x" : [-400,-50, 0, 30],
@@ -82,6 +87,9 @@ class hubController:
         self.no_viewer = environment.args.no_viewer
 
         environment.inputEventManager.subscribe('priorityUpdate', self.handlePriorityUpdate)
+
+    def checkoutPatrolRect(self, agent):
+        return self.patrol_rects[0]
 
     def isCheckOutNeeded(self):
         for p in self.patrol_routes:

@@ -61,6 +61,7 @@ class Agent(StateMachine): #we could use even more abstract classes... hub Agent
         self.direction = np.arctan2(dy, dx)
 
     def update(self, environment):
+        #eprint(self.state.__class__.__name__)
         self.nextState(self.state.update(self))
 
     def wander(self, place, radius):
@@ -73,7 +74,8 @@ class Agent(StateMachine): #we could use even more abstract classes... hub Agent
             self.direction = (self.direction + delta_d) % (2 * np.pi)
 
     def steerTowardsPoint(self, destination):
-        self.direction = np.arctan2(destination[1] - self.location[1], destination[0] - self.location[0])
+        #eprint(destination)
+        self.direction = np.arctan2((float)(destination[1]) - (float)(self.location[1]), (float)(destination[0]) - (float)(self.location[0]))
 
 class HubAgent(Agent):
     def __init__(self, environment, agentId, initialState, params, hub):

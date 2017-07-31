@@ -34,13 +34,22 @@ class BeeEnvironment(Environment):
                                }
 
     def initialize_agents(self):
+        for z in range(-2,0):
+            self.create_t_uav(z)
         for x in range(0, 5):
             self.create_uav(x)
         for y in range(5, 31):
             self.create_evader(y)
+        self.agents[str(-1)].counter = -100000
+        self.agents[str(-2)].counter = 100000
+        self.agents[str(-2)].velocity *= 1
+
         #for y in range(5, 10):
         #    self.create_explorer(y)
-
+    def create_t_uav(self, agentId):
+        agent_id = str(agentId)
+        uav = UAV(self, agent_id, UAV_Patrolling_Rect(None), self.hub, self.parameters)
+        self.agents[agent_id] = uav
     def create_evader(self, agentId):
         agent_id = str(agentId)
         evader = Evader(self, agent_id, Evading(None), self.parameters)
