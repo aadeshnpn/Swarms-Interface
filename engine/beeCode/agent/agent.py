@@ -153,14 +153,14 @@ class HubAgent(Agent):
     def checkAgentLeave(self):
         if (((self.hub[0] - self.location[0]) ** 2 + (self.hub[1] - self.location[1]) ** 2) ** .5 > self.hubRadius) \
                         and self.inHub is True:
-                if self.environment.hubController.beeCheckOut(self) == 0:
+                if self.environment.hubController.checkOut(self) == 0:
                     self.inHub = False
                     return True
         return False
     def checkAgentReturn(self):
         if (((self.hub[0] - self.location[0]) ** 2 + (self.hub[1] - self.location[1])** 2)** .5 < self.hubRadius):
             if not self.inHub: #if probs check if not agent.goingToSite
-                self.environment.hubController.beeCheckIn(self)
+                self.environment.hubController.checkIn(self)
                 self.inHub = True
                 return True
         return False

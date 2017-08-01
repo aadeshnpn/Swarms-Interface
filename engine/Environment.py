@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from utils.debug import *
 from InputEventManager import InputEventManager
 from beeCode.agent.agent import *
-from beeCode.hubController import hubController
+#from beeCode.hubController import hubController
 from beeCode.infoStation import InfoStation
 
 from beeCode.worldGenerator import *
@@ -84,8 +84,11 @@ class Environment(ABC):
         self.restart_simulation = False
         self.initialize_agents()
         self.inputEventManager = InputEventManager()
+        self.init_hubController()
+        '''
         self.hubController = hubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self,
                                            self.parameters["ExploreTime"])
+        '''
         self.flowController = flowController.FlowController()
         self.isPaused = False
         #self.attractors = []
@@ -95,6 +98,10 @@ class Environment(ABC):
         self.previousMetaJson = None
 
         self.chat_history = ""
+
+    @abstractmethod
+    def init_hubController(self):
+        pass
 
     @abstractmethod
     def init_parameters(self):

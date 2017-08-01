@@ -44,13 +44,19 @@ class UAV(HubAgent):
         self.patrolPointA = None
         self.patrolPointB = None
 
+        self.patrol_rect = None
+
         #UAV_Patrolling
         self.transitionTable = {(UAV_Searching(self).__class__, uavInput.targetFound): [None, UAV_Tracking(self)],
             (UAV_Tracking(self).__class__, uavInput.targetLost): [None, UAV_Searching(self)],
             (UAV_MovingToRally(self).__class__, uavInput.targetFound): [None, UAV_Tracking(self)],
             (UAV_MovingToRally(self).__class__, uavInput.reachedRallyPoint): [None, UAV_Patrolling(self)],
-            (UAV_Refueling(self).__class__, uavInput.refueled): [self.refuelToPatrolTransition, UAV_Patrolling(self)],
-            (UAV_Patrolling(self).__class__, uavInput.refuelRequired): [self.patrolToRefuelTransition, UAV_Refueling(self)]
+            #(UAV_Refueling(self).__class__, uavInput.refueled): [self.refuelToPatrolTransition, UAV_Patrolling(self)],
+            #(UAV_Patrolling(self).__class__, uavInput.refuelRequired): [self.patrolToRefuelTransition, UAV_Refueling(self)]
+            (UAV_Refueling(self).__class__, uavInput.refueled): [self.refuelToPatrolTransition, UAV_Patrolling_Rect(self)],
+            (UAV_Patrolling_Rect(self).__class__, uavInput.refuelRequired): [self.patrolToRefuelTransition, UAV_Refueling(self)]
+
+            #self.patrol_route = self.environment.hubController.checkOutPatrolRoute(self)
         }
 
     def patrolToRefuelTransition(self):
@@ -59,7 +65,8 @@ class UAV(HubAgent):
     def refuelToPatrolTransition(self):
         self.counter = 1000* int(self.id) + 1000
         #eprint('austin')
-        self.patrol_route = self.environment.hubController.checkOutPatrolRoute(self)
+        self.patrol_rect = self.environment.hubController.checkOutPatrolRect(self)
+        #self.patrol_route = self.environment.hubController.checkOutPatrolRoute(self)
         #self.patrolPointA = [patrol_route["x0"], patrol_route["y0"]]
         #self.patrolPointB = [patrol_route["x1"], patrol_route["y1"]]
 
@@ -80,7 +87,8 @@ class UAV_Refueling(State):
             agent.move(agent.hub)
             if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <= 1:
                 agent.velocity = 0
-                agent.environment.hubController.checkInPatrolRoute(agent)
+                agent.environment.hubController.checkInPatrolRect(agent)
+                #agent.environment.hubController.checkInPatrolRoute(agent)
                 agent.inHub = True
 
     def update(self, agent):
@@ -190,7 +198,7 @@ from sympy.geometry import *
 class UAV_Patrolling_Rect(State):
     def __init__(self, rect = None, agent = None):
         self.name = self.__class__.__name__
-        self.rect = Polygon(Point2D(100,100),Point2D(100,300),Point2D(300,300),Point2D(300,100))
+        self.rect = Polygon(Point2D(100, -400),Point2D(100,100),Point2D(300,100),Point2D(300,-400))
         self.waypoint = [self.rect.vertices[0][0], self.rect.vertices[0][1]]
         #eprint(self.rect.bounds)
 
@@ -204,7 +212,7 @@ class UAV_Patrolling_Rect(State):
         #eprint(agent.neighbors)
 
     def act(self, agent):
-        agent.counter -= 0
+        agent.counter -= 1
         agent.inHub = False
 
         if(distance(agent.location, self.waypoint) < 1):
@@ -227,6 +235,10 @@ class UAV_Patrolling_Rect(State):
             self.waypoint = new_waypoint
         else:
             agent.steerTowardsPoint(self.waypoint)
+
+        for n in agent.neighbors:
+            if(n.__class__.__name__ == "Evader"):
+                n.caught()
 
         for neighbor in agent.neighbors: #of course, this could use improvement. A malicious UAV could broadcast - hey. I've been out the longest. Follow me! - and lead the other UAVS astray
             if(neighbor.state.__class__.__name__ == agent.state.__class__.__name__ and neighbor.id < agent.id):

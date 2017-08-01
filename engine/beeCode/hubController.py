@@ -5,8 +5,8 @@ import copy
 from .agent.agent import *
 from utils.debug import *
 import time
-
-
+import numpy as np
+from sympy.geometry import *
 class beeInfo:
     def __init__(self, direction, velocity, state, AtHub, ret,id):
         self.direction = direction  # stored in degrees
@@ -27,63 +27,11 @@ class beeInfo:
         self.direction = direction
         self.atHub = 1
         self.returnedToHub = True
-
-#TODO: move import statements to top of file
-import numpy as np
-from sympy.geometry import *
-class hubController:
+class HubController:
     def __init__(self, radius, agents, environment, exploreTime):
         self.reset(radius, agents, environment, exploreTime)
         self.siteDistancePriority = 0
         self.siteSizePriority = 0
-
-        self.patrol_routes = [{
-            "x" : [-390, -210],
-            "y" : [100, 100],
-            "ids" : []
-        },
-        {
-            "x" : [-190, -10],
-            "y" : [100, 100],
-            "ids" : []
-        },
-        {
-            "x" : [10, 190],
-            "y" : [100, 100],
-            "ids" : []
-        },
-
-        {
-            "x" : [210, 390],
-            "y" : [100, 100],
-            "ids" : []
-        }]
-
-        self.patrol_rects = [
-            Polygon(Point2D(100,100),Point2D(100,300),Point2D(300,300),Point2D(300,100))
-        ]
-        ''',
-        {
-            "x" : [-400,-50, 0, 30],
-            "y" : [100,100, 100, 100],
-            "ids" : []
-        }]'''
-        '''
-        self.patrol_routes =  [ {
-                "x0" : 400,
-                "y0" : 200,
-                "x1" : 300,
-                "y1" : 200,
-                "ids": []
-            },
-            {
-                    "x0" : 400,
-                    "y0" : -200,
-                    "x1" : 300,
-                    "y1" : -200,
-                    "ids" : []
-                } ]
-        '''
         self.no_viewer = environment.args.no_viewer
 
         environment.inputEventManager.subscribe('priorityUpdate', self.handlePriorityUpdate)
@@ -133,7 +81,7 @@ class hubController:
         self.agentsInHub[id].priorities = self.getSitePriorities()
         del self.agentsInHub[id]
 
-    def beeCheckOut(self, bee):
+    def checkOut(self, bee):
         angle = bee.direction % (2 * np.pi)
         angle = int(int(angle * (180 / np.pi)) / 5)  # converting to fit in the array
         agent = self.agentList[bee.id]
@@ -151,7 +99,7 @@ class hubController:
         return agent.atHub
         # TODO if explorer set a timer for it, if assessor calculate projected time
 
-    def beeCheckIn(self,bee):
+    def checkIn(self,bee):
         # TODO check a map of where they've been to figure out where traps are.
         #eprint("checking in:", id, " Initial direction:", self.agentList[id].direction, " from:", int(dir*(180/np.pi))+180)
 

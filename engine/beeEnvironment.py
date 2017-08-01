@@ -1,4 +1,5 @@
 from Environment import *
+from beeCode.beeHubController import BeeHubController
 
 class BeeEnvironment(Environment):
     def __init__(self, file_name):
@@ -10,6 +11,9 @@ class BeeEnvironment(Environment):
             self.number_of_agents = args.agentNum
 
         super().__init__(file_name)
+    def init_hubController(self):
+        self.hubController = BeeHubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self,
+                                            self.parameters["ExploreTime"])
 
     def isFinished(self):
         return (args.commit_stop and "commit" in self.stats["stateCounts"] and
