@@ -48,7 +48,14 @@ class Agent(StateMachine): #we could use even more abstract classes... hub Agent
         agent_dict["live"] = self.live
         return agent_dict
 
+    @property
+    def direction(self):
+        return self.__direction
 
+    @direction.setter
+    def direction(self, value):
+        self.__direction = value
+        #self.environment.stats TODO
     def sense(self, environment):
         self.state.sense(self, environment)
 
