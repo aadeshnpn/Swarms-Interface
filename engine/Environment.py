@@ -61,8 +61,8 @@ class Environment(ABC):
             self.logfile = open(fname, "w+")
             self.logfile.write("%s\n" % json.dumps({"seed":self.seed}))
 
-        self.actions = []
-        self.influenceActions = []
+        self.actions = {"turns": 0, "stateChanges": 0, "parameterChange": 0}
+        self.influenceActions = {"turns": 0, "stateChanges": 0, "parameterChange": 0}
         self.args = args
         self.file_name = file_name
         self.x_limit = 0
@@ -310,7 +310,6 @@ class Environment(ABC):
                         self.suggest_new_direction(agent_id)
 
                     self.hubController.hiveAdjust(self.agents)
-
                     if not args.no_viewer:
                         print(json.dumps({
                             "type": "stateCounts",

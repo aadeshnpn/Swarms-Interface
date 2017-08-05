@@ -197,7 +197,10 @@ class BeeHubController(HubController):
                         bee.direction = ((angle * 5) / 180) * np.pi
                         bee.inHub = False
 
-                        self.agentLeave(angle,bee.id)
+                        self.environment.influenceActions["turns"] += 1
+                        self.environment.influenceActions["stateChanges"] += 1
+
+                        self.agentLeave(angle, bee.id)
                         break  # only execute this once per iteration, that way it's a 'slow' change
             elif self.directionParams[angle] == self.directions[angle]:
                 # meaning it has reached the user's requirements
@@ -212,7 +215,9 @@ class BeeHubController(HubController):
                             "hub": self.environment.hub,
                             "agentDirections": self.directions,
                             "agentsIn": self.incoming,
-                            "dead": self.deadBees
+                            "dead": self.deadBees,
+                            "actions": self.environment.actions,
+                            "influenceActions": self.environment.influenceActions
                         }
                 }
         }
