@@ -38,15 +38,19 @@ class UavHubController(HubController):
             "ids" : []
         }]
 
-        self.patrol_rects = [{
-            "rect" : Polygon(Point2D(-400,100),Point2D(100,100),Point2D(300,100),Point2D(300,-400)), "ids" : []
-        }]
+        self.patrol_rects = [{"rect" : Polygon(Point2D(100, -400),Point2D(100,100),Point2D(300,100),Point2D(300,-400)), "ids" : []},
+        {"rect" : Polygon(Point2D(-350,50),Point2D(-350,200),Point2D(-200,200),Point2D(-200,50)), "ids" : []},
+        {"rect" : Polygon(Point2D(-200,50),Point2D(-200,200),Point2D(0,200),Point2D(0,50)), "ids" : []} ]
         self.no_viewer = environment.args.no_viewer
 
         environment.inputEventManager.subscribe('priorityUpdate', self.handlePriorityUpdate)
 
     def checkOutPatrolRect(self, agent):
-        return min(self.patrol_rects, key = lambda patrol : sum(self.environment.agents[agent_id].counter for agent_id in patrol["ids"]))
+        eprint("checkOutPatrolRect, id = " + str(agent.id))
+        route = min(self.patrol_rects, key = lambda patrol : sum(self.environment.agents[agent_id].counter for agent_id in patrol["ids"]))
+        eprint(route)
+        route["ids"].append(agent.id)
+        return route["rect"]
         #return self.patrol_rects[0]["rect"]
 
     def checkInPatrolRect(self, agent):

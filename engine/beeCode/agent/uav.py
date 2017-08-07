@@ -94,7 +94,7 @@ class UAV_Refueling(State):
     def update(self, agent):
         if agent.counter < 1 and agent.environment.hubController.isCheckOutNeeded():
             agent.velocity = agent.parameters["Velocity"]
-            return uavInput.refueled
+            return uavInput.refueled #TODO: uavInput.ready instead - it may have been "refueled"/"ready to go" for a while now
 
 class UAV_Searching(State):
     def __init__(self, agent=None):
@@ -198,8 +198,8 @@ from sympy.geometry import *
 class UAV_Patrolling_Rect(State):
     def __init__(self, rect = None, agent = None):
         self.name = self.__class__.__name__
-        self.rect = Polygon(Point2D(100, -400),Point2D(100,100),Point2D(300,100),Point2D(300,-400))
-        self.waypoint = [self.rect.vertices[0][0], self.rect.vertices[0][1]]
+        self.rect = None#Polygon(Point2D(100, -400),Point2D(100,100),Point2D(300,100),Point2D(300,-400))
+        self.waypoint = None#[self.rect.vertices[0][0], self.rect.vertices[0][1]]
         #eprint(self.rect.bounds)
 
 
@@ -212,18 +212,23 @@ class UAV_Patrolling_Rect(State):
         #eprint(agent.neighbors)
 
     def act(self, agent):
+        #if(self.rect is None):
+        #    self.rect = agent.environment.hubController.checkOutPatrolRect(agent)["rect"] #TODO: ugly, needs fix so all that is passed back is the rectangle
+        if(self.waypoint is None):
+            self.waypoint = [agent.patrol_rect.vertices[0][0], agent.patrol_rect.vertices[0][1]]
+
         agent.counter -= 1
         agent.inHub = False
 
         if(distance(agent.location, self.waypoint) < 1):
             new_waypoint = [None,None]
-            if(self.waypoint[0] == self.rect.bounds[0]):
-                new_waypoint[0] = self.rect.bounds[2]
+            if(self.waypoint[0] == agent.patrol_rect.bounds[0]):
+                new_waypoint[0] = agent.patrol_rect.bounds[2]
             else:
-                new_waypoint[0] = self.rect.bounds[0]
+                new_waypoint[0] = agent.patrol_rect.bounds[0]
             agent.direction %= 2*np.pi
-            eprint(self.rect.bounds)
-            if((self.waypoint[1] < self.rect.bounds[1] and np.pi < agent.direction) or (self.waypoint[1] > self.rect.bounds[3] and np.pi > agent.direction)):
+            #eprint(self.rect.bounds)
+            if((self.waypoint[1] < agent.patrol_rect.bounds[1] and np.pi < agent.direction) or (self.waypoint[1] > agent.patrol_rect.bounds[3] and np.pi > agent.direction)):
                 agent.direction *= -1
 
             agent.direction %= 2*np.pi
@@ -241,19 +246,21 @@ class UAV_Patrolling_Rect(State):
                 n.caught()
 
         for neighbor in agent.neighbors: #of course, this could use improvement. A malicious UAV could broadcast - hey. I've been out the longest. Follow me! - and lead the other UAVS astray
+            break
             if(neighbor.state.__class__.__name__ == agent.state.__class__.__name__ and neighbor.id < agent.id):
                 self.waypoint[0] = neighbor.state.waypoint[0]
                 self.waypoint[1] = neighbor.state.waypoint[1]
                 self.waypoint[1] += 50
                 break
 
-        eprint(self.waypoint)
+        #eprint(self.waypoint)
 
         #else:
         #    agent.velocity = 0.0
     def update(self, agent):
+        if agent.counter < 1:
+            return uavInput.refuelRequired
         return None
-
 
 class UAV_Patrolling(State):
     def __init__(self, agent=None):
