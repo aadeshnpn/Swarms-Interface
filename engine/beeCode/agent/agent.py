@@ -48,7 +48,15 @@ class Agent(StateMachine): #we could use even more abstract classes... hub Agent
         agent_dict["live"] = self.live
         return agent_dict
 
+    @property
+    def direction(self):
+        return self.__direction
 
+    @direction.setter
+    def direction(self, value):
+        self.__direction = value
+        #self.environment.stats TODO
+        self.environment.actions["turns"] += 1
     def sense(self, environment):
         self.state.sense(self, environment)
 
@@ -248,6 +256,8 @@ class Bee(HubAgent):
         self.repulsor = None
         self.ignore_repulsor = None
     #TRANSitions
+    def transition(self):
+        self.environment.actions["stateChanges"] += 1
     def danceTransition(self):  #this runs after the agent has changed state
         dance = int(self.q_value*self.parameters["DanceTime"]-(250*self.assessments))
         if dance < 15:
@@ -293,6 +303,7 @@ class Exploring(State):
     def act(self, agent):
         if(agent.isInfluencedByNearestAttractor()):
             agent.orientTowardsNearestAttractor()
+            agent.environment.influenceActions["turns"] +=1
         elif(agent.isRepulsedByNearestRepulsor()):
             agent.avoidNearestRepulsor()
         elif self.inputExplore: #this is for when the user has requested more bees

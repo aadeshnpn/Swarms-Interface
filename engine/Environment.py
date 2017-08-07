@@ -23,7 +23,7 @@ from utils.potentialField import PotentialField
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-m", "--model", choices=["ant", "bee"], help="Run an 'ant' or 'bee' simulation")
+parser.add_argument("-m", "--model", choices=["ant", "bee", "uav"], help="Run an 'ant' or 'bee' simulation")
 parser.add_argument("-n", "--no-viewer", action="store_true", help="Don't output viewer world info")
 parser.add_argument("-s", "--stats", action="store_true", help="Output json stats after simulation")
 parser.add_argument("-c", "--commit-stop", action="store_true", help="Stop simulation after all agents have committed")
@@ -61,7 +61,8 @@ class Environment(ABC):
             self.logfile = open(fname, "w+")
             self.logfile.write("%s\n" % json.dumps({"seed":self.seed}))
 
-
+        self.actions = {"turns": 0, "stateChanges": 0, "parameterChange": 0}
+        self.influenceActions = {"turns": 0, "stateChanges": 0, "parameterChange": 0}
         self.args = args
         self.file_name = file_name
         self.x_limit = 0
@@ -309,7 +310,6 @@ class Environment(ABC):
                         self.suggest_new_direction(agent_id)
 
                     self.hubController.hiveAdjust(self.agents)
-
                     if not args.no_viewer:
                         print(json.dumps({
                             "type": "stateCounts",
