@@ -49,6 +49,8 @@ class UAV(HubAgent):
 
         self.destination = None
 
+        self.node = None
+
         #UAV_Patrolling
         self.transitionTable = {(UAV_Searching(self).__class__, uavInput.targetFound): [None, UAV_Tracking(self)],
             (UAV_Tracking(self).__class__, uavInput.targetLost): [None, UAV_Searching(self)],
@@ -108,7 +110,7 @@ class UAV_FrontierResting(UAV_State):
             if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <= 1:
                 agent.velocity = 0
                 if(agent.destination is not None):
-                    agent.environment.hubController.checkInRoute([agent.destination]) #TODO: []
+                    agent.environment.hubController.checkInRoute([agent.node]) #TODO: []
                 #agent.environment.hubController.checkInPatrolRoute(agent)
                 agent.inHub = True
 
@@ -119,7 +121,8 @@ class UAV_FrontierResting(UAV_State):
         if route is None:
             return None
         else:
-            agent.destination = route
+            agent.destination = route.position
+            agent.node = route
             return uavInput.finishedResting
 
 class UAV_FrontierExploring(UAV_State):
