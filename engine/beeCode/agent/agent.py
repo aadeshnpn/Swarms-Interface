@@ -104,7 +104,7 @@ class HubAgent(Agent):
             return True
         return False
     def isInRangeOfNearestAttractor(self):
-        assert(self.attractor is not None)
+        #assert(self.attractor is not None)
         return distance(self.attractor.point, self.location) < self.attractor.radius
 
     def isInfluencedByNearestAttractor(self):
@@ -112,7 +112,7 @@ class HubAgent(Agent):
 
     #if(agent.attractor is not None and distance(agent.attractor.point, agent.location) < agent.attractor.radius and agent.attracted is True):
     def orientTowardsNearestAttractor(self):
-        assert(self.attractor is not None)
+        #assert(self.attractor is not None)
         angle = safe_angle((np.cos(self.direction),np.sin(self.direction)), (self.attractor.x-self.location[0],self.attractor.y-self.location[1]))
         angle = np.clip(angle, -np.pi/16, np.pi/16)
         error = np.random.normal(0, .3)
@@ -126,14 +126,14 @@ class HubAgent(Agent):
         return False
 
     def isInRangeOfNearestRepulsor(self):
-        assert(self.repulsor is not None)
+        #assert(self.repulsor is not None)
         return distance(self.repulsor.point, self.location) < self.repulsor.radius
 
     def isRepulsedByNearestRepulsor(self):
         return self.isRepulsed() and self.isInRangeOfNearestRepulsor()
 
     def avoidNearestRepulsor(self):
-        assert(self.repulsor is not None)
+        #assert(self.repulsor is not None)
         angle = - safe_angle((np.cos(self.direction),np.sin(self.direction)), (self.repulsor.x-self.location[0],self.repulsor.y-self.location[1]))
         angle = np.clip(angle, -np.pi/16, np.pi/16)
         if(angle >= 0):
@@ -306,9 +306,11 @@ class Exploring(State):
             agent.environment.influenceActions["turns"] +=1
         elif(agent.isRepulsedByNearestRepulsor()):
             agent.avoidNearestRepulsor()
+            agent.environment.influenceActions["turns"] += 1
         elif self.inputExplore: #this is for when the user has requested more bees
-            delta_d = np.random.normal(0, .005) # this will assure that the bee moves less erratically, it can be decreased a little as well
+            delta_d = np.random.normal(0, .009) # this will assure that the bee moves less erratically, it can be decreased a little as well
             agent.direction = (agent.direction + delta_d) % (2 * np.pi)
+            agent.environment.influenceActions["turns"]+=1
         else:
             delta_d = np.random.normal(0, .1)
             agent.direction = (agent.direction + delta_d) % (2 * np.pi)
