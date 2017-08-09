@@ -6,12 +6,13 @@ import numpy as np
 
 from .debug import *
 def distance(a,b):
+    c = [0.0,0.0]
     a[0] = (float)(a[0])
     a[1] = (float)(a[1])
-    b[0] = (float)(b[0])
-    b[1] = (float)(b[1])
-    return np.sqrt((b[0]-a[0])**2 + (b[1]-a[1])**2)
-uavInput = Enum('uavInput', 'targetFound targetLost reachedRallyPoint refueled refuelRequired')
+    c[0] = (float)(b[0])
+    c[1] = (float)(b[1])
+    return np.sqrt((c[0]-a[0])**2 + (c[1]-a[1])**2)
+uavInput = Enum('uavInput', 'targetFound targetLost reachedRallyPoint refueled refuelRequired finishedResting reachedFrontierPoint')
 class UAV(HubAgent):
     def getUiRepresentation(self):
         return {
@@ -46,6 +47,8 @@ class UAV(HubAgent):
 
         self.patrol_rect = None
 
+        self.destination = None
+
         #UAV_Patrolling
         self.transitionTable = {(UAV_Searching(self).__class__, uavInput.targetFound): [None, UAV_Tracking(self)],
             (UAV_Tracking(self).__class__, uavInput.targetLost): [None, UAV_Searching(self)],
@@ -54,7 +57,10 @@ class UAV(HubAgent):
             #(UAV_Refueling(self).__class__, uavInput.refueled): [self.refuelToPatrolTransition, UAV_Patrolling(self)],
             #(UAV_Patrolling(self).__class__, uavInput.refuelRequired): [self.patrolToRefuelTransition, UAV_Refueling(self)]
             (UAV_Refueling(self).__class__, uavInput.refueled): [self.refuelToPatrolTransition, UAV_Patrolling_Rect(self)],
-            (UAV_Patrolling_Rect(self).__class__, uavInput.refuelRequired): [self.patrolToRefuelTransition, UAV_Refueling(self)]
+            (UAV_Patrolling_Rect(self).__class__, uavInput.refuelRequired): [self.patrolToRefuelTransition, UAV_Refueling(self)],
+
+            (UAV_FrontierExploring(self).__class__, uavInput.reachedFrontierPoint): [None, UAV_FrontierResting(self)],
+            (UAV_FrontierResting(self).__class__, uavInput.finishedResting): [None, UAV_FrontierExploring(self)]
 
             #self.patrol_route = self.environment.hubController.checkOutPatrolRoute(self)
         }
@@ -69,6 +75,72 @@ class UAV(HubAgent):
         #self.patrol_route = self.environment.hubController.checkOutPatrolRoute(self)
         #self.patrolPointA = [patrol_route["x0"], patrol_route["y0"]]
         #self.patrolPointB = [patrol_route["x1"], patrol_route["y1"]]
+
+class UAV_State(State):
+    def __init__(self, agent=None):
+        self.name = "UAV_State"
+
+    #override, temporary
+    def sense(self, agent, environment):
+        agent.neighbors.clear()
+        for other_key in environment.agents.keys():
+            other = environment.agents[other_key]
+            if(distance(agent.location, other.location) < 50 and agent != other):
+                agent.neighbors.append(other)
+
+    def act(self, agent):
+        pass
+
+    def update(self, agent):
+        return None
+
+class UAV_FrontierResting(UAV_State):
+    def __init__(self, agent=None):
+        self.name = self.__class__.__name__
+
+    def act(self, agent):
+        if agent.inHub:
+            agent.velocity = 0
+            agent.counter -= 1
+        else:
+            # if not at hub, move towards it
+            agent.move(agent.hub)
+            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <= 1:
+                agent.velocity = 0
+                if(agent.destination is not None):
+                    agent.environment.hubController.checkInRoute([agent.destination]) #TODO: []
+                #agent.environment.hubController.checkInPatrolRoute(agent)
+                agent.inHub = True
+
+    def update(self, agent):
+        if agent.inHub is False:
+            return None
+        route = agent.environment.hubController.checkOutRoute()
+        if route is None:
+            return None
+        else:
+            agent.destination = route
+            return uavInput.finishedResting
+
+class UAV_FrontierExploring(UAV_State):
+    def __init__(self, agent=None):
+        self.name = self.__class__.__name__
+
+    def sense(self, agent, environment):
+        pass # for now
+
+    def act(self, agent):
+        agent.velocity = agent.parameters['Velocity']
+        agent.inHub = False
+        destination = agent.destination
+        position = agent.location
+        #eprint(destination)
+        #eprint(position)
+        agent.direction = np.arctan2(destination[1] - position[1], destination[0] - position[0])
+    def update(self, agent):
+        if(distance(agent.location, agent.destination) < 10):
+            return uavInput.reachedFrontierPoint
+        return None
 
 class UAV_Refueling(State):
     def __init__(self, agent=None):
@@ -94,7 +166,7 @@ class UAV_Refueling(State):
     def update(self, agent):
         if agent.counter < 1 and agent.environment.hubController.isCheckOutNeeded():
             agent.velocity = agent.parameters["Velocity"]
-            return uavInput.refueled
+            return uavInput.refueled #TODO: uavInput.ready instead - it may have been "refueled"/"ready to go" for a while now
 
 class UAV_Searching(State):
     def __init__(self, agent=None):
@@ -198,8 +270,8 @@ from sympy.geometry import *
 class UAV_Patrolling_Rect(State):
     def __init__(self, rect = None, agent = None):
         self.name = self.__class__.__name__
-        self.rect = Polygon(Point2D(100, -400),Point2D(100,100),Point2D(300,100),Point2D(300,-400))
-        self.waypoint = [self.rect.vertices[0][0], self.rect.vertices[0][1]]
+        self.rect = None#Polygon(Point2D(100, -400),Point2D(100,100),Point2D(300,100),Point2D(300,-400))
+        self.waypoint = None#[self.rect.vertices[0][0], self.rect.vertices[0][1]]
         #eprint(self.rect.bounds)
 
 
@@ -212,18 +284,23 @@ class UAV_Patrolling_Rect(State):
         #eprint(agent.neighbors)
 
     def act(self, agent):
+        #if(self.rect is None):
+        #    self.rect = agent.environment.hubController.checkOutPatrolRect(agent)["rect"] #TODO: ugly, needs fix so all that is passed back is the rectangle
+        if(self.waypoint is None):
+            self.waypoint = [agent.patrol_rect.vertices[0][0], agent.patrol_rect.vertices[0][1]]
+
         agent.counter -= 1
         agent.inHub = False
 
         if(distance(agent.location, self.waypoint) < 1):
             new_waypoint = [None,None]
-            if(self.waypoint[0] == self.rect.bounds[0]):
-                new_waypoint[0] = self.rect.bounds[2]
+            if(self.waypoint[0] == agent.patrol_rect.bounds[0]):
+                new_waypoint[0] = agent.patrol_rect.bounds[2]
             else:
-                new_waypoint[0] = self.rect.bounds[0]
+                new_waypoint[0] = agent.patrol_rect.bounds[0]
             agent.direction %= 2*np.pi
-            eprint(self.rect.bounds)
-            if((self.waypoint[1] < self.rect.bounds[1] and np.pi < agent.direction) or (self.waypoint[1] > self.rect.bounds[3] and np.pi > agent.direction)):
+            #eprint(self.rect.bounds)
+            if((self.waypoint[1] < agent.patrol_rect.bounds[1] and np.pi < agent.direction) or (self.waypoint[1] > agent.patrol_rect.bounds[3] and np.pi > agent.direction)):
                 agent.direction *= -1
 
             agent.direction %= 2*np.pi
@@ -241,19 +318,21 @@ class UAV_Patrolling_Rect(State):
                 n.caught()
 
         for neighbor in agent.neighbors: #of course, this could use improvement. A malicious UAV could broadcast - hey. I've been out the longest. Follow me! - and lead the other UAVS astray
+            break
             if(neighbor.state.__class__.__name__ == agent.state.__class__.__name__ and neighbor.id < agent.id):
                 self.waypoint[0] = neighbor.state.waypoint[0]
                 self.waypoint[1] = neighbor.state.waypoint[1]
                 self.waypoint[1] += 50
                 break
 
-        eprint(self.waypoint)
+        #eprint(self.waypoint)
 
         #else:
         #    agent.velocity = 0.0
     def update(self, agent):
+        if agent.counter < 1:
+            return uavInput.refuelRequired
         return None
-
 
 class UAV_Patrolling(State):
     def __init__(self, agent=None):

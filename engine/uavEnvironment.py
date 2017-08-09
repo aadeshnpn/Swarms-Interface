@@ -39,15 +39,15 @@ class BeeEnvironment(Environment):
                                }
 
     def initialize_agents(self):
-        for z in range(-2,0):
-            self.create_t_uav(z)
+        #for z in range(-2,0):
+        #    self.create_t_uav(z)
         for x in range(0, 5):
             self.create_uav(x)
         for y in range(5, 31):
             self.create_evader(y)
-        self.agents[str(-1)].counter = -100000
-        self.agents[str(-2)].counter = 100000
-        self.agents[str(-2)].velocity *= 1
+        #self.agents[str(-1)].counter = -100000
+        #self.agents[str(-2)].counter = 100000
+        #self.agents[str(-2)].velocity *= 1
 
         #for y in range(5, 10):
         #    self.create_explorer(y)
@@ -63,7 +63,8 @@ class BeeEnvironment(Environment):
     #could use one more layer of abstraction, create_agent which accepts reference to newly created object
     def create_uav(self, agentId):
         agent_id = str(agentId)
-        agent = UAV(self, agent_id, UAV_Refueling(None), self.hub, self.parameters,  count = int(self.parameters["ExploreTime"]))
+        agent = UAV(self, agent_id, UAV_FrontierResting(None), self.hub, self.parameters,  count = int(self.parameters["ExploreTime"]))
+        agent.location = [10.0,30.0]
         self.agents[agent_id] = agent
 
     #agent_id could use improvement

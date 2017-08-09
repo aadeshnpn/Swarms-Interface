@@ -89,42 +89,6 @@ class BeeHubController(HubController):
 
         environment.inputEventManager.subscribe('priorityUpdate', self.handlePriorityUpdate)
 
-    def checkoutPatrolRect(self, agent):
-        return self.patrol_rects[0]
-
-    def isCheckOutNeeded(self):
-        for p in self.patrol_routes:
-            if(len(p["ids"]) == 0):
-                return True
-        return False
-
-    def checkOutPatrolRoute(self, agent):
-        eprint(str(agent.id) + "checking out")
-        min_sum = 100000000
-        min_ind = 0
-        for i in range(0, len(self.patrol_routes)):
-            s = 0
-            for uav_id in self.patrol_routes[i]["ids"]:
-                if(agent.environment.agents[uav_id].state.__class__.__name__ == "UAV_Patrolling"):
-                    s += agent.environment.agents[uav_id].counter
-            if(s < min_sum):
-                min_sum = s
-                min_ind = i
-            #if(len(self.patrol_routes[i]["ids"]) < len(self.patrol_routes[min_ind]["ids"])):
-            #    min_ind = i
-        self.patrol_routes[min_ind]["ids"].append(agent.id)
-        eprint(self.patrol_routes[min_ind])
-        return self.patrol_routes[min_ind]
-        #return self.patrol_routes[np.random.randint(len(self.patrol_routes))]
-    def checkInPatrolRoute(self, agent):
-        eprint(str(agent.id) + "checking in")
-        for p in self.patrol_routes:
-            if agent.id in p["ids"]:
-                p["ids"].remove(agent.id)
-                break
-        eprint(self.patrol_routes)
-        #assert(False)
-
     def agentLeave(self,angle,id):
         self.directions[angle] += 1
         agent = self.agentList[id]

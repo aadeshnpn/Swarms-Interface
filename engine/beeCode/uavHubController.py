@@ -10,9 +10,61 @@ from sympy.geometry import *
 
 from .hubController import HubController
 
+import random
+
 class UavHubController(HubController):
+    def init_probMap(self):
+        xmin = -600
+        xmax = 600
+        ymin = -600
+        ymax = 600
+        self.boundingBox = Polygon(Point2D(xmin,ymin),Point2D(xmin,ymax),Point2D(xmax,ymax),Point2D(xmax,ymin))
+        self.probMap = {}
+
+        self.sensing_radius = 60
+        x = xmin
+        y = ymin
+        while(x <= xmax):
+            y = ymin
+            while(y <= ymax):
+                self.probMap[(x,y)] = 1
+                y += self.sensing_radius
+            x += self.sensing_radius
+
+        self.frontier = set()
+        self.frontier.add((120,120))
+
+    def checkOutRoute(self):
+        eprint("checkOutRoute")
+        if(len(self.frontier) == 0):
+            eprint("Frontier empty")
+            return None
+        #eprint(self.frontier)
+        route = random.sample(self.frontier, 1)[0]
+        self.frontier.remove(route)
+        eprint(route)
+        return route
+
+    def checkInRoute(self, subsetOfFrontier):
+        eprint("checkInRoute")
+        eprint("subsetOfFrontier : " + str(subsetOfFrontier))
+        for r in subsetOfFrontier:
+            eprint("\tr = " + str(r))
+            self.probMap[r] = 0
+            if(r in self.frontier):
+                self.frontier.remove(r)
+            if(self.probMap[(r[0] + self.sensing_radius, r[1])] == 1):
+                self.frontier.add((r[0] + self.sensing_radius, r[1]))
+            if(self.probMap[(r[0], r[1]+ self.sensing_radius)] == 1):
+                self.frontier.add((r[0], r[1]+ self.sensing_radius))
+            if(self.probMap[(r[0] - self.sensing_radius, r[1])] == 1):
+                self.frontier.add((r[0] - self.sensing_radius, r[1]))
+            if(self.probMap[(r[0], r[1] - self.sensing_radius)] == 1):
+                self.frontier.add((r[0], r[1] - self.sensing_radius))
+        eprint("new frontier = " + str(self.frontier))
     def __init__(self, radius, agents, environment, exploreTime):
         self.reset(radius, agents, environment, exploreTime)
+        self.init_probMap()
         self.siteDistancePriority = 0
         self.siteSizePriority = 0
 
@@ -38,15 +90,19 @@ class UavHubController(HubController):
             "ids" : []
         }]
 
-        self.patrol_rects = [{
-            "rect" : Polygon(Point2D(-400,100),Point2D(100,100),Point2D(300,100),Point2D(300,-400)), "ids" : []
-        }]
+        self.patrol_rects = [{"rect" : Polygon(Point2D(100, -400),Point2D(100,100),Point2D(300,100),Point2D(300,-400)), "ids" : []},
+        {"rect" : Polygon(Point2D(-350,50),Point2D(-350,200),Point2D(-200,200),Point2D(-200,50)), "ids" : []},
+        {"rect" : Polygon(Point2D(-200,50),Point2D(-200,200),Point2D(0,200),Point2D(0,50)), "ids" : []} ]
         self.no_viewer = environment.args.no_viewer
 
         environment.inputEventManager.subscribe('priorityUpdate', self.handlePriorityUpdate)
 
     def checkOutPatrolRect(self, agent):
-        return min(self.patrol_rects, key = lambda patrol : sum(self.environment.agents[agent_id].counter for agent_id in patrol["ids"]))
+        eprint("checkOutPatrolRect, id = " + str(agent.id))
+        route = min(self.patrol_rects, key = lambda patrol : sum(self.environment.agents[agent_id].counter for agent_id in patrol["ids"]))
+        eprint(route)
+        route["ids"].append(agent.id)
+        return route["rect"]
         #return self.patrol_rects[0]["rect"]
 
     def checkInPatrolRect(self, agent):
