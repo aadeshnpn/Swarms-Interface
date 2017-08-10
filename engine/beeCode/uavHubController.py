@@ -9,10 +9,11 @@ import numpy as np
 from sympy.geometry import *
 
 from .hubController import HubController
-
+from .contaminationMap import ContaminationMap
 import random
 
 class UavHubController(HubController):
+    '''
     def init_probMap(self):
         xmin = -600
         xmax = 600
@@ -33,19 +34,24 @@ class UavHubController(HubController):
 
         self.frontier = set()
         self.frontier.add((120,120))
-
+    '''
     def checkOutRoute(self):
+        return self.contaminationMap.getRandomNodeFromFrontier()
+        '''
         eprint("checkOutRoute")
         if(len(self.frontier) == 0):
             eprint("Frontier empty")
             return None
         #eprint(self.frontier)
-        route = random.sample(self.frontier, 1)[0]
-        self.frontier.remove(route)
+
         eprint(route)
         return route
+        '''
 
     def checkInRoute(self, subsetOfFrontier):
+        self.contaminationMap.clearNode(subsetOfFrontier[0]) #TODO: remove; is temp.
+
+        '''
         eprint("checkInRoute")
         eprint("subsetOfFrontier : " + str(subsetOfFrontier))
         for r in subsetOfFrontier:
@@ -62,9 +68,11 @@ class UavHubController(HubController):
             if(self.probMap[(r[0], r[1] - self.sensing_radius)] == 1):
                 self.frontier.add((r[0], r[1] - self.sensing_radius))
         eprint("new frontier = " + str(self.frontier))
+        '''
     def __init__(self, radius, agents, environment, exploreTime):
         self.reset(radius, agents, environment, exploreTime)
-        self.init_probMap()
+        self.contaminationMap = ContaminationMap((10,30), 500, 50)
+        #self.init_probMap()
         self.siteDistancePriority = 0
         self.siteSizePriority = 0
 
