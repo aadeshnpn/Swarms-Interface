@@ -9,10 +9,20 @@ import numpy as np
 from sympy.geometry import *
 
 from .hubController import HubController
-
+from .contaminationMap import ContaminationMap
 import random
 
+#TODO: this is so gross - does numpy have something we can use?
+def distance(a,b):
+    c = [0.0,0.0]
+    a[0] = (float)(a[0])
+    a[1] = (float)(a[1])
+    c[0] = (float)(b[0])
+    c[1] = (float)(b[1])
+    return np.sqrt((c[0]-a[0])**2 + (c[1]-a[1])**2)
+
 class UavHubController(HubController):
+    '''
     def init_probMap(self):
         xmin = -600
         xmax = 600
@@ -33,19 +43,54 @@ class UavHubController(HubController):
 
         self.frontier = set()
         self.frontier.add((120,120))
+    '''
+    def checkOutRoute2(self):
+        start = self.contaminationMap.getRandomNodeFromFrontier()
+        if start is None:
+            return None
+        flight_plan = [start]
+        current = start
+        for i in range(0,5):
+            if((i+1) != len(flight_plan)):
+                break
+            candidates = []
+            for n in current.neighbors:
+                if(n.cleared is False):
+                    candidates.append(n)
+                    #flight_plan.append(n)
+                    #current = n
+                    #break
+            if(len(candidates) == 0):
+                break
+            closest = candidates[0]
+            for c in candidates:
+                if(distance([10,30],c.position) < distance([10,30] , closest.position)):
+                    closest = c
+            flight_plan.append(closest)
+        return flight_plan
+
+    def checkInRoute2(self, flight_plan):
+        for node in flight_plan:
+            self.contaminationMap.clearNode(node)
+
 
     def checkOutRoute(self):
+        return self.contaminationMap.getRandomNodeFromFrontier()
+        '''
         eprint("checkOutRoute")
         if(len(self.frontier) == 0):
             eprint("Frontier empty")
             return None
         #eprint(self.frontier)
-        route = random.sample(self.frontier, 1)[0]
-        self.frontier.remove(route)
+
         eprint(route)
         return route
+        '''
 
     def checkInRoute(self, subsetOfFrontier):
+        self.contaminationMap.clearNode(subsetOfFrontier[0]) #TODO: remove; is temp.
+
+        '''
         eprint("checkInRoute")
         eprint("subsetOfFrontier : " + str(subsetOfFrontier))
         for r in subsetOfFrontier:
@@ -62,9 +107,11 @@ class UavHubController(HubController):
             if(self.probMap[(r[0], r[1] - self.sensing_radius)] == 1):
                 self.frontier.add((r[0], r[1] - self.sensing_radius))
         eprint("new frontier = " + str(self.frontier))
+        '''
     def __init__(self, radius, agents, environment, exploreTime):
         self.reset(radius, agents, environment, exploreTime)
-        self.init_probMap()
+        self.contaminationMap = ContaminationMap((10,30), 500, 50)
+        #self.init_probMap()
         self.siteDistancePriority = 0
         self.siteSizePriority = 0
 
