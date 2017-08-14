@@ -51,6 +51,10 @@ class UAV(HubAgent):
 
         self.node = None
 
+        self.route = None
+
+        self.index = -1
+
         #UAV_Patrolling
         self.transitionTable = {(UAV_Searching(self).__class__, uavInput.targetFound): [None, UAV_Tracking(self)],
             (UAV_Tracking(self).__class__, uavInput.targetLost): [None, UAV_Searching(self)],
@@ -117,12 +121,15 @@ class UAV_FrontierResting(UAV_State):
     def update(self, agent):
         if agent.inHub is False:
             return None
-        route = agent.environment.hubController.checkOutRoute()
+        #route = agent.environment.hubController.checkOutRoute()
+        route = agent.environment.hubController.checkOutRoute2()
         if route is None:
             return None
         else:
-            agent.destination = route.position
-            agent.node = route
+            agent.index = 0
+            agent.route = route
+            agent.destination = route[0].position
+            agent.node = route[0]
             return uavInput.finishedResting
 
 class UAV_FrontierExploring(UAV_State):
@@ -140,8 +147,11 @@ class UAV_FrontierExploring(UAV_State):
         #eprint(destination)
         #eprint(position)
         agent.direction = np.arctan2(destination[1] - position[1], destination[0] - position[0])
+        if(distance(agent.location, agent.destination) < 10 and agent.index < len(agent.route) - 1):
+            agent.index += 1
+            agent.destination = agent.route[agent.index].position
     def update(self, agent):
-        if(distance(agent.location, agent.destination) < 10):
+        if(distance(agent.location, agent.route[len(agent.route)-1].position) < 10):
             return uavInput.reachedFrontierPoint
         return None
 
