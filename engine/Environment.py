@@ -21,6 +21,7 @@ import utils.geomUtil as geomUtil
 from utils.potentialField import PotentialField
 
 import argparse
+from Measurements import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--model", choices=["ant", "bee", "uav"], help="Run an 'ant' or 'bee' simulation")
@@ -38,7 +39,7 @@ args = parser.parse_args()
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-
+measurer = Measurements(5) # Agents are connected if they are in the same state and distance 5 away from each other
 
 class Environment(ABC):
     def __init__(self, file_name):
@@ -320,9 +321,14 @@ class Environment(ABC):
                     #    "commit"] + len(self.dead_agents) >= self.number_of_agents * .95):
                     if(self.isFinished()):
                         eprint("Simulation terminated")
+                        measurer.compute_measurements(self.agents.values())
+                        #TODO Save simulation data to database
                         break
 
                     self.flowController.updateFlowControllers()
+
+                    # TODO: Turn on measurment computation when ready
+                    #measurer.compute_measurements(self.agents.values())
 
 
                 for event in self.inputEventManager.eventQueue:
