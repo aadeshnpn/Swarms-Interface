@@ -5,7 +5,11 @@ class Node:
     def __init__(self, x, y):
         self.position = (x,y)
         self.neighbors = []
-        self.cleared = False
+        self.cleared = True #False
+        self.idleTime = 0
+
+    def incrementIdleTime(self):
+        idleTime += 1
 
 class ContaminationMap:
     def __init__(self, center, halved_radius, manhattan_distance_between_nodes):
@@ -55,9 +59,18 @@ class ContaminationMap:
         node = random.sample(self.frontier, 1)[0]
         self.frontier.remove(node)
         return node
+'''
+    def incrementMapIdleTimes(self):
+        for i in range(0, len(self.grid)):
+            for j in range(0, len(self.grid[i]):
+                self.grid[i][j].incrementIdleTime()
+
+    def markNodeVisited(self, node):
+        node.idleTime = 0
 
     def clearNode(self, node):
         node.cleared = True
         for neighbor in node.neighbors:
             if(neighbor.cleared is False):
                 self.frontier.add(neighbor)
+'''
