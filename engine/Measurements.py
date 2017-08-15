@@ -18,6 +18,7 @@ class Measurements:
         """
         self.close_dist = proximity_constant
 
+        self.swarm_sizes = []
         self.connections_measure = [] # = (num connections in graph)/(total possible connections in graph)
         self.avg_clustering_measure = [] # uses networkx.average_clustering()
 
@@ -42,5 +43,6 @@ class Measurements:
                     G[i, j] = 1
                     G[j, i] = 1
 
+        self.swarm_sizes.append(num_agents)
         self.connections_measure.append(G.sum()/num_agents**2)
         self.avg_clustering_measure.append(nx.average_clustering(nx.from_scipy_sparse_matrix(G)))
