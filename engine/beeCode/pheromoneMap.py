@@ -6,6 +6,13 @@ class Node:
         self.position = (x,y)
         self.neighbors = []
 
+    def __str__(self):
+        s = "Node: " + str(self.position) + " , " + "neighbors: "
+        for n in self.neighbors:
+            s += str(n.position) + ", "
+        s = s[0 :len(s) - 1]
+        return s
+
 class PheromoneNode(Node):
     def __init__(self, x, y):
         super().__init__(x,y)
@@ -69,7 +76,7 @@ class PheromoneMap(GridMap):
                 mostRecentVisit = max(this_lastVisit,other_lastVisit)
                 self.grid[i][j].lastVisited= mostRecentVisit
                 other_map.grid[i][j].lastVisited = mostRecentVisit
-                
+
 '''
     def incrementMapIdleTimes(self):
         for i in range(0, len(self.grid):

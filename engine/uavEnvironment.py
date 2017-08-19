@@ -2,9 +2,12 @@ from Environment import *
 from beeCode.agent.uav import *
 from beeCode.agent.evader import *
 from beeCode.uavHubController import UavHubController
+import logging
 class BeeEnvironment(Environment):
     def __init__(self, file_name):
         eprint("file_name = " + str(file_name))
+        logging.basicConfig(filename='uavSim.log',level=logging.DEBUG)
+        eprint("LOGGING")
         self.info_stations = []
         self.number_of_agents = 100
         self.sites = []
@@ -148,6 +151,5 @@ if __name__ == "__main__":
     file = "world.json"
     world = BeeEnvironment(os.path.join(ROOT_DIR, file))
     world.run()
-
     if args.stats:
         world.printStats()
