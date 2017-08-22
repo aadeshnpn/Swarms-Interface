@@ -3,8 +3,10 @@ from .stateMachine.StateMachine import StateMachine
 from .stateMachine.state import State
 from enum import Enum
 import numpy as np
-
+from ..pheromoneMap import PheromoneMap
+import time
 from .debug import *
+import logging
 def distance(a,b):
     c = [0.0,0.0]
     a[0] = (float)(a[0])
@@ -55,9 +57,13 @@ class UAV(HubAgent):
 
         self.index = -1
 
+        self.target = None
+
+        self.pheromoneMap = PheromoneMap((10,30), 500, 50)
         #UAV_Patrolling
         self.transitionTable = {(UAV_Searching(self).__class__, uavInput.targetFound): [None, UAV_Tracking(self)],
-            (UAV_Tracking(self).__class__, uavInput.targetLost): [None, UAV_Searching(self)],
+            (UAV_Tracking(self).__class__, uavInput.targetLost): [None, UAV_PheromonePatrol(self)],
+            (UAV_Tracking(self).__class__, uavInput.refuelRequired): [self.patrolToRefuelTransition, UAV_FrontierResting(self)],
             (UAV_MovingToRally(self).__class__, uavInput.targetFound): [None, UAV_Tracking(self)],
             (UAV_MovingToRally(self).__class__, uavInput.reachedRallyPoint): [None, UAV_Patrolling(self)],
             #(UAV_Refueling(self).__class__, uavInput.refueled): [self.refuelToPatrolTransition, UAV_Patrolling(self)],
@@ -65,19 +71,30 @@ class UAV(HubAgent):
             (UAV_Refueling(self).__class__, uavInput.refueled): [self.refuelToPatrolTransition, UAV_Patrolling_Rect(self)],
             (UAV_Patrolling_Rect(self).__class__, uavInput.refuelRequired): [self.patrolToRefuelTransition, UAV_Refueling(self)],
 
-            (UAV_FrontierExploring(self).__class__, uavInput.reachedFrontierPoint): [None, UAV_FrontierResting(self)],
-            (UAV_FrontierResting(self).__class__, uavInput.finishedResting): [None, UAV_FrontierExploring(self)]
+            #(UAV_FrontierExploring(self).__class__, uavInput.reachedFrontierPoint): [None, UAV_FrontierResting(self)],
+            #(UAV_FrontierResting(self).__class__, uavInput.finishedResting): [None, UAV_FrontierExploring(self)]
+
+            (UAV_PheromonePatrol(self).__class__, uavInput.refuelRequired): [self.patrolToRefuelTransition, UAV_FrontierResting(self)],
+            (UAV_PheromonePatrol(self).__class__, uavInput.targetFound): [None, UAV_Tracking(self)],
+            (UAV_FrontierResting(self).__class__, uavInput.finishedResting): [self.refuelToPatrolTransition, UAV_PheromonePatrol(self)]
+
 
             #self.patrol_route = self.environment.hubController.checkOutPatrolRoute(self)
         }
 
     def patrolToRefuelTransition(self):
         self.counter = 500 * int(self.id) + 100
-
+        self.environment.hubController.checkInPheromoneMap(self)
+        logging.debug("Agent " + str(self.id) + " to resting")
     def refuelToPatrolTransition(self):
         self.counter = 1000* int(self.id) + 1000
+        self.inHub = False
+        self.velocity = self.parameters['Velocity']
+        self.environment.hubController.checkOutPheromoneMap(self)
+        logging.debug("Agent " + str(self.id) + " to patrolling")
+        #TODO: sampling should be used in order to pick the next pheromone to go to after checkout - or just use local pheromones
         #eprint('austin')
-        self.patrol_rect = self.environment.hubController.checkOutPatrolRect(self)
+        #self.patrol_rect = self.environment.hubController.checkOutPatrolRect(self)
         #self.patrol_route = self.environment.hubController.checkOutPatrolRoute(self)
         #self.patrolPointA = [patrol_route["x0"], patrol_route["y0"]]
         #self.patrolPointB = [patrol_route["x1"], patrol_route["y1"]]
@@ -94,12 +111,52 @@ class UAV_State(State):
             if(distance(agent.location, other.location) < 50 and agent != other):
                 agent.neighbors.append(other)
 
+    #TODO: default action should be to move towards some destination
+    #      maybe return True if agent has reached destination, false if not
     def act(self, agent):
         pass
 
     def update(self, agent):
         return None
 
+class UAV_PheromonePatrol(UAV_State):
+    def __init__(self, agent=None):
+        self.name = self.__class__.__name__
+
+    def act(self, agent):
+        agent.counter -= 1
+        agent.inHub = False
+        if(agent.node is None):
+            #TODO: better initialization needed
+            agent.node = agent.pheromoneMap.grid[10][10]
+            agent.destination = agent.node.position
+            eprint(agent.id)
+            logging.debug(str(agent.id) + " - initialization: " + str(agent.destination))
+
+        agent.destination = np.array(agent.destination) #TODO: temp
+        agent.location = np.array(agent.location) #TODO: temp
+
+        if(np.linalg.norm(agent.destination - agent.location) < 10):
+            agent.node.markAsVisited()
+            current_time = time.time()
+            time_diffs = []
+            for n in agent.node.neighbors:
+                time_diffs.append(current_time - n.lastVisited)
+            probabilities = np.array(time_diffs) / np.sum(time_diffs)
+            agent.node = np.random.choice(agent.node.neighbors, p=probabilities)
+            logging.debug(str(agent.id) + ": " + str(agent.destination))
+            agent.destination = agent.node.position
+
+        agent.move(agent.destination)
+
+    def update(self, agent):
+        for n in agent.neighbors:
+            if(n.__class__.__name__ == "Evader"):
+                agent.target = n
+                return uavInput.targetFound
+        if(agent.counter < 1):
+            return uavInput.refuelRequired
+        return None
 class UAV_FrontierResting(UAV_State):
     def __init__(self, agent=None):
         self.name = self.__class__.__name__
@@ -113,8 +170,8 @@ class UAV_FrontierResting(UAV_State):
             agent.move(agent.hub)
             if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <= 1:
                 agent.velocity = 0
-                if(agent.destination is not None):
-                    agent.environment.hubController.checkInRoute([agent.node]) #TODO: []
+                #if(agent.destination is not None):
+                    #agent.environment.hubController.checkInRoute([agent.node]) #TODO: []
                 #agent.environment.hubController.checkInPatrolRoute(agent)
                 agent.inHub = True
 
@@ -122,14 +179,16 @@ class UAV_FrontierResting(UAV_State):
         if agent.inHub is False:
             return None
         #route = agent.environment.hubController.checkOutRoute()
-        route = agent.environment.hubController.checkOutRoute2()
-        if route is None:
-            return None
+        #route = agent.environment.hubController.checkOutRoute2()
+        #if route is None:
+        #    return None
+        if(agent.counter > 0):
+            pass
         else:
-            agent.index = 0
-            agent.route = route
-            agent.destination = route[0].position
-            agent.node = route[0]
+            #agent.index = 0
+            #agent.route = route
+            #agent.destination = route[0].position
+            #agent.node = route[0]
             return uavInput.finishedResting
 
 class UAV_FrontierExploring(UAV_State):
@@ -235,17 +294,22 @@ class UAV_Tracking(State):
             pass
             #eprint(str(neighbor.location[0]) + " " + str(neighbor.location[1]))
     def act(self, agent):
-        if(len(agent.neighbors) == 0):
-            return
-        other_loc = agent.neighbors[0].location
-        this_loc = agent.location
-        agent.direction = np.arctan2(other_loc[1] - this_loc[1], other_loc[0] - this_loc[0]) + np.pi/4
+        #if(len(agent.neighbors) == 0):
+        #    return
+        #other_loc = agent.neighbors[0].location
+        #this_loc = agent.location
+        #agent.direction = np.arctan2(other_loc[1] - this_loc[1], other_loc[0] - this_loc[0]) #+ np.pi/4
+        agent.counter -= 1 #TODO: in superclass?
+        agent.move(agent.target.location)
 
     def update(self, agent):
+        if(agent.counter < 1):
+            return uavInput.refuelRequired
         if(len(agent.neighbors) > 0):
             for neighbor in agent.neighbors:
-                if(neighbor.__class__.__name__ != "UAV"):
+                if(neighbor.__class__.__name__ == "Evader"):
                     return None
+        agent.target = None
         return uavInput.targetLost
 
 class UAV_MovingToRally(State):

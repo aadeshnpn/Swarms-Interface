@@ -2,9 +2,12 @@ from Environment import *
 from beeCode.agent.uav import *
 from beeCode.agent.evader import *
 from beeCode.uavHubController import UavHubController
+import logging
 class BeeEnvironment(Environment):
     def __init__(self, file_name):
         eprint("file_name = " + str(file_name))
+        logging.basicConfig(filename='uavSim.log',level=logging.DEBUG)
+        eprint("LOGGING")
         self.info_stations = []
         self.number_of_agents = 100
         self.sites = []
@@ -63,7 +66,7 @@ class BeeEnvironment(Environment):
     #could use one more layer of abstraction, create_agent which accepts reference to newly created object
     def create_uav(self, agentId):
         agent_id = str(agentId)
-        agent = UAV(self, agent_id, UAV_FrontierResting(None), self.hub, self.parameters,  count = int(self.parameters["ExploreTime"]))
+        agent = UAV(self, agent_id,  UAV_PheromonePatrol(None), self.hub, self.parameters,  count = int(self.parameters["ExploreTime"]))
         agent.location = [10.0,30.0]
         self.agents[agent_id] = agent
 
@@ -148,6 +151,5 @@ if __name__ == "__main__":
     file = "world.json"
     world = BeeEnvironment(os.path.join(ROOT_DIR, file))
     world.run()
-
     if args.stats:
         world.printStats()

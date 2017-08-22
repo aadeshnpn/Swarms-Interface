@@ -10,6 +10,7 @@ from sympy.geometry import *
 
 from .hubController import HubController
 from .contaminationMap import ContaminationMap
+from .pheromoneMap import PheromoneMap
 import random
 
 #TODO: this is so gross - does numpy have something we can use?
@@ -44,6 +45,16 @@ class UavHubController(HubController):
         self.frontier = set()
         self.frontier.add((120,120))
     '''
+    def checkOutPheromoneMap(self, agent):
+        #pass #return deep copy of pheromone map to agent
+        #return copy.deepcopy(self.pheromoneMap)
+        self.pheromoneMap.merge(agent.pheromoneMap)
+    def checkInPheromoneMap(self, agent):
+        self.pheromoneMap.merge(agent.pheromoneMap)
+        #pass #merge pheromone map... how? We expect these agents to be
+        #unreliable or some even to be malicious. How ought this be balanced out
+        #?
+
     def checkOutRoute2(self):
         start = self.contaminationMap.getRandomNodeFromFrontier()
         if start is None:
@@ -110,7 +121,8 @@ class UavHubController(HubController):
         '''
     def __init__(self, radius, agents, environment, exploreTime):
         self.reset(radius, agents, environment, exploreTime)
-        self.contaminationMap = ContaminationMap((10,30), 500, 50)
+        #self.contaminationMap = ContaminationMap((10,30), 500, 50)
+        self.pheromoneMap = PheromoneMap((10,30), 500, 50)
         #self.init_probMap()
         self.siteDistancePriority = 0
         self.siteSizePriority = 0
