@@ -83,6 +83,7 @@ class Environment(ABC):
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
 
         self.stats["parameters"]["agent"] = self.parameters
+        self.stats["type"] = "stats"
         self.restart_simulation = False
         self.initialize_agents()
         self.inputEventManager = InputEventManager()
@@ -285,11 +286,12 @@ class Environment(ABC):
                 if args.tick_limit != None and self.stats["ticks"] >= args.tick_limit:
                     self.stats["didNotFinish"] = True
                     break
-
                 self.stats["ticks"] = self.stats["ticks"] + 1
 
                 if args.stats and self.stats["ticks"] % 100 == 0:
-                    print(json.dumps(self.stats))
+                    pass
+                    #print(json.dumps(self.stats))
+                    #TODO  save to stats.frameData[]
 
                 if not self.isPaused:
                     if not args.no_viewer:

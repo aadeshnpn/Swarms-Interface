@@ -151,18 +151,23 @@ class RadialControl
          this.handles[i].setNext(this.handles[(i + 1) % this.handles.length]);
       }
 
-      if (this.interactive)
+      /*if (this.interactive)
       {
-        cursors.default.addEventListener('mousemove', this.startHandleHover.bind(this));
-        cursors.radialDrag.addEventListener('mousemove', this.onMouseMove.bind(this));
-        cursors.radialDrag.addEventListener('mousedown', this.onMouseDown.bind(this));
-        cursors.radialDrag.addEventListener('mouseup', this.onMouseUp.bind(this));
-      }
+
+      }*/
 
       ui.register("updateRadial", this.update.bind(this));
       ui.register("restart", this.reset.bind(this));
+      ui.register("hubControllerToggle", this.toggle.bind(this));
    }
-
+   toggle(data){
+     if (data && this.interactive){
+       cursors.default.addEventListener('mousemove', this.startHandleHover.bind(this));
+       cursors.radialDrag.addEventListener('mousemove', this.onMouseMove.bind(this));
+       cursors.radialDrag.addEventListener('mousedown', this.onMouseDown.bind(this));
+       cursors.radialDrag.addEventListener('mouseup', this.onMouseUp.bind(this));
+     }
+   }
    update(data)
    {
       // data is an array[72] of direction information for every five degrees

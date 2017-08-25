@@ -7,7 +7,7 @@ let dataSchema = Schema
   name: String,
   date: Date,
   totalTicks: Number,
-  influence: [Schema.Types.Mixed],
+  influence: [Number],
   redundancy: [Schema.types.Mixed]    
 });
 

@@ -33,8 +33,12 @@
               <option>random</option>
             </select>
           </label>
-          <label>Limit users? <input type="checkbox" id="limitUsers" name="limitUsers" value="true"></label>
-          <label>User Limit <input type="number" name="maxUsers" min="1" value="10" disabled></label>
+          <!--<label>Limit users? <input type="checkbox" id="limitUsers" name="limitUsers" value="true"></label>-->
+          <!--<label>User Limit <input type="number" name="maxUsers" min="1" value="10" disabled></label>-->
+          <label>hubController? <input type="checkbox"  name="hubController" value="true"></label>
+          <label>Bait? <input type="checkbox" name="bait" value="true"></label>
+          <label>Bomb? <input type="checkbox"  name="bomb" value="true"></label>
+          <label>Debug mode? <input type="checkbox"  name="debug" value="true"></label>
           <label>Number of agents <input type="number" name="agentNum" min="1" value="100"></label>
           <button id="createNewSim" type="submit">Create</button>
         </form>
@@ -79,6 +83,7 @@
           var data = {};
 
           var form = $("form").serializeArray();
+          console.log(form);
           for (var i = 0; i < form.length; i++)
           {
             data[form[i].name] = form[i].value;
@@ -110,7 +115,7 @@
           for (let key of keysSorted)
           {
             let [sim, info] = [key, json[key]];
-            console.log(info);
+            //console.log(info);
             $('#simList tbody').append(`
               <tr>
                 <td>${sim}</td>

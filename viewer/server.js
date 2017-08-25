@@ -71,6 +71,7 @@ require('sticky-cluster')(function (callback)
     {
       this.simId = simId;
       this.options = options;
+      console.log(this.options);
       this.jsonStreamParser = JSONStream.parse();
       this.outputChannel = `sim:${simId}:output`;
       this.inputChannel = `sim:${simId}:input`;
@@ -82,8 +83,9 @@ require('sticky-cluster')(function (callback)
 
       redisClient.setAsync(`sim:${simId}:connectedCount`, 0);
 
-      this.inputListener.subscribe(this.startChannel);
+      this.inputListener.subscribe(this.startChannel); //subscribe to channel
       this.inputListener.on("message", this.input.bind(this));
+      //bind any message from the channel to input.
 
       var info = {options: this.options, channels: {input: this.inputChannel, output: this.outputChannel, start: this.startChannel, kill: this.killChannel}};
 
@@ -152,7 +154,7 @@ require('sticky-cluster')(function (callback)
       // stderr going to our stderr (the terminal)
       const engine = spawn(python, args,
       {
-        stdio: ['pipe', 'pipe', process.stderr]
+        stdio: ['pipe', 'pipe', process.stderr] //first is stdin, then stdout, then std err
       });
 
       // keep track of all our children for cleanup in case of emergency
@@ -202,7 +204,13 @@ require('sticky-cluster')(function (callback)
       // i know we are serializing data we just unserialized, but we
       // need to do it like that to make sure we only get one complete JSON
       // obj at a time
+
+      if(data["type"] === "stats") {
+        //TODO save to database on final stats, data.create pass in stats,
+        //.save
+      }
       const str = JSON.stringify(data);
+
       this.outputBroadcaster.publish(this.outputChannel, str);
     }
 
@@ -374,6 +382,7 @@ require('sticky-cluster')(function (callback)
         {
           // We actually don't get the sim set up here, we just need to
           // send the viewer html back with this cookie for finding the right sim
+
           res.cookie("simId", simId);
 
           res.sendFile('client.html',
@@ -469,6 +478,29 @@ require('sticky-cluster')(function (callback)
     socket.on('simId', function(id)
     {
       var client = new Client(socket, id);
+      redisClient.getAsync(`sim:${id}:info`)
+        .then(infoStr =>
+        {
+          const info = JSON.parse(infoStr);
+
+          let channels = info.channels;
+          let options = info.options;
+          if(options.bait){
+            socket.emit('baitToggle', options.bait);
+          }
+          if(options.bomb){
+            socket.emit('bombToggle', options.bomb);
+          }
+          if(!options.hubController){
+            console.log('step1');
+            socket.emit('hubControllerToggle', {"type": "hubControllerToggle", "data": false});
+          } else{
+            socket.emit('hubControllerToggle', {"type": "hubControllerToggle", "data": true});
+          }
+
+
+          //info.options.
+        });
     });
   });
 
@@ -505,9 +537,11 @@ require('sticky-cluster')(function (callback)
 
   }*/
 
+//this is called when the server exits
   process.on('exit', exitHandler.bind(null, {flush: false, clean: true}));
   // var children = [];
 
+  //callback is from sticky-cluster. it needs this http server to go.
   callback(http);
 },
 {
@@ -549,6 +583,7 @@ function exitHandler(opts, err)
 const redisClient = redis.createClient();
 var children = [];
 
+//other ways to kill it.
 process.on('SIGTERM', exitHandler.bind(null, {exit: true, flush: true}));
 process.on('SIGINT', exitHandler.bind(null, {exit: true, flush: true}));
 process.on('exit', exitHandler);
