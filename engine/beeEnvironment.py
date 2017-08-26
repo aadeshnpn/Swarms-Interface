@@ -1,6 +1,8 @@
 from Environment import *
 from beeCode.beeHubController import BeeHubController
+from Measurements import *
 
+measurer = Measurements(5) # Agents are connected if they are in the same state and distance 5 away from each other
 class BeeEnvironment(Environment):
     def __init__(self, file_name):
         eprint("file_name = " + str(file_name))
@@ -10,15 +12,22 @@ class BeeEnvironment(Environment):
         if args.agentNum:
             self.number_of_agents = args.agentNum
 
+
         super().__init__(file_name)
     def init_hubController(self):
         self.hubController = BeeHubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self,
                                             self.parameters["ExploreTime"])
 
     def isFinished(self):
-        return (args.commit_stop and "commit" in self.stats["stateCounts"] and
-                self.stats["stateCounts"]["commit"] + len(self.dead_agents) >=
-                self.number_of_agents * .95)
+        #self.args.commit_stop and
+        return ("commit" in self.stats["stateCounts"] and \
+        self.stats["stateCounts"]["commit"] + len(self.dead_agents) >= self.number_of_agents * .95)
+
+    def finished(self):
+        pass
+        #send out data for the connections, average clustering, influence,
+        #total ticks, world number or whatever,
+        #then some way to measure the success of the simulation 
 
     def init_parameters(self):
         self.stats = {}
@@ -35,7 +44,8 @@ class BeeEnvironment(Environment):
                                "SiteAssessTime": 250,
                                "PipingTime": 1200
                                }
-
+    def compute_measurements(self):
+        measurer.compute_measurements(self.agents.values())
     def initialize_agents(self):
         rest_num = int(.1 * np.sqrt(self.number_of_agents))
         for x in range(self.number_of_agents - rest_num):

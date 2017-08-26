@@ -5,10 +5,14 @@ let Schema = mongoose.Schema;
 let dataSchema = Schema
 ({
   name: String,
+  world: String,
   date: Date,
   totalTicks: Number,
   influence: [Number],
-  redundancy: [Schema.types.Mixed]    
+  connectionsMeasure: [Number],
+  clusteringMeasure: [Number],
+  score: Number
 });
+//optional: save a lot of other data.
 
 module.exports = dataSchema

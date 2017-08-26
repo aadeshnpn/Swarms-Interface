@@ -21,7 +21,7 @@ import utils.geomUtil as geomUtil
 from utils.potentialField import PotentialField
 
 import argparse
-from Measurements import *
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--model", choices=["ant", "bee", "uav"], help="Run an 'ant' or 'bee' simulation")
@@ -39,7 +39,6 @@ args = parser.parse_args()
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-measurer = Measurements(5) # Agents are connected if they are in the same state and distance 5 away from each other
 
 class Environment(ABC):
     def __init__(self, file_name):
@@ -84,6 +83,7 @@ class Environment(ABC):
 
         self.stats["parameters"]["agent"] = self.parameters
         self.stats["type"] = "stats"
+        self.stats["measurements"] = {}
         self.restart_simulation = False
         self.initialize_agents()
         self.inputEventManager = InputEventManager()
@@ -313,23 +313,24 @@ class Environment(ABC):
                         self.suggest_new_direction(agent_id)
 
                     self.hubController.hiveAdjust(self.agents)
+                    self.compute_measurements()
                     if not args.no_viewer:
                         print(json.dumps({
                             "type": "stateCounts",
                             "data": self.stats["stateCounts"]
                         }))
 
+
                     #if (args.commit_stop and "commit" in self.stats["stateCounts"] and self.stats["stateCounts"][
                     #    "commit"] + len(self.dead_agents) >= self.number_of_agents * .95):
                     if(self.isFinished()):
                         eprint("Simulation terminated")
-                        measurer.compute_measurements(self.agents.values())
                         #TODO Save simulation data to database
                         break
 
                     self.flowController.updateFlowControllers()
 
-                    # TODO: Turn on measurment computation when ready
+
                     #measurer.compute_measurements(self.agents.values())
 
 
@@ -355,14 +356,16 @@ class Environment(ABC):
 
         self.stats["committedSites"] = []
 
-        # for id in self.agents:
-        #     if self.agents[id].potential_site != None:
-        #         self.stats["committedSites"].append(
-        #             {"x": self.agents[id].potential_site[0], "y": self.agents[id].potential_site[1]})
+        for id in self.agents:
+            if self.agents[id].potential_site != None:
+                self.stats["committedSites"].append(
+                    {"x": self.agents[id].potential_site[0], "y": self.agents[id].potential_site[1]})
 
-        # self.stats["committedSites"] = list(
-        #     dict(y) for y in set(tuple(x.items()) for x in self.stats["committedSites"]))
+        self.stats["committedSites"] = list(
+            dict(y) for y in set(tuple(x.items()) for x in self.stats["committedSites"]))
 
+    def compute_measurements(self):
+        pass
     def clear_for_reset(self):
         self.agents.clear()
         self.flowController.clear()

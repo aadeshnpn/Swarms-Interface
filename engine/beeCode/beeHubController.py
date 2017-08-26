@@ -38,53 +38,6 @@ class BeeHubController(HubController):
         self.siteDistancePriority = 0
         self.siteSizePriority = 0
 
-        self.patrol_routes = [{
-            "x" : [-390, -210],
-            "y" : [100, 100],
-            "ids" : []
-        },
-        {
-            "x" : [-190, -10],
-            "y" : [100, 100],
-            "ids" : []
-        },
-        {
-            "x" : [10, 190],
-            "y" : [100, 100],
-            "ids" : []
-        },
-
-        {
-            "x" : [210, 390],
-            "y" : [100, 100],
-            "ids" : []
-        }]
-
-        self.patrol_rects = [
-            Polygon(Point2D(100,100),Point2D(100,300),Point2D(300,300),Point2D(300,100))
-        ]
-        ''',
-        {
-            "x" : [-400,-50, 0, 30],
-            "y" : [100,100, 100, 100],
-            "ids" : []
-        }]'''
-        '''
-        self.patrol_routes =  [ {
-                "x0" : 400,
-                "y0" : 200,
-                "x1" : 300,
-                "y1" : 200,
-                "ids": []
-            },
-            {
-                    "x0" : 400,
-                    "y0" : -200,
-                    "x1" : 300,
-                    "y1" : -200,
-                    "ids" : []
-                } ]
-        '''
         self.no_viewer = environment.args.no_viewer
 
         environment.inputEventManager.subscribe('priorityUpdate', self.handlePriorityUpdate)
@@ -224,9 +177,10 @@ class BeeHubController(HubController):
         return {"distance": self.siteDistancePriority, "size": self.siteSizePriority}
 
     def handlePriorityUpdate(self, json_dict):
-        self.siteDistancePriority = float(json_dict["sitePriorities"]["distance"])
-        self.siteSizePriority = float(json_dict["sitePriorities"]["size"])
-
+        #self.siteDistancePriority = float(json_dict["sitePriorities"]["distance"])
+        #self.siteSizePriority = float(json_dict["sitePriorities"]["size"])
+        self.siteDistancePriority = 0
+        self.siteSizePriority = 0
         priorityJson = {
             "type": "updateSitePriorities",
             "data":
