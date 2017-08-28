@@ -37,6 +37,7 @@ require('sticky-cluster')(function (callback)
   // filesytem utils
   const fs = require('fs');
 
+
   // lets us do things like joining two paths without worrying about OS
   const path = require('path');
 
@@ -57,6 +58,13 @@ require('sticky-cluster')(function (callback)
 
   // body-parser enables reading POST data
   const bodyParser = require('body-parser');
+
+  //uses mongoose for the mongodb, which is muuuuch easier.
+  const mongoose = require("mongoose");
+  //const ObjectId = mongoose.Types.ObjectId;
+
+  //this folder has the models for the mongoose stuff.
+  const Models = require('./models');
 
 
 
@@ -208,6 +216,22 @@ require('sticky-cluster')(function (callback)
       if(data["type"] === "stats") {
         //TODO save to database on final stats, data.create pass in stats,
         //.save
+        //let dataSchema = new Models.dataSchema({})
+//      let newBatch = new Models.Batch({owner: user._id, date: Date(), sims: []});
+//      return newBatch.save();
+
+//      let newBatch = new Models.Batch({owner: user._id, date: Date(), sims: []});
+//      return newBatch.save();
+//          "data":
+//                        {
+//                            "world": 0,
+//                            "date": time.strftime("%c"),
+//                            "totalTicks": self.stats["ticks"],
+//                            "influence": self.totalInfluence,
+//                            "connectionsMeasure": measurer.connections_measure,
+//                            "clusteringMeasure": measurer.clusteringMeasure,
+//                            "score": 0
+//                        }
       }
       const str = JSON.stringify(data);
 

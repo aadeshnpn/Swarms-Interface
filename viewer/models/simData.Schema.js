@@ -6,7 +6,7 @@ let dataSchema = Schema
 ({
   name: String,
   world: String,
-  date: Date,
+  date: String,
   totalTicks: Number,
   influence: [Number],
   connectionsMeasure: [Number],

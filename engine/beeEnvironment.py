@@ -1,6 +1,7 @@
 from Environment import *
 from beeCode.beeHubController import BeeHubController
 from Measurements import *
+import time
 
 measurer = Measurements(5) # Agents are connected if they are in the same state and distance 5 away from each other
 class BeeEnvironment(Environment):
@@ -9,11 +10,13 @@ class BeeEnvironment(Environment):
         self.info_stations = []
         self.number_of_agents = 100
         self.sites = []
+        self.actions = {"turns": 0, "stateChanges": 0}
+        self.influenceActions = {"turns": 0, "stateChanges": 0}
+        self.totalInfluence = []
         if args.agentNum:
             self.number_of_agents = args.agentNum
-
-
         super().__init__(file_name)
+
     def init_hubController(self):
         self.hubController = BeeHubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self,
                                             self.parameters["ExploreTime"])
@@ -24,7 +27,36 @@ class BeeEnvironment(Environment):
         self.stats["stateCounts"]["commit"] + len(self.dead_agents) >= self.number_of_agents * .95)
 
     def finished(self):
-        pass
+        self.stats["ticks"]
+        measurer.connections_measure
+        measurer.average_clustering_measure
+        self.totalInfluence
+        self.stats["didNotFinish"]
+        time.strftime("%c")
+        finalStats = {
+                    "type": "stats",
+                    "data":
+                        {
+                            "world": 0,
+                            "date": time.strftime("%c"),
+                            "totalTicks": self.stats["ticks"],
+                            "influence": self.totalInfluence,
+                            "connectionsMeasure": measurer.connections_measure,
+                            "clusteringMeasure": measurer.clusteringMeasure,
+                            "score": 0
+                        }
+                }
+        json.dumps(finalStats)
+
+
+        # name: String, TODO
+        # world: String, TODO
+        # date: Date, TODO
+        # totalTicks: Number,
+        # influence: [Number],
+        # connectionsMeasure: [Number],
+        # clusteringMeasure: [Number],
+        # score: Number TODO
         #send out data for the connections, average clustering, influence,
         #total ticks, world number or whatever,
         #then some way to measure the success of the simulation 
@@ -46,6 +78,15 @@ class BeeEnvironment(Environment):
                                }
     def compute_measurements(self):
         measurer.compute_measurements(self.agents.values())
+        influence = (self.influenceActions["turns"] + self.influenceActions["stateChanges"])/(self.actions["turns"] + self.actions["stateChanges"])
+        self.influenceActions =dict.fromkeys(self.influenceActions,0)
+        self.actions = dict.fromkeys(self.actions,0)
+        self.totalInfluence.append(influence)
+
+        # self.actions = {"turns": 0, "stateChanges": 0}
+        # self.influenceActions = {"turns": 0, "stateChanges": 0}
+        # self.totalInfluence = []
+
     def initialize_agents(self):
         rest_num = int(.1 * np.sqrt(self.number_of_agents))
         for x in range(self.number_of_agents - rest_num):

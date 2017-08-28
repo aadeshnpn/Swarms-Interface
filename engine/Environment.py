@@ -1,5 +1,3 @@
-# import multiprocessing
-# pool=multiprocessing.Pool(processes=16)
 import json
 import os
 import time
@@ -23,6 +21,7 @@ from utils.potentialField import PotentialField
 import argparse
 
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--model", choices=["ant", "bee", "uav"], help="Run an 'ant' or 'bee' simulation")
 parser.add_argument("-n", "--no-viewer", action="store_true", help="Don't output viewer world info")
@@ -38,7 +37,6 @@ parser.add_argument("-a", "--agentNum", type=int, help="specifies number of agen
 args = parser.parse_args()
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-
 
 class Environment(ABC):
     def __init__(self, file_name):
@@ -57,12 +55,10 @@ class Environment(ABC):
             while (os.path.exists(fname)):
                 fname_id += 1
                 fname = base_fname + "-" + str(fname_id)
-
             self.logfile = open(fname, "w+")
             self.logfile.write("%s\n" % json.dumps({"seed":self.seed}))
 
-        self.actions = {"turns": 0, "stateChanges": 0, "parameterChange": 0}
-        self.influenceActions = {"turns": 0, "stateChanges": 0, "parameterChange": 0}
+
         self.args = args
         self.file_name = file_name
         self.x_limit = 0
@@ -76,7 +72,7 @@ class Environment(ABC):
         self.agents = {}
         self.dead_agents = []
         self.frames_per_sec = 100
-        self.numberOfSwarms = 2
+        self.numberOfSwarms = 1
 
         self.init_parameters()
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
@@ -314,6 +310,7 @@ class Environment(ABC):
 
                     self.hubController.hiveAdjust(self.agents)
                     self.compute_measurements()
+
                     if not args.no_viewer:
                         print(json.dumps({
                             "type": "stateCounts",
@@ -366,6 +363,7 @@ class Environment(ABC):
 
     def compute_measurements(self):
         pass
+
     def clear_for_reset(self):
         self.agents.clear()
         self.flowController.clear()
