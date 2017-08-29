@@ -91,12 +91,13 @@ require('sticky-cluster')(function (callback)
 
       redisClient.setAsync(`sim:${simId}:connectedCount`, 0);
 
+
       this.inputListener.subscribe(this.startChannel); //subscribe to channel
       this.inputListener.on("message", this.input.bind(this));
       //bind any message from the channel to input.
 
       var info = {options: this.options, channels: {input: this.inputChannel, output: this.outputChannel, start: this.startChannel, kill: this.killChannel}};
-
+      console.log(this.options);
       // This probably isn't best practice, you'd really want to bring in rejson
       // or something, but because this isn't an enterprise app, I think we can
       // get away with the stringy approach
@@ -215,23 +216,28 @@ require('sticky-cluster')(function (callback)
 
       if(data["type"] === "stats") {
         //TODO save to database on final stats, data.create pass in stats,
-        //.save
-        //let dataSchema = new Models.dataSchema({})
-//      let newBatch = new Models.Batch({owner: user._id, date: Date(), sims: []});
-//      return newBatch.save();
+        redisClient.getAsync(`sim:${id}:info`)
+        .then(infoStr =>
+        {
+            const info = JSON.parse(infoStr);
 
-//      let newBatch = new Models.Batch({owner: user._id, date: Date(), sims: []});
-//      return newBatch.save();
-//          "data":
-//                        {
-//                            "world": 0,
-//                            "date": time.strftime("%c"),
-//                            "totalTicks": self.stats["ticks"],
-//                            "influence": self.totalInfluence,
-//                            "connectionsMeasure": measurer.connections_measure,
-//                            "clusteringMeasure": measurer.clusteringMeasure,
-//                            "score": 0
-//                        }
+            let options = info.options;
+
+            data = data.data;
+            let simData = new Models.simData({
+                "name": info.options.name,
+                "world": data.world,
+                "data": data.date,
+                "totalTicks": data.totalTicks,
+                "influence": data.influence,
+                "connectionsMeasure": data.connectionsMeasure,
+                "clusteringMeasure": data.clusteringMeasure,
+                "score": data.score
+            });
+            simData.save();
+
+         });
+
       }
       const str = JSON.stringify(data);
 
@@ -286,7 +292,6 @@ require('sticky-cluster')(function (callback)
                 //       and auto-stop like we do now, but also have the sim
                 //       run independently if we want
                 this.userInputBroadcaster.publish(this.channels.start, "first");
-
               }
             });
 
@@ -516,7 +521,6 @@ require('sticky-cluster')(function (callback)
             socket.emit('bombToggle', options.bomb);
           }
           if(!options.hubController){
-            console.log('step1');
             socket.emit('hubControllerToggle', {"type": "hubControllerToggle", "data": false});
           } else{
             socket.emit('hubControllerToggle', {"type": "hubControllerToggle", "data": true});

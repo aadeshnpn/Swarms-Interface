@@ -190,9 +190,18 @@ class Bee(HubAgent):
                 "commit": []
             }
         }
+    def update(self, environment):
+        #eprint(self.state.__class__.__name__)
+        old = self.state.name
+        if(self.nextState(self.state.update(self))):
+            del environment.states[old][self.id]
+            environment.states[self.state.name] = self.id
+
+
 
     def __init__(self, environment, agentId, initialstate, hub, params, count=1000):
         super().__init__(environment, agentId, initialstate, params, hub)
+
 
         exp = np.random.normal(1, .5, 1)
         while exp < 0:
@@ -255,6 +264,8 @@ class Bee(HubAgent):
 
         self.repulsor = None
         self.ignore_repulsor = None
+        environment.states[self.state.name] = self.id
+
     #TRANSitions
     def transition(self):
         self.environment.actions["stateChanges"] += 1

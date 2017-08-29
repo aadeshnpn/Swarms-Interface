@@ -13,6 +13,7 @@ class BeeEnvironment(Environment):
         self.actions = {"turns": 0, "stateChanges": 0}
         self.influenceActions = {"turns": 0, "stateChanges": 0}
         self.totalInfluence = []
+        self.states = {"exploring": {}, "observing":{},"resting":{},'dancing':{},'assessing':{},'site assess':{},'piping':{},'commit':{}}
         if args.agentNum:
             self.number_of_agents = args.agentNum
         super().__init__(file_name)
@@ -20,6 +21,7 @@ class BeeEnvironment(Environment):
     def init_hubController(self):
         self.hubController = BeeHubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self,
                                             self.parameters["ExploreTime"])
+
 
     def isFinished(self):
         #self.args.commit_stop and

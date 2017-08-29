@@ -6,7 +6,7 @@ let SimulationSchema = new Schema(
   owner: Schema.Types.ObjectId,
   type: String,
   date: Date,
-  simNumber: Number,
+  world: Number,
   totalTicks: Number,
   tickData: [Schema.Types.Mixed],
   committedSites: [Schema.Types.Mixed],

@@ -33,6 +33,7 @@ class Measurements:
         :param agents: (dictionary of agents)
         :return: (NoneType)
         """
+
         agents_list = list(agents)
         num_agents = len(agents_list)
         G = dok_matrix((num_agents, num_agents), dtype=int)

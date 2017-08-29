@@ -8,14 +8,14 @@ class StateMachine(ABC):
 
     def nextState(self, input):
         if input is None:
-            return
+            return False
         currState = self.transitionTable[(self.state.__class__, input)]
         self.state = copy.copy(currState[1])        # environment.sort_by_state(self.id, self.state.__class__, currState[1].__class__)
 
         self.transition()
         if currState[0] is not None:
             currState[0]()
-        return
+        return True
         RuntimeError("Input not supported for current state")
 
     # return a dictionary representing states that should be shown to the user
