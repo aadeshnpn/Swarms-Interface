@@ -213,10 +213,10 @@ require('sticky-cluster')(function (callback)
       // i know we are serializing data we just unserialized, but we
       // need to do it like that to make sure we only get one complete JSON
       // obj at a time
-
       if(data["type"] === "stats") {
         //TODO save to database on final stats, data.create pass in stats,
-        redisClient.getAsync(`sim:${id}:info`)
+        console.log('getting ready to save to database');
+        redisClient.getAsync(`sim:${this.simId}:info`)
         .then(infoStr =>
         {
             const info = JSON.parse(infoStr);
@@ -234,7 +234,10 @@ require('sticky-cluster')(function (callback)
                 "clusteringMeasure": data.clusteringMeasure,
                 "score": data.score
             });
-            simData.save();
+            simData.save(function(err, simData){
+                if(err) return console.log(err);
+                });
+            console.log('saved to database');
 
          });
 

@@ -9,6 +9,7 @@
     "body-parser": "^1.17.2",
     "config": "1.25.0",
     "express": "^4.14.0",
+    "mongodb": "^2.2.31",
     "node-ipc": "8.9.2",
     "node-minify": "^2.0.2",
     "redis": "^2.7.1",

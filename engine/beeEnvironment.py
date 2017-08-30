@@ -3,6 +3,7 @@ from beeCode.beeHubController import BeeHubController
 from Measurements import *
 import time
 
+
 measurer = Measurements(5) # Agents are connected if they are in the same state and distance 5 away from each other
 class BeeEnvironment(Environment):
     def __init__(self, file_name):
@@ -25,16 +26,10 @@ class BeeEnvironment(Environment):
 
     def isFinished(self):
         #self.args.commit_stop and
-        return ("commit" in self.stats["stateCounts"] and \
-        self.stats["stateCounts"]["commit"] + len(self.dead_agents) >= self.number_of_agents * .95)
+        return (len(self.states["commit"]) + len(self.dead_agents) >= self.number_of_agents * .95 and len(self.states["piping"]) < 1)
 
     def finished(self):
-        self.stats["ticks"]
-        measurer.connections_measure
-        measurer.average_clustering_measure
-        self.totalInfluence
-        self.stats["didNotFinish"]
-        time.strftime("%c")
+        eprint('dumping the stats')
         finalStats = {
                     "type": "stats",
                     "data":
@@ -44,11 +39,12 @@ class BeeEnvironment(Environment):
                             "totalTicks": self.stats["ticks"],
                             "influence": self.totalInfluence,
                             "connectionsMeasure": measurer.connections_measure,
-                            "clusteringMeasure": measurer.clusteringMeasure,
+                            "clusteringMeasure": measurer.avg_clustering_measure,
                             "score": 0
                         }
                 }
-        json.dumps(finalStats)
+        print(json.dumps(finalStats))
+        eprint('stats have been dumped')
 
 
         # name: String, TODO
@@ -80,7 +76,10 @@ class BeeEnvironment(Environment):
                                }
     def compute_measurements(self):
         measurer.compute_measurements(self.agents.values())
-        influence = (self.influenceActions["turns"] + self.influenceActions["stateChanges"])/(self.actions["turns"] + self.actions["stateChanges"])
+        actions = (self.actions["turns"] + self.actions["stateChanges"])
+        influence = 0
+        if actions > 0:
+            influence = (self.influenceActions["turns"] + self.influenceActions["stateChanges"])/actions
         self.influenceActions =dict.fromkeys(self.influenceActions,0)
         self.actions = dict.fromkeys(self.actions,0)
         self.totalInfluence.append(influence)

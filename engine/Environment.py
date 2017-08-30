@@ -251,6 +251,8 @@ class Environment(ABC):
     @abstractmethod
     def isFinished(self):
         pass
+    def finished(self):
+        pass
 
     # Move all of the agents
     def run(self):
@@ -299,9 +301,9 @@ class Environment(ABC):
                     # makes python mad...
                     #AGENT RUN LOOP
                     for agent_id in keys:
-                        if self.agents[agent_id].state.name not in self.stats["stateCounts"]:
-                            self.stats["stateCounts"][self.agents[agent_id].state.name] = 0
-                        #self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
+                        # if self.agents[agent_id].state.name not in self.stats["stateCounts"]:
+                        #     self.stats["stateCounts"][self.agents[agent_id].state.name] = 0
+                        # self.stats["stateCounts"][self.agents[agent_id].state.name] += 1
                         # is this faster?
                         self.agents[agent_id].act()
                         self.agents[agent_id].sense(self)
@@ -322,7 +324,9 @@ class Environment(ABC):
                     #    "commit"] + len(self.dead_agents) >= self.number_of_agents * .95):
                     if(self.isFinished()):
                         eprint("Simulation terminated")
+                        self.finished()
                         #TODO Save simulation data to database
+                        time.sleep(10)
                         break
 
                     self.flowController.updateFlowControllers()
