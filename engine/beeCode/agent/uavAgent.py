@@ -1,4 +1,4 @@
-from .agent import HubAgent
+from .abstractAgent import HubAgent
 from .stateMachine.StateMachine import StateMachine
 from .stateMachine.state import State
 from enum import Enum

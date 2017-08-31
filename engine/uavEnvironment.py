@@ -1,5 +1,5 @@
 from Environment import *
-from beeCode.agent.uav import *
+from beeCode.agent.uavAgent import *
 from beeCode.agent.evader import *
 from beeCode.uavHubController import UavHubController
 import logging

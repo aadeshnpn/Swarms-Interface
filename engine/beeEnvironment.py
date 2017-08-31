@@ -1,6 +1,7 @@
 from Environment import *
 from beeCode.beeHubController import BeeHubController
 from Measurements import *
+from beeCode.agent.beeAgent import *
 import time
 
 

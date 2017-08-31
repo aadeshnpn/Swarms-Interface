@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 
 from utils.debug import *
 from InputEventManager import InputEventManager
-from beeCode.agent.agent import *
+#from beeCode.agent.agent import *
 #from beeCode.hubController import hubController
 from beeCode.infoStation import InfoStation
 

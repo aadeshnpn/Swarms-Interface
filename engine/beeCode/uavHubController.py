@@ -2,7 +2,7 @@ import json
 
 from randomdict import RandomDict
 import copy
-from .agent.agent import *
+from .agent.uavAgent import *
 from utils.debug import *
 import time
 import numpy as np

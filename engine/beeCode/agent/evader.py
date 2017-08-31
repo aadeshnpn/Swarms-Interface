@@ -1,6 +1,6 @@
 from .stateMachine.StateMachine import StateMachine
 from .stateMachine.state import State
-from .agent import *
+from .abstractAgent import *
 import numpy as np
 
 class Evader(Agent):
