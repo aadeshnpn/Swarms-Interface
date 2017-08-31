@@ -56,7 +56,7 @@ class Agent(StateMachine): #we could use even more abstract classes... hub Agent
     def direction(self, value):
         self.__direction = value
         #self.environment.stats TODO
-        self.environment.actions["turns"] += 1 
+        #self.environment.actions["turns"] += 1 
     def sense(self, environment):
         self.state.sense(self, environment)
 
@@ -196,8 +196,10 @@ class Bee(HubAgent):
         if(self.nextState(self.state.update(self))):
             del environment.states[old][self.id]
             environment.states[self.state.name][self.id] = self.id
-
-
+    
+    def direction(self, value):
+        super().direction(value)
+        self.environment.actions["turns"] += 1 
 
     def __init__(self, environment, agentId, initialstate, hub, params, count=1000):
         super().__init__(environment, agentId, initialstate, params, hub)
