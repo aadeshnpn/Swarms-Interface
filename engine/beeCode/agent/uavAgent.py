@@ -7,6 +7,16 @@ from ..pheromoneMap import PheromoneMap
 import time
 from .debug import *
 import logging
+'''
+When a UAV1 spots another UAV tracking a target, do the following:
+    - decrease last visit time for UAV1 in a normally shaped curve 
+    around the target, where time last seen is increasing from target center
+
+    This will occur in the pheromone patrol section of code.
+
+'''
+
+
 def distance(a,b):
     c = [0.0,0.0]
     a[0] = (float)(a[0])
@@ -33,7 +43,7 @@ class UAV(HubAgent):
         super().__init__(environment, agentId, initialstate, params, hub)
 
         #self.live = True
-        self.counter = 100
+        self.counter = 100000
 
         self.param_time_stamp = 0
         self.velocity = self.parameters["Velocity"] * .95
@@ -53,13 +63,16 @@ class UAV(HubAgent):
 
         self.node = None
 
+        self.timer1 = 0
+        self.targetsOfOthers = set()
+
         self.route = None
 
         self.index = -1
 
         self.target = None
 
-        self.pheromoneMap = PheromoneMap((10,30), 500, 50)
+        self.pheromoneMap = PheromoneMap((10,30), 80, 80)
         #UAV_Patrolling
         self.transitionTable = {(UAV_Searching(self).__class__, uavInput.targetFound): [None, UAV_Tracking(self)],
             (UAV_Tracking(self).__class__, uavInput.targetLost): [None, UAV_PheromonePatrol(self)],
@@ -83,11 +96,11 @@ class UAV(HubAgent):
         }
 
     def patrolToRefuelTransition(self):
-        self.counter = 500 * int(self.id) + 100
+        self.counter = 10 * int(self.id) + 300
         self.environment.hubController.checkInPheromoneMap(self)
         logging.debug("Agent " + str(self.id) + " to resting")
     def refuelToPatrolTransition(self):
-        self.counter = 1000* int(self.id) + 1000
+        self.counter = 100000* int(self.id) + 1000
         self.inHub = False
         self.velocity = self.parameters['Velocity']
         self.environment.hubController.checkOutPheromoneMap(self)
@@ -98,6 +111,9 @@ class UAV(HubAgent):
         #self.patrol_route = self.environment.hubController.checkOutPatrolRoute(self)
         #self.patrolPointA = [patrol_route["x0"], patrol_route["y0"]]
         #self.patrolPointB = [patrol_route["x1"], patrol_route["y1"]]
+    #TODO: need better name
+    def merge(self, other_agent):
+        self.pheromoneMap.merge(other_agent.pheromoneMap)
 
 class UAV_State(State):
     def __init__(self, agent=None):
@@ -123,18 +139,36 @@ class UAV_PheromonePatrol(UAV_State):
     def __init__(self, agent=None):
         self.name = self.__class__.__name__
 
+    def sense(self, agent, environment):
+        agent.neighbors.clear()
+        for other_key in environment.agents.keys():
+            other = environment.agents[other_key]
+            if((agent != other) and (distance(agent.location, other.location) < 50  or (other.__class__.__name__ == "UAV" and distance(agent.location, other.location) < 100))):
+                agent.neighbors.append(other)
+        for neighbor in agent.neighbors:
+            pass
+
     def act(self, agent):
         agent.counter -= 1
         agent.inHub = False
         if(agent.node is None):
             #TODO: better initialization needed
-            agent.node = agent.pheromoneMap.grid[10][10]
+            agent.node = agent.pheromoneMap.grid[0][0]
             agent.destination = agent.node.position
-            eprint(agent.id)
+            eprint("(psuedo)Init UAV #:" + str(agent.id))
             logging.debug(str(agent.id) + " - initialization: " + str(agent.destination))
 
         agent.destination = np.array(agent.destination) #TODO: temp
         agent.location = np.array(agent.location) #TODO: temp
+
+        '''
+        uavSeen = False
+        for n in agent.neighbors:
+            if(n.__class__.__name__ == "UAV"):
+                uavSeen = True
+                agent.merge(n)
+                agent.pheromoneMap.getNearestNode(n.destination).markAsVisited
+        '''
 
         if(np.linalg.norm(agent.destination - agent.location) < 10):
             agent.node.markAsVisited()
@@ -146,12 +180,70 @@ class UAV_PheromonePatrol(UAV_State):
             agent.node = np.random.choice(agent.node.neighbors, p=probabilities)
             logging.debug(str(agent.id) + ": " + str(agent.destination))
             agent.destination = agent.node.position
+            if(agent.timer1 > 0):
+                eprint(agent.pheromoneMap)
 
         agent.move(agent.destination)
 
     def update(self, agent):
+        if(agent.timer1 > 0):
+            #agent.timer1 -= 1
+            for n in agent.neighbors:
+                if(n.__class__.__name__ == "UAV" and n.target is not None):
+                    agent.targetsOfOthers.add(n.target)
+        else:    
+            agent.targetsOfOthers.clear()
+            for n in agent.neighbors:
+                if(n.__class__.__name__ == "UAV" and n.target is not None):
+                    eprint("UAV #" + str(agent.id) + " has found another UAV with a target")
+                    agent.timer1 = 1000
+                    agent.targetsOfOthers.add(n.target)
+                    nodeClosestToTarget = agent.pheromoneMap.getNearestNode(n.target.location)
+                    nodeClosestToTarget.setLastVisitedTime(0)
+                    for n1 in nodeClosestToTarget.neighbors:
+                        n1.setLastVisitedTime(0)
+                        for n2 in n1.neighbors:
+                            if(n2.lastVisited != 0):
+                                n2.setLastVisitedTime(0)
+                                #todo (maybe): next recursive step
+                    agent.destination = nodeClosestToTarget.position
+                    eprint(agent.pheromoneMap)
+                    break
+            ''' 
+            if(agent.timer1 < 1 and n.__class__.__name__ == "UAV" and n.target is not None):
+                agent.targetsOfOthers.add(n.target)
+                d = agent.environment.hubController.pheromoneMap.distanceBetweenNodes
+
+                x0 = n.target.location[0] - (n.target.location[0] % d)
+                y0 = n.target.location[1] - (n.target.location[1] % d)
+                
+                p0 = [x0 , y0]
+                p1 = [x0 + d , y0]
+                p2 = [x0 , y0 + d]
+                p3 = [x0 + d, y0 + d]
+
+                ps = [p0, p1, p2, p3]
+                center = min(ps, key = lambda p : np.linalg.norm(np.array(p) - np.array(n.target.location)))
+
+                #!!!! floating point danger here
+                xi = center[0] / d
+                yi = center[1] / d
+            
+                g = agent.pheromoneMap.grid
+
+                for i in range(-3, 3):
+                    for j in range(-3, 3):
+                        if(i + yi < 0  or yi + i >= len(g) or j + xi < 0  or xi + j <len(g[0])):
+                            continue
+                        agent.pheromoneMap.grid[yi + i, xi + j].setLastVisitedTime(0 + 50 * (i**2))
+                agent.timer1 = 100000
+                #agent.targetsOfOthers.add(n.target)
+                break
+            '''
         for n in agent.neighbors:
             if(n.__class__.__name__ == "Evader"):
+                if(n in agent.targetsOfOthers):
+                    continue
                 agent.target = n
                 return uavInput.targetFound
         if(agent.counter < 1):
