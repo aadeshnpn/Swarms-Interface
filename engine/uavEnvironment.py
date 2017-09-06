@@ -44,9 +44,9 @@ class BeeEnvironment(Environment):
     def initialize_agents(self):
         #for z in range(-2,0):
         #    self.create_t_uav(z)
-        for x in range(0, 2):
+        for x in range(0, 5):
             self.create_uav(x)
-        for y in range(5, 6):
+        for y in range(5, 10):
             self.create_evader(y)
         #self.agents[str(-1)].counter = -100000
         #self.agents[str(-2)].counter = 100000

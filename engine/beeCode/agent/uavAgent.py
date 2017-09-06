@@ -15,8 +15,9 @@ When a UAV1 spots another UAV tracking a target, do the following:
     This will occur in the pheromone patrol section of code.
 
 '''
-
-
+#TODO: make uavCode folder
+#TODO: clean up all this code
+#TODO: needs to get expunged from the code
 def distance(a,b):
     c = [0.0,0.0]
     a[0] = (float)(a[0])
@@ -63,8 +64,10 @@ class UAV(HubAgent):
 
         self.node = None
 
-        self.timer1 = 0
+        self.timer1 = 0 #needs a better name, determines whether a UAV is searching around the position of a target of another uav or not
         self.targetsOfOthers = set()
+
+        self.timer2 = 0
 
         self.route = None
 
@@ -72,7 +75,7 @@ class UAV(HubAgent):
 
         self.target = None
 
-        self.pheromoneMap = PheromoneMap((10,30), 80, 80)
+        self.pheromoneMap = PheromoneMap((10,30), 90*3, 30)
         #UAV_Patrolling
         self.transitionTable = {(UAV_Searching(self).__class__, uavInput.targetFound): [None, UAV_Tracking(self)],
             (UAV_Tracking(self).__class__, uavInput.targetLost): [None, UAV_PheromonePatrol(self)],
@@ -143,7 +146,7 @@ class UAV_PheromonePatrol(UAV_State):
         agent.neighbors.clear()
         for other_key in environment.agents.keys():
             other = environment.agents[other_key]
-            if((agent != other) and (distance(agent.location, other.location) < 50  or (other.__class__.__name__ == "UAV" and distance(agent.location, other.location) < 100))):
+            if((agent != other) and (distance(agent.location, other.location) < 90  or (other.__class__.__name__ == "UAV" and distance(agent.location, other.location) < 90))):
                 agent.neighbors.append(other)
         for neighbor in agent.neighbors:
             pass
@@ -170,22 +173,40 @@ class UAV_PheromonePatrol(UAV_State):
                 agent.pheromoneMap.getNearestNode(n.destination).markAsVisited
         '''
 
-        if(np.linalg.norm(agent.destination - agent.location) < 10):
+        for n in agent.neighbors:
+            if(n.state.__class__.__name__ == "UAV_PheromonePatrol"):
+                if(agent.timer2 < 1):
+                    agent.timer2 = 100
+                    eprint("UAV encountered another patroller")
+
+        if(agent.timer2 == 100 or np.linalg.norm(agent.destination - agent.location) < 10):
             agent.node.markAsVisited()
             current_time = time.time()
             time_diffs = []
+            potential_node_destinations = []
             for n in agent.node.neighbors:
-                time_diffs.append(current_time - n.lastVisited)
+                potential_node_destinations.append(n)
+            potential_node_destinations.append(agent.node)
+            for n in potential_node_destinations:
+                diff = (current_time - n.lastVisited)+100
+                for neighbor in agent.neighbors:
+                    if(neighbor.state.__class__.__name__ == "UAV_PheromonePatrol"):
+                        diff *= (distance(neighbor.location, n.position))
+                time_diffs.append(diff)
             probabilities = np.array(time_diffs) / np.sum(time_diffs)
-            agent.node = np.random.choice(agent.node.neighbors, p=probabilities)
+            agent.node = np.random.choice(potential_node_destinations, p=probabilities)
             logging.debug(str(agent.id) + ": " + str(agent.destination))
             agent.destination = agent.node.position
             if(agent.timer1 > 0):
                 eprint(agent.pheromoneMap)
 
+
+
         agent.move(agent.destination)
 
     def update(self, agent):
+        if(agent.timer2 > 0):
+            agent.timer2 -= 1
         if(agent.timer1 > 0):
             #agent.timer1 -= 1
             for n in agent.neighbors:
