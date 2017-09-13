@@ -14,12 +14,15 @@ plt.figure(1)
 x = np.linspace(0,data['totalTicks'],data['totalTicks'])
 plt.title('clustering measure')
 plt.plot(x,data['clusteringMeasure'])
+plt.savefig('clustering',format="png")
+
+
 
 
 
 plt.figure(2)
 plt.plot(x,data['connectionsMeasure'])
-
+plt.savefig('connections',format="png")
 plt.show()
 
 
