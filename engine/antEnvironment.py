@@ -18,15 +18,15 @@ import utils.geomUtil as geomUtil
 import sys, os
 import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-m", "--model", choices=["ant", "bee"], help="Run an 'ant' or 'bee' simulation")
-parser.add_argument("-n", "--no-viewer", action="store_true", help="Don't output viewer world info")
-parser.add_argument("-s", "--stats", action="store_true", help="Output json stats after simulation")
-parser.add_argument("-c", "--commit-stop", action="store_true", help="Stop simulation after all agents have committed")
-parser.add_argument("-t", "--tick-limit", type=int, help="Stop simulation after TICK_LIMIT ticks")
-parser.add_argument("-r", "--randomize", action="store_true", help="randomizes the environment")
+# parser = argparse.ArgumentParser()
+# parser.add_argument("-m", "--model", choices=["ant", "bee"], help="Run an 'ant' or 'bee' simulation")
+# parser.add_argument("-n", "--no-viewer", action="store_true", help="Don't output viewer world info")
+# parser.add_argument("-s", "--stats", action="store_true", help="Output json stats after simulation")
+# parser.add_argument("-c", "--commit-stop", action="store_true", help="Stop simulation after all agents have committed")
+# parser.add_argument("-t", "--tick-limit", type=int, help="Stop simulation after TICK_LIMIT ticks")
+# parser.add_argument("-r", "--randomize", action="store_true", help="randomizes the environment")
+#
 
-args = parser.parse_args()
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -34,7 +34,18 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #random.seed(123)
 #class Site:
 #    def __init__(self,location,radius,q_value):
-
+parser = argparse.ArgumentParser()
+parser.add_argument("-m", "--model", choices=["ant", "bee", "uav"], help="Run an 'ant' or 'bee' simulation")
+parser.add_argument("-n", "--no-viewer", action="store_true", help="Don't output viewer world info")
+parser.add_argument("-s", "--stats", action="store_true", help="Output json stats after simulation")
+parser.add_argument("-c", "--commit-stop", action="store_true", help="Stop simulation after all agents have committed")
+parser.add_argument("-t", "--tick-limit", type=int, help="Stop simulation after TICK_LIMIT ticks")
+parser.add_argument("-r", "--randomize", action="store_true", help="randomizes the environment")
+parser.add_argument("-l", "--log_file", type=str, help="Log input events to LOG_FILE")
+parser.add_argument("-e", "--seed", type=int, help="Run the simulation with the specified random seed")
+parser.add_argument("-p", "--pipe", type=str, help="Connect to the specified named pipe")
+parser.add_argument("-a", "--agentNum", type=int, help="specifies number of agents")
+args = parser.parse_args()
 """
 Function to be used for parallel processing
 """
