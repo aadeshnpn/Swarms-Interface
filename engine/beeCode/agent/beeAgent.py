@@ -26,7 +26,8 @@ class Bee(HubAgent):
         #eprint(self.state.__class__.__name__)
         old = self.state.name
         if(self.nextState(self.state.update(self))):
-            del environment.states[old][self.id]
+            if self.id in environment.states[old]:
+                del environment.states[old][self.id]
             environment.states[self.state.name][self.id] = self.id
     
     def direction(self, value):

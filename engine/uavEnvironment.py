@@ -46,7 +46,7 @@ class BeeEnvironment(Environment):
         #    self.create_t_uav(z)
         for x in range(0, 5):
             self.create_uav(x)
-        for y in range(5, 31):
+        for y in range(5, 10):
             self.create_evader(y)
         #self.agents[str(-1)].counter = -100000
         #self.agents[str(-2)].counter = 100000
@@ -140,7 +140,7 @@ class BeeEnvironment(Environment):
                 })
         )
     def build_patrolRoutes(self, data):
-        self.patrol_routes = data['patrol_routes']
+        pass #self.patrol_routes = data['patrol_routes']
 
     def build_json_environment(self):
         data = super().build_json_environment()
