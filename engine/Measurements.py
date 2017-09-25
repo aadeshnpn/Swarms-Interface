@@ -41,6 +41,9 @@ class Measurements:
             for j in range(i+1, num_agents):
                 if (agents_list[i].state.__class__ == agents_list[j].state.__class__
                         and distance(agents_list[i].location, agents_list[j].location) < self.close_dist):
+                    # if (agents_list[i].state.__class__ != agents_list[j].state.__class__
+                    #     or np.sqrt((agents_list[i].location[0] - agents_list[j].location[0]) ** 2 + (
+                    #         agents_list[i].location[1] - agents_list[j].location[1]) ** 2) > self.close_dist):
                     G[i, j] = 1
                     G[j, i] = 1
 

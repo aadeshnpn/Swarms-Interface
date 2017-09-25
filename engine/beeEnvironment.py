@@ -16,6 +16,10 @@ class BeeEnvironment(Environment):
         self.influenceActions = {"turns": 0, "stateChanges": 0}
         self.totalInfluence = []
         self.states = {"exploring": {}, "observing":{},"resting":{},'dancing':{},'assessing':{},'site assess':{},'piping':{},'commit':{}}
+
+        self.xPos = []
+        self.yPos = []
+        self.dataStates = []
         if args.agentNum:
             self.number_of_agents = args.agentNum
         super().__init__(file_name)
@@ -30,22 +34,32 @@ class BeeEnvironment(Environment):
         return (len(self.states["commit"]) + len(self.dead_agents) >= self.number_of_agents * .95 and len(self.states["piping"]) < 1)
 
     def finished(self):
-        eprint('dumping the stats')
+        # finalStats = {
+        #             "type": "stats",
+        #             "data":
+        #                 {
+        #                     "world": 0,
+        #                     "date": time.strftime("%c"),
+        #                     "totalTicks": self.stats["ticks"],
+        #                     "influence": self.totalInfluence,
+        #                     "connectionsMeasure": measurer.connections_measure,
+        #                     "clusteringMeasure": measurer.avg_clustering_measure,
+        #                     "score": 0
+        #                 }
+        #         }
         finalStats = {
-                    "type": "stats",
-                    "data":
-                        {
-                            "world": 0,
-                            "date": time.strftime("%c"),
-                            "totalTicks": self.stats["ticks"],
-                            "influence": self.totalInfluence,
-                            "connectionsMeasure": measurer.connections_measure,
-                            "clusteringMeasure": measurer.avg_clustering_measure,
-                            "score": 0
-                        }
+            "type": "stats",
+            "data":
+                {
+                    "date": time.strftime("%c"),
+                    "totalTicks": self.stats["ticks"],
+                    "influence":self.totalInfluence,
+                    "xPos": self.xPos,
+                    "yPos": self.yPos,
+                    "states": self.dataStates
                 }
+        }
         print(json.dumps(finalStats))
-        eprint('stats have been dumped')
 
 
         # name: String, TODO
@@ -58,7 +72,7 @@ class BeeEnvironment(Environment):
         # score: Number TODO
         #send out data for the connections, average clustering, influence,
         #total ticks, world number or whatever,
-        #then some way to measure the success of the simulation 
+        #then some way to measure the success of the simulation
 
     def init_parameters(self):
         self.stats = {}
@@ -75,8 +89,21 @@ class BeeEnvironment(Environment):
                                "SiteAssessTime": 250,
                                "PipingTime": 1200
                                }
+
+    #compute measurements is ran every loop in the run function by environment.py
     def compute_measurements(self):
-        measurer.compute_measurements(self.agents.values())
+        xPos = []
+        yPos = []
+        states= []
+        for id, agent in self.agents.items():
+            xPos.append(agent.location[0])
+            yPos.append(agent.location[1])
+            states.append(agent.state.name)
+        self.xPos.append(xPos)
+        self.yPos.append(yPos)
+        self.dataStates.append(states)
+
+        # measurer.compute_measurements(self.agents.values())
         actions = (self.actions["turns"] + self.actions["stateChanges"])
         influence = 0
         if actions > 0:

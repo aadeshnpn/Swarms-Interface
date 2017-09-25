@@ -224,10 +224,25 @@ require('sticky-cluster')(function (callback)
             let options = info.options;
 
             data = data.data;
-            let simData = new Models.simData({
+            let allSimData = new Models.allSimData({
+              "name": info.options.name,
+            })
+            let simData = new Models.allSimData({
+                "name": info.options.name,
+                "date": data.date,
+                "totalTicks": data.totalTicks,
+                "influence": "",
+                "xPos": data.xPos,
+                "yPos": data.yPos,
+                "states":data.states
+            });
+            // "yPos": data.yPos,
+            // "states":data.states
+
+            let simData2 = new Models.simData({
                 "name": info.options.name,
                 "world": data.world,
-                "data": data.date,
+                "date": data.date,
                 "totalTicks": data.totalTicks,
                 "influence": data.influence,
                 "connectionsMeasure": data.connectionsMeasure,
@@ -235,6 +250,9 @@ require('sticky-cluster')(function (callback)
                 "score": data.score
             });
             simData.save(function(err, simData){
+                if(err) return console.log(err);
+                });
+            simData.save(function(err, simData2){
                 if(err) return console.log(err);
                 });
             console.log('saved to database');
@@ -367,7 +385,8 @@ require('sticky-cluster')(function (callback)
       }
     }
 
-    const id = options.name || shortid.generate();
+    options.name = options.name || shortid.generate();
+    const id  = options.name;
 
     // check if we already have a sim under that name
     redisClient.sismemberAsync("activeSims", id)

@@ -19,6 +19,7 @@ mongo.once('open', function()
 
 let models =
 {
-    simData : mongoose.model('simData' , require('./simData.Schema.js'))
+    simData : mongoose.model('simData' , require('./simData.Schema.js')),
+    allSimData: mongoose.model('allSimData', require('./allSimData.Schema.js'))
 };
 module.exports = models;
