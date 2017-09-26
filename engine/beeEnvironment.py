@@ -56,7 +56,11 @@ class BeeEnvironment(Environment):
                     "influence":self.totalInfluence,
                     "xPos": self.xPos,
                     "yPos": self.yPos,
-                    "states": self.dataStates
+                    "states": self.dataStates,
+                    "world": 0,
+                    "connectionsMeasure":[],
+                    "clusteringMeasure":[],
+                    "score": 0
                 }
         }
         print(json.dumps(finalStats))

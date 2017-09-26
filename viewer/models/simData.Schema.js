@@ -11,6 +11,7 @@ let dataSchema = Schema
   influence: [Number],
   connectionsMeasure: [Number],
   clusteringMeasure: [Number],
+  states: [[String]],
   score: Number
 });
 //optional: save a lot of other data.

@@ -224,17 +224,13 @@ require('sticky-cluster')(function (callback)
             let options = info.options;
 
             data = data.data;
-            let allSimData = new Models.allSimData({
-              "name": info.options.name,
-            })
             let simData = new Models.allSimData({
                 "name": info.options.name,
                 "date": data.date,
                 "totalTicks": data.totalTicks,
-                "influence": "",
+                "influence": data.influence,
                 "xPos": data.xPos,
-                "yPos": data.yPos,
-                "states":data.states
+                "yPos": data.yPos
             });
             // "yPos": data.yPos,
             // "states":data.states
@@ -247,6 +243,7 @@ require('sticky-cluster')(function (callback)
                 "influence": data.influence,
                 "connectionsMeasure": data.connectionsMeasure,
                 "clusteringMeasure": data.clusteringMeasure,
+                "states":data.states,
                 "score": data.score
             });
             simData.save(function(err, simData){
