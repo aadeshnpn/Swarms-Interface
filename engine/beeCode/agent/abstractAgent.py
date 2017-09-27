@@ -54,8 +54,8 @@ class Agent(StateMachine): #we could use even more abstract classes... hub Agent
     @direction.setter
     def direction(self, value):
         self.__direction = value
-        #self.environment.stats TODO
-        #self.environment.actions["turns"] += 1 
+        #self.environment.actions["turns"] += 1
+        
     def sense(self, environment):
         self.state.sense(self, environment)
 
@@ -171,4 +171,3 @@ class HubAgent(Agent):
                 self.inHub = True
                 return True
         return False
-

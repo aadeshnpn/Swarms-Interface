@@ -29,10 +29,11 @@ class Bee(HubAgent):
             if self.id in environment.states[old]:
                 del environment.states[old][self.id]
             environment.states[self.state.name][self.id] = self.id
-    
+    @HubAgent.direction.setter
     def direction(self, value):
-        super().direction(value)
-        self.environment.actions["turns"] += 1 
+        self.environment.actions["turns"] += 1
+        HubAgent.direction.fset(self, value)
+
 
     def __init__(self, environment, agentId, initialstate, hub, params, count=1000):
         super().__init__(environment, agentId, initialstate, params, hub)
