@@ -215,7 +215,6 @@ require('sticky-cluster')(function (callback)
       // obj at a time
       if(data["type"] === "stats") {
         //TODO save to database on final stats, data.create pass in stats,
-        console.log('getting ready to save to database');
         redisClient.getAsync(`sim:${this.simId}:info`)
         .then(infoStr =>
         {
@@ -224,11 +223,10 @@ require('sticky-cluster')(function (callback)
             let options = info.options;
 
             data = data.data;
-            let simData = new Models.allSimData({
+            let simData = new Models.simData({
                 "name": info.options.name,
                 "date": data.date,
                 "totalTicks": data.totalTicks,
-                "influence": data.influence,
                 "xPos": data.xPos,
                 "yPos": data.yPos
             });
@@ -249,7 +247,7 @@ require('sticky-cluster')(function (callback)
             simData.save(function(err, simData){
                 if(err) return console.log(err);
                 });
-            simData.save(function(err, simData2){
+            simData2.save(function(err, simData2){
                 if(err) return console.log(err);
                 });
             console.log('saved to database');

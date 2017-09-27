@@ -12,8 +12,14 @@ let dataSchema = Schema
   connectionsMeasure: [Number],
   clusteringMeasure: [Number],
   states: [[String]],
+  xPos: [[Number]],
+  yPos: [[Number]],
   score: Number
 });
+
+
+
+
 //optional: save a lot of other data.
 
 module.exports = dataSchema
