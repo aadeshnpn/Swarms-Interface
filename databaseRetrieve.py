@@ -14,7 +14,7 @@ for data in collection.find():
     print(data['name'])
     influence = data['influence']
     plt.figure(1)
-    x = np.linspace(0, data['totalTicks'], data['totalTicks'])
+    x = np.linspace(0, data['totalTicks'], data['totalTicks']) #TODO: Pretty sure you want (totalticks + 1) points
     if data['totalTicks'] != len(data['clusteringMeasure']):
         print('do you want to delete?')
         answer = input('do you want to delete a discrepant database (y or n)?: ' + data['name'])
