@@ -39,7 +39,7 @@ class Measurements:
         G = dok_matrix((num_agents, num_agents), dtype=int)
         for i in range(num_agents):
             for j in range(i+1, num_agents):
-                if (stateList[i] == stateList[j] and (np.sqrt((xlist[i]-xlist[j])**2+(ylist[i]-ylist[j])**2) < self.close_dist):
+                if stateList[i] == stateList[j] and (np.sqrt((xlist[i]-xlist[j])**2+(ylist[i]-ylist[j])**2)) < self.close_dist:
                     # if (agents_list[i].state.__class__ != agents_list[j].state.__class__
                     #     or np.sqrt((agents_list[i].location[0] - agents_list[j].location[0]) ** 2 + (
                     #         agents_list[i].location[1] - agents_list[j].location[1]) ** 2) > self.close_dist):
