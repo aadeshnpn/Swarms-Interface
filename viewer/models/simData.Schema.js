@@ -12,8 +12,6 @@ let dataSchema = Schema
   connectionsMeasure: [Number],
   clusteringMeasure: [Number],
   states: [[String]],
-  xPos: [[Number]],
-  yPos: [[Number]],
   score: Number
 });
 

@@ -2,26 +2,34 @@ import numpy as np
 from scipy.sparse import dok_matrix
 import networkx as nx
 import matplotlib.pyplot as plt
+import os
 
-def distance(a,b):
-	return np.sqrt((b[0]-a[0])**2 + (b[1]-a[1])**2)
+
+def distance(a, b):
+    return np.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2)
+
 
 class Measurements:
     """
     Class containing data structures and methods needed to compute connectedness and dispersion metrics for
     the honey bee colony nest selection task.
+    :param proximity_constant: (float), how close agents have to be in order to be connected in the dispersion
+            graph
     """
 
-    def __init__(self, proximity_constant):
-        """
-        :param proximity_constant: (float), how close agents have to be in order to be connected in the dispersion
-                graph
-        """
+    def __init__(self, proximity_constant, nme):
         self.close_dist = proximity_constant
-
         self.swarm_sizes = []
-        self.connections_measure = [] # = (num connections in graph)/(total possible connections in graph)
-        self.avg_clustering_measure = [] # uses networkx.average_clustering()
+        self.connections_measure = []  # = (num connections in graph)/(total possible connections in graph)
+        self.avg_clustering_measure = []  # uses networkx.average_clustering()
+        self.measurements = {"swarm_sizes": self.swarm_sizes, "connections_measure": self.connections_measure,
+                             "avg_clustering_measure": self.avg_clustering_measure}
+        self.name = nme
+
+    def reset(self):
+        self.swarm_sizes = []
+        self.connections_measure = []  # = (num connections in graph)/(total possible connections in graph)
+        self.avg_clustering_measure = []  # uses networkx.average_clustering()
 
     def compute_measurements(self, xlist, ylist, stateList):
         """
@@ -38,8 +46,9 @@ class Measurements:
         num_agents = len(xlist)
         G = dok_matrix((num_agents, num_agents), dtype=int)
         for i in range(num_agents):
-            for j in range(i+1, num_agents):
-                if stateList[i] == stateList[j] and (np.sqrt((xlist[i]-xlist[j])**2+(ylist[i]-ylist[j])**2)) < self.close_dist:
+            for j in range(i + 1, num_agents):
+                if stateList[i] == stateList[j] and (
+                np.sqrt((xlist[i] - xlist[j]) ** 2 + (ylist[i] - ylist[j]) ** 2)) < self.close_dist:
                     # if (agents_list[i].state.__class__ != agents_list[j].state.__class__
                     #     or np.sqrt((agents_list[i].location[0] - agents_list[j].location[0]) ** 2 + (
                     #         agents_list[i].location[1] - agents_list[j].location[1]) ** 2) > self.close_dist):
@@ -47,28 +56,36 @@ class Measurements:
                     G[j, i] = 1
 
         self.swarm_sizes.append(num_agents)
-        self.connections_measure.append(G.sum()/num_agents**2)
+        self.connections_measure.append(G.sum() / num_agents ** 2)
         self.avg_clustering_measure.append(nx.average_clustering(nx.from_scipy_sparse_matrix(G)))
-    def GraphAllMeasurements(self, xPos, yPos, states, tickTotal):
-        #TODO check to make sure that they match up.
-        for i in range(tickTotal):
-            self.computeMeasurements(xPos[i],yPos[i], states[i])
 
-    #up to 4 plots, x represents ticks, y is a dictionary, key is label, value is list
+    def GraphComputeAllMeasurements(self, xPos, yPos, states, tickTotal):
+        # TODO check to make sure that they match up.
+        for i in range(tickTotal):
+            self.compute_measurements(xPos[i], yPos[i], states[i])
+        print('completed measurements, graphing now')
+        if not os.path.exists(self.name):
+            os.makedirs(self.name)
+        x = np.linspace(0, tickTotal, tickTotal)
+        # for key,value in self.measurements:
+        # 	plot(x,)
+        self.plot(x, self.measurements, self.name)
+        self.reset()
+
+        # up to 4 plots, x represents ticks, y is a dictionary, key is label, value is list of y values
+
     def plot(self, x, data, name):
-        i=1
+        i = 1
         plt.figure(1)
-        for label, y in data:
-            plt.subplot(22+i)
+        for label, y in data.items():
+            plt.subplot(220 + i)
             plt.plot(x, y)
             plt.ylabel(label)
+            i += 1
 
         plt.suptitle(name)
-        plt.savefig('data/' + data['name'])
+        plt.savefig('data/' + self.name)
 
         plt.show()
         plt.cla()  # which clears data but not axes
         plt.clf()  # which clears data and axes
-
-
-
