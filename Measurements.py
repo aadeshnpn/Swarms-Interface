@@ -25,6 +25,18 @@ class Measurements:
         self.measurements = {"swarm_sizes": self.swarm_sizes, "connections_measure": self.connections_measure,
                              "avg_clustering_measure": self.avg_clustering_measure}
         self.name = nme
+        self.xPos = None
+        self.yPos = None
+        self.states = None
+        self.ticks = None
+
+    def update(self,name,close_dist,xPos,yPos,states,tickTotal):
+        self.xPos = xPos
+        self.yPos = yPos
+        self.name = name
+        self.close_dist = close_dist
+        self.states = states
+        self.ticks = tickTotal
 
     def reset(self):
         self.swarm_sizes = []
@@ -59,14 +71,14 @@ class Measurements:
         self.connections_measure.append(G.sum() / num_agents ** 2)
         self.avg_clustering_measure.append(nx.average_clustering(nx.from_scipy_sparse_matrix(G)))
 
-    def GraphComputeAllMeasurements(self, xPos, yPos, states, tickTotal):
+    def GraphComputeAllMeasurements(self):
         # TODO check to make sure that they match up.
-        for i in range(tickTotal):
-            self.compute_measurements(xPos[i], yPos[i], states[i])
+        for i in range(self.ticks):
+            self.compute_measurements(self.xPos[i], self.yPos[i], self.states[i])
         print('completed measurements, graphing now')
         if not os.path.exists(self.name):
             os.makedirs(self.name)
-        x = np.linspace(0, tickTotal, tickTotal)
+        x = np.linspace(1, self.ticks, self.ticks)
         # for key,value in self.measurements:
         # 	plot(x,)
         self.plot(x, self.measurements, self.name)
