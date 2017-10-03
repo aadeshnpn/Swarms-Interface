@@ -48,27 +48,24 @@ class Measurements:
         self.close_dist = close_dist
         self.states = states
         self.ticks = tickTotal
-        self.influence = influence
-
+        self.influence =influence
+        self.measurements["influence"]= self.influence
     def reset(self):
         self.swarm_sizes = []
         self.connections_measure = []  # = (num connections in graph)/(total possible connections in graph)
         self.avg_clustering_measure = []  # uses networkx.average_clustering()
+        self.influence = []
+        self.measurements["influence"] = self.influence
         self.influenceMean = 0
         self.connectionMean = 0
         self.clusteringMean = 0
 
-    def f1(matrix):
-        matrix*self.swarm_sizes
+    def f1(self, matrix):
+        return matrix*self.swarm_sizes
 
-    def f2():
-        np.power(matrix,self.swarm_sizes)
+    def f2(self, matrix):
+        return np.power(matrix,self.swarm_sizes)
 
-    def f3():
-        pass
-
-    def f4():
-        pass
 
 
     def compute_measurements(self, xlist, ylist, stateList):
@@ -89,28 +86,27 @@ class Measurements:
         for i in range(num_agents):
             for j in range(i + 1, num_agents):
                 if stateList[i] == stateList[j] and (
-                # np.sqrt((xlist[i] - xlist[j]) ** 2 + (ylist[i] - ylist[j]) ** 2)) < self.close_dist:
-                #     G[i, j] = 1
-                #     G[j, i] = 1
-                if (stateList[i] != stateList[j] or np.sqrt((xlist[i] - xlist[j]) ** 2 + (ylist[i] - ylist[j]) ** 2) > self.close_dist):
-                    G2[i,j] = 1
-                    G2[i,j] = 1
+                np.sqrt((xlist[i] - xlist[j]) ** 2 + (ylist[i] - ylist[j]) ** 2)) < self.close_dist:
+                    G[i, j] = 1
+                    G[j, i] = 1
+                # if (stateList[i] != stateList[j] or np.sqrt((xlist[i] - xlist[j]) ** 2 + (ylist[i] - ylist[j]) ** 2) > self.close_dist):
+                #     G2[i,j] = 1
+                #     G2[i,j] = 1
         self.swarm_sizes.append(num_agents)
-        self.connections_measure.append(G2.sum() / num_agents ** 2)
-        self.avg_clustering_measure.append(nx.average_clustering(nx.from_scipy_sparse_matrix(G2)))
+        self.connections_measure.append(G.sum() / num_agents ** 2)
+        self.avg_clustering_measure.append(nx.average_clustering(nx.from_scipy_sparse_matrix(G)))
 
     def GraphComputeAllMeasurements(self):
         # TODO check to make sure that they match up.
         for i in range(self.ticks):
             self.compute_measurements(self.xPos[i], self.yPos[i], self.states[i])
         print('completed measurements, graphing now')
-        
         self.connections_measure = self.f1(np.array(self.connections_measure))
         self.avg_clustering_measure = self.f1(np.array(self.avg_clustering_measure))
 
-        self.connectionMean = np.mean(self.connections_measure)/self.ticks
-        self.clusteringMean = np.mean(self.avg_clustering_measure)/self.ticks
-        self.influenceMean = np.mean(self.influence)/self.influence
+        self.connectionMean = np.mean(self.connections_measure)
+        self.clusteringMean = np.mean(self.avg_clustering_measure)
+        self.influenceMean = np.mean(self.influence)
 
         #TODO somehow figure out how to run these functions on the numpy arrays
         #TODO calculate the averages of each simulation.
@@ -120,7 +116,8 @@ class Measurements:
         #     os.makedirs(self.name)
         x = np.linspace(1, self.ticks, self.ticks)
         self.plot(x, self.measurements, self.name)
-        if not self.measurements2
+        if len(self.measurements2) > 0:
+            print('doing measurements 2')
             self.plot(x, self.measurements2, self.name)
         print("clustering mean: ", self.clusteringMean)
         print("influence mean: ", self.influenceMean)
@@ -133,6 +130,9 @@ class Measurements:
         i = 1
         plt.figure(1)
         for label, y in data.items():
+            # print(label)
+            # print(len(x))
+            # print(len(y))
             plt.subplot(220 + i)
             plt.plot(x, y)
             plt.ylabel(label)
