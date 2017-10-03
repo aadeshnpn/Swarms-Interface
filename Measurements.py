@@ -22,26 +22,54 @@ class Measurements:
         self.swarm_sizes = []
         self.connections_measure = []  # = (num connections in graph)/(total possible connections in graph)
         self.avg_clustering_measure = []  # uses networkx.average_clustering()
+        self.influence = []
+
+        #keep self.measurments at 4 or less for graphing purposes
         self.measurements = {"swarm_sizes": self.swarm_sizes, "connections_measure": self.connections_measure,
-                             "avg_clustering_measure": self.avg_clustering_measure}
+                             "avg_clustering_measure": self.avg_clustering_measure, "influence": self.influence}
+        #Use another one instead
+
+        self.measurements2 = {}
         self.name = nme
         self.xPos = None
         self.yPos = None
         self.states = None
         self.ticks = None
+        self.influenceMean = 0
+        self.connectionMean = 0
+        self.clusteringMean = 0
 
-    def update(self,name,close_dist,xPos,yPos,states,tickTotal):
+
+
+    def update(self,name,close_dist,xPos,yPos,states,tickTotal, influence):
         self.xPos = xPos
         self.yPos = yPos
         self.name = name
         self.close_dist = close_dist
         self.states = states
         self.ticks = tickTotal
+        self.influence = influence
 
     def reset(self):
         self.swarm_sizes = []
         self.connections_measure = []  # = (num connections in graph)/(total possible connections in graph)
         self.avg_clustering_measure = []  # uses networkx.average_clustering()
+        self.influenceMean = 0
+        self.connectionMean = 0
+        self.clusteringMean = 0
+
+    def f1(matrix):
+        matrix*self.swarm_sizes
+
+    def f2():
+        np.power(matrix,self.swarm_sizes)
+
+    def f3():
+        pass
+
+    def f4():
+        pass
+
 
     def compute_measurements(self, xlist, ylist, stateList):
         """
@@ -57,35 +85,50 @@ class Measurements:
 
         num_agents = len(xlist)
         G = dok_matrix((num_agents, num_agents), dtype=int)
+        G2 = dok_matrix((num_agents, num_agents), dtype=int)
         for i in range(num_agents):
             for j in range(i + 1, num_agents):
                 if stateList[i] == stateList[j] and (
-                np.sqrt((xlist[i] - xlist[j]) ** 2 + (ylist[i] - ylist[j]) ** 2)) < self.close_dist:
-                    # if (agents_list[i].state.__class__ != agents_list[j].state.__class__
-                    #     or np.sqrt((agents_list[i].location[0] - agents_list[j].location[0]) ** 2 + (
-                    #         agents_list[i].location[1] - agents_list[j].location[1]) ** 2) > self.close_dist):
-                    G[i, j] = 1
-                    G[j, i] = 1
-
+                # np.sqrt((xlist[i] - xlist[j]) ** 2 + (ylist[i] - ylist[j]) ** 2)) < self.close_dist:
+                #     G[i, j] = 1
+                #     G[j, i] = 1
+                if (stateList[i] != stateList[j] or np.sqrt((xlist[i] - xlist[j]) ** 2 + (ylist[i] - ylist[j]) ** 2) > self.close_dist):
+                    G2[i,j] = 1
+                    G2[i,j] = 1
         self.swarm_sizes.append(num_agents)
-        self.connections_measure.append(G.sum() / num_agents ** 2)
-        self.avg_clustering_measure.append(nx.average_clustering(nx.from_scipy_sparse_matrix(G)))
+        self.connections_measure.append(G2.sum() / num_agents ** 2)
+        self.avg_clustering_measure.append(nx.average_clustering(nx.from_scipy_sparse_matrix(G2)))
 
     def GraphComputeAllMeasurements(self):
         # TODO check to make sure that they match up.
         for i in range(self.ticks):
             self.compute_measurements(self.xPos[i], self.yPos[i], self.states[i])
         print('completed measurements, graphing now')
-        if not os.path.exists(self.name):
-            os.makedirs(self.name)
+        
+        self.connections_measure = self.f1(np.array(self.connections_measure))
+        self.avg_clustering_measure = self.f1(np.array(self.avg_clustering_measure))
+
+        self.connectionMean = np.mean(self.connections_measure)/self.ticks
+        self.clusteringMean = np.mean(self.avg_clustering_measure)/self.ticks
+        self.influenceMean = np.mean(self.influence)/self.influence
+
+        #TODO somehow figure out how to run these functions on the numpy arrays
+        #TODO calculate the averages of each simulation.
+
+
+        # if not os.path.exists(self.name):
+        #     os.makedirs(self.name)
         x = np.linspace(1, self.ticks, self.ticks)
-        # for key,value in self.measurements:
-        # 	plot(x,)
         self.plot(x, self.measurements, self.name)
+        if not self.measurements2
+            self.plot(x, self.measurements2, self.name)
+        print("clustering mean: ", self.clusteringMean)
+        print("influence mean: ", self.influenceMean)
+        print("connection mean: ", self.connectionMean)
+
         self.reset()
 
         # up to 4 plots, x represents ticks, y is a dictionary, key is label, value is list of y values
-
     def plot(self, x, data, name):
         i = 1
         plt.figure(1)
