@@ -1,6 +1,7 @@
 from Environment import *
 from beeCode.agent.uavAgent import *
 from beeCode.agent.evader import *
+from beeCode.agent.humanAgent import *
 from beeCode.uavHubController import UavHubController
 import logging
 class BeeEnvironment(Environment):
@@ -46,8 +47,10 @@ class BeeEnvironment(Environment):
         #    self.create_t_uav(z)
         for x in range(0, 5):
             self.create_uav(x)
-        for y in range(5, 10):
+        for y in range(5, 6):
             self.create_evader(y)
+        for z in range(6,7):
+            self.create_human_truck(z)
         #self.agents[str(-1)].counter = -100000
         #self.agents[str(-2)].counter = 100000
         #self.agents[str(-2)].velocity *= 1
@@ -62,7 +65,11 @@ class BeeEnvironment(Environment):
         agent_id = str(agentId)
         evader = Evader(self, agent_id, Evading(None), self.parameters)
         self.agents[agent_id] = evader
-
+    def create_human_truck(self, agentId):
+        agent_id = str(agentId)
+        human_truck = HumanTruck(self, agent_id, Human_Searching(None), self.parameters)
+        human_truck.location = [-50,-50]
+        self.agents[agent_id] = human_truck
     #could use one more layer of abstraction, create_agent which accepts reference to newly created object
     def create_uav(self, agentId):
         agent_id = str(agentId)

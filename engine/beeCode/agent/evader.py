@@ -16,8 +16,8 @@ class Evader(Agent):
 
     def __init__(self, environment, agentId, initialstate, params, count=1000):
         super().__init__(environment, agentId, initialstate, params)
-        self.velocity = self.parameters["Velocity"] * .95
-        self.location = [np.random.random()*800 - 400, 00*np.random.random() + 800 ]
+        self.velocity = self.parameters["Velocity"] * .1
+        self.location = [100,100]#[np.random.random()*800 - 400, 00*np.random.random() + 800 ]
         #UAV_Patrolling
         self.transitionTable = {
         }
@@ -33,7 +33,7 @@ class Evading(State):
         pass
 
     def act(self, agent):
-        agent.direction = 1.5*3.141592
+        agent.direction = np.random.normal(agent.direction, .01)
 
     def update(self, agent):
         return None
