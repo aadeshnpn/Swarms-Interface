@@ -7,7 +7,6 @@ let dataSchema = Schema
   name: String,
   date: String,
   totalTicks: Number,
-  influence: [Number],
   xPos: [[Number]],
   yPos: [[Number]]
 });

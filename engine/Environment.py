@@ -42,7 +42,7 @@ class Environment(ABC):
     def __init__(self, file_name):
 
         if (not args.seed):
-            self.seed = np.random.randint(np.iinfo(np.uint32).max)
+            self.seed = np.random.randint(np.iinfo(np.uint32).max, dtype=np.int64)
         else:
             self.seed = args.seed
 

@@ -218,12 +218,13 @@ require('sticky-cluster')(function (callback)
         redisClient.getAsync(`sim:${this.simId}:info`)
         .then(infoStr =>
         {
+          if(this.options.model =="bee"){
             const info = JSON.parse(infoStr);
 
             let options = info.options;
 
             data = data.data;
-            let simData = new Models.simData({
+            let simData = new Models.posSimData({
                 "name": info.options.name,
                 "date": data.date,
                 "totalTicks": data.totalTicks,
@@ -251,6 +252,7 @@ require('sticky-cluster')(function (callback)
                 if(err) return console.log(err);
                 });
             console.log('saved to database');
+          }
 
          });
 
