@@ -12,10 +12,14 @@ class BeeEnvironment(Environment):
         self.info_stations = []
         self.number_of_agents = 100
         self.sites = []
+        self.clues = []
         if args.agentNum:
             self.number_of_agents = args.agentNum
 
         super().__init__(file_name)
+
+    def addClue(self, clue):
+        self.clues.append(clue)
 
     def init_hubController(self):
         self.hubController = UavHubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self,

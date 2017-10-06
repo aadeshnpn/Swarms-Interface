@@ -1,6 +1,7 @@
 from .stateMachine.StateMachine import StateMachine
 from .stateMachine.state import State
 from .abstractAgent import *
+from copy import deepcopy
 import numpy as np
 
 class Evader(Agent):
@@ -28,16 +29,27 @@ class Evader(Agent):
 class Evading(State):
     def __init__(self, agent=None):
         self.name = "Evading"
-
+        self.clueTimer = 100
     def sense(self, agent, environment):
         pass
 
     def act(self, agent):
         agent.direction = np.random.normal(agent.direction, .01)
-
+        if(self.clueTimer < 0):
+            self.clueTimer = 100
+            agent.environment.addClue(Clue(deepcopy(agent.location), agent.direction))
+        self.clueTimer -= 1
     def update(self, agent):
         return None
 
+
+class Clue:
+    def __init__(self, location, direction):
+        self.location = location
+        self.probOfDetection = 1.0
+        self.direction = direction
+        #TODO: varying rates of detection (dogs can really easily find somethings, whereas helicopters can't see things like a broken branch at eye level)
+        #TODO: (possible) (varying) decay over time
 '''
 class Caught(State):
     def __init__(self, agent=None):

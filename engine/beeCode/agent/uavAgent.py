@@ -177,7 +177,7 @@ class UAV_PheromonePatrol(UAV_State):
             if(n.state.__class__.__name__ == "UAV_PheromonePatrol"):
                 if(agent.timer2 < 1):
                     agent.timer2 = 100
-                    eprint("UAV encountered another patroller")
+                    #eprint("UAV encountered another patroller")
 
         if(agent.timer2 == 100 or np.linalg.norm(agent.destination - agent.location) < 10):
             agent.node.markAsVisited()
