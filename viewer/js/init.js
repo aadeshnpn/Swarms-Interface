@@ -30,6 +30,7 @@ var obstacle = document.getElementById("obstacle");
 
 var finishedDrawing = true;
 
+
 // In order to associate a client with a specific engine process,
 // the server sends us a unique id to send back once socket.io has
 // established a connection
@@ -59,6 +60,8 @@ socket.on('update', function(worldUpdate)
       canvas.setAttribute("width", world.width);
       canvas.setAttribute("height", world.height);
 
+
+
       // make sure the canvas doesn't get cut off on the screen
       document.getElementById("canvasDiv").style.width = world.width + "px";
 
@@ -68,6 +71,24 @@ socket.on('update', function(worldUpdate)
       // request that the browser call the draw() function when its ready for
       // the next animation frame
       window.requestAnimationFrame(draw);
+      fogBlockSize= 10;
+      fogBlock    = [];
+      var fogX=0;
+      var fogY=0;
+      //console.log(((this.width/this.fogBlockSize)*(this.height/this.fogBlockSize)))
+      for (var i=0; i<(world.height/fogBlockSize);i++)
+      {
+        for(var j=0;j<(world.width/fogBlockSize);j++)
+        {
+
+            fogBlock.push(new Fog(fogX,fogY,fogBlockSize));
+
+          fogX+=fogBlockSize;
+        }
+        fogX=0;
+        fogY+=fogBlockSize;
+      }
+      //console.log(fogBlock)
    }
    else if (finishedDrawing)
    {
@@ -88,17 +109,34 @@ socket.on('update', function(worldUpdate)
    ui.on(worldUpdate);
 });
 
+
 function draw()
 {
+   //console.log(window.screen.width)
+   //console.log(window.screen.height)
+
+   var sliderVal=document.getElementById('myRange').value;
+   //console.log(sliderVal)
+   //console.log(sliderVal)
    finishedDrawing = false;
    // we draw to the 2d context, not the canvas directly
    var ctx = canvas.getContext("2d");
-
+   var image = document.getElementById('source');
+   //console.log(image)
    // clear everything
    ctx.clearRect(-world.x_limit, -world.y_limit, world.width, world.height);
    ctx.save();
-   ctx.fillStyle = "rgb(229, 229, 229)";
-   ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
+
+
+    ctx.fillStyle = "rgb(100, 100, 100)";
+    ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
+   //Draw the background image
+   ctx.globalAlpha = sliderVal/100;
+   ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height)
+   ctx.globalAlpha = 1;
+
+
+
    ctx.restore();
 
    world.draw(ctx, debug, showAgentStates); // move to update path rather than 1/60

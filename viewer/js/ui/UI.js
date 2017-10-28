@@ -15,7 +15,7 @@ class UI
       this.canvasElems.push( new BaitBombGhost (this) );
       this.canvasElems.push( new MissionLayer  (this) );
       this.canvasElems.push( new StateBubbles  (this) );
-
+      
       this.documentElems.push( new DebugParams       (this) );
       this.documentElems.push( new UIParams			  (this) );
       this.documentElems.push( new SitePriorityMeters(this) );

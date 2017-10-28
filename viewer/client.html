@@ -13,17 +13,64 @@
    </head>
 
    <body>
+     <div>
+     <table id="beeStats">
+     <tr><td id="deadBees">Estimated Dead: 0 </td>
+     <td id="turns">total turns: 0 </td>
+     <td id="stateChanges">total state changes: 0 </td>
+     <td id="influenceTurns"> influenced turns: 0 </td>
+     <td id="influenceChanges">influenced state Changes: 0 </td></tr>
+     </table>
+     <br>
+   </div>
+   <div id="debugArea" class="debug">
+      <div id="debugTools" class="debugPane">
 
-      <div id="canvasDiv" class="canvas">
+         <button id="buttonPausePlay">Pause</button>
+         <button id="buttonRestart">Restart</button>
+         <button id="buttonUpdateDebugParams">Update</button>
+         <div id="parameters"></div>
+         <label>FPS cap<input name="uiFps" value="100" min="1" type="number"></label>
+         <div id="debugParams"></div>
+      </div>
+   </div>
+
+
+      <div id="canvasDiv" class="canvas" >
          <canvas id="canvas"></canvas>
+         <div style="display:none;">
+           <img id="source" src="/img/background.jpg" >
+         </div>
+
+         <div id="showHide">
+
+           <button id="sideWaysText"><< Agent Info <<</button><br>
+
+         </div>
+         <div id= "AgentInfo">
+
+           <div id="agentLoc">
+             <h4 style="overflow-y=hidden;">Information</h4>
+             <table id="infoTable" style="overflow-y=hidden;">
+               <tr id="infoTableHeaders"></tr>
+             </table>
+           </div>
+
+         </div>
+
       </div>
-      <div style="float: right">
-      <p> <b>Chatroom </b></p>
-      <textarea id="chatwindow" rows="10" cols="80" readonly></textarea><br>
-      <input id="chatmsg" type="text" size="80" maxlength="80" onkeyup="" placeholder="message">
-      <button id="buttonSend" style="cursor:pointer;border:1px solid gray;">Send</button><br>
+
+      <button id="sideWaysTextChat"><< Chat Window <<</button><br>
+      <div id="chatArea"  >
+        <div id="chatTitle"><h2 > <b>Chatroom </b></h2></div>
+        <div id="chatwindow"></div><br>
+        <form>
+          <input id="userName" type="text" size="82" maxlength="82" onkeyup="" placeholder="Name" > <br>
+          <input id="chatmsg" type="text" size="73" maxlength="73" onkeyup="" placeholder="Message">
+          <input type="submit" value ="Submit" id="buttonSend" style="cursor:pointer;border:1px solid gray;"><br>
+        </form>
       </div>
-      <hr/>
+
       <button id="buttonBugBait" style = "display:none">Bug Bait</button>
       <button id="buttonBugBomb" style = "display:none">Bug Bomb</button>
       <!--<div id="sitePriorityControls">
@@ -32,55 +79,21 @@
          <label>Prefer Small<input name="size"     type="range" min="-1" max="1" step="0.01" value="0">Prefer Large</label><br/>
          <label>Low site quality Preference<input name="qVal"     type="range" min="-1" max="1" step="0.01" value="0">Need high site quality </label>
       </div>-->
-      <p id="deadBees">Estimated Dead: 0 </p>
-      <p id="turns">total turns: 0 </p>
-      <p id="stateChanges">total state changes: 0 </p>
-      <p id="influenceTurns"> influenced turns: 0 </p>
-      <p id="influenceChanges">influenced state Changes: 0 </p>
-
-
-      <label>Debug mode<input id="checkboxDebug" type="checkbox" checked></label>
+      <button id="sideWaysTextDebug">>> Debug Tools >></button><br>
+      <div id="slidecontainer">
+        <input type="range" min="1" max="100" value="100" class="slider" id="myRange">
+      <!-- <div id="menuBar">
+    </div> -->
       <label class="debug">Show agent states <input id="checkboxStates" type="checkbox"></label>
       <label class="debug">Show Agents <input id="checkboxRebug" type="checkbox" checked></label>
 
-      <div id="debugArea" class="debug">
-         <div id="debugTools" class="debugPane">
-            <button id="buttonPausePlay">Pause</button>
-            <button id="buttonRestart">Restart</button>
-            <!-- TODO: make this all look nice -->
-            <div id="debugParams">
-               <!-- nothing seems to be affecting the local html page-->
-               <!--<label>Piping Threshold  <input name="beePipingThreshold"       type="number"></label> <br>
-               <label>Velocity          <input name="beeGlobalVelocity"        type="number"></label> <br>
-               <label>Explore Time      <input name="beeExploreTimeMultiplier" type="number"></label>
-               <label>Rest Time         <input name="beeRestTime"              type="number"></label>
-               <label>Dance Time        <input name="beeDanceTime"             type="number"></label>
-               <label>Observe Time      <input name="beeObserveTime"           type="number"></label>
-               <label>Site Access Time  <input name="beeSiteAccessTime"        type="number"></label>
-               <label>Site Access Radius<input name="beeSiteAccessRadius"      type="number"></label>
-               <label>Piping Timer      <input name="beePipingTimer"           type="number"></label>
-               <label>Number of Agents  <input name="numberOfAgents"           type="number"></label> -->
-               <button id="buttonUpdateDebugParams">Update</button>
-            </div>
-            <div id="UIParams">
-               <label>FPS cap           <input name="uiFps" value="100" min="1" type="number"></label>
-            </div>
-         </div>
-
-         <div id="debugSelectionInfo" class="debugPane">
-            <h4>Information</h4>
-            <table id="infoTable">
-              <tr id="infoTableHeaders"></tr>
-            </table>
-         </div>
-      </div>
-
       <div style="display: none">
-         <img id="bee"      src="/img/bee-transparent-small.png">
+         <img id="bee"      src="/img/quad.png">
          <!--<img id="bee"      src="img/dot.png">-->
-         <img id="bee-dead"      src="/img/bee-dead-transparent-small.png">
+         <img id="bee-dead"      src="/img/quad.png">
          <!--<img id="bee-dead" src="img/bee-dead-transparent-small.png">-->
          <img id="obstacle" src="/img/boulder.png">
+
       </div>
 
    </body>

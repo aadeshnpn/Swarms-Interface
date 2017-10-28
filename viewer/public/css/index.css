@@ -6,7 +6,46 @@
   margin-right: 100px;
   min-width: 400px;
   border: 1px solid #e0e0e0;
-  border-radius: 3px;
+  border-radius: 10px;
+}
+#newSim{
+  margin:auto;
+  width:50%;
+  text-align: center;
+}
+
+#newSims, #activeSim {
+  background-color: #EEECEE;
+  padding: 15px 0px;
+  box-shadow: 1px 1px 6px #888888;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+}
+label{
+  font-size: 20px;
+  font-weight:550;
+}
+input{
+
+}
+select{
+  height:25px;
+  font-size: 20px;
+}
+#activeSims{
+  margin:auto;
+  width:70%;
+
+}
+#simList{
+  margin:auto;
+  width:auto;
+
+}
+
+h1{
+  text-align: center;
+  padding: inherit;
 }
 
 table
@@ -16,6 +55,7 @@ table
 
 th, td
 {
+
   text-align: center;
 }
 
@@ -39,5 +79,5 @@ td
 
 tr:nth-of-type(even) td
 {
-  background-color: rgb(197, 216, 247);
+  background-color: rgba(197, 216, 247,.7);
 }

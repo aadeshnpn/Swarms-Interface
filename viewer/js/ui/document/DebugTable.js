@@ -44,6 +44,7 @@ class DebugTable
                   // This agent doesn't have a row in our debug table, so create one
                   if (!$(`#agentInfo${agent.id}`).length)
                   {
+                     
                      let row = $(document.createElement('tr'));
                      row.attr('id', `agentInfo${agent.id}`);
                      row.attr('class', 'agentInfo');

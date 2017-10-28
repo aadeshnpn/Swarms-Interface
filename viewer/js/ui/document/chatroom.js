@@ -11,7 +11,8 @@ class chatRoom
        console.log('chatRoom update called.');
        if(data!== this.chatHistory){
             this.chatHistory = data;
-            document.getElementById("chatwindow").value = this.chatHistory;
+            console.log(this.chatHistory)
+            document.getElementById("chatwindow").innerHTML = this.chatHistory;
        }
    }
 }

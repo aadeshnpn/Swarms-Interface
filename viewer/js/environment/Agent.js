@@ -17,9 +17,9 @@ class Agent
   {
     if (!debug)
       return;
-      
-    ctx.save();
 
+    ctx.save();
+    //console.log(this.x)
     // move the drawing context to the agent's x and y coords
     ctx.translate(this.x, this.y);
 

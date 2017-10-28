@@ -27,8 +27,8 @@ class SelectionRect
 
       ctx.save();
 
-      ctx.fillStyle = "rgba(60, 181, 249, 0.2)";
-      ctx.strokeStyle = "rgb(60, 181, 249)";
+      ctx.fillStyle = "rgba(0,202,0,.5)";
+      ctx.strokeStyle = "rgba(0, 0, 0,.7)";
       ctx.lineWidth = 1;
 
       // Reset the context to canvas top-left because we have canvas-relative

@@ -25,12 +25,13 @@ class DebugParams
 
    setup(data)
    {
+      //$('#buttonUpdateDebugParams').after("<br>");
       for (let [param, val] of Object.entries(data.parameters))
       {
          var label = $("<label></label>").text(`${param}`);
-         label.append($('<input>').val(val).attr('type','number').attr('name',`${param}`));
+         label.append($('<input style="width:40%;">').val(val).attr('type','number').attr('name',`${param}`));
          label.append("<br>");
-         $('#buttonUpdateDebugParams').before(label);
+         $('#parameters').after(label);
          //$(`#debugParams input[name=${param}]`).val(val);
       }
    }

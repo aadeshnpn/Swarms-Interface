@@ -38,9 +38,14 @@ class World
   // a canvas element
   draw(ctx, debug = false, showAgentStates = false)
   {
+    var sliderVal=document.getElementById('myRange').value;
+
     // Ok so this isn't really buying us all that much simplification at this level
     // right *now*, but the point is if in the future we ever need some sort of
     // this drawn singly at a world level, it could go right here very nicely.
+    // ctx.shadowColor = 'rgba(51,51,51,.6)';
+    // ctx.shadowOffsetX = sliderVal/10;
+    // ctx.shadowBlur = 10;
 
     for (var site       of this.sites      ) { site      .draw(ctx, debug); }
     for (var obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
@@ -57,6 +62,7 @@ class World
     for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates); }
 
     for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
+    for (var fog        of fogBlock        ) { fog       .draw(this.agents); }
 
   }
 }

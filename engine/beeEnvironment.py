@@ -204,6 +204,7 @@ class BeeEnvironment(Environment):
 
 if __name__ == "__main__":
     file = "world.json"
+
     world = BeeEnvironment(os.path.join(ROOT_DIR, file))
     world.run()
 
