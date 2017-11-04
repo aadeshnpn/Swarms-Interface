@@ -24,6 +24,7 @@ class Hub
 
     ctx.beginPath();
     ctx.arc(0, 0, radius, 0, Math.PI * 2, false);
+
     ctx.fill();
     ctx.stroke();
 

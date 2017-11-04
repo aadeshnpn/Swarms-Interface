@@ -42,7 +42,9 @@ class Environment(ABC):
     def __init__(self, file_name):
 
         if (not args.seed):
+
             self.seed = np.random.randint(np.iinfo(np.uint32).max, dtype=np.int64)
+
         else:
             self.seed = args.seed
 
@@ -118,7 +120,7 @@ class Environment(ABC):
         else:
             json_data = open(self.file_name).read()
             data = json.loads(json_data)
-
+        eprint(data)
         self.stats["world"] = data
 
         self.x_limit = data["dimensions"]["x_length"] / 2
@@ -192,7 +194,7 @@ class Environment(ABC):
                 potential_field_d) * potential_field_v  # potential field should push away from obstacles
             agent.location[1] += np.sin(potential_field_d) * potential_field_v
         elif terrain_value == -1:  # If the agent is in rough terrain, it will move at half speed
-            slow_down = .5
+            slow_down = .9
             agent.location[0] += np.cos(
                 agent.direction) * agent.velocity * slow_down  # + np.cos(potential_field_d) * potential_field_v
             agent.location[1] += np.sin(

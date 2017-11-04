@@ -478,7 +478,7 @@ require('sticky-cluster')(function (callback)
   });
 
   // On a request for 'client.js', minify and concat all the relevant scripts, then
-  // serve it
+  // serve it <--- Gives one centralized location for the client Javascript Code
   app.get('/client.js', function(req, res)
   {
     minifier.minify(
@@ -520,6 +520,7 @@ require('sticky-cluster')(function (callback)
   // On any new connection, we're passed a socket object representing that
   // that specific connection. Any socket specific setup has to be done on that
   // object, not the global io object
+
   io.on('connection', function(socket)
   {
     // We only need to set up the client here; it will take care of other events,

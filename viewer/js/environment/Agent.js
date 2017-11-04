@@ -10,13 +10,18 @@ class Agent
     this.potentialSite =  agentJson.potential_site;
     this.isAlive       =  agentJson.live;
     this.qVal          =  agentJson.qVal;
-    Agent.stateColors  = {}
+    Agent.stateColors  = {};
+    this.lastLocations = [];
   }
 
   draw(ctx, debug = false, showAgentStates = false)
   {
     if (!debug)
       return;
+    this.lastLocations.push({
+      x:this.x,
+      y:this.y
+    })
 
     ctx.save();
     //console.log(this.x)
