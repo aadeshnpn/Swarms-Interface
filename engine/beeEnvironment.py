@@ -8,7 +8,8 @@ import time
 measurer = Measurements(5) # Agents are connected if they are in the same state and distance 5 away from each other
 class BeeEnvironment(Environment):
     def __init__(self, file_name):
-        eprint("file_name = " + str(file_name))
+        eprint("\n \n \n \n \nStarting Bee Simulation \n \n \n \n")
+        #eprint("file_name = " + str(file_name))
         self.info_stations = []
         self.number_of_agents = 100
         self.sites = []

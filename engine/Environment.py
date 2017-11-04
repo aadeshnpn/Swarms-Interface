@@ -120,7 +120,7 @@ class Environment(ABC):
         else:
             json_data = open(self.file_name).read()
             data = json.loads(json_data)
-        eprint(data)
+
         self.stats["world"] = data
 
         self.x_limit = data["dimensions"]["x_length"] / 2
@@ -194,25 +194,27 @@ class Environment(ABC):
                 potential_field_d) * potential_field_v  # potential field should push away from obstacles
             agent.location[1] += np.sin(potential_field_d) * potential_field_v
         elif terrain_value == -1:  # If the agent is in rough terrain, it will move at half speed
-            slow_down = .9
+            slow_down = .5
             agent.location[0] += np.cos(
                 agent.direction) * agent.velocity * slow_down  # + np.cos(potential_field_d) * potential_field_v
             agent.location[1] += np.sin(
                 agent.direction) * agent.velocity * slow_down  # + np.sin(potential_field_d) * potential_field_v
 
-        # If the agent goes outside of the limits, it re-enters on the opposite side.
-        if agent.location[0] > self.x_limit:
+        # Postion Vector is in Radians. To reverse the agent's direction, we add PI to its direction.
+        if agent.location[0] >= self.x_limit:
             #agent.location[0] -= 2 * self.x_limit
-            agent.direction *= -1
+            agent.direction += np.pi
+            #agent.location[0]=self.x_limit -20
+
         elif agent.location[0] < self.x_limit * -1:
             #agent.location[0] += 2 * self.x_limit
-            agent.direction *= -1
-        if agent.location[1] > self.y_limit:
+            agent.direction += np.pi
+        if agent.location[1] >= self.y_limit:
             #agent.location[1] -= 2 * self.y_limit
-            agent.direction *= -1
+            agent.direction += np.pi
         elif agent.location[1] < self.y_limit * -1:
             #agent.location[1] += 2 * self.y_limit
-            agent.direction *= -1
+            agent.direction += np.pi
 
     def pause(self, json):
         self.isPaused = True
@@ -244,7 +246,7 @@ class Environment(ABC):
 
     def processMessage(self, data):
         self.chat_history += data['message'] + '\n'
-        eprint(self.chat_history)
+        #eprint(self.chat_history)
         print(json.dumps({
             "type" : "updateChat",
             "data" : self.chat_history

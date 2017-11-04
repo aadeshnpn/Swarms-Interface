@@ -80,7 +80,8 @@ require('sticky-cluster')(function (callback)
     {
       this.simId = simId;
       this.options = options;
-      console.log(this.options);
+      //Commented out to clean up console.
+      //console.log(this.options);
       this.jsonStreamParser = JSONStream.parse();
       this.outputChannel = `sim:${simId}:output`;
       this.inputChannel = `sim:${simId}:input`;
@@ -98,7 +99,7 @@ require('sticky-cluster')(function (callback)
       //bind any message from the channel to input.
 
       var info = {options: this.options, channels: {input: this.inputChannel, output: this.outputChannel, start: this.startChannel, kill: this.killChannel}};
-      console.log(this.options);
+      //console.log(this.options);
       // This probably isn't best practice, you'd really want to bring in rejson
       // or something, but because this isn't an enterprise app, I think we can
       // get away with the stringy approach
