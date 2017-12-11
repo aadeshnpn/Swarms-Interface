@@ -16,6 +16,7 @@ class beeInfo:
         self.returnedToHub = ret
         self.dead = False
         self.id= id
+
         # include a variable projecting at what time it left the hub? (add later)
     def checkOut(self, direction, state):
         self.state = state
@@ -32,6 +33,7 @@ class HubController:
         self.reset(radius, agents, environment, exploreTime)
         self.siteDistancePriority = 0
         self.siteSizePriority = 0
+
         self.no_viewer = environment.args.no_viewer
 
         environment.inputEventManager.subscribe('priorityUpdate', self.handlePriorityUpdate)
@@ -96,6 +98,7 @@ class HubController:
             bee.state = Observing(bee)
             bee.observeTransition()
         agent.state = bee.state
+
         return agent.atHub
         # TODO if explorer set a timer for it, if assessor calculate projected time
 
@@ -207,6 +210,7 @@ class HubController:
                             "agentDirections": self.directions,
                             "agentsIn": self.incoming,
                             "dead": self.deadBees
+                            #"dPos": self.dPos;
                         }
                 }
         }

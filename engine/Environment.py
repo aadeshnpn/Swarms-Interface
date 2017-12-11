@@ -1,6 +1,8 @@
 import json
 import os
 import time
+import math
+import random
 from datetime import datetime
 import numpy as np
 from abc import ABC, abstractmethod
@@ -34,6 +36,7 @@ parser.add_argument("-e", "--seed", type=int, help="Run the simulation with the 
 parser.add_argument("-p", "--pipe", type=str, help="Connect to the specified named pipe")
 parser.add_argument("-a", "--agentNum", type=int, help="specifies number of agents")
 
+
 args = parser.parse_args()
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -62,6 +65,7 @@ class Environment(ABC):
 
 
         self.args = args
+        self.wait=0;
         self.file_name = file_name
         self.x_limit = 0
         self.y_limit = 0
@@ -172,10 +176,14 @@ class Environment(ABC):
             agent.direction) * agent.velocity  # + np.sin(potential_field_d) * potential_field_v
 
         terrain_value = self.check_terrain(proposed_x, proposed_y)
-
+        self.wait+=1
         if terrain_value == 0:
             agent.location[0] = proposed_x
             agent.location[1] = proposed_y
+
+
+            #agent.append({"X":agent.location[0],"Y":agent.location[1]})
+            #eprint(agent.locationsVisited)
         elif terrain_value == -3:
             agent.location[0] = proposed_x
             agent.location[1] = proposed_y
@@ -193,6 +201,7 @@ class Environment(ABC):
             agent.location[0] += np.cos(
                 potential_field_d) * potential_field_v  # potential field should push away from obstacles
             agent.location[1] += np.sin(potential_field_d) * potential_field_v
+
         elif terrain_value == -1:  # If the agent is in rough terrain, it will move at half speed
             slow_down = .5
             agent.location[0] += np.cos(
@@ -258,7 +267,50 @@ class Environment(ABC):
     def finished(self):
         pass
 
+
     # Move all of the agents
+
+    def moveSites(self):
+        for site in self.sites:
+            random1=random.randint(0,1)
+            if random1 ==0:
+                site['velX'] -=site['acc']*.008
+            if random1 ==1:
+                site['velX'] +=site['acc']*.008
+
+            if site['velX'] >.25:
+                site['velX']=.25
+            if site['velX'] <-.25:
+                site['velX']=-.25
+
+
+            site['x']+=site['velX']
+            if site['x'] +site['radius']>= self.x_limit:
+                site['velX']*=-1
+
+            elif site['x']-site['radius'] < self.x_limit * -1:
+                site['velX']*=-1
+
+            random1=random.randint(0,1)
+            if random1 ==0:
+                site['velY'] -=site['acc']*.008
+            if random1 ==1:
+                site['velY'] +=site['acc']*.008
+
+            if site['velY'] >.25:
+                site['velY']=.25
+
+            if site['velY'] <-.25:
+                site['velY']=-.25
+
+            site['y']+=site['velY']
+
+            if site['y']+site['radius'] >= self.y_limit:
+                site['velY']*=-1
+            elif site['y']-site['radius'] < self.y_limit * -1:
+                site['velY']*=-1
+
+
     def run(self):
 
         if (not args.no_viewer):
@@ -284,7 +336,9 @@ class Environment(ABC):
         self.stats["deadAgents"] = 0
 
         while True:
+            #self.moveSites()
             try:
+
                 if args.tick_limit != None and self.stats["ticks"] >= args.tick_limit:
                     self.stats["didNotFinish"] = True
                     break

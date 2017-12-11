@@ -22,7 +22,6 @@ class Site
     ctx.fillStyle   = `rgba(${Math.round(255 * rVal)}, ${Math.round(255 * gVal)}, 70, 0.8)`;
     ctx.strokeStyle = "rgb(20, 20, 20)";
     ctx.translate(this.x, this.y);
-
     ctx.beginPath();
     ctx.arc(0, 0, this.radius, 0, Math.PI * 2, false);
     ctx.fill();

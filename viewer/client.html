@@ -15,11 +15,11 @@
    <body>
      <div>
      <table id="beeStats">
-     <tr><td id="deadBees">Estimated Dead: 0 </td>
-     <td id="turns">total turns: 0 </td>
-     <td id="stateChanges">total state changes: 0 </td>
-     <td id="influenceTurns"> influenced turns: 0 </td>
-     <td id="influenceChanges">influenced state Changes: 0 </td></tr>
+     <tr><td id="deadBees">Estimated Dead: 0 <br>   <progress value="22" max="100" id="deadBeeProgress"></progress> </td>
+     <!-- <td id="turns">total turns: 0 </td> -->
+     <!-- <td id="stateChanges">total state changes: 0 </td> -->
+     <!-- <td id="influenceTurns"> influenced turns: 0 </td> -->
+     <!-- <td id="influenceChanges">influenced state Changes: 0 </td></tr> -->
      </table>
      <br>
    </div>
@@ -38,29 +38,24 @@
 
       <div id="canvasDiv" class="canvas" >
          <canvas id="canvas"></canvas>
-         <div style="display:none;">
-           <img id="source" src="/img/background.jpg" >
-         </div>
 
-         <div id="showHide">
 
-           <button id="sideWaysText"><< Agent Info <<</button><br>
 
-         </div>
-         <div id= "AgentInfo">
-
-           <div id="agentLoc">
-             <h4 style="overflow-y=hidden;">Information</h4>
-             <table id="infoTable" style="overflow-y=hidden;">
-               <tr id="infoTableHeaders"></tr>
-             </table>
-           </div>
-
-         </div>
 
       </div>
 
-      <button id="sideWaysTextChat"><< Chat Window <<</button><br>
+      <div id= "AgentInfo">
+
+        <div id="agentLoc">
+          <h4 style="overflow-y=hidden;">Information</h4>
+          <table id="infoTable" style="overflow-y=hidden;">
+            <tr id="infoTableHeaders"></tr>
+          </table>
+        </div>
+
+      </div>
+
+
       <div id="chatArea"  >
         <div id="chatTitle"><h2 > <b>Chatroom </b></h2></div>
         <div id="chatwindow"></div><br>
@@ -79,23 +74,39 @@
          <label>Prefer Small<input name="size"     type="range" min="-1" max="1" step="0.01" value="0">Prefer Large</label><br/>
          <label>Low site quality Preference<input name="qVal"     type="range" min="-1" max="1" step="0.01" value="0">Need high site quality </label>
       </div>-->
-      <button id="sideWaysTextDebug">>> Debug Tools >></button><br>
-      <div id="slidecontainer">
-        <input type="range" min="1" max="100" value="100" class="slider" id="myRange">
       <!-- <div id="menuBar">
     </div> -->
-      <label class="debug">Show agent states <input id="checkboxStates" type="checkbox"></label>
-      <label class="debug">Show Agents <input id="checkboxRebug" type="checkbox" checked></label>
+
+
+
+      <div class="menuContent">
+        <div class="menuButton"> <div id="messengerIcon"></div></div>
+        <div class="menuButton"> <div id="agentInfoIcon"></div></div>
+      </div>
+      <div class="menu">
+      </div>
+
+      <div class="optionsContent">
+        <div class="optionsButton"> <div id="debugIcon"></div></div>
+        <div class="optionsButton"> <div id="dontShowAgents"></div></div>
+        <div class="optionsButton"> <div id="backgroundTransparency"></div></div>
+        <div class="optionsButton"> <div id="dontShowAgentState"></div></div>
+      </div>
+      <div id="options"></div>
+
+          <input type="range" min="1" max="100" value="100" class="slider" id="myRange">
+
 
       <div style="display: none">
          <img id="bee"      src="/img/quad.png">
-         <!--<img id="bee"      src="img/dot.png">-->
          <img id="bee-dead"      src="/img/quad.png">
-         <!--<img id="bee-dead" src="img/bee-dead-transparent-small.png">-->
          <img id="obstacle" src="/img/boulder.png">
-
+         <img id="source" src="/img/background.jpg" >
       </div>
-      <progress value="22" max="100" id="deadBeeProgress"></progress>
+      <audio src="/sounds/openMenu.mp3" id = "audio0" type="audio/mpeg">
+      <audio src="/sounds/closeMenu.mp3" id = "audio1" type="audio/mpeg">
+
+
    </body>
 
    <script
@@ -103,7 +114,6 @@
      integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
      crossorigin="anonymous">
      </script>
-   <script src="/client.js">
-     </script>
+   <script src="/client.js"></script>
 
 </html>

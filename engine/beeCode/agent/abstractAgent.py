@@ -41,6 +41,7 @@ class Agent(StateMachine): #we could use even more abstract classes... hub Agent
         agent_dict = {}
         agent_dict["x"] = self.location[0]
         agent_dict["y"] = self.location[1]
+        #agent_dict["dPos"] = self.locationsVisited
         agent_dict["id"] = self.id
         agent_dict["state"] = self.state.name
         agent_dict["direction"] = self.direction
@@ -55,7 +56,7 @@ class Agent(StateMachine): #we could use even more abstract classes... hub Agent
     def direction(self, value):
         self.__direction = value
         #self.environment.actions["turns"] += 1
-        
+
     def sense(self, environment):
         self.state.sense(self, environment)
 

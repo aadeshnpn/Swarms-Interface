@@ -38,7 +38,6 @@ require('sticky-cluster')(function (callback)
   // filesytem utils
   const fs = require('fs');
 
-
   // lets us do things like joining two paths without worrying about OS
   const path = require('path');
 
@@ -84,10 +83,10 @@ require('sticky-cluster')(function (callback)
       //console.log(this.options);
       this.jsonStreamParser = JSONStream.parse();
       this.outputChannel = `sim:${simId}:output`;
+      console.log(this.outputChannel)
       this.inputChannel = `sim:${simId}:input`;
       this.killChannel = `sim:${simId}:kill`;
       this.startChannel = `sim:${simId}:start`;
-
       this.inputListener = redisClient.duplicate();
       this.outputBroadcaster = redisClient.duplicate();
 
@@ -99,12 +98,14 @@ require('sticky-cluster')(function (callback)
       //bind any message from the channel to input.
 
       var info = {options: this.options, channels: {input: this.inputChannel, output: this.outputChannel, start: this.startChannel, kill: this.killChannel}};
+
       //console.log(this.options);
       // This probably isn't best practice, you'd really want to bring in rejson
       // or something, but because this isn't an enterprise app, I think we can
       // get away with the stringy approach
       redisClient.setAsync(`sim:${simId}:info`, JSON.stringify(info))
         .then( () => {
+
           redisClient.sadd("activeSims", `${simId}`);
         });
 
@@ -202,6 +203,7 @@ require('sticky-cluster')(function (callback)
 
         case this.startChannel:
           this.start();
+
           break;
 
         case this.killChannel:
@@ -233,6 +235,7 @@ require('sticky-cluster')(function (callback)
                 "xPos": data.xPos,
                 "yPos": data.yPos
             });
+
             // "yPos": data.yPos,
             // "states":data.states
 
@@ -260,7 +263,6 @@ require('sticky-cluster')(function (callback)
 
       }
       const str = JSON.stringify(data);
-
       this.outputBroadcaster.publish(this.outputChannel, str);
     }
 
@@ -324,6 +326,8 @@ require('sticky-cluster')(function (callback)
 
     sendUpdate(channel, data)
     {
+      //The start info and update info need to be seperated so that we can eliminate the need to recreate
+      //a new world object every time through the init draw function.
       const obj = JSON.parse(data);
       this.socket.emit(obj.type, obj);
     }
@@ -393,6 +397,7 @@ require('sticky-cluster')(function (callback)
       {
         if (inUse)
         {
+          console.log("Simulation already exists")
           res.status(400).send("Simulation already exists");
         }
         else
@@ -408,6 +413,7 @@ require('sticky-cluster')(function (callback)
   // Route for connecting to a specific simulation
   app.get('/sims/:id', function(req, res)
   {
+    console.log(req.params.id);
     const simId = req.params.id;
     let simInfo;
 

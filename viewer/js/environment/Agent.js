@@ -14,14 +14,12 @@ class Agent
     this.lastLocations = [];
   }
 
-  draw(ctx, debug = false, showAgentStates = false)
+  draw(ctx, debug = false, showAgentStates = false,hub)
   {
+
     if (!debug)
       return;
-    this.lastLocations.push({
-      x:this.x,
-      y:this.y
-    })
+
 
     ctx.save();
     //console.log(this.x)
@@ -31,6 +29,7 @@ class Agent
     ctx.save();
 
     ctx.rotate(this.rotation);
+
     ctx.drawImage(bee, -bee.width/2, -bee.height/2);
 
 

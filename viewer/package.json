@@ -18,7 +18,8 @@
     "shortid": "^2.2.6",
     "socket.io": "^1.7.4",
     "sticky-cluster": "^0.3.2",
-    "sticky-session": "^1.1.2"
+    "sticky-session": "^1.1.2",
+    "window-size": "^1.1.0"
   },
   "devDependencies": {},
   "scripts": {

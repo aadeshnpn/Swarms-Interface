@@ -39,6 +39,7 @@ class UI
 
    on(msg)
    {
+
      for (let cb of this.eventCallbacks[msg.type])
 
         cb(msg.data);

@@ -16,25 +16,37 @@
       "x":550,
       "y":-300,
       "radius":7,
-      "q_value":0.9
+      "q_value":0.9,
+      "acc":2,
+      "velX":0,
+      "velY":0
     },
     {
       "x":500,
       "y":350,
       "radius":7,
-      "q_value":0.4
+      "q_value":0.4,
+      "acc":2,
+      "velX":0,
+      "velY":0
     },
     {
       "x":-240,
       "y":-230,
       "radius":7,
-      "q_value":0.6
+      "q_value":0.6,
+      "acc":2,
+      "velX":0,
+      "velY":0
     },
     {
       "x":-650,
       "y":270,
       "radius":7,
-      "q_value":0.5
+      "q_value":0.5,
+      "acc":2,
+      "velX":0,
+      "velY":0
     }
   ],
 

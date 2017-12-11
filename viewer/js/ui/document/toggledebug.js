@@ -1,31 +1,69 @@
-const rebugCheckbox = document.getElementById('checkboxRebug');
-const agentHide =document.getElementById('showHide');
-const showChat =document.getElementById('sideWaysTextChat');
-const debugCheckbox =document.getElementById('sideWaysTextDebug');
+const rebugCheckbox = document.getElementById('dontShowAgents');
+const agentHide =document.getElementById('agentInfoIcon');
+const showChat =document.getElementById('messengerIcon');
+const debugButton =document.getElementById('debugIcon');
+var showAgent = false;
+var showDebug = false;
+var showSlider = false;
+var showAgentInfo = false;
+var showChatWindow = false;
 
+$("#debugIcon").click(function(){
+  $('#debugArea').fadeToggle();
+  if(showDebug){
+    showDebug = false;
+  }
+  else{
+    showDebug=true;
+  }
+})
 
-var agentToggle=false;
+$("#backgroundTransparency").click(function(){
+  $('#myRange').fadeToggle();
+  if(showSlider){
+    showSlider=false;
+  }
+  else{
+    showSlider=true;
+  }
+})
+
 agentHide.addEventListener('click', function(e){
-     $('#agentLoc').toggle("slide");
+     $('#agentLoc').fadeToggle();
+     if(showAgentInfo){
+       showAgentInfo=false;
+     }
+     else{
+       showAgentInfo=true;
+     }
+
 });
 
 showChat.addEventListener('click', function(e){
-     $('#chatArea').toggle("slide");
+     $('#chatArea').fadeToggle();
+     if(showChatWindow){
+       showChatWindow=false;
+     }
+     else{
+       showChatWindow=true;
+     }
 });
 
-debugCheckbox.addEventListener('click', function(e)
+
+rebugCheckbox.addEventListener('click', function(e)
 {
-  console.log("Hey")
-      $('#debugArea').toggle("slide");
-});
-rebugCheckbox.addEventListener('change', function(e)
-{
-   if (e.target.checked)
-   {
+  if(!showAgent){
+
       debug = true;
-   }
-   else
-   {
+      showAgent= true;
+      //$('#showAgents').css('background-image', 'url("dontShowDrones.png")')
+      $('#dontShowAgents').attr('id',"showAgents")
+    }
+    else{
+      console.log("Agent Off")
       debug = false;
-   }
+      showAgent=false;
+      $('#showAgents').attr('id',"dontShowAgents")
+    }
+
 });

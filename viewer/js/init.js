@@ -7,7 +7,7 @@ var socket = io();
 var world = null;
 var clientId;
 
-var debug           = true;
+var debug           = false;
 var showAgentStates = false;
 
 // get a reference to the canvas element
@@ -56,6 +56,7 @@ socket.on('update', function(worldUpdate)
    // First update
    if (world === null)
    {
+     //console.log("HERE!")
       world = new World(worldUpdate.data);
       canvas.setAttribute("width", world.width);
       canvas.setAttribute("height", world.height);
@@ -92,7 +93,7 @@ socket.on('update', function(worldUpdate)
    }
    else if (finishedDrawing)
    {
-      world = new World(worldUpdate.data); //try implementing an array and stack
+      world.update(worldUpdate.data) //= new World(worldUpdate.data); //try implementing an array and stack
       //you'd push worldupdate.data into array, and then pop it off the stack when you need it
       // "need it" means you've finished a draw cycle, which is happening in browser
       // if you want to keep everything in draw function like it is, make the array and stack
@@ -108,62 +109,45 @@ socket.on('update', function(worldUpdate)
 
    ui.on(worldUpdate);
 });
+var ctx;
 
-
-function draw()
+function draw(environment)
 {
-   //console.log(window.screen.width)
-   //console.log(window.screen.height)
-
    var sliderVal=document.getElementById('myRange').value;
-   //console.log(sliderVal)
-   //console.log(sliderVal)
    finishedDrawing = false;
    // we draw to the 2d context, not the canvas directly
-   var ctx = canvas.getContext("2d");
+   ctx = canvas.getContext("2d");
    var image = document.getElementById('source');
    //console.log(image)
    // clear everything
    ctx.clearRect(-world.x_limit, -world.y_limit, world.width, world.height);
    ctx.save();
+   ctx.fillStyle = "rgb(100, 100, 100)";
+   ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
 
-
-    ctx.fillStyle = "rgb(100, 100, 100)";
-    ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
-   //Draw the background image
    ctx.globalAlpha = sliderVal/100;
    ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height)
    ctx.globalAlpha = 1;
 
-
-
    ctx.restore();
 
-   world.draw(ctx, debug, showAgentStates); // move to update path rather than 1/60
+   world.draw(ctx, debug, showAgentStates,environment); // move to update path rather than 1/60
    ui.draw(ctx, debug);
 
    finishedDrawing = true;
 
    // maintain a maximum rate of 60fps
-   window.setTimeout(() => { window.requestAnimationFrame(draw)}, 1000 / 60);
+
+   window.setTimeout(() => { window.requestAnimationFrame(draw)}, 1000 / 100);
    //window.requestAnimationFrame(draw);
 }
 
 // TODO: I don't like where this is going, I should be able to make one subscription
 //       to the socket and let the UI class sort out all the details
-
-socket.on('updateMission', function(data)
-{
-  ui.on(data);
-});
-socket.on('baitToggle', function(data){
-  document.getElementById('buttonBugBait').style.display = 'block';
-});
-socket.on('bombToggle', function(data){
-  document.getElementById('buttonBugBomb').style.display = 'block';
-});
+socket.on('baitToggle'          , function(data) { document.getElementById('buttonBugBait').style.display = 'block';});
+socket.on('bombToggle'          , function(data) { document.getElementById('buttonBugBomb').style.display = 'block';});
+socket.on('updateMission'       , function(data) { ui.on(data) });
 socket.on('hubControllerToggle' , function(data) { ui.on(data) });
-
 socket.on('restart'             , function(data) { ui.on(data) });
 socket.on('updateRadial'        , function(data) { ui.on(data) });
 socket.on('updateDebugParams'   , function(data) { ui.on(data) });
@@ -171,5 +155,4 @@ socket.on('updateUIParams'      , function(data) { ui.on(data) });
 socket.on('updateSitePriorities', function(data) { ui.on(data) });
 socket.on('setStates'           , function(data) { ui.on(data) });
 socket.on('stateCounts'         , function(data) { ui.on(data) });
-
 socket.on('updateChat'          , function(data) { ui.on(data) });

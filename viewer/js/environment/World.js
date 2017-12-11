@@ -6,7 +6,7 @@ class World
     this.y_limit = environmentJson.y_limit;
     this.width  = this.x_limit * 2;
     this.height = this.y_limit * 2;
-    this.hub    = new Hub(environmentJson.hub);
+    this.hub    = new Hub(environmentJson);
     this.sites       = [];
     this.obstacles   = [];
     this.traps       = [];
@@ -16,6 +16,10 @@ class World
     this.agents      = [];
     this.dead_agents = [];
     this.pheromones;
+    this.environment = environmentJson;
+    this.test =true;
+    this.time=1000
+
 
     for (var site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
     for (var obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
@@ -34,9 +38,38 @@ class World
      return {x: (x - this.x_limit), y: -(y - this.y_limit)};
   }
 
+  update(environment){
+    //Update Sites (will be implemented with moving sites)
+    // for(var i =0; i < this.sites.length;i++){
+    //   this.sites[i].x= environment.sites[i].x
+    //   this.sites[i].y= -environment.sites[i].y
+    // }
+
+    //console.log(environment.agents.length)
+
+
+    //Update Dead Agents
+    for(var i=0; i< this.sites.length;i++){
+      this.sites[i].x=environment.sites[i].x
+      this.sites[i].y=-environment.sites[i]["y"]
+    }
+    for(var i =0; i < this.dead_agents.length;i++){
+
+      this.dead_agents[i].x= environment.dead_agents[i].x
+      this.dead_agents[i].y= -environment.dead_agents[i].y
+    }
+    //Update Alive Agents
+    for(var i =0; i < this.agents.length-this.dead_agents.length;i++){
+
+      this.agents[i].x= environment.agents[i].x
+      this.agents[i].y= -environment.agents[i].y
+      this.agents[i].rotation = environment.agents[i].rotation
+    }
+
+  }
   // Draw the whole world recursively. Takes a 2dRenderingContext obj from
   // a canvas element
-  draw(ctx, debug = false, showAgentStates = false)
+  draw(ctx, debug = false, showAgentStates = false, environment)
   {
     var sliderVal=document.getElementById('myRange').value;
 
@@ -46,6 +79,7 @@ class World
     // ctx.shadowColor = 'rgba(51,51,51,.6)';
     // ctx.shadowOffsetX = sliderVal/10;
     // ctx.shadowBlur = 10;
+    //path.draw(ctx,this.environment);
 
     for (var site       of this.sites      ) { site      .draw(ctx, debug); }
     for (var obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
@@ -53,16 +87,13 @@ class World
     for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
     for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
     for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
-    //if(Math.random()<.5){
     this.pheromones.draw(ctx, debug);
-    //}
+    this.hub.draw(ctx, debug, this.agents);
 
-    this.hub.draw(ctx, debug);
-
-    for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates); }
-
+    for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
     for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
-    for (var fog        of fogBlock        ) { fog       .draw(this.agents); }
+    for (var fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
+    //for (var fog        of fogBlock        ) { fog       .draw(ctx); }
 
   }
 }

@@ -2,14 +2,54 @@ class Hub
 {
   constructor(hubJson)
   {
-    this.x      =  hubJson["x"];
-    this.y      = -hubJson["y"];
-    this.radius =  hubJson["radius"];
+    this.x      =  hubJson.hub["x"];
+    this.y      = -hubJson.hub["y"];
+    this.radius =  hubJson.hub["radius"];
+    this.paths=[]
+    for(var i=0;i <= hubJson.agents.length;i++){
+      this.paths[i]=new Array()
+    }
   }
 
-  draw(ctx, debug = false)
+  draw(ctx, debug = false, agents)
   {
     ctx.save();
+    var i=0;
+    var k=0;
+
+    for(var agent of agents){
+      if(Math.sqrt((this.x - agent.x)*(this.x - agent.x) +(this.y - agent.y)*(this.y - agent.y)) < this.radius-5){
+        //console.log("here")
+        //i is the agent id
+        //2nd parameter creates a new array for that agent
+        //3rd line copies agents last locations over to that new array
+        this.paths[i][this.paths[i].length]=new Array()
+        this.paths[i][this.paths[i].length] = agent.lastLocations.slice()
+        agent.lastLocations.splice(0,agent.lastLocations.length)
+      }
+      i++;
+    }
+
+    // console.log("Paths Length: " + this.paths.length)
+    // console.log("Paths at Index 0: " + this.paths[0].length)
+
+    for(var agentPaths of this.paths){
+      var i=0;
+      for(var agentPath of agentPaths){
+        var k=0;
+        if(agentPath.length == 0){
+          agentPaths.splice(i,1);
+        }
+        for(var path of agentPath){
+          if(path.opacity<=0){
+            agentPath.splice(k,1);
+          }
+          path.opacity=0
+        }
+        i++
+      }
+    }
+
 
     ctx.fillStyle = "rgba(242, 179, 19, 0.4)";
     ctx.strokeStyle = "rgb(242, 179, 19)";
