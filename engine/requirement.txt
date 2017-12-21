@@ -1,0 +1,8 @@
+numpy
+sympy
+RandomDict
+joblib
+scipy
+networkx
+logging
+pymongo

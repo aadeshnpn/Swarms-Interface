@@ -59,7 +59,7 @@ class Handle
 
    draw(ctx, debug = false)
    {
-      ctx.save()
+      ctx.save();
 
       ctx.strokeStyle = this.colour;
 
@@ -114,12 +114,13 @@ class Handle
 
    isHovered(x, y)
    {
-      var box = {left: this.requestedX - 5, top: this.requestedY - 5, right: this.requestedX + 5, bottom: this.requestedY + 5};
+      // use distance formula sqrt(x^2+y^2) to hover within radius
+      let dist = Math.sqrt(Math.pow(x - this.requestedX, 2) + Math.pow(y - this.requestedY, 2));
+      return dist <= 8;
 
-      if (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom)
-         return true;
-      else
-         return false;
+      // this uses a rectangle, so it's dumb
+      // var box = {left: this.requestedX - 5, top: this.requestedY - 5, right: this.requestedX + 5, bottom: this.requestedY + 5};
+      // return (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom);
    }
 }
 
@@ -136,12 +137,14 @@ class RadialControl
       this.hover = {active: true, handle: null};
       //this.hub = {x: world.hub.x, y: world.hub.y}
 
+       // create a handle for every 5th degree
       for (let i = 0; i < (360 / 5); i++)
       {
-         this.handles.push(new Handle(i * 5, this.hub, {interactive: this.interactive, colour: this.colour}) ); // we're doing it this way so eventually we can paramaterise the 5
+         // we're doing it this way so eventually we can paramaterise the 5
+         this.handles.push(new Handle(i * 5, this.hub, {interactive: this.interactive, colour: this.colour}) );
       }
 
-      this.handles[0].setPrev(this.handles[this.handles.length - 1])
+      this.handles[0].setPrev(this.handles[this.handles.length - 1]);
       this.handles[0].setNext(this.handles[1]);
 
       for (let i = 1; i < this.handles.length; i++)
@@ -184,17 +187,26 @@ class RadialControl
       }
    }
 
-   startHandleHover(e)
-   {
-      let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
-      for (let h of this.handles)
-         if (h.isHovered(worldRelative.x, worldRelative.y))
-         {
-            this.hover = {active: true, handle: h};
-            ui.requestActiveCursor(cursors.radialDrag);
-            break;
-         }
-   }
+	startHandleHover(e) {
+		let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+		/* TODO remove these two lines.
+		 * I don't know why they are here. If they are uncommented, then the hover of
+		 * the mouse is based on the center of the radial control, not the center of
+		 * the canvas (the origin). So the hover doesn't actually work with these lines.
+		 * I have left these here in case something else breaks. But as far as I can
+		 * tell, we should just remove these all together.
+		 */
+		// worldRelative.x -= world.hub.x;
+		// worldRelative.y += world.hub.y;
+
+		// let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+		for (let h of this.handles)
+			if (h.isHovered(worldRelative.x, worldRelative.y)) {
+				this.hover = {active: true, handle: h};
+				ui.requestActiveCursor(cursors.radialDrag);
+				break;
+			}
+	}
 
    onMouseDown(e)
    {
@@ -204,13 +216,12 @@ class RadialControl
       this.hover.handle = null;
    }
 
-   onMouseUp(e)
-   {
-      if (this.drag.active)
-      {
-         this.drag.active = false;
-         this.drag.handle = null;
-      }
+   onMouseUp(e) {
+      if (this.drag.active) {
+		  this.drag.active = false;
+		  this.drag.handle = null;
+		  ui.setActiveCursor(cursors.default);
+	  }
    }
 
    onMouseMove(e)
@@ -230,15 +241,15 @@ class RadialControl
       }
       else
       {
-         var angle = Math.atan2(worldRelative.y, worldRelative.x);
-         var magnitude = Math.sqrt(Math.pow(worldRelative.x, 2) + Math.pow(worldRelative.y, 2));
+         let angle = Math.atan2(worldRelative.y, worldRelative.x);
+         let magnitude = Math.sqrt(Math.pow(worldRelative.x, 2) + Math.pow(worldRelative.y, 2));
 
          if (angle < 0)
          {
             angle += Math.PI*2;
          }
 
-         var component = this.computeMouseComponent(worldRelative, this.drag.handle);
+         let component = this.computeMouseComponent(worldRelative, this.drag.handle);
 
          if (component < 1 * RadialControl.RADIUS_SCALE)
          {
@@ -269,46 +280,42 @@ class RadialControl
       }
    }
 
-   onMouseUp(e)
-   {
-      this.drag.active = false;
-      this.drag.handle = null;
-      ui.setActiveCursor(cursors.default);
-   }
+	computeMouseComponent(mouseCoords, handle) {
+		// let handleVector = {x: Math.cos(handle.r), y: -Math.sin(handle.r)};
+		let mouseMagnitude = Math.sqrt(Math.pow(mouseCoords.x, 2) + Math.pow(mouseCoords.y, 2));
+		let mouseAngle = Math.atan2(mouseCoords.y, mouseCoords.x);
 
-   computeMouseComponent(mouseCoords, handle)
-   {
-      var handleVector = {x: Math.cos(handle.r), y: -Math.sin(handle.r)};
-      var mouseMagnitude = Math.sqrt(Math.pow(mouseCoords.x, 2) + Math.pow(mouseCoords.y, 2));
-      var mouseAngle = Math.atan2(mouseCoords.y, mouseCoords.x);
+		let component = mouseMagnitude * Math.cos(mouseAngle - handle.r);
 
-      var component = mouseMagnitude * Math.cos(mouseAngle - handle.r);
+		return component;
+	}
 
-      return component;
-   }
+	reset() {
+		this.handles = [];
+		this.drag = {active: false, handle: null};
+		this.hover = {active: true, handle: null};
 
-   reset()
-   {
-      this.handles = [];
-      this.drag = {active: false, handle: null};
-      this.hover = {active: true, handle: null};
+		for (let i = 0; i < (360 / 5); i++) {
+			// we're doing it this way so eventually we can paramaterise the 5
+			this.handles.push(new Handle(i * 5, {interactive: this.interactive, colour: this.colour}));
+		}
 
-      for (let i = 0; i < (360 / 5); i++)
-      {
-         this.handles.push( new Handle(i * 5, {interactive: this.interactive, colour: this.colour}) ); // we're doing it this way so eventually we can paramaterise the 5
-      }
+		this.handles[0].setPrev(this.handles[this.handles.length - 1])
+		this.handles[0].setNext(this.handles[1]);
 
-      this.handles[0].setPrev(this.handles[this.handles.length - 1])
-      this.handles[0].setNext(this.handles[1]);
-
-      for (let i = 1; i < this.handles.length; i++)
-      {
-         // this only works because js lets you do negative array indices
-         this.handles[i].setPrev(this.handles[(i - 1) % this.handles.length]);
-         this.handles[i].setNext(this.handles[(i + 1) % this.handles.length]);
-      }
-   }
+		for (let i = 1; i < this.handles.length; i++) {
+			// this only works because js lets you do negative array indices
+			this.handles[i].setPrev(this.handles[(i - 1) % this.handles.length]);
+			this.handles[i].setNext(this.handles[(i + 1) % this.handles.length]);
+		}
+	}
 }
+
+// If 100% of the agents are going in a direction, that point will have distance of MAX_AGENT_SCALE * RADIUS_SCALE
+RadialControl.MAX_AGENT_SCALE = 10.0;
+RadialControl.RADIUS_SCALE = 50;
+RadialControl.LINE_COLOUR = 'blue';
+RadialControl.HANDLE_COLOUR = 'blue';
 
 /*class RadialControl
 {
@@ -467,8 +474,3 @@ class RadialControl
    }
 }*/
 
-// If 100% of the agents are going in a direction, that point will have distance of MAX_AGENT_SCALE * RADIUS_SCALE
-RadialControl.MAX_AGENT_SCALE = 10.0;
-RadialControl.RADIUS_SCALE = 50;
-RadialControl.LINE_COLOUR = 'blue';
-RadialControl.HANDLE_COLOUR = 'blue';

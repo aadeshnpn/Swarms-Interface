@@ -126,12 +126,12 @@ function draw(environment)
    ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
 
    ctx.globalAlpha = sliderVal/100;
-   ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height)
+   ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height);
    ctx.globalAlpha = 1;
 
    ctx.restore();
 
-   world.draw(ctx, debug, showAgentStates,environment); // move to update path rather than 1/60
+   world.draw(ctx, debug, showAgentStates, environment); // move to update path rather than 1/60
    ui.draw(ctx, debug);
 
    finishedDrawing = true;

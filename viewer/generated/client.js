@@ -96,50 +96,242 @@ class BaitBombGhost
   }
 }
 
-class MissionLayer
-{
-  constructor(ui)
-  {
-    this.points = [];
+class MissionLayer {
+	constructor(ui) {
+		this.points = [];
+		this.hoveredPoint = null;
 
-    ui.register('updateMission', this.update.bind(this));
-    ui.register('restart',       this.reset.bind(this));
-  }
+		// the radius of the circle to draw for each point
+		// and to detect the hover
+		this.radius = 5;
 
-  update(data)
-  {
-    this.points.push(data);
+		// a cluster has an image and an array of points
+		// this is used to assign a single image to a group
+		// of points that likely belong to the same site
+		this.clusters = [];
 
-    // this can really slow down the ui if it gets out of hand
-    if (this.points.length > 200)
-      this.points.shift();
-  }
+		// the cluster distance is the minimum distance
+		// a point must be from every point in a cluster
+		// be be placed in a different cluster
+		this.clusterDist = 8;
 
-  draw(ctx, debug = false)
-  {
-    ctx.save();
+		// this is a placeholder for the image to show
+		// when hovered over a point
+		this.image = new Image();
 
-    for (let point of this.points)
-    {
-      var rVal = (point.q > 0.5) ? (1.0 - point.q) * 2 : 1.0;
-      var gVal = (point.q > 0.5) ? 1.0 : point.q * 2;
+		// the max size can be any positive number, and
+		// the image will be draw with the correct ratio
+		// bounded inside the max size
+		this.imageMaxWidth = 200;
+		this.imageMaxHeight = 200;
 
-      ctx.fillStyle   = `rgba(${Math.round(255 * rVal)}, ${Math.round(255 * gVal)}, 70, 0.8)`;
-      ctx.strokeStyle = "rgb(20, 20, 20)";
+		// this is the width of the colored border and
+		// stroke around the image
+		this.imageBorderWidth = 2;
 
-      ctx.beginPath();
-      ctx.arc(point.x, -point.y, 5, 0, Math.PI * 2, false);
-      ctx.fill();
-      ctx.stroke();
-    }
+		// create list of images
+		this.siteImages = [];
+		this.loadSiteImages();
 
-    ctx.restore();
-  }
+		ui.register('updateMission', this.update.bind(this));
+		ui.register('restart', this.reset.bind(this));
 
-  reset()
-  {
-     this.points = [];
-  }
+		cursors.default.addEventListener('mousemove', this.onMouseMove.bind(this));
+	}
+
+	update(data) {
+		this.points.push(data);
+		// this can really slow down the ui if it gets out of hand
+		if (this.points.length > 200) { // only keep the most recent 200 points
+			this.points.shift();
+		}
+
+		// add to clusters
+		let added = false;
+		// check if the data point is close enough to an existing cluster
+		clusterLoop:
+		for (let cluster of this.clusters) {
+			for (let point of cluster.points) {
+				// compare distance to every point in cluster
+				if (this.dist(point, data) <= this.clusterDist) {
+					// match, store in cluster
+					cluster.points.push(data);
+					added = true;
+					break clusterLoop;
+				}
+			}
+		}
+
+		if (!added) {
+			// if all of the images have been used, reuse them
+			if (this.siteImages.size === 0) {
+				this.loadSiteImages();
+			}
+
+			// this point wasn't added to an existing cluster, start a new cluster
+			this.clusters.push({image:this.siteImages.pop(), points:[data]});
+		}
+	}
+
+	draw(ctx, debug = false) {
+
+		ctx.save();
+
+		for (let point of this.points) {
+			// red value multiplier
+			let rVal = (point.q > 0.5) ? (1.0 - point.q) * 2 : 1.0;
+			// green value multiplier
+			let gVal = (point.q > 0.5) ? 1.0 : point.q * 2;
+			// set the fill and stroke colors
+			ctx.fillStyle = `rgba(${Math.round(255 * rVal)}, ${Math.round(255 * gVal)}, 70, 0.8)`;
+			ctx.strokeStyle = "rgb(20, 20, 20)";
+
+			// draw the circle
+			ctx.beginPath();
+			ctx.arc(point.x, -point.y, this.radius, 0, 2 * Math.PI, false);
+			ctx.fill();
+			ctx.stroke();
+			ctx.closePath();
+
+			// if hovered, draw image
+			if (point === this.hoveredPoint) {
+
+				// get natural size of image
+
+				let width = this.image.width;
+				let height = this.image.height;
+
+				// scale image size
+
+				if (width > this.imageMaxWidth) {
+					let scale = this.imageMaxWidth / width;
+					width = this.imageMaxWidth;
+					height = height * scale;
+				}
+
+				if (height > this.imageMaxHeight) {
+					let scale = this.imageMaxHeight / height;
+					height = this.imageMaxHeight;
+					width = width * scale;
+				}
+
+				// add border width
+
+				width += 2 * this.imageBorderWidth;
+				height += 2 * this.imageBorderWidth;
+
+				// determine bounds for image to stay in view
+
+				let xLimit = ctx.canvas.clientWidth / 2;
+				let yLimit = ctx.canvas.clientHeight / 2;
+
+				let left = point.x - width / 2;
+				if (left < -xLimit) {
+					left = -xLimit;
+				}
+
+				let right = left + width;
+				if (right > xLimit) {
+					right = xLimit;
+					left = right - width;
+				}
+
+				let top = point.y + height;
+				if (top > yLimit) {
+					top = yLimit;
+				}
+
+				let bottom = top - height;
+				if (bottom < -yLimit) {
+					bottom = -yLimit;
+					top = bottom + height;
+				}
+
+				// draw border and background
+
+				ctx.beginPath();
+				ctx.moveTo(left, -bottom);
+				ctx.lineTo(right, -bottom);
+				ctx.lineTo(right, -top);
+				ctx.lineTo(left, -top);
+				ctx.lineTo(left, -bottom);
+				ctx.fill();
+				ctx.stroke();
+				ctx.closePath();
+
+				// redraw the center of the circle
+
+				ctx.beginPath();
+				ctx.arc(point.x, -point.y, this.radius, 0, 2 * Math.PI, false);
+				ctx.fill();
+				ctx.closePath();
+
+				// draw image
+
+				ctx.drawImage(this.image, left + this.imageBorderWidth, -top + this.imageBorderWidth,
+					width - 2 * this.imageBorderWidth, height - 2 * this.imageBorderWidth);
+			}
+		}
+
+		ctx.restore();
+	}
+
+	reset() {
+		this.points = [];
+		this.clusters = [];
+		this.siteImages = [];
+		this.hoveredPoint = null;
+		this.loadSiteImages();
+	}
+
+	onMouseMove(e) {
+		let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+
+		this.hoveredPoint = null;
+		// check every point to see if it is hovered
+		for (let point of this.points) {
+			if (this.isHovered(point, worldRelative)) {
+				// if hovered point changed, check cluster for new image
+				if (this.hoveredPoint !== point) {
+					this.hoveredPoint = point;
+					// find the cluster this point belongs to
+					for (let cluster of this.clusters) {
+						if (cluster.points.includes(point)) {
+							this.image.src = cluster.image;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	loadSiteImages() {
+		let numOfImages = 12;
+		// load in names of image files
+		for (let i = 1; i <= numOfImages; i++) {
+			this.siteImages.push("../siteImages/" + (i < 10 ? "0" : "") + i + ".jpg");
+		}
+
+		// shuffle them
+		for (let i = 0; i < numOfImages; i++) {
+			// choose one at random
+			let rand = Math.floor(Math.random() * numOfImages);
+			// swap them
+			let temp = this.siteImages[rand];
+			this.siteImages[rand] = this.siteImages[i];
+			this.siteImages[i] = temp;
+		}
+	}
+
+	dist(point1, point2) {
+		// use distance formula sqrt(x^2+y^2)
+		return Math.sqrt(Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2));
+	}
+
+	isHovered(point, mouse) {
+		return this.dist(point, mouse) <= this.radius;
+	}
 }
 
 class Handle
@@ -203,7 +395,7 @@ class Handle
 
    draw(ctx, debug = false)
    {
-      ctx.save()
+      ctx.save();
 
       ctx.strokeStyle = this.colour;
 
@@ -258,12 +450,13 @@ class Handle
 
    isHovered(x, y)
    {
-      var box = {left: this.requestedX - 5, top: this.requestedY - 5, right: this.requestedX + 5, bottom: this.requestedY + 5};
+      // use distance formula sqrt(x^2+y^2) to hover within radius
+      let dist = Math.sqrt(Math.pow(x - this.requestedX, 2) + Math.pow(y - this.requestedY, 2));
+      return dist <= 8;
 
-      if (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom)
-         return true;
-      else
-         return false;
+      // this uses a rectangle, so it's dumb
+      // var box = {left: this.requestedX - 5, top: this.requestedY - 5, right: this.requestedX + 5, bottom: this.requestedY + 5};
+      // return (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom);
    }
 }
 
@@ -280,12 +473,14 @@ class RadialControl
       this.hover = {active: true, handle: null};
       //this.hub = {x: world.hub.x, y: world.hub.y}
 
+       // create a handle for every 5th degree
       for (let i = 0; i < (360 / 5); i++)
       {
-         this.handles.push(new Handle(i * 5, this.hub, {interactive: this.interactive, colour: this.colour}) ); // we're doing it this way so eventually we can paramaterise the 5
+         // we're doing it this way so eventually we can paramaterise the 5
+         this.handles.push(new Handle(i * 5, this.hub, {interactive: this.interactive, colour: this.colour}) );
       }
 
-      this.handles[0].setPrev(this.handles[this.handles.length - 1])
+      this.handles[0].setPrev(this.handles[this.handles.length - 1]);
       this.handles[0].setNext(this.handles[1]);
 
       for (let i = 1; i < this.handles.length; i++)
@@ -303,6 +498,7 @@ class RadialControl
       ui.register("updateRadial", this.update.bind(this));
       ui.register("restart", this.reset.bind(this));
       ui.register("hubControllerToggle", this.toggle.bind(this));
+      this.toggle(true);//TODO remove
    }
    toggle(data){
      if (data && this.interactive){
@@ -328,17 +524,26 @@ class RadialControl
       }
    }
 
-   startHandleHover(e)
-   {
-      let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
-      for (let h of this.handles)
-         if (h.isHovered(worldRelative.x, worldRelative.y))
-         {
-            this.hover = {active: true, handle: h};
-            ui.requestActiveCursor(cursors.radialDrag);
-            break;
-         }
-   }
+	startHandleHover(e) {
+		let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+		/* TODO remove these two lines.
+		 * I don't know why they are here. If they are uncommented, then the hover of
+		 * the mouse is based on the center of the radial control, not the center of
+		 * the canvas (the origin). So the hover doesn't actually work with these lines.
+		 * I have left these here in case something else breaks. But as far as I can
+		 * tell, we should just remove these all together.
+		 */
+		// worldRelative.x -= world.hub.x;
+		// worldRelative.y += world.hub.y;
+
+		// let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+		for (let h of this.handles)
+			if (h.isHovered(worldRelative.x, worldRelative.y)) {
+				this.hover = {active: true, handle: h};
+				ui.requestActiveCursor(cursors.radialDrag);
+				break;
+			}
+	}
 
    onMouseDown(e)
    {
@@ -348,13 +553,12 @@ class RadialControl
       this.hover.handle = null;
    }
 
-   onMouseUp(e)
-   {
-      if (this.drag.active)
-      {
-         this.drag.active = false;
-         this.drag.handle = null;
-      }
+   onMouseUp(e) {
+      if (this.drag.active) {
+		  this.drag.active = false;
+		  this.drag.handle = null;
+		  ui.setActiveCursor(cursors.default);
+	  }
    }
 
    onMouseMove(e)
@@ -374,15 +578,15 @@ class RadialControl
       }
       else
       {
-         var angle = Math.atan2(worldRelative.y, worldRelative.x);
-         var magnitude = Math.sqrt(Math.pow(worldRelative.x, 2) + Math.pow(worldRelative.y, 2));
+         let angle = Math.atan2(worldRelative.y, worldRelative.x);
+         let magnitude = Math.sqrt(Math.pow(worldRelative.x, 2) + Math.pow(worldRelative.y, 2));
 
          if (angle < 0)
          {
             angle += Math.PI*2;
          }
 
-         var component = this.computeMouseComponent(worldRelative, this.drag.handle);
+         let component = this.computeMouseComponent(worldRelative, this.drag.handle);
 
          if (component < 1 * RadialControl.RADIUS_SCALE)
          {
@@ -413,46 +617,42 @@ class RadialControl
       }
    }
 
-   onMouseUp(e)
-   {
-      this.drag.active = false;
-      this.drag.handle = null;
-      ui.setActiveCursor(cursors.default);
-   }
+	computeMouseComponent(mouseCoords, handle) {
+		// let handleVector = {x: Math.cos(handle.r), y: -Math.sin(handle.r)};
+		let mouseMagnitude = Math.sqrt(Math.pow(mouseCoords.x, 2) + Math.pow(mouseCoords.y, 2));
+		let mouseAngle = Math.atan2(mouseCoords.y, mouseCoords.x);
 
-   computeMouseComponent(mouseCoords, handle)
-   {
-      var handleVector = {x: Math.cos(handle.r), y: -Math.sin(handle.r)};
-      var mouseMagnitude = Math.sqrt(Math.pow(mouseCoords.x, 2) + Math.pow(mouseCoords.y, 2));
-      var mouseAngle = Math.atan2(mouseCoords.y, mouseCoords.x);
+		let component = mouseMagnitude * Math.cos(mouseAngle - handle.r);
 
-      var component = mouseMagnitude * Math.cos(mouseAngle - handle.r);
+		return component;
+	}
 
-      return component;
-   }
+	reset() {
+		this.handles = [];
+		this.drag = {active: false, handle: null};
+		this.hover = {active: true, handle: null};
 
-   reset()
-   {
-      this.handles = [];
-      this.drag = {active: false, handle: null};
-      this.hover = {active: true, handle: null};
+		for (let i = 0; i < (360 / 5); i++) {
+			// we're doing it this way so eventually we can paramaterise the 5
+			this.handles.push(new Handle(i * 5, {interactive: this.interactive, colour: this.colour}));
+		}
 
-      for (let i = 0; i < (360 / 5); i++)
-      {
-         this.handles.push( new Handle(i * 5, {interactive: this.interactive, colour: this.colour}) ); // we're doing it this way so eventually we can paramaterise the 5
-      }
+		this.handles[0].setPrev(this.handles[this.handles.length - 1])
+		this.handles[0].setNext(this.handles[1]);
 
-      this.handles[0].setPrev(this.handles[this.handles.length - 1])
-      this.handles[0].setNext(this.handles[1]);
-
-      for (let i = 1; i < this.handles.length; i++)
-      {
-         // this only works because js lets you do negative array indices
-         this.handles[i].setPrev(this.handles[(i - 1) % this.handles.length]);
-         this.handles[i].setNext(this.handles[(i + 1) % this.handles.length]);
-      }
-   }
+		for (let i = 1; i < this.handles.length; i++) {
+			// this only works because js lets you do negative array indices
+			this.handles[i].setPrev(this.handles[(i - 1) % this.handles.length]);
+			this.handles[i].setNext(this.handles[(i + 1) % this.handles.length]);
+		}
+	}
 }
+
+// If 100% of the agents are going in a direction, that point will have distance of MAX_AGENT_SCALE * RADIUS_SCALE
+RadialControl.MAX_AGENT_SCALE = 10.0;
+RadialControl.RADIUS_SCALE = 50;
+RadialControl.LINE_COLOUR = 'blue';
+RadialControl.HANDLE_COLOUR = 'blue';
 
 /*class RadialControl
 {
@@ -611,11 +811,6 @@ class RadialControl
    }
 }*/
 
-// If 100% of the agents are going in a direction, that point will have distance of MAX_AGENT_SCALE * RADIUS_SCALE
-RadialControl.MAX_AGENT_SCALE = 10.0;
-RadialControl.RADIUS_SCALE = 50;
-RadialControl.LINE_COLOUR = 'blue';
-RadialControl.HANDLE_COLOUR = 'blue';
 
 class SelectionBoxes
 {
@@ -1011,54 +1206,51 @@ bombButton.addEventListener('click', function()
   ui.setActiveCursor(cursors.placeBaitBomb);
 });
 
-class beeCounter
-{
-   constructor(ui)
-   {
-      ui.register('updateRadial', this.update.bind(this));
-      this.dead = 0
-      this.deadBee=document.getElementById("deadBeeProgress");
-      this.deadBee.value=0;
-   }
-   update(data)
-   {
-    var deadBee=document.getElementById("deadBeeProgress");
-    //deadBee.value=0;
-    //console.log(data)
-       if(data.controller['dead']!=this.dead){
-            var deadBee=document.getElementById("deadBeeProgress");
-            this.dead = data.controller['dead'];
-            //console.log(this.deadBee)
-            this.deadBee.value =this.dead
-            //console.log(this.dead)
-            //deadBee.value=this.dead;
-            document.getElementById("deadBees").innerHTML = "Estimated Dead: " + this.dead.toString();
-       }
+class BeeCounter {
+	constructor(ui) {
+		ui.register('updateRadial', this.update.bind(this));
+		this.dead = 0;
+		this.deadBee = document.getElementById("deadBeeProgress");
+		this.deadBee.value = 0;
+	}
 
-      // document.getElementById("turns").innerHTML = "total turns: " + data.controller['actions']["turns"].toString();
-       //document.getElementById("stateChanges").innerHTML = "Total state changes: " + data.controller['actions']["stateChanges"].toString();
+	update(data) {
+		// var deadBee = document.getElementById("deadBeeProgress");
+		//deadBee.value=0;
+		//console.log(data)
+		if (data.controller['dead'] != this.dead) {
+			let deadBee = document.getElementById("deadBeeProgress");
+			this.dead = data.controller['dead'];
+			//console.log(this.deadBee)
+			this.deadBee.value = this.dead
+			//console.log(this.dead)
+			//deadBee.value=this.dead;
+			document.getElementById("deadBees").innerHTML = "Estimated Dead: " + this.dead.toString();
+		}
 
-       //document.getElementById("influenceTurns").innerHTML = "Influenced turns: " + data.controller['influenceActions']["turns"].toString();
-       //document.getElementById("influenceChanges").innerHTML = "Influenced changes: " + data.controller['influenceActions']["stateChanges"].toString();
-       /*
-        self.actions = {"turns": 0, "stateChanges": 0, "parameterChange": 0}
-        self.influenceActions = {"turns": 0, "stateChanges": 0, "parameterChange": 0}
-        */
-   }
+		// document.getElementById("turns").innerHTML = "total turns: " + data.controller['actions']["turns"].toString();
+		//document.getElementById("stateChanges").innerHTML = "Total state changes: " + data.controller['actions']["stateChanges"].toString();
+
+		//document.getElementById("influenceTurns").innerHTML = "Influenced turns: " + data.controller['influenceActions']["turns"].toString();
+		//document.getElementById("influenceChanges").innerHTML = "Influenced changes: " + data.controller['influenceActions']["stateChanges"].toString();
+		/*
+		 self.actions = {"turns": 0, "stateChanges": 0, "parameterChange": 0}
+		 self.influenceActions = {"turns": 0, "stateChanges": 0, "parameterChange": 0}
+		 */
+	}
 }
 
-var buttonSend = document.getElementById('buttonSend');
-var chatmsg = document.getElementById('chatmsg');
-var userName = document.getElementById('userName');
+let buttonSend = document.getElementById('buttonSend');
+let chatmsg = document.getElementById('chatmsg');
+let userName = document.getElementById('userName');
 //var chat = "<strong>" + userName.value + ": </strong>" + chatmsg.value;
-$("#buttonSend").click(function(e)
-{
-  var chat = "<strong>" + userName.value + ": </strong>" + chatmsg.value +"<br>";
-  e.preventDefault();
-  console.log(chatmsg.value);
-  socket.emit('input', {'type': 'message', message: chat});
-  chatmsg.value = '';
-  userName.readOnly=true;
+$("#buttonSend").click(function (e) {
+	let chat = "<strong>" + userName.value + ": </strong>" + chatmsg.value + "<br>";
+	e.preventDefault();
+	console.log(chatmsg.value);
+	socket.emit('input', {'type': 'message', message: chat});
+	chatmsg.value = '';
+	userName.readOnly = true;
 });
 
 /*buttonSend.addEventListener('click', function()
@@ -1077,23 +1269,21 @@ function pressEnter()
 });
 */
 
-class chatRoom
-{
-   constructor(ui)
-   {
-      ui.register('updateChat', this.update.bind(this));
-      this.chatHistory = '';
-      console.log('chatRoom initialized.');
-   }
-   update(data)
-   {
-       console.log('chatRoom update called.');
-       if(data!== this.chatHistory){
-            this.chatHistory = data;
-            console.log(this.chatHistory)
-            document.getElementById("chatwindow").innerHTML = this.chatHistory;
-       }
-   }
+class ChatRoom {
+	constructor(ui) {
+		ui.register('updateChat', this.update.bind(this));
+		this.chatHistory = '';
+		console.log('ChatRoom initialized.');
+	}
+
+	update(data) {
+		console.log('ChatRoom update called.');
+		if (data !== this.chatHistory) {
+			this.chatHistory = data;
+			console.log(this.chatHistory);
+			document.getElementById("chatwindow").innerHTML = this.chatHistory;
+		}
+	}
 }
 
 class DebugParams
@@ -1486,119 +1676,104 @@ UIParams.defaults =
   "uiFps" : 1
 }
 
-class UI
-{
-   constructor()
-   {
-      this.selectedAgents = {};
-      this.selectedNumber = 0;
-      this.canvasElems = [];
-      this.documentElems = [];
-      this.eventCallbacks = {};
+class UI {
+	constructor() {
+		this.selectedAgents = {};
+		this.selectedNumber = 0;
+		this.canvasElems = [];
+		this.documentElems = [];
+		this.eventCallbacks = {};
 
-      this.canvasElems.push( new SelectionBoxes(this) );
-      this.canvasElems.push( new SelectionRect (this) );
-      this.canvasElems.push( new RadialControl (this) );
-      this.canvasElems.push( new RadialControl (this, {interactive: false, colour: "green", dataset: "agentsIn"}) );
-      this.canvasElems.push( new BaitBombGhost (this) );
-      this.canvasElems.push( new MissionLayer  (this) );
-      this.canvasElems.push( new StateBubbles  (this) );
+		this.canvasElems.push(new SelectionBoxes(this));
+		this.canvasElems.push(new SelectionRect(this));
+		this.canvasElems.push(new RadialControl(this));
+		this.canvasElems.push(new RadialControl(this, {interactive: false, colour: "green", dataset: "agentsIn"}));
+		this.canvasElems.push(new BaitBombGhost(this));
+		this.canvasElems.push(new MissionLayer(this));
+		this.canvasElems.push(new StateBubbles(this));
 
-      this.documentElems.push( new DebugParams       (this) );
-      this.documentElems.push( new UIParams			  (this) );
-      this.documentElems.push( new SitePriorityMeters(this) );
-      this.documentElems.push( new DebugTable        (this) );
-      this.documentElems.push(new beeCounter        (this));
-      this.documentElems.push(new chatRoom(this));
+		this.documentElems.push(new DebugParams(this));
+		this.documentElems.push(new UIParams(this));
+		this.documentElems.push(new SitePriorityMeters(this));
+		this.documentElems.push(new DebugTable(this));
+		this.documentElems.push(new BeeCounter(this));
+		this.documentElems.push(new ChatRoom(this));
 
-      this.activeCursor = cursors.default.activate();
+		this.activeCursor = cursors.default.activate();
 
-      this.register('restart', this.reset.bind(this));
-   }
+		this.register('restart', this.reset.bind(this));
+	}
 
-   register(event, callback)
-   {
-     //console.log(event)
-     if (!this.eventCallbacks[event])
-        this.eventCallbacks[event] = [];
+	register(event, callback) {
+		//console.log(event)
+		if (!this.eventCallbacks[event]) {
+			this.eventCallbacks[event] = [];
+		}
+		this.eventCallbacks[event].push(callback);
+	}
 
-      this.eventCallbacks[event].push(callback);
-   }
+	on(msg) {
+		for (let cb of this.eventCallbacks[msg.type]) {
+			cb(msg.data);
+		}
+	}
 
-   on(msg)
-   {
+	// indiviual components now must register for any updates they want
+	/*update(data)
+	{
+	   for (let element of this.canvasElems)
+		  element.update(data);
 
-     for (let cb of this.eventCallbacks[msg.type])
+	   for (let element of this.documentElems)
+		  element.update(data);
+	}*/
 
-        cb(msg.data);
-   }
+	draw(ctx, debug = false) {
+		for (let element of this.canvasElems)
+			element.draw(ctx, debug);
+	}
 
-   // indiviual components now must register for any updates they want
-   /*update(data)
-   {
-      for (let element of this.canvasElems)
-         element.update(data);
+	setActiveCursor(cursor) {
+		if (!(cursor instanceof Cursor))
+			throw new Error('Active cursor can only be set to a Cursor object');
 
-      for (let element of this.documentElems)
-         element.update(data);
-   }*/
+		this.activeCursor.deactivate();
+		this.activeCursor = cursor;
+		this.activeCursor.activate();
+	}
 
-   draw(ctx, debug = false)
-   {
-     for (let element of this.canvasElems)
-      element.draw(ctx, debug);
-   }
+	requestActiveCursor(cursor) {
+		if (this.activeCursor.type == "default") {
+			this.setActiveCursor(cursor);
+		}
+	}
 
-   setActiveCursor(cursor)
-   {
-      if (!(cursor instanceof Cursor))
-         throw new Error('Active cursor can only be set to a Cursor object');
+	agentsSelected() {
+		return this.selectedNumber;
+	}
 
-      this.activeCursor.deactivate();
-      this.activeCursor = cursor;
-      this.activeCursor.activate();
-   }
+	addSelectedAgents(ids) {
+		this.selectedNumber += ids.length;
 
-   requestActiveCursor(cursor)
-   {
-      if (this.activeCursor.type == "default")
-      {
-         this.setActiveCursor(cursor);
-      }
-   }
+		for (let id of ids) {
+			this.selectedAgents[id] = true;
+		}
 
-   agentsSelected()
-   {
-      return this.selectedNumber;
-   }
+	}
 
-   addSelectedAgents(ids)
-   {
-      this.selectedNumber += ids.length;
+	clearSelectedAgents() {
+		this.selectedAgents = {};
+		this.selectedNumber = 0;
+	}
 
-      for (var id of ids)
-      {
-         this.selectedAgents[id] = true;
-      }
+	isAgentSelected(id) {
+		if (this.selectedAgents[id])
+			return true;
+	}
 
-   }
-
-   clearSelectedAgents()
-   {
-      this.selectedAgents = {};
-      this.selectedNumber = 0;
-   }
-
-   isAgentSelected(id)
-   {
-      if (this.selectedAgents[id])
-         return true;
-   }
-
-   reset()
-   {
-      this.clearSelectedAgents();
-   }
+	reset() {
+		this.clearSelectedAgents();
+	}
 
 }
 
@@ -2194,20 +2369,19 @@ class World
     this.repulsors   = [];
     this.agents      = [];
     this.dead_agents = [];
-    this.pheromones;
     this.environment = environmentJson;
     this.test =true;
-    this.time=1000
+    this.time=1000;
 
 
-    for (var site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
-    for (var obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
-    for (var trap       of environmentJson.traps      ) { this.traps      .push( new Trap      (trap      ) ); }
-    for (var rough      of environmentJson.rough      ) { this.rough      .push( new Rough     (rough     ) ); }
-    for (var attractor  of environmentJson.attractors ) { this.attractors .push( new Attractor (attractor ) ); }
-    for (var repulsor   of environmentJson.repulsors  ) { this.repulsors  .push( new Repulsor  (repulsor  ) ); }
-    for (var agent      of environmentJson.agents     ) { this.agents     .push( new Agent     (agent     ) ); }
-    for (var dead_agent of environmentJson.dead_agents) { this.dead_agents.push( new DeadAgent (dead_agent) ); }
+    for (let site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
+    for (let obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
+    for (let trap       of environmentJson.traps      ) { this.traps      .push( new Trap      (trap      ) ); }
+    for (let rough      of environmentJson.rough      ) { this.rough      .push( new Rough     (rough     ) ); }
+    for (let attractor  of environmentJson.attractors ) { this.attractors .push( new Attractor (attractor ) ); }
+    for (let repulsor   of environmentJson.repulsors  ) { this.repulsors  .push( new Repulsor  (repulsor  ) ); }
+    for (let agent      of environmentJson.agents     ) { this.agents     .push( new Agent     (agent     ) ); }
+    for (let dead_agent of environmentJson.dead_agents) { this.dead_agents.push( new DeadAgent (dead_agent) ); }
     //for (var pheromone of environmentJson.pheromones)   { this.pheromones .push( new Pheromone (pheromone)  ); }
     this.pheromones = new Pheromone(environmentJson.pheromones);
   }
@@ -2227,30 +2401,30 @@ class World
     //console.log(environment.agents.length)
 
 
-    //Update Dead Agents
-    for(var i=0; i< this.sites.length;i++){
-      this.sites[i].x=environment.sites[i].x
-      this.sites[i].y=-environment.sites[i]["y"]
-    }
-    for(var i =0; i < this.dead_agents.length;i++){
+	  //Update Dead Agents
+	  for (let i = 0; i < this.sites.length; i++) {
+		  this.sites[i].x = environment.sites[i].x;
+		  this.sites[i].y = -environment.sites[i]["y"];
+	  }
+	  for (let i = 0; i < this.dead_agents.length; i++) {
 
-      this.dead_agents[i].x= environment.dead_agents[i].x
-      this.dead_agents[i].y= -environment.dead_agents[i].y
-    }
-    //Update Alive Agents
-    for(var i =0; i < this.agents.length-this.dead_agents.length;i++){
+		  this.dead_agents[i].x = environment.dead_agents[i].x;
+		  this.dead_agents[i].y = -environment.dead_agents[i].y;
+	  }
+	  //Update Alive Agents
+	  for (let i = 0; i < this.agents.length - this.dead_agents.length; i++) {
 
-      this.agents[i].x= environment.agents[i].x
-      this.agents[i].y= -environment.agents[i].y
-      this.agents[i].rotation = environment.agents[i].rotation
-    }
+		  this.agents[i].x = environment.agents[i].x;
+		  this.agents[i].y = -environment.agents[i].y;
+		  this.agents[i].rotation = environment.agents[i].rotation;
+	  }
 
   }
   // Draw the whole world recursively. Takes a 2dRenderingContext obj from
   // a canvas element
   draw(ctx, debug = false, showAgentStates = false, environment)
   {
-    var sliderVal=document.getElementById('myRange').value;
+    let sliderVal = document.getElementById('myRange').value;
 
     // Ok so this isn't really buying us all that much simplification at this level
     // right *now*, but the point is if in the future we ever need some sort of
@@ -2260,19 +2434,19 @@ class World
     // ctx.shadowBlur = 10;
     //path.draw(ctx,this.environment);
 
-    for (var site       of this.sites      ) { site      .draw(ctx, debug); }
-    for (var obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
-    for (var trap       of this.traps      ) { trap      .draw(ctx, debug); }
-    for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
-    for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
-    for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
+    for (let site       of this.sites      ) { site      .draw(ctx, debug); }
+    for (let obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
+    for (let trap       of this.traps      ) { trap      .draw(ctx, debug); }
+    for (let rough      of this.rough      ) { rough     .draw(ctx, debug); }
+    for (let attractor  of this.attractors ) { attractor .draw(ctx, debug); }
+    for (let repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
     this.pheromones.draw(ctx, debug);
     this.hub.draw(ctx, debug, this.agents);
 
-    for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
-    for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
-    for (var fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
-    //for (var fog        of fogBlock        ) { fog       .draw(ctx); }
+    for (let agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
+    for (let dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
+    for (let fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
+    //for (let fog        of fogBlock        ) { fog       .draw(ctx); }
 
   }
 }
@@ -2405,12 +2579,12 @@ function draw(environment)
    ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
 
    ctx.globalAlpha = sliderVal/100;
-   ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height)
+   ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height);
    ctx.globalAlpha = 1;
 
    ctx.restore();
 
-   world.draw(ctx, debug, showAgentStates,environment); // move to update path rather than 1/60
+   world.draw(ctx, debug, showAgentStates, environment); // move to update path rather than 1/60
    ui.draw(ctx, debug);
 
    finishedDrawing = true;
