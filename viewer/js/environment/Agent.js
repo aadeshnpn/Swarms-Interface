@@ -29,9 +29,13 @@ class Agent
     ctx.save();
 
     ctx.rotate(this.rotation);
-
-    ctx.drawImage(bee, -bee.width/2, -bee.height/2);
-
+    ctx.shadowColor = 'rgba(0,0,0,.7)';
+    ctx.shadowOffsetY = 2;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowBlur=10;
+    ctx.drawImage(bee, -bee.width/2, -bee.height/2);;
+    ctx.shadowOffsetY = 0;
+    ctx.shadowOffsetX = 0;
 
     if (showAgentStates && Agent.stateStyles[this.state] !== "" && Agent.stateStyles[this.state] !== undefined) {
        ctx.fillStyle = Agent.stateStyles[this.state];

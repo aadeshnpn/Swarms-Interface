@@ -15,6 +15,8 @@ class Fog
     this.inside=false;
     this.numberVisited=0;
     this.agentTime=new Map()
+    this.agentsInHub=[]
+    this.init=false
   }
 
   visited(agent){
@@ -22,6 +24,11 @@ class Fog
   }
 
   checkAgent(agents,hub){
+    if(!this.init){
+      this.agentsInHub=new Array(agents.length)
+      this.agentsInHub.fill(false,0,agents.length)
+      this.init=true
+    }
     for(var agent of agents)
     {
       //console.log(agent.x)
@@ -34,6 +41,7 @@ class Fog
         {
           this.agentTime.set(agent.id.toString(),Date.now())
           agent.lastLocations.push(this)
+          //console.log(this.agentsInHub);
         }
 
       }
@@ -49,7 +57,7 @@ class Fog
     // if(this.agentTime.get(id.toString()) != undefined){
     //   this.time = this.agentTime.get(id.toString());
     // }
-    // //console.log(this.inside)
+    //console.log(this.inside)
     // var start=this.time;
     // var end= Date.now()
     // this.opacity=(end-start)/10000

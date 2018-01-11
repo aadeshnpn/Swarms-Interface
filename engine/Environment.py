@@ -25,7 +25,7 @@ import argparse
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-m", "--model", choices=["ant", "bee", "uav"], help="Run an 'ant' or 'bee' simulation")
+parser.add_argument("-m", "--model", choices=["Ant", "Bee", "Uav"], help="Run an 'ant' or 'bee' simulation")
 parser.add_argument("-n", "--no-viewer", action="store_true", help="Don't output viewer world info")
 parser.add_argument("-s", "--stats", action="store_true", help="Output json stats after simulation")
 parser.add_argument("-c", "--commit-stop", action="store_true", help="Stop simulation after all agents have committed")
@@ -139,7 +139,8 @@ class Environment(ABC):
 
     # Returns 0 if terrain is clear, -1 if it is rough (slows velocity of agent to half-speed), -2 if there is an
     # obstacle, and -3 if there is a trap
-    def check_terrain(self, x, y):
+    def check_terrain(self, x, y,view):
+        #eprint(self.agents)
         for trap in self.traps:
             x_dif = x - trap["x"]
             y_dif = y - trap["y"]
@@ -147,9 +148,9 @@ class Environment(ABC):
                 return -3
 
         for obstacle in self.obstacles:
-            x_dif = x - obstacle["x"]
-            y_dif = y - obstacle["y"]
-            if x_dif ** 2 + y_dif ** 2 <= (obstacle["radius"]) ** 2:
+            x_dif = x+view - obstacle["x"]
+            y_dif = y+view - obstacle["y"]
+            if (x_dif/view) ** 2 + (y_dif/view) ** 2 <= (obstacle["radius"]) ** 2:
                 return -2
 
         for spot in self.rough:
@@ -175,7 +176,7 @@ class Environment(ABC):
         proposed_y = agent.location[1] + np.sin(
             agent.direction) * agent.velocity  # + np.sin(potential_field_d) * potential_field_v
 
-        terrain_value = self.check_terrain(proposed_x, proposed_y)
+        terrain_value = self.check_terrain(proposed_x, proposed_y,agent.view)
         self.wait+=1
         if terrain_value == 0:
             agent.location[0] = proposed_x
@@ -198,8 +199,7 @@ class Environment(ABC):
             potential_field_v = np.sqrt(potential_field_effect[0] ** 2 + potential_field_effect[1] ** 2)
             potential_field_d = np.arctan2(potential_field_effect[1], potential_field_effect[0])
 
-            agent.location[0] += np.cos(
-                potential_field_d) * potential_field_v  # potential field should push away from obstacles
+            agent.location[0] += np.cos(potential_field_d) * potential_field_v  # potential field should push away from obstacles
             agent.location[1] += np.sin(potential_field_d) * potential_field_v
 
         elif terrain_value == -1:  # If the agent is in rough terrain, it will move at half speed
@@ -467,13 +467,14 @@ class Environment(ABC):
         for obstacle in self.obstacles:
             location = [obstacle["x"], obstacle["y"]]
             spread = 20  # What should this be?
-            strength = .25  # Dictates the strength of the field
+            strength = .5  # Dictates the strength of the field
             self.potential_fields.append(
                 PotentialField(location, obstacle["radius"], spread, strength, type='repulsor'))
 
     def potential_field_sum(self, location):
         dx = 0
         dy = 0
+
         for field in self.potential_fields:
             delta = field.effect(location)
             dx += delta[0]
@@ -482,6 +483,7 @@ class Environment(ABC):
         return [dx, dy]
 
     def change_state(self, agent_id, new_state):
+        eprint(new_state)
         self.agents[agent_id].state = new_state
 
     @abstractmethod

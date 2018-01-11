@@ -8,11 +8,74 @@
   border: 1px solid #e0e0e0;
   border-radius: 10px;
 }
+#simName{
+  border-radius: 10px;
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.36) inset;
+  padding-left: 5px;
+  margin-top: 5px;
+  width:300px;
+  height:30px;
+  font-size: 20px;
+}
+#maxUsers{
+  border-radius: 10px;
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.36) inset;
+  padding-left: 5px;
+  margin-top: 5px;
+  width:60px;
+  height:30px;
+  font-size: 20px;
+}
+#agentNumber{
+  border-radius: 10px;
+  margin-top: 5px;
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.36) inset;
+  padding-left: 5px;
+  width:100px;
+  height:30px;
+  font-size: 15px;
+}
+.deleteSim{
+  width:30px;
+  background-color: rgb(220, 220, 220);
+  text-align: center;
+}
 #newSim{
   margin:auto;
   width:50%;
   text-align: center;
 }
+select{
+  margin-top: 5px;
+  height:25px;
+  font-size: 20px;
+}
+select:focus, .text:focus {
+  outline-width: 0;
+  border:solid 2px rgba(0, 94, 255, 0.6);
+}
+
+
+label{
+  font-size: 20px;
+  font-weight:550;
+  color:rgb(56, 56, 56);
+  text-shadow: 1px 1px rgba(0, 0, 0, 0.33);
+}
+button{
+  width:90px;
+  cursor: pointer;
+  background-color: rgb(235, 235, 235);
+  border-radius: 5px;
+  border:1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 2px 2px 2px black;
+}
+button:focus{
+  outline-width: 0;
+  /*border:solid 2px rgba(0, 94, 255, 0.2);*/
+  box-shadow: 1px 1px 1px black;
+}
+
 
 #newSims, #activeSim {
   background-color: #EEECEE;
@@ -21,17 +84,7 @@
   border: 1px solid #e0e0e0;
   border-radius: 10px;
 }
-label{
-  font-size: 20px;
-  font-weight:550;
-}
-input{
 
-}
-select{
-  height:25px;
-  font-size: 20px;
-}
 #activeSims{
   margin:auto;
   width:70%;

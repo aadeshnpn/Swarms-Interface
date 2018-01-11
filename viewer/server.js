@@ -83,7 +83,7 @@ require('sticky-cluster')(function (callback)
       //console.log(this.options);
       this.jsonStreamParser = JSONStream.parse();
       this.outputChannel = `sim:${simId}:output`;
-      console.log(this.outputChannel)
+      // console.log(this.outputChannel)
       this.inputChannel = `sim:${simId}:input`;
       this.killChannel = `sim:${simId}:kill`;
       this.startChannel = `sim:${simId}:start`;
@@ -127,12 +127,12 @@ require('sticky-cluster')(function (callback)
       var simEnv = '../engine/beeEnvironment.py';
       switch (this.options.model)
       {
-        case 'bee':
+        case 'Bee':
             break;
-        case 'ant':
+        case 'Ant':
             simEnv = '../engine/antEnvironment.py';
             break;
-        case 'uav':
+        case 'Uav':
             simEnv = '../engine/uavEnvironment.py';
             break;
       }
@@ -142,6 +142,7 @@ require('sticky-cluster')(function (callback)
       // Build all the arguments to pass to python
       for (let [key, val] of Object.entries(this.options))
       {
+
         switch (key)
         {
           case 'model':
@@ -150,7 +151,7 @@ require('sticky-cluster')(function (callback)
             break;
 
           case 'worldType':
-            if (val === 'random')
+            if (val == 'Random')
               args.push('--random');
             break;
 
@@ -370,22 +371,26 @@ require('sticky-cluster')(function (callback)
     const options = req.body;
     let userLimit;
 
-    if (options.limitUsers === "true")
-    {
+    if (options.limitUsers === "true"){
       try
       {
         userLimit = parseInt(options.maxUsers, 10);
-
         if (userLimit < 1)
           throw new Error();
 
           // convert it from str to int
-          options.maxUsers = userLimit;
+            options.maxUsers = userLimit;
+
+
+
       }
       catch (e)
       {
         res.status(400).send("Invalid user limit.");
       }
+    }
+    else{
+      options.maxUsers=10;
     }
 
     options.name = options.name || shortid.generate();
@@ -402,6 +407,7 @@ require('sticky-cluster')(function (callback)
         }
         else
         {
+          
           new Simulation(id, options);
 
           // send back the link for connecting to the simulation
@@ -409,11 +415,17 @@ require('sticky-cluster')(function (callback)
         }
       });
   });
-
+  // Route for deleting a simulation
+  app.post('/simDel/', function(req, res){
+    //console.log("In Delete");
+    console.log();
+    redisClient.DEL("activeSims", req.body.simId);
+    res.status(200)
+  })
   // Route for connecting to a specific simulation
   app.get('/sims/:id', function(req, res)
   {
-    console.log(req.params.id);
+    // console.log(req.params.id);
     const simId = req.params.id;
     let simInfo;
 

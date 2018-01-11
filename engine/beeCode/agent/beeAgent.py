@@ -3,7 +3,7 @@ from enum import Enum
 from .stateMachine.state import State
 from .abstractAgent import HubAgent
 
-input = Enum('input', 'nestFound exploreTime observeTime dancerFound siteFound tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
+input = Enum('input', 'nestFound exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
 
 class Bee(HubAgent):
 
@@ -62,6 +62,7 @@ class Bee(HubAgent):
 
         # bee agent variables
         self.live = True
+        self.view=2
         self.location = [hub["x"], hub["y"]]
         self.velocity = self.parameters["Velocity"]
         self.potential_site = None  # array [x,y]
@@ -77,7 +78,8 @@ class Bee(HubAgent):
         self.priorities = None
 
         # create table here.
-        self.transitionTable = {(Exploring(self).__class__, input.nestFound): [self.siteAssessTransition, SiteAssess(self)],
+        self.transitionTable = {
+                (Exploring(self).__class__, input.nestFound): [self.siteAssessTransition, SiteAssess(self)],
                 (Exploring(self).__class__, input.exploreTime): [self.observeTransition, Observing(self)],
                 (Observing(self).__class__, input.observeTime): [self.exploreTransition, Exploring(self)],
                 (Observing(self).__class__, input.dancerFound): [None, Assessing(self)],
@@ -203,6 +205,22 @@ class Assessing(State):
             agent.goingToSite = True
             self.siteFound = False
             return input.siteFound
+
+
+class SiteSearch(State):
+    def __init__(self, agent=None):
+        self.name = "siteSearch"
+        self.siteFound = False
+
+    def sense(self, agent, environment):
+        if not agent.checkAgentLeave(): #if probs check if agent.goingToSite
+            self.siteFound = agent.checkAgentReturn() #if probs, check if not agent.goingToSite
+    #TODO TODO repeated code in sense and update????
+    def act(self, agent):
+        return
+
+    def update(self, agent):
+        return input.siteFound
 
 
 class Resting(State):

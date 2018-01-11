@@ -16,7 +16,7 @@ class BeeEnvironment(Environment):
         self.actions = {"turns": 0, "stateChanges": 0}
         self.influenceActions = {"turns": 0, "stateChanges": 0}
         self.totalInfluence = []
-        self.states = {"exploring": {}, "observing":{},"resting":{},'dancing':{},'assessing':{},'site assess':{},'piping':{},'commit':{}}
+        self.states = {"exploring": {}, "observing":{},"resting":{},'dancing':{},'assessing':{},'siteSearch':{},'site assess':{},'piping':{},'commit':{}}
 
         self.xPos = []
         self.yPos = []
@@ -136,6 +136,7 @@ class BeeEnvironment(Environment):
           count = int(self.parameters["ExploreTime"]))
         self.agents[agent_id] = agent
 
+
     def create_rester(self, agentId):
         agent_id = str(agentId)
         #eprint("rest_num = " + str(agent_id))
@@ -154,10 +155,13 @@ class BeeEnvironment(Environment):
     def get_q(self, agent):
         # Calculate the distance between the coordinates and the center of each site, then compare that distance with
         # the radius of the obstacles, traps, rough spots, and sites
+        for info in self.info_stations:
+            info.radius+=.1
         for i, site in enumerate(self.sites):
             x_dif = agent.location[0] - site["x"]
             y_dif = agent.location[1] - site["y"]
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
+
             if tot_dif <= site["radius"]:
                 info = self.info_stations[i]
                 if not agent.atSite:
@@ -165,6 +169,7 @@ class BeeEnvironment(Environment):
                     agent.atSite = True
                     agent.siteIndex = i
                     #TODO: move this to agents, which would be faster
+
                     info.check_for_changes(agent,agent.parameters, agent.param_time_stamp)
                     agent.infoStation = info
                 # return the q_value as a linear gradient. The center of the site will return 100% of the q_value,

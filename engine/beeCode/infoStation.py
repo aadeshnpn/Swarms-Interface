@@ -6,7 +6,7 @@ class InfoStation:
         self.bee_count = 0
 
         self.parameters = parameters
-
+        self.radius = 2
         # last_update starts with negative value, so that the first bee at the station sets the initial parameter values
         self.last_update = -1
         self.agents = {}

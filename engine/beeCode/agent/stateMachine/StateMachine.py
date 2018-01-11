@@ -10,8 +10,8 @@ class StateMachine(ABC):
         if input is None:
             return False
         currState = self.transitionTable[(self.state.__class__, input)]
-        self.state = copy.copy(currState[1])        # environment.sort_by_state(self.id, self.state.__class__, currState[1].__class__)
 
+        self.state = copy.copy(currState[1])        # environment.sort_by_state(self.id, self.state.__class__, currState[1].__class__)
         self.transition()
         if currState[0] is not None:
             currState[0]()

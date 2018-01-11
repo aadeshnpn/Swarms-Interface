@@ -48,22 +48,26 @@ class World
     //console.log(environment.agents.length)
 
 
-    //Update Dead Agents
+
     for(var i=0; i< this.sites.length;i++){
       this.sites[i].x=environment.sites[i].x
       this.sites[i].y=-environment.sites[i]["y"]
     }
-    for(var i =0; i < this.dead_agents.length;i++){
 
-      this.dead_agents[i].x= environment.dead_agents[i].x
-      this.dead_agents[i].y= -environment.dead_agents[i].y
-    }
     //Update Alive Agents
     for(var i =0; i < this.agents.length-this.dead_agents.length;i++){
 
+      for(var dead of environment.dead_agents){
+
+              if(this.agents[i].id == dead.id ){
+                this.agents.splice(i,1)
+                this.dead_agents.push(new DeadAgent(dead))
+              }
+      }
+
       this.agents[i].x= environment.agents[i].x
       this.agents[i].y= -environment.agents[i].y
-      this.agents[i].rotation = environment.agents[i].rotation
+      this.agents[i].rotation = Math.PI/2 -environment.agents[i].direction
     }
 
   }
@@ -81,6 +85,8 @@ class World
     // ctx.shadowBlur = 10;
     //path.draw(ctx,this.environment);
 
+
+    //TODO: Find the place where the info stations are drawn
     for (var site       of this.sites      ) { site      .draw(ctx, debug); }
     for (var obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
     for (var trap       of this.traps      ) { trap      .draw(ctx, debug); }
@@ -93,7 +99,7 @@ class World
     for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
     for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
     for (var fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
-    //for (var fog        of fogBlock        ) { fog       .draw(ctx); }
+    for (var fog        of fogBlock        ) { fog       .draw(ctx); }
 
   }
 }

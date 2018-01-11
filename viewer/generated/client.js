@@ -1633,9 +1633,13 @@ class Agent
     ctx.save();
 
     ctx.rotate(this.rotation);
-
-    ctx.drawImage(bee, -bee.width/2, -bee.height/2);
-
+    ctx.shadowColor = 'rgba(0,0,0,.7)';
+    ctx.shadowOffsetY = 2;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowBlur=10;
+    ctx.drawImage(bee, -bee.width/2, -bee.height/2);;
+    ctx.shadowOffsetY = 0;
+    ctx.shadowOffsetX = 0;
 
     if (showAgentStates && Agent.stateStyles[this.state] !== "" && Agent.stateStyles[this.state] !== undefined) {
        ctx.fillStyle = Agent.stateStyles[this.state];
@@ -1753,6 +1757,8 @@ class Fog
     this.inside=false;
     this.numberVisited=0;
     this.agentTime=new Map()
+    this.agentsInHub=[]
+    this.init=false
   }
 
   visited(agent){
@@ -1760,6 +1766,11 @@ class Fog
   }
 
   checkAgent(agents,hub){
+    if(!this.init){
+      this.agentsInHub=new Array(agents.length)
+      this.agentsInHub.fill(false,0,agents.length)
+      this.init=true
+    }
     for(var agent of agents)
     {
       //console.log(agent.x)
@@ -1772,6 +1783,7 @@ class Fog
         {
           this.agentTime.set(agent.id.toString(),Date.now())
           agent.lastLocations.push(this)
+          //console.log(this.agentsInHub);
         }
 
       }
@@ -1787,7 +1799,7 @@ class Fog
     // if(this.agentTime.get(id.toString()) != undefined){
     //   this.time = this.agentTime.get(id.toString());
     // }
-    // //console.log(this.inside)
+    //console.log(this.inside)
     // var start=this.time;
     // var end= Date.now()
     // this.opacity=(end-start)/10000
@@ -1875,22 +1887,28 @@ class Hub
 
     // console.log("Paths Length: " + this.paths.length)
     // console.log("Paths at Index 0: " + this.paths[0].length)
-
+    var t=0
     for(var agentPaths of this.paths){
       var i=0;
+
       for(var agentPath of agentPaths){
         var k=0;
         if(agentPath.length == 0){
           agentPaths.splice(i,1);
         }
+        var j=0
         for(var path of agentPath){
           if(path.opacity<=0){
             agentPath.splice(k,1);
           }
           path.opacity=0
+          //console.log(t);
+          path.agentsInHub[t]=true
+          j++
         }
         i++
       }
+      t++
     }
 
 
@@ -2227,22 +2245,26 @@ class World
     //console.log(environment.agents.length)
 
 
-    //Update Dead Agents
+
     for(var i=0; i< this.sites.length;i++){
       this.sites[i].x=environment.sites[i].x
       this.sites[i].y=-environment.sites[i]["y"]
     }
-    for(var i =0; i < this.dead_agents.length;i++){
 
-      this.dead_agents[i].x= environment.dead_agents[i].x
-      this.dead_agents[i].y= -environment.dead_agents[i].y
-    }
     //Update Alive Agents
     for(var i =0; i < this.agents.length-this.dead_agents.length;i++){
 
+      for(var dead of environment.dead_agents){
+
+              if(this.agents[i].id == dead.id ){
+                this.agents.splice(i,1)
+                this.dead_agents.push(new DeadAgent(dead))
+              }
+      }
+
       this.agents[i].x= environment.agents[i].x
       this.agents[i].y= -environment.agents[i].y
-      this.agents[i].rotation = environment.agents[i].rotation
+      this.agents[i].rotation = Math.PI/2 -environment.agents[i].direction
     }
 
   }
@@ -2260,6 +2282,8 @@ class World
     // ctx.shadowBlur = 10;
     //path.draw(ctx,this.environment);
 
+
+    //TODO: Find the place where the info stations are drawn
     for (var site       of this.sites      ) { site      .draw(ctx, debug); }
     for (var obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
     for (var trap       of this.traps      ) { trap      .draw(ctx, debug); }
@@ -2272,7 +2296,7 @@ class World
     for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
     for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
     for (var fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
-    //for (var fog        of fogBlock        ) { fog       .draw(ctx); }
+    for (var fog        of fogBlock        ) { fog       .draw(ctx); }
 
   }
 }
