@@ -1,0 +1,51 @@
+@import 'menuCss.css';
+
+:root{
+  --buttonSize:60px;
+}
+
+body{
+  background-color: rgb(55, 55, 55);
+  overflow-x: hidden;
+}
+
+canvas {
+  padding: 0;
+  margin: auto;
+  display: block;
+  z-index: -100 !important;
+  position: absolute;
+  top: -40px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border:solid black;
+  border-width:4px;
+}
+
+#statsBar{
+  text-align: center;
+  z-index: 99 !important;
+  position: absolute;
+  top: 0;
+  left:0;
+  width: 100%;
+  color:white;
+}
+#beeStats{
+  width: 100%;
+  text-shadow: 2px 2px black;
+  background-color: rgba(20,20,20,.7);
+  padding: 5px 0px;
+}
+
+#deadBeeDiv{
+  margin:0 auto;
+  width:12%;
+  height: 20px;
+  background-color: rgb(161, 161, 161);
+}
+
+#deadBeeProgress{
+  background-color: rgb(100,255,10);
+}

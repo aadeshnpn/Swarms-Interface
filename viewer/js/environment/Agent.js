@@ -17,8 +17,7 @@ class Agent
   draw(ctx, debug = false, showAgentStates = false,hub)
   {
 
-    if (!debug)
-      return;
+    if (!debug) return;
 
 
     ctx.save();
@@ -33,6 +32,7 @@ class Agent
     ctx.shadowOffsetY = 2;
     ctx.shadowOffsetX = 2;
     ctx.shadowBlur=10;
+
     ctx.drawImage(bee, -bee.width/2, -bee.height/2);;
     ctx.shadowOffsetY = 0;
     ctx.shadowOffsetX = 0;

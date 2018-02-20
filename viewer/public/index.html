@@ -1,183 +1,90 @@
 <html>
-  <head>
-    <link rel="stylesheet" type="text/css" href="css/default.css" />
-    <link rel="stylesheet" type="text/css" href="css/index.css" />
-    <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
-  </head>
-  <body>
-    <div id="content">
-      <div id="activeSims">
-        <h1>Active Sims</h1>
+<head>
+  <link rel="stylesheet" type="text/css" href="css/default.css" />
+  <link rel="stylesheet" type="text/css" href="indexCss/index.css" />
+  <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
+</head>
+<body>
+  <div id="content">
+    <h2>Swarm Simulations</h2>
+    <div id="redirect">
+      <h1>New Sim</h1>
+      <button id="redirectToCreate">Create</button>
+    </div>
+    <div id="activeSims">
+      <h1>Active Sims</h1>
         <div id="activeSim">
-        <table id="simList">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Sim Type</th>
-              <th>World</th>
-              <th>Connected</th>
-              <th># of Agents</th>
-              <th>Link</th>
-              <th>Delete</th>
-            </tr>
-          </thead>
-          <tbody>
-          </tbody>
-        </table>
-      </div>
-      </div>
-      <div id="newSim">
-        <h1>New Sim</h1>
-        <form id="newSims">
-          <label>Simulation Name <br><input type="text" class="text" id="simName" name="name"></label><br><br>
-          <label>Type <br><select name="model"><option>Bee</option><option>Ant</option><option>Uav</option></select></label><br><br>
-          <label>World Type <br>
-            <select name="worldType">
-              <option>Static</option>
-              <option>Random</option>
-            </select>
-          </label><br><br>
-          <label>Limit users? <input type="checkbox" id="limitUsers" name="limitUsers" value="true"></label>
-          <label>User Limit <input type="number" class="text" id="maxUsers"name="maxUsers" min="1" value="10" disabled></label><br><br>
-          <label>Hub Controller:<input type="checkbox"  name="hubController" value="true"></label>
-          <label>Bait:<input type="checkbox" name="bait" value="true"></label>
-          <label>Bomb:<input type="checkbox"  name="bomb" value="true"></label>
-          <label>Debug mode:<input type="checkbox"  name="debug" value="true"></label><br><br>
-          <label>Number of agents:<br><input type="number" class="text" id="agentNumber" name="agentNum" min="1" value="100" ></label><br><br>
-          <div id="largeAgent"><div>
-          <button id="createNewSim" type="submit">Create</button>
-        </form>
-      </div>
-      <!--<div id="database">-->
-        <!--<h1>Access database</h1>-->
-        <!--<form id="database">-->
-          <!--<label>Name: <input type="text" name="charles"></label>-->
-          <!--<button id=type="submit">Do database stuff</button>-->
-        <!--</form>-->
-      <!--</div>-->
+
+          <table id="simList">
+            <thead>
+              <tr>
+                <th>Sim</th>
+                <th>Sim Type</th>
+                <th>World</th>
+                <th>Connected</th>
+                <th># of Agents</th>
+                <th>Link</th>
+                <th>Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+
+        </div>
 
     </div>
 
+    <!-- <div id="newSim">
 
-    <script
-      src="https://code.jquery.com/jquery-3.2.1.min.js"
-      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-      crossorigin="anonymous">
-    </script>
+      <h1>New Sim</h1>
 
-    <script
-      type="text/javascript"
-      src="js/plugins/jquery.tablesorter.min.js">
-    </script>
+      <form id="newSims">
+        <label>Simulation Name <br><input type="text" class="text" id="simName" name="name"></label><br><br>
+        <label>Type <br><select name="model"><option>Drone</option><option>Bee</option><option>Ant</option><option>Uav</option></select></label><br><br>
+        <label>World Type <br>
+          <select name="worldType">
+            <option>Static</option>
+            <option>Random</option>
+          </select>
+        </label><br><br>
+        <label id="limit">Limit users? <input type="checkbox" id="limitUsers" name="limitUsers" value="true"></label>
 
-    <script type="text/javascript">
-      let currentSort = [[0, 0]]; // first column, descending
+        <label >User Limit <input type="number" class="text" id="maxUsers"name="maxUsers" min="1" value="10" disabled></label><br><br>
 
-      $(document).ready(() =>
-      {
+        <label>Hub Controller:<input type="checkbox"  name="hubController" value="true"></label>
+        <label>Bait:<input type="checkbox" name="bait" value="true"></label>
+        <label>Bomb:<input type="checkbox"  name="bomb" value="true"></label>
+        <label>Debug mode:<input type="checkbox"  name="debug" value="true"></label><br><br>
+        <label>Number of agents:<br><input type="number" class="text" id="agentNumber" name="agentNum" min="1" value="100" ></label><br><br>
+        <button id="createNewSim" type="submit">Create</button>
+      </form>
+    </div>-->
 
-
-
-
-        getSims();
-
-        window.setInterval(getSims, 5000);
-
-        let simListTable = $('#simList');
-
-        let numHeaders = simListTable.children('th').length;
-
-        simListTable.tablesorter();
-        simListTable.bind("sortEnd", function(event) { currentSort = event.target.config.sortList; } );
-
-        // The last column should always be the link to the sim, and it doesn't
-        // make any sense to sort by that.
-        $('#simList thead th:last-of-type').data('sorter', false);
-
-        $('#createNewSim').on('click', function(event)
-        {
-          event.preventDefault();
-
-          var data = {};
-
-          var form = $("form").serializeArray();
-          //console.log($("form").serializeArray());
-
-          for (var i = 0; i < form.length; i++)
-          {
-            data[form[i].name] = form[i].value;
-          }
-
-          $.post("/sims/", data, res =>
-          {
-
-            //console.log(res);
-            //$('#activeSims').append(`<a href="${res}">Join</a>`);
-            getSims();
-          });
-        });
-
-        $('#limitUsers').change((event) =>
-        {
-          $('#newSim input[name=maxUsers]').prop("disabled", !$(event.target).prop('checked'));
-        });
+<!--
+    <h1>Access database</h1>
+    <div id="database">
+      <form id="databaseForm">
+        <label>Name: <input type="text" name="charles"></label>
+        <button id='databaseButton' type="submit">Get Database Info</button>
+      </form>
+    </div> -->
+  </div>
+<!-- Hum -->
 
 
+<script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous">
+</script>
 
-      });
+<script
+  type="text/javascript"
+  src="js/plugins/jquery.tablesorter.min.js">
+</script>
+<script src="./js/index.js"></script>
 
-      function getSims()
-      {
 
-        $.get("/simlist", json =>
-        {
-          $('#simList').find("tr:gt(0)").remove();
-
-          let keysSorted = Object.keys(json).sort();
-          var i=1;
-          for (let key of keysSorted)
-          {
-            let [sim, info] = [key, json[key]];
-            //console.log(info);
-            $('#simList tbody').append(`
-              <tr>
-                <td>${sim}</td>
-                <td>${info.options.model}</td>
-                <td>${info.options.worldType}</td>
-                <td>${info.connected} / ${info.options.maxUsers}</td>
-                <td>${info.options.agentNum}</td>
-                <td><a href='/sims/${sim}'>Join</a></td>
-                <td><button class="deleteSim" id="sim${i}">X</button></td>
-              </tr>`);
-              //console.log($('.deleteSim'));
-              $('#simList').trigger("update");
-
-          }
-          $('.deleteSim').click(function(e){
-            var id=(e.target.id).split('sim')[1]
-            var simId=$(this.parentNode.parentNode)[0].firstElementChild.innerHTML
-            //simId=JSON.stringify(simId)
-
-            var myobj= {simId:simId}
-            jobj = JSON.stringify(myobj);
-            $.ajax({
-              url:'simDel',
-              type: "POST",
-              data:jobj,
-              contentType: "application/json; charset=utf-8",
-              success: function(data,textStatus){
-
-              }
-            })
-
-            //
-            $(this).parents("tr").remove()
-            // console.log(json);
-
-          })
-        });
-      }
-
-      </script>
-  </body>
+</body>
 </html>

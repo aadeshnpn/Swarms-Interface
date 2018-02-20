@@ -28,6 +28,7 @@ class DebugParams
       //$('#buttonUpdateDebugParams').after("<br>");
       for (let [param, val] of Object.entries(data.parameters))
       {
+         param = param.split(/(?=[A-Z])/).join(' ')
          var label = $("<label></label>").text(`${param}`);
          label.append($('<input style="width:40%;">').val(val).attr('type','number').attr('name',`${param}`));
          label.append("<br>");

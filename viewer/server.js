@@ -66,6 +66,8 @@ require('sticky-cluster')(function (callback)
   //this folder has the models for the mongoose stuff.
   const Models = require('./models');
 
+  app.use(bodyParser.json({limit:'50mb'}));
+  app.use(bodyParser.urlencoded({extended:true, limit:'50mb'}));
 
 
   // The server's job should be essentially to grab world info from the simulation
@@ -125,12 +127,16 @@ require('sticky-cluster')(function (callback)
       var args = [];
       //var simEnv = this.options.model === "ant" ? '../engine/uavEnvironment.py' : '../engine/beeEnvironment.py';
       var simEnv = '../engine/beeEnvironment.py';
+
       switch (this.options.model)
       {
         case 'Bee':
             break;
         case 'Ant':
             simEnv = '../engine/antEnvironment.py';
+            break;
+        case 'Drone':
+            this.options.model='Bee'
             break;
         case 'Uav':
             simEnv = '../engine/uavEnvironment.py';
@@ -368,6 +374,7 @@ require('sticky-cluster')(function (callback)
   // Route for creating a new simulation
   app.post('/sims/', function(req, res)
   {
+
     const options = req.body;
     let userLimit;
 
@@ -407,7 +414,7 @@ require('sticky-cluster')(function (callback)
         }
         else
         {
-          
+
           new Simulation(id, options);
 
           // send back the link for connecting to the simulation
@@ -418,9 +425,20 @@ require('sticky-cluster')(function (callback)
   // Route for deleting a simulation
   app.post('/simDel/', function(req, res){
     //console.log("In Delete");
-    console.log();
+
     redisClient.DEL("activeSims", req.body.simId);
     res.status(200)
+  })
+
+  var simdata = Models.simData//mongoose.model('posSimData')
+  app.get('/database/', function(req, res){
+    // console.log(simdata);
+    // simdata.find(function(err,data){
+    //       console.log();
+    //         if(err){return next(err);}
+    //         res.json(data).status(200);
+    // })
+
   })
   // Route for connecting to a specific simulation
   app.get('/sims/:id', function(req, res)
@@ -453,7 +471,7 @@ require('sticky-cluster')(function (callback)
 
           res.cookie("simId", simId);
 
-          res.sendFile('client.html',
+          res.sendFile('public/client.html',
           {
             root: __dirname
           });
@@ -554,6 +572,7 @@ require('sticky-cluster')(function (callback)
 
           let channels = info.channels;
           let options = info.options;
+          socket.emit('simType',options.model);
           if(options.bait){
             socket.emit('baitToggle', options.bait);
           }

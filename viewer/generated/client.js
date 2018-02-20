@@ -96,50 +96,242 @@ class BaitBombGhost
   }
 }
 
-class MissionLayer
-{
-  constructor(ui)
-  {
-    this.points = [];
+class MissionLayer {
+	constructor(ui) {
+		this.points = [];
+		this.hoveredPoint = null;
 
-    ui.register('updateMission', this.update.bind(this));
-    ui.register('restart',       this.reset.bind(this));
-  }
+		// the radius of the circle to draw for each point
+		// and to detect the hover
+		this.radius = 5;
 
-  update(data)
-  {
-    this.points.push(data);
+		// a cluster has an image and an array of points
+		// this is used to assign a single image to a group
+		// of points that likely belong to the same site
+		this.clusters = [];
 
-    // this can really slow down the ui if it gets out of hand
-    if (this.points.length > 200)
-      this.points.shift();
-  }
+		// the cluster distance is the minimum distance
+		// a point must be from every point in a cluster
+		// be be placed in a different cluster
+		this.clusterDist = 8;
 
-  draw(ctx, debug = false)
-  {
-    ctx.save();
+		// this is a placeholder for the image to show
+		// when hovered over a point
+		this.image = new Image();
 
-    for (let point of this.points)
-    {
-      var rVal = (point.q > 0.5) ? (1.0 - point.q) * 2 : 1.0;
-      var gVal = (point.q > 0.5) ? 1.0 : point.q * 2;
+		// the max size can be any positive number, and
+		// the image will be draw with the correct ratio
+		// bounded inside the max size
+		this.imageMaxWidth = 200;
+		this.imageMaxHeight = 200;
 
-      ctx.fillStyle   = `rgba(${Math.round(255 * rVal)}, ${Math.round(255 * gVal)}, 70, 0.8)`;
-      ctx.strokeStyle = "rgb(20, 20, 20)";
+		// this is the width of the colored border and
+		// stroke around the image
+		this.imageBorderWidth = 2;
 
-      ctx.beginPath();
-      ctx.arc(point.x, -point.y, 5, 0, Math.PI * 2, false);
-      ctx.fill();
-      ctx.stroke();
-    }
+		// create list of images
+		this.siteImages = [];
+		this.loadSiteImages();
 
-    ctx.restore();
-  }
+		ui.register('updateMission', this.update.bind(this));
+		ui.register('restart', this.reset.bind(this));
 
-  reset()
-  {
-     this.points = [];
-  }
+		cursors.default.addEventListener('mousemove', this.onMouseMove.bind(this));
+	}
+
+	update(data) {
+		this.points.push(data);
+		// this can really slow down the ui if it gets out of hand
+		if (this.points.length > 200) { // only keep the most recent 200 points
+			this.points.shift();
+		}
+
+		// add to clusters
+		let added = false;
+		// check if the data point is close enough to an existing cluster
+		clusterLoop:
+		for (let cluster of this.clusters) {
+			for (let point of cluster.points) {
+				// compare distance to every point in cluster
+				if (this.dist(point, data) <= this.clusterDist) {
+					// match, store in cluster
+					cluster.points.push(data);
+					added = true;
+					break clusterLoop;
+				}
+			}
+		}
+
+		if (!added) {
+			// if all of the images have been used, reuse them
+			if (this.siteImages.size === 0) {
+				this.loadSiteImages();
+			}
+
+			// this point wasn't added to an existing cluster, start a new cluster
+			this.clusters.push({image:this.siteImages.pop(), points:[data]});
+		}
+	}
+
+	draw(ctx, debug = false) {
+
+		ctx.save();
+
+		for (let point of this.points) {
+			// red value multiplier
+			let rVal = (point.q > 0.5) ? (1.0 - point.q) * 2 : 1.0;
+			// green value multiplier
+			let gVal = (point.q > 0.5) ? 1.0 : point.q * 2;
+			// set the fill and stroke colors
+			ctx.fillStyle = `rgba(${Math.round(255 * rVal)}, ${Math.round(255 * gVal)}, 70, 0.8)`;
+			ctx.strokeStyle = "rgb(20, 20, 20)";
+
+			// draw the circle
+			ctx.beginPath();
+			ctx.arc(point.x, -point.y, this.radius, 0, 2 * Math.PI, false);
+			ctx.fill();
+			ctx.stroke();
+			ctx.closePath();
+
+			// if hovered, draw image
+			if (point === this.hoveredPoint) {
+
+				// get natural size of image
+
+				let width = this.image.width;
+				let height = this.image.height;
+
+				// scale image size
+
+				if (width > this.imageMaxWidth) {
+					let scale = this.imageMaxWidth / width;
+					width = this.imageMaxWidth;
+					height = height * scale;
+				}
+
+				if (height > this.imageMaxHeight) {
+					let scale = this.imageMaxHeight / height;
+					height = this.imageMaxHeight;
+					width = width * scale;
+				}
+
+				// add border width
+
+				width += 2 * this.imageBorderWidth;
+				height += 2 * this.imageBorderWidth;
+
+				// determine bounds for image to stay in view
+
+				let xLimit = ctx.canvas.clientWidth / 2;
+				let yLimit = ctx.canvas.clientHeight / 2;
+
+				let left = point.x - width / 2;
+				if (left < -xLimit) {
+					left = -xLimit;
+				}
+
+				let right = left + width;
+				if (right > xLimit) {
+					right = xLimit;
+					left = right - width;
+				}
+
+				let top = point.y + height;
+				if (top > yLimit) {
+					top = yLimit;
+				}
+
+				let bottom = top - height;
+				if (bottom < -yLimit) {
+					bottom = -yLimit;
+					top = bottom + height;
+				}
+
+				// draw border and background
+
+				ctx.beginPath();
+				ctx.moveTo(left, -bottom);
+				ctx.lineTo(right, -bottom);
+				ctx.lineTo(right, -top);
+				ctx.lineTo(left, -top);
+				ctx.lineTo(left, -bottom);
+				ctx.fill();
+				ctx.stroke();
+				ctx.closePath();
+
+				// redraw the center of the circle
+
+				ctx.beginPath();
+				ctx.arc(point.x, -point.y, this.radius, 0, 2 * Math.PI, false);
+				ctx.fill();
+				ctx.closePath();
+
+				// draw image
+
+				ctx.drawImage(this.image, left + this.imageBorderWidth, -top + this.imageBorderWidth,
+					width - 2 * this.imageBorderWidth, height - 2 * this.imageBorderWidth);
+			}
+		}
+
+		ctx.restore();
+	}
+
+	reset() {
+		this.points = [];
+		this.clusters = [];
+		this.siteImages = [];
+		this.hoveredPoint = null;
+		this.loadSiteImages();
+	}
+
+	onMouseMove(e) {
+		let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+
+		this.hoveredPoint = null;
+		// check every point to see if it is hovered
+		for (let point of this.points) {
+			if (this.isHovered(point, worldRelative)) {
+				// if hovered point changed, check cluster for new image
+				if (this.hoveredPoint !== point) {
+					this.hoveredPoint = point;
+					// find the cluster this point belongs to
+					for (let cluster of this.clusters) {
+						if (cluster.points.includes(point)) {
+							this.image.src = cluster.image;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	loadSiteImages() {
+		let numOfImages = 12;
+		// load in names of image files
+		for (let i = 1; i <= numOfImages; i++) {
+			this.siteImages.push("../siteImages/" + (i < 10 ? "0" : "") + i + ".jpg");
+		}
+
+		// shuffle them
+		for (let i = 0; i < numOfImages; i++) {
+			// choose one at random
+			let rand = Math.floor(Math.random() * numOfImages);
+			// swap them
+			let temp = this.siteImages[rand];
+			this.siteImages[rand] = this.siteImages[i];
+			this.siteImages[i] = temp;
+		}
+	}
+
+	dist(point1, point2) {
+		// use distance formula sqrt(x^2+y^2)
+		return Math.sqrt(Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2));
+	}
+
+	isHovered(point, mouse) {
+		return this.dist(point, mouse) <= this.radius;
+	}
 }
 
 class Handle
@@ -690,8 +882,8 @@ class SelectionRect
 
       ctx.save();
 
-      ctx.fillStyle = "rgba(0,202,0,.5)";
-      ctx.strokeStyle = "rgba(0, 0, 0,.7)";
+      ctx.fillStyle = "rgba(0,150,0,.3)";
+      ctx.strokeStyle = "rgba(0, 0, 0,.5)";
       ctx.lineWidth = 1;
 
       // Reset the context to canvas top-left because we have canvas-relative
@@ -1011,40 +1203,35 @@ bombButton.addEventListener('click', function()
   ui.setActiveCursor(cursors.placeBaitBomb);
 });
 
-class beeCounter
-{
-   constructor(ui)
-   {
-      ui.register('updateRadial', this.update.bind(this));
-      this.dead = 0
-      this.deadBee=document.getElementById("deadBeeProgress");
-      this.deadBee.value=0;
-   }
-   update(data)
-   {
-    var deadBee=document.getElementById("deadBeeProgress");
-    //deadBee.value=0;
-    //console.log(data)
-       if(data.controller['dead']!=this.dead){
-            var deadBee=document.getElementById("deadBeeProgress");
-            this.dead = data.controller['dead'];
-            //console.log(this.deadBee)
-            this.deadBee.value =this.dead
-            //console.log(this.dead)
-            //deadBee.value=this.dead;
-            document.getElementById("deadBees").innerHTML = "Estimated Dead: " + this.dead.toString();
-       }
+class BeeCounter {
+	constructor(ui) {
+		ui.register('updateRadial', this.update.bind(this));
+		this.dead = 0;
 
-      // document.getElementById("turns").innerHTML = "total turns: " + data.controller['actions']["turns"].toString();
-       //document.getElementById("stateChanges").innerHTML = "Total state changes: " + data.controller['actions']["stateChanges"].toString();
+	}
 
-       //document.getElementById("influenceTurns").innerHTML = "Influenced turns: " + data.controller['influenceActions']["turns"].toString();
-       //document.getElementById("influenceChanges").innerHTML = "Influenced changes: " + data.controller['influenceActions']["stateChanges"].toString();
-       /*
-        self.actions = {"turns": 0, "stateChanges": 0, "parameterChange": 0}
-        self.influenceActions = {"turns": 0, "stateChanges": 0, "parameterChange": 0}
-        */
-   }
+	update(data) {
+		// var deadBee = document.getElementById("deadBeeProgress");
+		//deadBee.value=0;
+		//console.log(data)
+		if (data.controller['dead'] != this.dead) {
+			var deadBeeStatus=$('#deadBeeProgress');
+
+			this.dead = data.controller['dead'];
+
+			document.getElementById("deadBees").innerHTML = "Estimated Dead: " + this.dead.toString() + '<br><progress value="'+this.dead.toString()+'" max="100" id="deadBeeProgress"></progress>';
+		}
+
+		// document.getElementById("turns").innerHTML = "total turns: " + data.controller['actions']["turns"].toString();
+		//document.getElementById("stateChanges").innerHTML = "Total state changes: " + data.controller['actions']["stateChanges"].toString();
+
+		//document.getElementById("influenceTurns").innerHTML = "Influenced turns: " + data.controller['influenceActions']["turns"].toString();
+		//document.getElementById("influenceChanges").innerHTML = "Influenced changes: " + data.controller['influenceActions']["stateChanges"].toString();
+		/*
+		 self.actions = {"turns": 0, "stateChanges": 0, "parameterChange": 0}
+		 self.influenceActions = {"turns": 0, "stateChanges": 0, "parameterChange": 0}
+		 */
+	}
 }
 
 var buttonSend = document.getElementById('buttonSend');
@@ -1077,23 +1264,18 @@ function pressEnter()
 });
 */
 
-class chatRoom
-{
-   constructor(ui)
-   {
-      ui.register('updateChat', this.update.bind(this));
-      this.chatHistory = '';
-      console.log('chatRoom initialized.');
-   }
-   update(data)
-   {
-       console.log('chatRoom update called.');
-       if(data!== this.chatHistory){
-            this.chatHistory = data;
-            console.log(this.chatHistory)
-            document.getElementById("chatwindow").innerHTML = this.chatHistory;
-       }
-   }
+class ChatRoom {
+	constructor(ui) {
+		ui.register('updateChat', this.update.bind(this));
+		this.chatHistory = '';
+	}
+
+	update(data) {
+		if (data !== this.chatHistory) {
+			this.chatHistory = data;
+			document.getElementById("chatwindow").innerHTML = this.chatHistory;
+		}
+	}
 }
 
 class DebugParams
@@ -1126,6 +1308,7 @@ class DebugParams
       //$('#buttonUpdateDebugParams').after("<br>");
       for (let [param, val] of Object.entries(data.parameters))
       {
+         param = param.split(/(?=[A-Z])/).join(' ')
          var label = $("<label></label>").text(`${param}`);
          label.append($('<input style="width:40%;">').val(val).attr('type','number').attr('name',`${param}`));
          label.append("<br>");
@@ -1192,7 +1375,7 @@ class DebugTable
                   // This agent doesn't have a row in our debug table, so create one
                   if (!$(`#agentInfo${agent.id}`).length)
                   {
-                     
+
                      let row = $(document.createElement('tr'));
                      row.attr('id', `agentInfo${agent.id}`);
                      row.attr('class', 'agentInfo');
@@ -1344,11 +1527,15 @@ const rebugCheckbox = document.getElementById('dontShowAgents');
 const agentHide =document.getElementById('agentInfoIcon');
 const showChat =document.getElementById('messengerIcon');
 const debugButton =document.getElementById('debugIcon');
+const fogButton =document.getElementById('showFogIcon');
 var showAgent = false;
+var showFog=true;
 var showDebug = false;
 var showSlider = false;
 var showAgentInfo = false;
 var showChatWindow = false;
+
+
 
 $("#debugIcon").click(function(){
   $('#debugArea').fadeToggle();
@@ -1357,6 +1544,19 @@ $("#debugIcon").click(function(){
   }
   else{
     showDebug=true;
+  }
+})
+$("#showFogIcon").click(function(){
+  //console.log(showFog);
+  if(showFog){
+      //console.log($('#showFogIcon').attr('id'));
+    $('#showFogIcon').attr('id',"dontShowFogIcon")
+    showFog = false;
+  }
+  else{
+    //console.log($('#dontShowFogIcon').attr('id'));
+    $('#dontShowFogIcon').attr('id',"showFogIcon")
+    showFog=true;
   }
 })
 
@@ -1415,6 +1615,36 @@ var showOptions1 = false;
 var openSound = document.getElementById("audio0")
 
 var closeSound = document.getElementById("audio1");
+var menuArray=['messengerIcon','menu','agentInfoIcon']
+var optionsArray=['options','showAgentState','dontShowAgentState','backgroundTransparency','showFogIcon','dontShowFogIcon','showAgents','dontShowAgents','debugIcon']
+//var optionsArray.push('')
+$("body").click(function(e){
+
+  let inMenu =false;
+  let inOptions=false;
+  for(let menus of menuArray){
+    if(menus == e.target.id || menus==$(e.target).attr('class')){
+      inMenu=true;
+    }
+  }
+  for(let options of optionsArray){
+    if(options == e.target.id || options==$(e.target).attr('class')){
+      inOptions=true;
+    }
+  }
+  if(!inMenu){
+    $(".menuContent").fadeOut();
+    $("#chatArea").fadeOut();
+    // $("#agentLoc").fadeOut();
+  }
+  if(!inOptions){
+    $(".optionsContent").fadeOut();
+    $('#myRange').fadeOut()
+    $('#debugArea').fadeOut();
+  }
+  // console.log(e.target.id);
+  // console.log($(e.target).attr('class'));
+})
 
 $(".menu").click(function(){
 $(".menuContent").fadeToggle();
@@ -1508,8 +1738,8 @@ class UI
       this.documentElems.push( new UIParams			  (this) );
       this.documentElems.push( new SitePriorityMeters(this) );
       this.documentElems.push( new DebugTable        (this) );
-      this.documentElems.push(new beeCounter        (this));
-      this.documentElems.push(new chatRoom(this));
+      this.documentElems.push(new BeeCounter        (this));
+      this.documentElems.push(new ChatRoom(this));
 
       this.activeCursor = cursors.default.activate();
 
@@ -1621,8 +1851,7 @@ class Agent
   draw(ctx, debug = false, showAgentStates = false,hub)
   {
 
-    if (!debug)
-      return;
+    if (!debug) return;
 
 
     ctx.save();
@@ -1637,6 +1866,7 @@ class Agent
     ctx.shadowOffsetY = 2;
     ctx.shadowOffsetX = 2;
     ctx.shadowBlur=10;
+
     ctx.drawImage(bee, -bee.width/2, -bee.height/2);;
     ctx.shadowOffsetY = 0;
     ctx.shadowOffsetX = 0;
@@ -2037,10 +2267,10 @@ class Pheromone
 
     ctx.fillStyle = Pheromone.FILL_STYLE;
 
-    for (let pheromone of this.pheromones)
-    {
-        ctx.fillRect(pheromone.x - 3, -pheromone.y - 3, 9, 9);
-    }
+    //for (let pheromone of this.pheromones)
+    //{
+        ctx.fillRect(this.pheromones.x - 3, -this.pheromones.y - 3, 9, 9);
+    //}
 
     ctx.restore();
   }
@@ -2212,20 +2442,19 @@ class World
     this.repulsors   = [];
     this.agents      = [];
     this.dead_agents = [];
-    this.pheromones;
     this.environment = environmentJson;
     this.test =true;
-    this.time=1000
+    this.time=1000;
 
 
-    for (var site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
-    for (var obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
-    for (var trap       of environmentJson.traps      ) { this.traps      .push( new Trap      (trap      ) ); }
-    for (var rough      of environmentJson.rough      ) { this.rough      .push( new Rough     (rough     ) ); }
-    for (var attractor  of environmentJson.attractors ) { this.attractors .push( new Attractor (attractor ) ); }
-    for (var repulsor   of environmentJson.repulsors  ) { this.repulsors  .push( new Repulsor  (repulsor  ) ); }
-    for (var agent      of environmentJson.agents     ) { this.agents     .push( new Agent     (agent     ) ); }
-    for (var dead_agent of environmentJson.dead_agents) { this.dead_agents.push( new DeadAgent (dead_agent) ); }
+    for (let site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
+    for (let obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
+    for (let trap       of environmentJson.traps      ) { this.traps      .push( new Trap      (trap      ) ); }
+    for (let rough      of environmentJson.rough      ) { this.rough      .push( new Rough     (rough     ) ); }
+    for (let attractor  of environmentJson.attractors ) { this.attractors .push( new Attractor (attractor ) ); }
+    for (let repulsor   of environmentJson.repulsors  ) { this.repulsors  .push( new Repulsor  (repulsor  ) ); }
+    for (let agent      of environmentJson.agents     ) { this.agents     .push( new Agent     (agent     ) ); }
+    for (let dead_agent of environmentJson.dead_agents) { this.dead_agents.push( new DeadAgent (dead_agent) ); }
     //for (var pheromone of environmentJson.pheromones)   { this.pheromones .push( new Pheromone (pheromone)  ); }
     this.pheromones = new Pheromone(environmentJson.pheromones);
   }
@@ -2245,6 +2474,7 @@ class World
     //console.log(environment.agents.length)
 
 
+//<<<<<<< HEAD
 
     for(var i=0; i< this.sites.length;i++){
       this.sites[i].x=environment.sites[i].x
@@ -2265,14 +2495,35 @@ class World
       this.agents[i].x= environment.agents[i].x
       this.agents[i].y= -environment.agents[i].y
       this.agents[i].rotation = Math.PI/2 -environment.agents[i].direction
+      this.agents[i].state=environment.agents[i].state
+
     }
+//=======
+	  // //Update Dead Agents
+	  // for (let i = 0; i < this.sites.length; i++) {
+		//   this.sites[i].x = environment.sites[i].x;
+		//   this.sites[i].y = -environment.sites[i]["y"];
+	  // }
+	  // for (let i = 0; i < this.dead_agents.length; i++) {
+    //
+		//   this.dead_agents[i].x = environment.dead_agents[i].x;
+		//   this.dead_agents[i].y = -environment.dead_agents[i].y;
+	  // }
+	  // //Update Alive Agents
+	  // for (let i = 0; i < this.agents.length - this.dead_agents.length; i++) {
+    //
+		//   this.agents[i].x = environment.agents[i].x;
+		//   this.agents[i].y = -environment.agents[i].y;
+		//   this.agents[i].rotation = environment.agents[i].rotation;
+	  // }
+//>>>>>>> 0039f9a7c85313d08902ab5a03211a77db5832b0
 
   }
   // Draw the whole world recursively. Takes a 2dRenderingContext obj from
   // a canvas element
   draw(ctx, debug = false, showAgentStates = false, environment)
   {
-    var sliderVal=document.getElementById('myRange').value;
+    let sliderVal = document.getElementById('myRange').value;
 
     // Ok so this isn't really buying us all that much simplification at this level
     // right *now*, but the point is if in the future we ever need some sort of
@@ -2282,6 +2533,7 @@ class World
     // ctx.shadowBlur = 10;
     //path.draw(ctx,this.environment);
 
+//<<<<<<< HEAD
 
     //TODO: Find the place where the info stations are drawn
     for (var site       of this.sites      ) { site      .draw(ctx, debug); }
@@ -2292,11 +2544,28 @@ class World
     for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
     this.pheromones.draw(ctx, debug);
     this.hub.draw(ctx, debug, this.agents);
-
     for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
     for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
     for (var fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
-    for (var fog        of fogBlock        ) { fog       .draw(ctx); }
+    if(showFog){
+      for (var fog        of fogBlock        ) { fog       .draw(ctx); }
+
+    }
+//=======
+    // for (let site       of this.sites      ) { site      .draw(ctx, debug); }
+    // for (let obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
+    // for (let trap       of this.traps      ) { trap      .draw(ctx, debug); }
+    // for (let rough      of this.rough      ) { rough     .draw(ctx, debug); }
+    // for (let attractor  of this.attractors ) { attractor .draw(ctx, debug); }
+    // for (let repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
+    // this.pheromones.draw(ctx, debug);
+    // this.hub.draw(ctx, debug, this.agents);
+    //
+    // for (let agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
+    // for (let dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
+    // for (let fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
+    //for (let fog        of fogBlock        ) { fog       .draw(ctx); }
+//>>>>>>> 0039f9a7c85313d08902ab5a03211a77db5832b0
 
   }
 }
@@ -2323,13 +2592,40 @@ const cursors =
    radialDrag: new CursorRadialDrag(),
    placeBaitBomb: new CursorPlaceBaitBomb()
 };
-
+$("#deadBees").click(function(){
+  window.location.replace("http://localhost:3000");
+})
 const ui = new UI();
-
+var bee;
+var beeDead;
+var obstacle;
+var simType;
+bee      = document.getElementById("drone"     );
 // get image refs
-var bee      = document.getElementById("bee"     );
-var beeDead  = document.getElementById("bee-dead");
-var obstacle = document.getElementById("obstacle");
+socket.on('simType', function(type)
+{
+  simType=type;
+  //console.log(simType);
+  if(type=="Drone"){
+    bee      = document.getElementById("drone"     );
+;
+    beeDead  = document.getElementById("drone-dead");
+  }
+  else if(type=="Bee"){
+    bee      = document.getElementById("bee"     );
+    beeDead  = document.getElementById("bee-dead");
+  }
+  else if(type=="Ant"){
+    bee      = document.getElementById("ant"     );
+    beeDead  = document.getElementById("ant-dead");
+  }
+  else if(type=="Uav"){
+    bee      = document.getElementById("drone"     );
+    beeDead  = document.getElementById("drone-dead");
+  }
+   obstacle = document.getElementById("obstacle");
+});
+
 
 var finishedDrawing = true;
 
@@ -2396,7 +2692,10 @@ socket.on('update', function(worldUpdate)
    }
    else if (finishedDrawing)
    {
-      world.update(worldUpdate.data) //= new World(worldUpdate.data); //try implementing an array and stack
+      world.update(worldUpdate.data) //= new World(worldUpdate.data); <---- This creates a new world every update which causes issues with
+      //saving info that is not from the engine (E.G - the fog system)
+
+      //try implementing an array and stack
       //you'd push worldupdate.data into array, and then pop it off the stack when you need it
       // "need it" means you've finished a draw cycle, which is happening in browser
       // if you want to keep everything in draw function like it is, make the array and stack
@@ -2425,16 +2724,19 @@ function draw(environment)
    // clear everything
    ctx.clearRect(-world.x_limit, -world.y_limit, world.width, world.height);
    ctx.save();
-   ctx.fillStyle = "rgb(100, 100, 100)";
+   ctx.fillStyle = "rgb(160, 160, 160)";
    ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
 
    ctx.globalAlpha = sliderVal/100;
-   ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height)
+
+  if(simType=="Drone"){
+     ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height);
+  }
    ctx.globalAlpha = 1;
 
    ctx.restore();
 
-   world.draw(ctx, debug, showAgentStates,environment); // move to update path rather than 1/60
+   world.draw(ctx, debug, showAgentStates, environment); // move to update path rather than 1/60
    ui.draw(ctx, debug);
 
    finishedDrawing = true;

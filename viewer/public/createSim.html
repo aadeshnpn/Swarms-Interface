@@ -1,0 +1,106 @@
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="css/default.css" />
+  <link rel="stylesheet" type="text/css" href="createWorld/index.css" />
+  <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
+</head>
+<body>
+<div id="header"> <h1 id="title">Sim Name -- Drone Agent</h1></div>
+<div id="sidePanels">
+
+  <div class="panel" id="logo"></div>
+
+  <div class="panel" id="simName">
+    Simulation Name <br>
+      <input type="text" class="text" id="simNameText" name="name">
+    <span id="simNameToolTip" class="toolTip">Enter Sim Name. If left blank, a name will be generated</span>
+    <br><br>
+  </div>
+
+  <div class="panel" id="agentNumberPanel">Number of agents<br>
+      <input type="number" class="text" id="agentNumber" name="agentNum" min="1" value="100" >
+    <span id="agentNumToolTip" class="toolTip">Enter Number of Agents</span>
+    <br><br>
+  </div>
+
+  <div class="panel" id="agentType">Simulation Agent<br>
+      <div id="droneAgent" class="agentTypes" name="Drone"></div>
+      <div id="beeAgent" class="agentTypes" name="Bee"></div>
+      <div id="antAgent" class="agentTypes" name="Ant"></div>
+      <div id="uavAgent" class="agentTypes" name="Uav"></div>
+      <span id="agentTypeToolTip" class="toolTip">Select type of agent. Different agents have different simulations. The drone agent is based off of the bee agent</span>
+  </div>
+
+  <div class="panel" id="worldType">World Type<br>
+    <div id="static" class="worldTypes" name="Static">S</div>
+    <div id="random" class="worldTypes" name="Random">R</div>
+    <span id="worldTypeToolTip" class="toolTip">S = Pre-generated World<br> R = Randomly Generated World </span>
+  </div>
+
+  <div class="panel modes" id="hubDiv" >Hub Controller<br>
+    <label class="switch" >
+      <input type="checkbox" id="hubController">
+      <span class="slider round"></span>
+    </label>
+    <span id="hubToolTip" class="toolTip">Turn On/Off Hub Controller. The Hub Controller allows you to suggest directions for the agents</span>
+
+  </div>
+  <div class="panel modes" id="baitDiv" >Bait<br>
+    <label class="switch" >
+      <input type="checkbox" id="baitPanel">
+      <span class="slider round"></span>
+    </label>
+    <span id="baitToolTip" class="toolTip">Turn On/Off Bait. A bait placed on the map will affect the agents that cross its borders.
+      It will direct the agents to the center of the bait</span>
+  </div>
+
+
+  <div class="panel modes" id="bombDiv">Bomb<br>
+    <label class="switch" >
+      <input type="checkbox" id="bombPanel">
+      <span class="slider round"></span>
+    </label>
+    <span id="bombToolTip" class="toolTip">Turn On/Off Bomb. A bomb placed on the map will affect the agents that cross its borders.
+      It will direct the agents away from the bomb</span>
+
+    </div>
+
+  <div class="panel"></div>
+  <!-- <div class="panel modes" id="debug" >Debug mode:<br> <span id="debugText">Off</span><br><br></div> -->
+
+</div>
+<div id="canvasDiv">
+  <span id="startSim">Start Simulation</span>
+  <canvas id="canvas" width="1230" height="920"></canvas>
+</div>
+
+<div style="display: none">
+  <img id="background" src="/img/background.jpg" >
+  <img id="Drone"      src="/img/quad1.png">
+  <img id="Bee"      src="/img/bee-transparent-small.png">
+  <img id="Ant"      src="/img/ant-small.png">
+</div>
+
+<script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous">
+</script>
+<script
+  type="text/javascript"
+  src="js/plugins/jquery.tablesorter.min.js">
+</script>
+<script src="./js/createSim.js"></script>
+<script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous">
+</script>
+<script
+  type="text/javascript"
+  src="js/plugins/jquery.tablesorter.min.js">
+</script>
+<script src="./js/index.js">
+</script>
+</body>
+</html>
