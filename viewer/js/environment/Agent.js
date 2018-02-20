@@ -51,15 +51,16 @@ class Agent
 Agent.stateStyles = {
   'resting'    :'',                          // No coloring
   'exploring'  :'rgba(  0, 255,   0, 0.25)', // Green
+  'follow_site':'rgba(255, 255, 255, 0.25)', // White
   'observing'  :'rgba(  0,   0, 255, 0.25)', // Blue
   'assessing'  :'rgba(255, 255,   0, 0.25)', // Yellow
   'dancing'    :'rgba(  0, 255, 255, 0.25)', // Cyan
   'piping'     :'rgba(255,   0, 255, 0.25)', // Magenta
   'commit'     :'rgba(255,  96,   0, 0.25)',  // Orange
-  'recruiting'  :'rgba(  0, 255,   0, 0.25)', // Green
-  'waiting'  :'rgba(  0,   0, 255, 0.25)', // Blue
+  'recruiting' :'rgba(  0, 255,   0, 0.25)', // Green
+  'waiting'    :'rgba(  0,   0, 255, 0.25)', // Blue
   'site assess':'rgba(255,   0,   0, 0.25)', // Red
   'searching'  :'rgba(255, 255,   0, 0.25)', // Yellow
-  'following'    :'rgba(  0, 255, 255, 0.25)', // Cyan
-  'exploiting'     :'rgba(255,   0, 255, 0.25)' // Magenta
+  'following'  :'rgba(  0, 255, 255, 0.25)', // Cyan
+  'exploiting' :'rgba(255,   0, 255, 0.25)' // Magenta
 }

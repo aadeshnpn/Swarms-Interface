@@ -395,7 +395,7 @@ class Handle
 
    draw(ctx, debug = false)
    {
-      ctx.save()
+      ctx.save();
 
       ctx.strokeStyle = this.colour;
 
@@ -450,12 +450,13 @@ class Handle
 
    isHovered(x, y)
    {
-      var box = {left: this.requestedX - 5, top: this.requestedY - 5, right: this.requestedX + 5, bottom: this.requestedY + 5};
+      // use distance formula sqrt(x^2+y^2) to hover within radius
+      let dist = Math.sqrt(Math.pow(x - this.requestedX, 2) + Math.pow(y - this.requestedY, 2));
+      return dist <= 8;
 
-      if (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom)
-         return true;
-      else
-         return false;
+      // this uses a rectangle, so it's dumb
+      // var box = {left: this.requestedX - 5, top: this.requestedY - 5, right: this.requestedX + 5, bottom: this.requestedY + 5};
+      // return (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom);
    }
 }
 
@@ -472,12 +473,14 @@ class RadialControl
       this.hover = {active: true, handle: null};
       //this.hub = {x: world.hub.x, y: world.hub.y}
 
+       // create a handle for every 5th degree
       for (let i = 0; i < (360 / 5); i++)
       {
-         this.handles.push(new Handle(i * 5, this.hub, {interactive: this.interactive, colour: this.colour}) ); // we're doing it this way so eventually we can paramaterise the 5
+         // we're doing it this way so eventually we can paramaterise the 5
+         this.handles.push(new Handle(i * 5, this.hub, {interactive: this.interactive, colour: this.colour}) );
       }
 
-      this.handles[0].setPrev(this.handles[this.handles.length - 1])
+      this.handles[0].setPrev(this.handles[this.handles.length - 1]);
       this.handles[0].setNext(this.handles[1]);
 
       for (let i = 1; i < this.handles.length; i++)
@@ -520,17 +523,26 @@ class RadialControl
       }
    }
 
-   startHandleHover(e)
-   {
-      let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
-      for (let h of this.handles)
-         if (h.isHovered(worldRelative.x, worldRelative.y))
-         {
-            this.hover = {active: true, handle: h};
-            ui.requestActiveCursor(cursors.radialDrag);
-            break;
-         }
-   }
+	startHandleHover(e) {
+		let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+		/* TODO remove these two lines.
+		 * I don't know why they are here. If they are uncommented, then the hover of
+		 * the mouse is based on the center of the radial control, not the center of
+		 * the canvas (the origin). So the hover doesn't actually work with these lines.
+		 * I have left these here in case something else breaks. But as far as I can
+		 * tell, we should just remove these all together.
+		 */
+		// worldRelative.x -= world.hub.x;
+		// worldRelative.y += world.hub.y;
+
+		// let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+		for (let h of this.handles)
+			if (h.isHovered(worldRelative.x, worldRelative.y)) {
+				this.hover = {active: true, handle: h};
+				ui.requestActiveCursor(cursors.radialDrag);
+				break;
+			}
+	}
 
    onMouseDown(e)
    {
@@ -540,13 +552,12 @@ class RadialControl
       this.hover.handle = null;
    }
 
-   onMouseUp(e)
-   {
-      if (this.drag.active)
-      {
-         this.drag.active = false;
-         this.drag.handle = null;
-      }
+   onMouseUp(e) {
+      if (this.drag.active) {
+		  this.drag.active = false;
+		  this.drag.handle = null;
+		  ui.setActiveCursor(cursors.default);
+	  }
    }
 
    onMouseMove(e)
@@ -566,15 +577,15 @@ class RadialControl
       }
       else
       {
-         var angle = Math.atan2(worldRelative.y, worldRelative.x);
-         var magnitude = Math.sqrt(Math.pow(worldRelative.x, 2) + Math.pow(worldRelative.y, 2));
+         let angle = Math.atan2(worldRelative.y, worldRelative.x);
+         let magnitude = Math.sqrt(Math.pow(worldRelative.x, 2) + Math.pow(worldRelative.y, 2));
 
          if (angle < 0)
          {
             angle += Math.PI*2;
          }
 
-         var component = this.computeMouseComponent(worldRelative, this.drag.handle);
+         let component = this.computeMouseComponent(worldRelative, this.drag.handle);
 
          if (component < 1 * RadialControl.RADIUS_SCALE)
          {
@@ -605,46 +616,42 @@ class RadialControl
       }
    }
 
-   onMouseUp(e)
-   {
-      this.drag.active = false;
-      this.drag.handle = null;
-      ui.setActiveCursor(cursors.default);
-   }
+	computeMouseComponent(mouseCoords, handle) {
+		// let handleVector = {x: Math.cos(handle.r), y: -Math.sin(handle.r)};
+		let mouseMagnitude = Math.sqrt(Math.pow(mouseCoords.x, 2) + Math.pow(mouseCoords.y, 2));
+		let mouseAngle = Math.atan2(mouseCoords.y, mouseCoords.x);
 
-   computeMouseComponent(mouseCoords, handle)
-   {
-      var handleVector = {x: Math.cos(handle.r), y: -Math.sin(handle.r)};
-      var mouseMagnitude = Math.sqrt(Math.pow(mouseCoords.x, 2) + Math.pow(mouseCoords.y, 2));
-      var mouseAngle = Math.atan2(mouseCoords.y, mouseCoords.x);
+		let component = mouseMagnitude * Math.cos(mouseAngle - handle.r);
 
-      var component = mouseMagnitude * Math.cos(mouseAngle - handle.r);
+		return component;
+	}
 
-      return component;
-   }
+	reset() {
+		this.handles = [];
+		this.drag = {active: false, handle: null};
+		this.hover = {active: true, handle: null};
 
-   reset()
-   {
-      this.handles = [];
-      this.drag = {active: false, handle: null};
-      this.hover = {active: true, handle: null};
+		for (let i = 0; i < (360 / 5); i++) {
+			// we're doing it this way so eventually we can paramaterise the 5
+			this.handles.push(new Handle(i * 5, {interactive: this.interactive, colour: this.colour}));
+		}
 
-      for (let i = 0; i < (360 / 5); i++)
-      {
-         this.handles.push( new Handle(i * 5, {interactive: this.interactive, colour: this.colour}) ); // we're doing it this way so eventually we can paramaterise the 5
-      }
+		this.handles[0].setPrev(this.handles[this.handles.length - 1])
+		this.handles[0].setNext(this.handles[1]);
 
-      this.handles[0].setPrev(this.handles[this.handles.length - 1])
-      this.handles[0].setNext(this.handles[1]);
-
-      for (let i = 1; i < this.handles.length; i++)
-      {
-         // this only works because js lets you do negative array indices
-         this.handles[i].setPrev(this.handles[(i - 1) % this.handles.length]);
-         this.handles[i].setNext(this.handles[(i + 1) % this.handles.length]);
-      }
-   }
+		for (let i = 1; i < this.handles.length; i++) {
+			// this only works because js lets you do negative array indices
+			this.handles[i].setPrev(this.handles[(i - 1) % this.handles.length]);
+			this.handles[i].setNext(this.handles[(i + 1) % this.handles.length]);
+		}
+	}
 }
+
+// If 100% of the agents are going in a direction, that point will have distance of MAX_AGENT_SCALE * RADIUS_SCALE
+RadialControl.MAX_AGENT_SCALE = 10.0;
+RadialControl.RADIUS_SCALE = 50;
+RadialControl.LINE_COLOUR = 'blue';
+RadialControl.HANDLE_COLOUR = 'blue';
 
 /*class RadialControl
 {
@@ -803,11 +810,6 @@ class RadialControl
    }
 }*/
 
-// If 100% of the agents are going in a direction, that point will have distance of MAX_AGENT_SCALE * RADIUS_SCALE
-RadialControl.MAX_AGENT_SCALE = 10.0;
-RadialControl.RADIUS_SCALE = 50;
-RadialControl.LINE_COLOUR = 'blue';
-RadialControl.HANDLE_COLOUR = 'blue';
 
 class SelectionBoxes
 {
@@ -1207,7 +1209,8 @@ class BeeCounter {
 	constructor(ui) {
 		ui.register('updateRadial', this.update.bind(this));
 		this.dead = 0;
-
+		this.deadBee = document.getElementById("deadBeeProgress");
+		this.deadBee.value = 0;
 	}
 
 	update(data) {
@@ -1215,11 +1218,13 @@ class BeeCounter {
 		//deadBee.value=0;
 		//console.log(data)
 		if (data.controller['dead'] != this.dead) {
-			var deadBeeStatus=$('#deadBeeProgress');
-
+			let deadBee = document.getElementById("deadBeeProgress");
 			this.dead = data.controller['dead'];
-
-			document.getElementById("deadBees").innerHTML = "Estimated Dead: " + this.dead.toString() + '<br><progress value="'+this.dead.toString()+'" max="100" id="deadBeeProgress"></progress>';
+			//console.log(this.deadBee)
+			this.deadBee.value = this.dead
+			//console.log(this.dead)
+			//deadBee.value=this.dead;
+			document.getElementById("deadBees").innerHTML = "Estimated Dead: " + this.dead.toString();
 		}
 
 		// document.getElementById("turns").innerHTML = "total turns: " + data.controller['actions']["turns"].toString();
@@ -1234,18 +1239,17 @@ class BeeCounter {
 	}
 }
 
-var buttonSend = document.getElementById('buttonSend');
-var chatmsg = document.getElementById('chatmsg');
-var userName = document.getElementById('userName');
+let buttonSend = document.getElementById('buttonSend');
+let chatmsg = document.getElementById('chatmsg');
+let userName = document.getElementById('userName');
 //var chat = "<strong>" + userName.value + ": </strong>" + chatmsg.value;
-$("#buttonSend").click(function(e)
-{
-  var chat = "<strong>" + userName.value + ": </strong>" + chatmsg.value +"<br>";
-  e.preventDefault();
-  console.log(chatmsg.value);
-  socket.emit('input', {'type': 'message', message: chat});
-  chatmsg.value = '';
-  userName.readOnly=true;
+$("#buttonSend").click(function (e) {
+	let chat = "<strong>" + userName.value + ": </strong>" + chatmsg.value + "<br>";
+	e.preventDefault();
+	console.log(chatmsg.value);
+	socket.emit('input', {'type': 'message', message: chat});
+	chatmsg.value = '';
+	userName.readOnly = true;
 });
 
 /*buttonSend.addEventListener('click', function()
@@ -1716,119 +1720,104 @@ UIParams.defaults =
   "uiFps" : 1
 }
 
-class UI
-{
-   constructor()
-   {
-      this.selectedAgents = {};
-      this.selectedNumber = 0;
-      this.canvasElems = [];
-      this.documentElems = [];
-      this.eventCallbacks = {};
+class UI {
+	constructor() {
+		this.selectedAgents = {};
+		this.selectedNumber = 0;
+		this.canvasElems = [];
+		this.documentElems = [];
+		this.eventCallbacks = {};
 
-      this.canvasElems.push( new SelectionBoxes(this) );
-      this.canvasElems.push( new SelectionRect (this) );
-      this.canvasElems.push( new RadialControl (this) );
-      this.canvasElems.push( new RadialControl (this, {interactive: false, colour: "green", dataset: "agentsIn"}) );
-      this.canvasElems.push( new BaitBombGhost (this) );
-      this.canvasElems.push( new MissionLayer  (this) );
-      this.canvasElems.push( new StateBubbles  (this) );
+		this.canvasElems.push(new SelectionBoxes(this));
+		this.canvasElems.push(new SelectionRect(this));
+		this.canvasElems.push(new RadialControl(this));
+		this.canvasElems.push(new RadialControl(this, {interactive: false, colour: "green", dataset: "agentsIn"}));
+		this.canvasElems.push(new BaitBombGhost(this));
+		this.canvasElems.push(new MissionLayer(this));
+		this.canvasElems.push(new StateBubbles(this));
 
-      this.documentElems.push( new DebugParams       (this) );
-      this.documentElems.push( new UIParams			  (this) );
-      this.documentElems.push( new SitePriorityMeters(this) );
-      this.documentElems.push( new DebugTable        (this) );
-      this.documentElems.push(new BeeCounter        (this));
-      this.documentElems.push(new ChatRoom(this));
+		this.documentElems.push(new DebugParams(this));
+		this.documentElems.push(new UIParams(this));
+		this.documentElems.push(new SitePriorityMeters(this));
+		this.documentElems.push(new DebugTable(this));
+		this.documentElems.push(new BeeCounter(this));
+		this.documentElems.push(new ChatRoom(this));
 
-      this.activeCursor = cursors.default.activate();
+		this.activeCursor = cursors.default.activate();
 
-      this.register('restart', this.reset.bind(this));
-   }
+		this.register('restart', this.reset.bind(this));
+	}
 
-   register(event, callback)
-   {
-     //console.log(event)
-     if (!this.eventCallbacks[event])
-        this.eventCallbacks[event] = [];
+	register(event, callback) {
+		//console.log(event)
+		if (!this.eventCallbacks[event]) {
+			this.eventCallbacks[event] = [];
+		}
+		this.eventCallbacks[event].push(callback);
+	}
 
-      this.eventCallbacks[event].push(callback);
-   }
+	on(msg) {
+		for (let cb of this.eventCallbacks[msg.type]) {
+			cb(msg.data);
+		}
+	}
 
-   on(msg)
-   {
+	// indiviual components now must register for any updates they want
+	/*update(data)
+	{
+	   for (let element of this.canvasElems)
+		  element.update(data);
 
-     for (let cb of this.eventCallbacks[msg.type])
+	   for (let element of this.documentElems)
+		  element.update(data);
+	}*/
 
-        cb(msg.data);
-   }
+	draw(ctx, debug = false) {
+		for (let element of this.canvasElems)
+			element.draw(ctx, debug);
+	}
 
-   // indiviual components now must register for any updates they want
-   /*update(data)
-   {
-      for (let element of this.canvasElems)
-         element.update(data);
+	setActiveCursor(cursor) {
+		if (!(cursor instanceof Cursor))
+			throw new Error('Active cursor can only be set to a Cursor object');
 
-      for (let element of this.documentElems)
-         element.update(data);
-   }*/
+		this.activeCursor.deactivate();
+		this.activeCursor = cursor;
+		this.activeCursor.activate();
+	}
 
-   draw(ctx, debug = false)
-   {
-     for (let element of this.canvasElems)
-      element.draw(ctx, debug);
-   }
+	requestActiveCursor(cursor) {
+		if (this.activeCursor.type == "default") {
+			this.setActiveCursor(cursor);
+		}
+	}
 
-   setActiveCursor(cursor)
-   {
-      if (!(cursor instanceof Cursor))
-         throw new Error('Active cursor can only be set to a Cursor object');
+	agentsSelected() {
+		return this.selectedNumber;
+	}
 
-      this.activeCursor.deactivate();
-      this.activeCursor = cursor;
-      this.activeCursor.activate();
-   }
+	addSelectedAgents(ids) {
+		this.selectedNumber += ids.length;
 
-   requestActiveCursor(cursor)
-   {
-      if (this.activeCursor.type == "default")
-      {
-         this.setActiveCursor(cursor);
-      }
-   }
+		for (let id of ids) {
+			this.selectedAgents[id] = true;
+		}
 
-   agentsSelected()
-   {
-      return this.selectedNumber;
-   }
+	}
 
-   addSelectedAgents(ids)
-   {
-      this.selectedNumber += ids.length;
+	clearSelectedAgents() {
+		this.selectedAgents = {};
+		this.selectedNumber = 0;
+	}
 
-      for (var id of ids)
-      {
-         this.selectedAgents[id] = true;
-      }
+	isAgentSelected(id) {
+		if (this.selectedAgents[id])
+			return true;
+	}
 
-   }
-
-   clearSelectedAgents()
-   {
-      this.selectedAgents = {};
-      this.selectedNumber = 0;
-   }
-
-   isAgentSelected(id)
-   {
-      if (this.selectedAgents[id])
-         return true;
-   }
-
-   reset()
-   {
-      this.clearSelectedAgents();
-   }
+	reset() {
+		this.clearSelectedAgents();
+	}
 
 }
 
@@ -1885,17 +1874,18 @@ class Agent
 Agent.stateStyles = {
   'resting'    :'',                          // No coloring
   'exploring'  :'rgba(  0, 255,   0, 0.25)', // Green
+  'follow_site':'rgba(255, 255, 255, 0.25)', // White
   'observing'  :'rgba(  0,   0, 255, 0.25)', // Blue
   'assessing'  :'rgba(255, 255,   0, 0.25)', // Yellow
   'dancing'    :'rgba(  0, 255, 255, 0.25)', // Cyan
   'piping'     :'rgba(255,   0, 255, 0.25)', // Magenta
   'commit'     :'rgba(255,  96,   0, 0.25)',  // Orange
-  'recruiting'  :'rgba(  0, 255,   0, 0.25)', // Green
-  'waiting'  :'rgba(  0,   0, 255, 0.25)', // Blue
+  'recruiting' :'rgba(  0, 255,   0, 0.25)', // Green
+  'waiting'    :'rgba(  0,   0, 255, 0.25)', // Blue
   'site assess':'rgba(255,   0,   0, 0.25)', // Red
   'searching'  :'rgba(255, 255,   0, 0.25)', // Yellow
-  'following'    :'rgba(  0, 255, 255, 0.25)', // Cyan
-  'exploiting'     :'rgba(255,   0, 255, 0.25)' // Magenta
+  'following'  :'rgba(  0, 255, 255, 0.25)', // Cyan
+  'exploiting' :'rgba(255,   0, 255, 0.25)' // Magenta
 }
 
 class Attractor

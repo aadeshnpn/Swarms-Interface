@@ -1,115 +1,100 @@
-class UI
-{
-   constructor()
-   {
-      this.selectedAgents = {};
-      this.selectedNumber = 0;
-      this.canvasElems = [];
-      this.documentElems = [];
-      this.eventCallbacks = {};
+class UI {
+	constructor() {
+		this.selectedAgents = {};
+		this.selectedNumber = 0;
+		this.canvasElems = [];
+		this.documentElems = [];
+		this.eventCallbacks = {};
 
-      this.canvasElems.push( new SelectionBoxes(this) );
-      this.canvasElems.push( new SelectionRect (this) );
-      this.canvasElems.push( new RadialControl (this) );
-      this.canvasElems.push( new RadialControl (this, {interactive: false, colour: "green", dataset: "agentsIn"}) );
-      this.canvasElems.push( new BaitBombGhost (this) );
-      this.canvasElems.push( new MissionLayer  (this) );
-      this.canvasElems.push( new StateBubbles  (this) );
+		this.canvasElems.push(new SelectionBoxes(this));
+		this.canvasElems.push(new SelectionRect(this));
+		this.canvasElems.push(new RadialControl(this));
+		this.canvasElems.push(new RadialControl(this, {interactive: false, colour: "green", dataset: "agentsIn"}));
+		this.canvasElems.push(new BaitBombGhost(this));
+		this.canvasElems.push(new MissionLayer(this));
+		this.canvasElems.push(new StateBubbles(this));
 
-      this.documentElems.push( new DebugParams       (this) );
-      this.documentElems.push( new UIParams			  (this) );
-      this.documentElems.push( new SitePriorityMeters(this) );
-      this.documentElems.push( new DebugTable        (this) );
-      this.documentElems.push(new BeeCounter        (this));
-      this.documentElems.push(new ChatRoom(this));
+		this.documentElems.push(new DebugParams(this));
+		this.documentElems.push(new UIParams(this));
+		this.documentElems.push(new SitePriorityMeters(this));
+		this.documentElems.push(new DebugTable(this));
+		this.documentElems.push(new BeeCounter(this));
+		this.documentElems.push(new ChatRoom(this));
 
-      this.activeCursor = cursors.default.activate();
+		this.activeCursor = cursors.default.activate();
 
-      this.register('restart', this.reset.bind(this));
-   }
+		this.register('restart', this.reset.bind(this));
+	}
 
-   register(event, callback)
-   {
-     //console.log(event)
-     if (!this.eventCallbacks[event])
-        this.eventCallbacks[event] = [];
+	register(event, callback) {
+		//console.log(event)
+		if (!this.eventCallbacks[event]) {
+			this.eventCallbacks[event] = [];
+		}
+		this.eventCallbacks[event].push(callback);
+	}
 
-      this.eventCallbacks[event].push(callback);
-   }
+	on(msg) {
+		for (let cb of this.eventCallbacks[msg.type]) {
+			cb(msg.data);
+		}
+	}
 
-   on(msg)
-   {
+	// indiviual components now must register for any updates they want
+	/*update(data)
+	{
+	   for (let element of this.canvasElems)
+		  element.update(data);
 
-     for (let cb of this.eventCallbacks[msg.type])
+	   for (let element of this.documentElems)
+		  element.update(data);
+	}*/
 
-        cb(msg.data);
-   }
+	draw(ctx, debug = false) {
+		for (let element of this.canvasElems)
+			element.draw(ctx, debug);
+	}
 
-   // indiviual components now must register for any updates they want
-   /*update(data)
-   {
-      for (let element of this.canvasElems)
-         element.update(data);
+	setActiveCursor(cursor) {
+		if (!(cursor instanceof Cursor))
+			throw new Error('Active cursor can only be set to a Cursor object');
 
-      for (let element of this.documentElems)
-         element.update(data);
-   }*/
+		this.activeCursor.deactivate();
+		this.activeCursor = cursor;
+		this.activeCursor.activate();
+	}
 
-   draw(ctx, debug = false)
-   {
-     for (let element of this.canvasElems)
-      element.draw(ctx, debug);
-   }
+	requestActiveCursor(cursor) {
+		if (this.activeCursor.type == "default") {
+			this.setActiveCursor(cursor);
+		}
+	}
 
-   setActiveCursor(cursor)
-   {
-      if (!(cursor instanceof Cursor))
-         throw new Error('Active cursor can only be set to a Cursor object');
+	agentsSelected() {
+		return this.selectedNumber;
+	}
 
-      this.activeCursor.deactivate();
-      this.activeCursor = cursor;
-      this.activeCursor.activate();
-   }
+	addSelectedAgents(ids) {
+		this.selectedNumber += ids.length;
 
-   requestActiveCursor(cursor)
-   {
-      if (this.activeCursor.type == "default")
-      {
-         this.setActiveCursor(cursor);
-      }
-   }
+		for (let id of ids) {
+			this.selectedAgents[id] = true;
+		}
 
-   agentsSelected()
-   {
-      return this.selectedNumber;
-   }
+	}
 
-   addSelectedAgents(ids)
-   {
-      this.selectedNumber += ids.length;
+	clearSelectedAgents() {
+		this.selectedAgents = {};
+		this.selectedNumber = 0;
+	}
 
-      for (var id of ids)
-      {
-         this.selectedAgents[id] = true;
-      }
+	isAgentSelected(id) {
+		if (this.selectedAgents[id])
+			return true;
+	}
 
-   }
-
-   clearSelectedAgents()
-   {
-      this.selectedAgents = {};
-      this.selectedNumber = 0;
-   }
-
-   isAgentSelected(id)
-   {
-      if (this.selectedAgents[id])
-         return true;
-   }
-
-   reset()
-   {
-      this.clearSelectedAgents();
-   }
+	reset() {
+		this.clearSelectedAgents();
+	}
 
 }

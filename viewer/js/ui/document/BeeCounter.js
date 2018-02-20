@@ -2,7 +2,8 @@ class BeeCounter {
 	constructor(ui) {
 		ui.register('updateRadial', this.update.bind(this));
 		this.dead = 0;
-
+		this.deadBee = document.getElementById("deadBeeProgress");
+		this.deadBee.value = 0;
 	}
 
 	update(data) {
@@ -10,11 +11,13 @@ class BeeCounter {
 		//deadBee.value=0;
 		//console.log(data)
 		if (data.controller['dead'] != this.dead) {
-			var deadBeeStatus=$('#deadBeeProgress');
-
+			let deadBee = document.getElementById("deadBeeProgress");
 			this.dead = data.controller['dead'];
-
-			document.getElementById("deadBees").innerHTML = "Estimated Dead: " + this.dead.toString() + '<br><progress value="'+this.dead.toString()+'" max="100" id="deadBeeProgress"></progress>';
+			//console.log(this.deadBee)
+			this.deadBee.value = this.dead
+			//console.log(this.dead)
+			//deadBee.value=this.dead;
+			document.getElementById("deadBees").innerHTML = "Estimated Dead: " + this.dead.toString();
 		}
 
 		// document.getElementById("turns").innerHTML = "total turns: " + data.controller['actions']["turns"].toString();
