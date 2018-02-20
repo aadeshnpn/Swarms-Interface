@@ -52,6 +52,7 @@ class World
     //console.log(environment.agents.length)
 
 
+
 	  //Update Dead Agents
 	  for (let i = 0; i < this.sites.length; i++) {
 		  this.sites[i].x = environment.sites[i].x;
@@ -71,6 +72,7 @@ class World
       this.agents[i].state = environment.agents[i].state;
 	  }
 
+
   }
   // Draw the whole world recursively. Takes a 2dRenderingContext obj from
   // a canvas element
@@ -86,19 +88,43 @@ class World
     // ctx.shadowBlur = 10;
     //path.draw(ctx,this.environment);
 
-    for (let site       of this.sites      ) { site      .draw(ctx, debug); }
-    for (let obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
-    for (let trap       of this.traps      ) { trap      .draw(ctx, debug); }
-    for (let rough      of this.rough      ) { rough     .draw(ctx, debug); }
-    for (let attractor  of this.attractors ) { attractor .draw(ctx, debug); }
-    for (let repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
+//<<<<<<< HEAD
+
+    //TODO: Find the place where the info stations are drawn
+    for (var site       of this.sites      ) { site      .draw(ctx, debug); }
+    for (var obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
+    for (var trap       of this.traps      ) { trap      .draw(ctx, debug); }
+    for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
+    for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
+    for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
     this.pheromones.draw(ctx, debug);
     this.hub.draw(ctx, debug, this.agents);
+    for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
+    for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
+    for (var fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
+    if(showFog){
+      for (var fog        of fogBlock        ) { fog       .draw(ctx); }
 
-    for (let agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
-    for (let dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
-    for (let fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
+    }
+//=======
+    // for (let site       of this.sites      ) { site      .draw(ctx, debug); }
+    // for (let obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
+    // for (let trap       of this.traps      ) { trap      .draw(ctx, debug); }
+    // for (let rough      of this.rough      ) { rough     .draw(ctx, debug); }
+    // for (let attractor  of this.attractors ) { attractor .draw(ctx, debug); }
+    // for (let repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
+    // this.pheromones.draw(ctx, debug);
+    // this.hub.draw(ctx, debug, this.agents);
+    //
+    // for (let agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
+    // for (let dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
+    // for (let fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
     //for (let fog        of fogBlock        ) { fog       .draw(ctx); }
+
     for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
+
+//>>>>>>> 0039f9a7c85313d08902ab5a03211a77db5832b0
+
+
   }
 }

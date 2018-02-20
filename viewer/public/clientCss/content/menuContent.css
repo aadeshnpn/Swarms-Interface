@@ -1,0 +1,170 @@
+:root{
+--buttonSize:60px;
+}
+
+.menuContent{
+  display:none;
+  position: absolute;
+  bottom:70px;
+  left:5px;
+  width:var(--buttonSize);
+  height:120px;
+}
+
+.menuButton{
+  text-align: center;
+  line-height: var(--buttonSize);
+  font-size: 15px;
+  width: 100%;
+  height:50%;
+  border-radius: 50%;
+  background-color: rgb(116, 116, 116);
+}
+.menuButton:hover{
+  margin:0 auto;
+  cursor:pointer;
+}
+
+#agentInfoIcon{
+  width:var(--buttonSize);
+  height: 60px;
+  margin: 0 auto;
+  position: relative;
+  background-image: url("../../img/drone.png");
+  background-size: var(--buttonSize) var(--buttonSize);
+  background-repeat: no-repeat;
+}
+#agentInfoIcon:hover{
+  background-image: url("../../img/droneHover.png");
+  background-size: var(--buttonSize) var(--buttonSize);
+  background-repeat: no-repeat;
+}
+#agentInfoIcon #agentToolTip{
+  visibility: hidden;
+  width: 100px;
+  background-color: rgba(85, 85, 85, 0.86);
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 0 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 0%;
+  right: -45px;
+  margin-right: -60px;
+  opacity: 0;
+  transition: opacity .5s;
+}
+#agentInfoIcon #agentToolTip::after {
+  content: "";
+  position: absolute;
+  top: 45%;
+  left: -10px;
+  margin-right: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color:  transparent #555 transparent transparent ;
+}
+#agentInfoIcon:hover #agentToolTip {
+  visibility: visible;
+  opacity: 1;
+}
+#AgentInfo{
+  position: absolute;
+  right:0px;
+  top:46px;
+}
+#agentLoc{
+  display:none;
+  width:800px;
+  min-height:250px;
+  max-height: 735px;
+  overflow-y: auto;
+  background-color: rgba(20,20,20,.7);
+  padding: 15px 10px;
+  margin-left: 60px;
+  box-shadow: 1px 1px 6px black;
+  border: 1px solid black;
+  color:white;
+}
+#infoTable td{
+  border-bottom: 1px solid black;
+  padding:10px 40px 0px 0px;
+}
+.agentInfo td{
+	text-align: right;
+}
+.agentCoord{
+	width: 15%;
+}
+
+#messengerIcon{
+  width:var(--buttonSize);
+  height: var(--buttonSize);
+  margin: 0 auto;
+  position: relative;
+  background-image: url("../../img/messenger.png");
+  background-size: var(--buttonSize) var(--buttonSize);
+  background-repeat: no-repeat;
+}
+#messengerIcon:hover{
+
+  background-image: url("../../img/messengerHover.png");
+  background-size: var(--buttonSize) var(--buttonSize);
+  background-repeat: no-repeat;
+}
+#messengerIcon #messengerToolTip{
+  visibility: hidden;
+  width: 100px;
+  background-color: rgba(85, 85, 85, 0.86);
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 0 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 0%;
+  right: -45px;
+  margin-right: -60px;
+  opacity: 0;
+  transition: opacity .5s;
+}
+#messengerIcon #messengerToolTip::after {
+  content: "";
+  position: absolute;
+  top: 45%;
+  left: -10px;
+  margin-right: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color:  transparent #555 transparent transparent ;
+}
+#messengerIcon:hover #messengerToolTip {
+  visibility: visible;
+  opacity: 1;
+}
+#chatArea{
+  display:none;
+  position: absolute;
+  float:right;
+  bottom:inherit;
+  left:70px;
+  bottom:5px;
+  background-color: rgba(20,20,20,.5);
+  padding: 15px 10px;
+  box-shadow: 1px 1px 6px black;
+  border: 1px solid black;
+}
+#chatTitle{
+  text-align: center;
+  color:white;
+  text-shadow: 2px 2px black;
+}
+#chatwindow{
+  background-color: rgba(150,150,150,.5);
+  border-style:solid;
+  border-width:1px;
+  height:200px;
+  color:white;
+  border-color: black;
+}

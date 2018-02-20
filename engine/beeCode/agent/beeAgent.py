@@ -2,8 +2,13 @@ import numpy as np
 from enum import Enum
 from .stateMachine.state import State
 from .abstractAgent import HubAgent
+from utils.debug import *
+import math
+import time
+from utils.geomUtil import distance
 
-input = Enum('input', 'nestFound exploreTime observeTime dancerFound siteFound tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
+#input = Enum('input', 'nestFound exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
+input = Enum('input', 'nestFound maxAgents exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
 
 class Bee(HubAgent):
 
@@ -25,6 +30,7 @@ class Bee(HubAgent):
     def update(self, environment):
         #eprint(self.state.__class__.__name__)
         old = self.state.name
+
         if(self.nextState(self.state.update(self))):
             if self.id in environment.states[old]:
                 del environment.states[old][self.id]
@@ -62,12 +68,16 @@ class Bee(HubAgent):
 
         # bee agent variables
         self.live = True
+        self.view=2
+        self.swarmLoc=0;
         self.location = [hub["x"], hub["y"]]
         self.velocity = self.parameters["Velocity"]
         self.potential_site = None  # array [x,y]
         self.q_value = 0
         self.assessments = 1
-
+        self.dist=np.random.randint(25,500)
+        self.swarmDir=np.random.randint(0,2)
+        self.swarmSpeed=np.random.rand()
         self.atSite = False
         self.siteIndex = None
         self.goingToSite = False
@@ -77,7 +87,9 @@ class Bee(HubAgent):
         self.priorities = None
 
         # create table here.
-        self.transitionTable = {(Exploring(self).__class__, input.nestFound): [self.siteAssessTransition, SiteAssess(self)],
+        self.transitionTable = {
+                (Exploring(self).__class__, input.nestFound): [None, followSite(self)],
+                (followSite(self).__class__, input.maxAgents): [self.exploreTransition, Exploring(self)],
                 (Exploring(self).__class__, input.exploreTime): [self.observeTransition, Observing(self)],
                 (Observing(self).__class__, input.observeTime): [self.exploreTransition, Exploring(self)],
                 (Observing(self).__class__, input.dancerFound): [None, Assessing(self)],
@@ -94,12 +106,30 @@ class Bee(HubAgent):
                 (Resting(self).__class__, input.startPipe): [self.pipingTransition, Piping(self)],
                 (Piping(self).__class__, input.quorum): [None, Commit(self)]
             }
-
+        # self.transitionTable = {
+        #         (Exploring(self).__class__, input.nestFound): [self.siteAssessTransition, SiteAssess(self)],
+        #         (Exploring(self).__class__, input.exploreTime): [self.observeTransition, Observing(self)],
+        #         (Observing(self).__class__, input.observeTime): [self.exploreTransition, Exploring(self)],
+        #         (Observing(self).__class__, input.dancerFound): [None, Assessing(self)],
+        #         (Observing(self).__class__, input.startPipe): [self.pipingTransition, Piping(self)],
+        #         (Observing(self).__class__, input.quit): [self.restingTransition, Resting(self)],
+        #         (Assessing(self).__class__, input.siteFound): [self.danceTransition, Dancing(self)], # self.danceTransition()
+        #         (Assessing(self).__class__, input.siteAssess): [self.siteAssessTransition, SiteAssess(self)],
+        #         (SiteAssess(self).__class__, input.finAssess): [self.finishAssess, Assessing(self)],
+        #         (SiteAssess(self).__class__, input.startPipe): [self.pipingTransition, Piping(self)],
+        #         (Dancing(self).__class__, input.tiredDance): [self.restingTransition, Resting(self)],
+        #         (Dancing(self).__class__, input.notTiredDance): [None, Assessing(self)],
+        #         (Dancing(self).__class__, input.startPipe): [self.pipingTransition, Piping(self)],
+        #         (Resting(self).__class__, input.restingTime): [self.observeTransition, Observing(self)],
+        #         (Resting(self).__class__, input.startPipe): [self.pipingTransition, Piping(self)],
+        #         (Piping(self).__class__, input.quorum): [None, Commit(self)]
+        #     }
         self.attractor = None
         self.attracted = None
 
         self.repulsor = None
         self.ignore_repulsor = None
+
         environment.states[self.state.name][self.id] = self.id
 
     #TRANSitions
@@ -142,8 +172,11 @@ class Exploring(State):
         agent.checkAgentLeave()
 
         new_q = environment.get_q(agent)["q"]
-        agent.q_value = new_q
+        site_id=environment.get_id(agent)
 
+        agent.q_value = new_q
+        if agent.q_value > 0:
+            agent.potential_site = [agent.location[0], agent.location[1],site_id]
         agent.senseAndProcessAttractor(environment)
         agent.senseAndProcessRepulsor(environment)
 
@@ -165,8 +198,9 @@ class Exploring(State):
     def update(self, agent):
         agent.counter -= 1
         if agent.q_value > 0:
-            agent.potential_site = [agent.location[0], agent.location[1]]
             return input.nestFound
+            #agent.potential_site = [agent.location[0], agent.location[1]]
+
         elif agent.counter < 1:
             return input.exploreTime
         else:
@@ -204,6 +238,20 @@ class Assessing(State):
             self.siteFound = False
             return input.siteFound
 
+class SiteSearch(State):
+    def __init__(self, agent=None):
+        self.name = "siteSearch"
+        self.siteFound = False
+
+    def sense(self, agent, environment):
+        if not agent.checkAgentLeave(): #if probs check if agent.goingToSite
+            self.siteFound = agent.checkAgentReturn() #if probs, check if not agent.goingToSite
+    #TODO TODO repeated code in sense and update????
+    def act(self, agent):
+        return
+
+    def update(self, agent):
+        return input.siteFound
 
 class Resting(State):
     def __init__(self, agent=None):
@@ -310,6 +358,60 @@ class Observing(State):
                 return input.quit
             return input.observeTime
 
+class followSite(State):
+    def __init__(self, agent=None):
+            self.name = "follow_site"
+            self.siteRadius = 9
+
+
+    def sense(self, agent, environment):
+        site_id =agent.potential_site[2]
+        # if(environment.get_numberOfAgentsInState(site_id) > 4):
+        #     return input.maxAgents
+        for site in environment.sites:
+            if site_id == site["id"]:
+                dist=distance(agent.location[0],agent.location[1],site["x"],site["y"])
+
+
+                if dist<50:
+                    agent.velocity=math.sqrt(site["x"]**2+ site["y"]**2)/10
+                    if agent.velocity>2:
+                        agent.velocity=2;
+
+                    x= (math.cos(agent.swarmLoc)*10)+site["x"]
+                    y= (math.sin(agent.swarmLoc)*10)+site["y"]
+
+                    agent.potential_site=[x, y,site_id]
+                    # eprint(agent.swarmDir)
+                    if agent.swarmDir==0:
+                        agent.swarmLoc+=.1
+                    else:
+                        agent.swarmLoc-=.1
+                else:
+                    agent.potential_site=[site["x"], site["y"],site_id]
+        # x, y = environment.worldToPher(agent.location[0], agent.location[1])
+        # environment.pheromoneList[x, y] += agent.parameters["PheromoneStrength"] * np.sqrt(agent.q_value)
+        # environment.pheromoneList[x-3:x+3,y-3:y+3] += 2 * np.sqrt(agent.q_value)
+        # if np.random.random() < .2:
+        #     environment.pheromoneView[x, y] += agent.parameters["PheromoneStrength"] * np.sqrt(agent.q_value)
+        return
+
+
+
+    def act(self, agent):
+        #eprint("Follow Site act")
+        # eprint(agent.parameters["PheromoneStrength"])
+
+        return
+
+
+    def update(self, agent):
+
+        agent.move(agent.potential_site)
+        #eprint("Follow Site update")
+        return
+
+
 class SiteAssess(State):
     def __init__(self, agent=None):
         self.name = "site assess"
@@ -362,7 +464,6 @@ class SiteAssess(State):
             return input.finAssess
         else:
             agent.counter -= 1
-
 
 class Piping(State):
     def __init__(self, agent=None):

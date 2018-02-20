@@ -32,22 +32,28 @@ class Hub
 
     // console.log("Paths Length: " + this.paths.length)
     // console.log("Paths at Index 0: " + this.paths[0].length)
-
+    var t=0
     for(var agentPaths of this.paths){
       var i=0;
+
       for(var agentPath of agentPaths){
         var k=0;
         if(agentPath.length == 0){
           agentPaths.splice(i,1);
         }
+        var j=0
         for(var path of agentPath){
           if(path.opacity<=0){
             agentPath.splice(k,1);
           }
           path.opacity=0
+          //console.log(t);
+          path.agentsInHub[t]=true
+          j++
         }
         i++
       }
+      t++
     }
 
 

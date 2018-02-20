@@ -884,8 +884,8 @@ class SelectionRect
 
       ctx.save();
 
-      ctx.fillStyle = "rgba(0,202,0,.5)";
-      ctx.strokeStyle = "rgba(0, 0, 0,.7)";
+      ctx.fillStyle = "rgba(0,150,0,.3)";
+      ctx.strokeStyle = "rgba(0, 0, 0,.5)";
       ctx.lineWidth = 1;
 
       // Reset the context to canvas top-left because we have canvas-relative
@@ -1284,14 +1284,11 @@ class ChatRoom {
 	constructor(ui) {
 		ui.register('updateChat', this.update.bind(this));
 		this.chatHistory = '';
-		console.log('ChatRoom initialized.');
 	}
 
 	update(data) {
-		console.log('ChatRoom update called.');
 		if (data !== this.chatHistory) {
 			this.chatHistory = data;
-			console.log(this.chatHistory);
 			document.getElementById("chatwindow").innerHTML = this.chatHistory;
 		}
 	}
@@ -1327,6 +1324,7 @@ class DebugParams
       //$('#buttonUpdateDebugParams').after("<br>");
       for (let [param, val] of Object.entries(data.parameters))
       {
+         param = param.split(/(?=[A-Z])/).join(' ')
          var label = $("<label></label>").text(`${param}`);
          label.append($('<input style="width:40%;">').val(val).attr('type','number').attr('name',`${param}`));
          label.append("<br>");
@@ -1393,7 +1391,7 @@ class DebugTable
                   // This agent doesn't have a row in our debug table, so create one
                   if (!$(`#agentInfo${agent.id}`).length)
                   {
-                     
+
                      let row = $(document.createElement('tr'));
                      row.attr('id', `agentInfo${agent.id}`);
                      row.attr('class', 'agentInfo');
@@ -1545,11 +1543,15 @@ const rebugCheckbox = document.getElementById('dontShowAgents');
 const agentHide =document.getElementById('agentInfoIcon');
 const showChat =document.getElementById('messengerIcon');
 const debugButton =document.getElementById('debugIcon');
+const fogButton =document.getElementById('showFogIcon');
 var showAgent = false;
+var showFog=true;
 var showDebug = false;
 var showSlider = false;
 var showAgentInfo = false;
 var showChatWindow = false;
+
+
 
 $("#debugIcon").click(function(){
   $('#debugArea').fadeToggle();
@@ -1558,6 +1560,19 @@ $("#debugIcon").click(function(){
   }
   else{
     showDebug=true;
+  }
+})
+$("#showFogIcon").click(function(){
+  //console.log(showFog);
+  if(showFog){
+      //console.log($('#showFogIcon').attr('id'));
+    $('#showFogIcon').attr('id',"dontShowFogIcon")
+    showFog = false;
+  }
+  else{
+    //console.log($('#dontShowFogIcon').attr('id'));
+    $('#dontShowFogIcon').attr('id',"showFogIcon")
+    showFog=true;
   }
 })
 
@@ -1616,6 +1631,36 @@ var showOptions1 = false;
 var openSound = document.getElementById("audio0")
 
 var closeSound = document.getElementById("audio1");
+var menuArray=['messengerIcon','menu','agentInfoIcon']
+var optionsArray=['options','showAgentState','dontShowAgentState','backgroundTransparency','showFogIcon','dontShowFogIcon','showAgents','dontShowAgents','debugIcon']
+//var optionsArray.push('')
+$("body").click(function(e){
+
+  let inMenu =false;
+  let inOptions=false;
+  for(let menus of menuArray){
+    if(menus == e.target.id || menus==$(e.target).attr('class')){
+      inMenu=true;
+    }
+  }
+  for(let options of optionsArray){
+    if(options == e.target.id || options==$(e.target).attr('class')){
+      inOptions=true;
+    }
+  }
+  if(!inMenu){
+    $(".menuContent").fadeOut();
+    $("#chatArea").fadeOut();
+    // $("#agentLoc").fadeOut();
+  }
+  if(!inOptions){
+    $(".optionsContent").fadeOut();
+    $('#myRange').fadeOut()
+    $('#debugArea').fadeOut();
+  }
+  // console.log(e.target.id);
+  // console.log($(e.target).attr('class'));
+})
 
 $(".menu").click(function(){
 $(".menuContent").fadeToggle();
@@ -1808,8 +1853,7 @@ class Agent
   draw(ctx, debug = false, showAgentStates = false,hub)
   {
 
-    if (!debug)
-      return;
+    if (!debug) return;
 
 
     ctx.save();
@@ -1820,9 +1864,14 @@ class Agent
     ctx.save();
 
     ctx.rotate(this.rotation);
+    ctx.shadowColor = 'rgba(0,0,0,.7)';
+    ctx.shadowOffsetY = 2;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowBlur=10;
 
-    ctx.drawImage(bee, -bee.width/2, -bee.height/2);
-
+    ctx.drawImage(bee, -bee.width/2, -bee.height/2);;
+    ctx.shadowOffsetY = 0;
+    ctx.shadowOffsetX = 0;
 
     if (showAgentStates && Agent.stateStyles[this.state] !== "" && Agent.stateStyles[this.state] !== undefined) {
        ctx.fillStyle = Agent.stateStyles[this.state];
@@ -1838,17 +1887,18 @@ class Agent
 Agent.stateStyles = {
   'resting'    :'',                          // No coloring
   'exploring'  :'rgba(  0, 255,   0, 0.25)', // Green
+  'follow_site':'rgba(255, 255, 255, 0.25)', // White
   'observing'  :'rgba(  0,   0, 255, 0.25)', // Blue
   'assessing'  :'rgba(255, 255,   0, 0.25)', // Yellow
   'dancing'    :'rgba(  0, 255, 255, 0.25)', // Cyan
   'piping'     :'rgba(255,   0, 255, 0.25)', // Magenta
   'commit'     :'rgba(255,  96,   0, 0.25)',  // Orange
-  'recruiting'  :'rgba(  0, 255,   0, 0.25)', // Green
-  'waiting'  :'rgba(  0,   0, 255, 0.25)', // Blue
+  'recruiting' :'rgba(  0, 255,   0, 0.25)', // Green
+  'waiting'    :'rgba(  0,   0, 255, 0.25)', // Blue
   'site assess':'rgba(255,   0,   0, 0.25)', // Red
   'searching'  :'rgba(255, 255,   0, 0.25)', // Yellow
-  'following'    :'rgba(  0, 255, 255, 0.25)', // Cyan
-  'exploiting'     :'rgba(255,   0, 255, 0.25)' // Magenta
+  'following'  :'rgba(  0, 255, 255, 0.25)', // Cyan
+  'exploiting' :'rgba(255,   0, 255, 0.25)' // Magenta
 }
 
 class Attractor
@@ -1940,6 +1990,8 @@ class Fog
     this.inside=false;
     this.numberVisited=0;
     this.agentTime=new Map()
+    this.agentsInHub=[]
+    this.init=false
   }
 
   visited(agent){
@@ -1947,6 +1999,11 @@ class Fog
   }
 
   checkAgent(agents,hub){
+    if(!this.init){
+      this.agentsInHub=new Array(agents.length)
+      this.agentsInHub.fill(false,0,agents.length)
+      this.init=true
+    }
     for(var agent of agents)
     {
       //console.log(agent.x)
@@ -1959,6 +2016,7 @@ class Fog
         {
           this.agentTime.set(agent.id.toString(),Date.now())
           agent.lastLocations.push(this)
+          //console.log(this.agentsInHub);
         }
 
       }
@@ -1974,7 +2032,7 @@ class Fog
     // if(this.agentTime.get(id.toString()) != undefined){
     //   this.time = this.agentTime.get(id.toString());
     // }
-    // //console.log(this.inside)
+    //console.log(this.inside)
     // var start=this.time;
     // var end= Date.now()
     // this.opacity=(end-start)/10000
@@ -2062,22 +2120,28 @@ class Hub
 
     // console.log("Paths Length: " + this.paths.length)
     // console.log("Paths at Index 0: " + this.paths[0].length)
-
+    var t=0
     for(var agentPaths of this.paths){
       var i=0;
+
       for(var agentPath of agentPaths){
         var k=0;
         if(agentPath.length == 0){
           agentPaths.splice(i,1);
         }
+        var j=0
         for(var path of agentPath){
           if(path.opacity<=0){
             agentPath.splice(k,1);
           }
           path.opacity=0
+          //console.log(t);
+          path.agentsInHub[t]=true
+          j++
         }
         i++
       }
+      t++
     }
 
 
@@ -2206,10 +2270,10 @@ class Pheromone
 
     ctx.fillStyle = Pheromone.FILL_STYLE;
 
-    for (let pheromone of this.pheromones)
-    {
-        ctx.fillRect(pheromone.x - 3, -pheromone.y - 3, 9, 9);
-    }
+    //for (let pheromone of this.pheromones)
+    //{
+        ctx.fillRect(this.pheromones.x - 3, -this.pheromones.y - 3, 9, 9);
+    //}
 
     ctx.restore();
   }
@@ -2499,6 +2563,7 @@ class World
     //console.log(environment.agents.length)
 
 
+
 	  //Update Dead Agents
 	  for (let i = 0; i < this.sites.length; i++) {
 		  this.sites[i].x = environment.sites[i].x;
@@ -2518,6 +2583,7 @@ class World
       this.agents[i].state = environment.agents[i].state;
 	  }
 
+
   }
   // Draw the whole world recursively. Takes a 2dRenderingContext obj from
   // a canvas element
@@ -2533,20 +2599,44 @@ class World
     // ctx.shadowBlur = 10;
     //path.draw(ctx,this.environment);
 
-    for (let site       of this.sites      ) { site      .draw(ctx, debug); }
-    for (let obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
-    for (let trap       of this.traps      ) { trap      .draw(ctx, debug); }
-    for (let rough      of this.rough      ) { rough     .draw(ctx, debug); }
-    for (let attractor  of this.attractors ) { attractor .draw(ctx, debug); }
-    for (let repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
+//<<<<<<< HEAD
+
+    //TODO: Find the place where the info stations are drawn
+    for (var site       of this.sites      ) { site      .draw(ctx, debug); }
+    for (var obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
+    for (var trap       of this.traps      ) { trap      .draw(ctx, debug); }
+    for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
+    for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
+    for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
     this.pheromones.draw(ctx, debug);
     this.hub.draw(ctx, debug, this.agents);
+    for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
+    for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
+    for (var fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
+    if(showFog){
+      for (var fog        of fogBlock        ) { fog       .draw(ctx); }
 
-    for (let agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
-    for (let dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
-    for (let fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
+    }
+//=======
+    // for (let site       of this.sites      ) { site      .draw(ctx, debug); }
+    // for (let obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
+    // for (let trap       of this.traps      ) { trap      .draw(ctx, debug); }
+    // for (let rough      of this.rough      ) { rough     .draw(ctx, debug); }
+    // for (let attractor  of this.attractors ) { attractor .draw(ctx, debug); }
+    // for (let repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
+    // this.pheromones.draw(ctx, debug);
+    // this.hub.draw(ctx, debug, this.agents);
+    //
+    // for (let agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
+    // for (let dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
+    // for (let fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
     //for (let fog        of fogBlock        ) { fog       .draw(ctx); }
+
     for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
+
+//>>>>>>> 0039f9a7c85313d08902ab5a03211a77db5832b0
+
+
   }
 }
 
@@ -2572,13 +2662,40 @@ const cursors =
    radialDrag: new CursorRadialDrag(),
    placeBaitBomb: new CursorPlaceBaitBomb()
 };
-
+$("#deadBees").click(function(){
+  window.location.replace("http://localhost:3000");
+})
 const ui = new UI();
-
+var bee;
+var beeDead;
+var obstacle;
+var simType;
+bee      = document.getElementById("drone"     );
 // get image refs
-var bee      = document.getElementById("bee"     );
-var beeDead  = document.getElementById("bee-dead");
-var obstacle = document.getElementById("obstacle");
+socket.on('simType', function(type)
+{
+  simType=type;
+  //console.log(simType);
+  if(type=="Drone"){
+    bee      = document.getElementById("drone"     );
+;
+    beeDead  = document.getElementById("drone-dead");
+  }
+  else if(type=="Bee"){
+    bee      = document.getElementById("bee"     );
+    beeDead  = document.getElementById("bee-dead");
+  }
+  else if(type=="Ant"){
+    bee      = document.getElementById("ant"     );
+    beeDead  = document.getElementById("ant-dead");
+  }
+  else if(type=="Uav"){
+    bee      = document.getElementById("drone"     );
+    beeDead  = document.getElementById("drone-dead");
+  }
+   obstacle = document.getElementById("obstacle");
+});
+
 
 var finishedDrawing = true;
 
@@ -2645,7 +2762,10 @@ socket.on('update', function(worldUpdate)
    }
    else if (finishedDrawing)
    {
-      world.update(worldUpdate.data) //= new World(worldUpdate.data); //try implementing an array and stack
+      world.update(worldUpdate.data) //= new World(worldUpdate.data); <---- This creates a new world every update which causes issues with
+      //saving info that is not from the engine (E.G - the fog system)
+
+      //try implementing an array and stack
       //you'd push worldupdate.data into array, and then pop it off the stack when you need it
       // "need it" means you've finished a draw cycle, which is happening in browser
       // if you want to keep everything in draw function like it is, make the array and stack
@@ -2674,11 +2794,15 @@ function draw(environment)
    // clear everything
    ctx.clearRect(-world.x_limit, -world.y_limit, world.width, world.height);
    ctx.save();
-   ctx.fillStyle = "rgb(100, 100, 100)";
+   ctx.fillStyle = "rgb(160, 160, 160)";
    ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
 
    ctx.globalAlpha = sliderVal/100;
-   //ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height);
+
+  if(simType=="Drone"){
+     ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height);
+  }
+
    ctx.globalAlpha = 1;
 
    ctx.restore();

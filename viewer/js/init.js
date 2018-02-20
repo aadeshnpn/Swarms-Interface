@@ -20,13 +20,40 @@ const cursors =
    radialDrag: new CursorRadialDrag(),
    placeBaitBomb: new CursorPlaceBaitBomb()
 };
-
+$("#deadBees").click(function(){
+  window.location.replace("http://localhost:3000");
+})
 const ui = new UI();
-
+var bee;
+var beeDead;
+var obstacle;
+var simType;
+bee      = document.getElementById("drone"     );
 // get image refs
-var bee      = document.getElementById("bee"     );
-var beeDead  = document.getElementById("bee-dead");
-var obstacle = document.getElementById("obstacle");
+socket.on('simType', function(type)
+{
+  simType=type;
+  //console.log(simType);
+  if(type=="Drone"){
+    bee      = document.getElementById("drone"     );
+;
+    beeDead  = document.getElementById("drone-dead");
+  }
+  else if(type=="Bee"){
+    bee      = document.getElementById("bee"     );
+    beeDead  = document.getElementById("bee-dead");
+  }
+  else if(type=="Ant"){
+    bee      = document.getElementById("ant"     );
+    beeDead  = document.getElementById("ant-dead");
+  }
+  else if(type=="Uav"){
+    bee      = document.getElementById("drone"     );
+    beeDead  = document.getElementById("drone-dead");
+  }
+   obstacle = document.getElementById("obstacle");
+});
+
 
 var finishedDrawing = true;
 
@@ -93,7 +120,10 @@ socket.on('update', function(worldUpdate)
    }
    else if (finishedDrawing)
    {
-      world.update(worldUpdate.data) //= new World(worldUpdate.data); //try implementing an array and stack
+      world.update(worldUpdate.data) //= new World(worldUpdate.data); <---- This creates a new world every update which causes issues with
+      //saving info that is not from the engine (E.G - the fog system)
+
+      //try implementing an array and stack
       //you'd push worldupdate.data into array, and then pop it off the stack when you need it
       // "need it" means you've finished a draw cycle, which is happening in browser
       // if you want to keep everything in draw function like it is, make the array and stack
@@ -122,11 +152,15 @@ function draw(environment)
    // clear everything
    ctx.clearRect(-world.x_limit, -world.y_limit, world.width, world.height);
    ctx.save();
-   ctx.fillStyle = "rgb(100, 100, 100)";
+   ctx.fillStyle = "rgb(160, 160, 160)";
    ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
 
    ctx.globalAlpha = sliderVal/100;
-   //ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height);
+
+  if(simType=="Drone"){
+     ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height);
+  }
+
    ctx.globalAlpha = 1;
 
    ctx.restore();

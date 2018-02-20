@@ -13,11 +13,14 @@ class BeeEnvironment(Environment):
         self.info_stations = []
         self.number_of_agents = 100
         self.sites = []
+        self.x_limit=0;
+        self.y_limit=0;
         self.actions = {"turns": 0, "stateChanges": 0}
         self.influenceActions = {"turns": 0, "stateChanges": 0}
         self.totalInfluence = []
-        self.states = {"exploring": {}, "observing":{},"resting":{},'dancing':{},'assessing':{},'site assess':{},'piping':{},'commit':{}}
 
+        self.states = {"exploring": {},"follow_site": {}, "observing":{},"resting":{},'dancing':{},'assessing':{},'siteSearch':{},'site assess':{},'piping':{},'commit':{}}
+        self.pheromoneList = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])
         self.xPos = []
         self.yPos = []
         self.dataStates = []
@@ -92,7 +95,8 @@ class BeeEnvironment(Environment):
                                "DanceTime": 1150,
                                "ObserveTime": 2000,
                                "SiteAssessTime": 250,
-                               "PipingTime": 1200
+                               "PipingTime": 1200,
+                               "PheromoneStrength":25
                                }
 
     #compute measurements is ran every loop in the run function by environment.py
@@ -136,6 +140,7 @@ class BeeEnvironment(Environment):
           count = int(self.parameters["ExploreTime"]))
         self.agents[agent_id] = agent
 
+
     def create_rester(self, agentId):
         agent_id = str(agentId)
         #eprint("rest_num = " + str(agent_id))
@@ -150,14 +155,53 @@ class BeeEnvironment(Environment):
     def create_infoStations(self):
         for x in range(len(self.sites)):
             self.info_stations.append(InfoStation(self.parameters))
-
-    def get_q(self, agent):
-        # Calculate the distance between the coordinates and the center of each site, then compare that distance with
-        # the radius of the obstacles, traps, rough spots, and sites
+    def get_id(self,agent):
         for i, site in enumerate(self.sites):
             x_dif = agent.location[0] - site["x"]
             y_dif = agent.location[1] - site["y"]
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
+            if tot_dif <= site["radius"]:
+                return site["id"]
+    def get_pheromone(self,agent):
+        #x=int(int(agent.location[0]+self.x_limit)/3)
+        #y=int(int(agent.location[1]+self.y_limit)/3)
+        x,y = self.worldToPher(agent.location[0],agent.location[1])
+        return self.pheromoneList[x,y]
+    def create_pheromone_dict(indices,i,x_limit,y_limit):
+        pheromone_dict = {}
+        x,y = pherToWorld(indicies[0][i],indicies[1][i],x_limit,y_limit)
+        pheromone_dict["x"] = x
+        pheromone_dict["y"] = y
+        return pheromone_dict
+    def pherToWorld(self, x, y):
+        #x = int(int(x * 3 + 1) - self.x_limit) this is for 1/3 array
+        #y = int(int(y * 3 + 1) - self.y_limit)
+        x = int(x-self.x_limit)
+        y = int(y-self.y_limit)
+        return x,y
+    def worldToPher(self,x,y):
+        #x = int(int(x + self.x_limit) / 3) this is for 1/3 array
+        #y = int(int(y + self.y_limit) / 3)
+        x = int(x+self.x_limit)
+        y = int(y+self.y_limit)
+        return x,y
+    def get_numberOfAgentsInState(self,site_id):
+        num=0;
+        for ID in self.agents:
+
+            if self.agents[ID].potential_site != None and self.agents[ID].potential_site[2] == site_id:
+                num+=1
+        return num
+    def get_q(self, agent):
+        # Calculate the distance between the coordinates and the center of each site, then compare that distance with
+        # the radius of the obstacles, traps, rough spots, and sites
+        for info in self.info_stations:
+            info.radius+=.1
+        for i, site in enumerate(self.sites):
+            x_dif = agent.location[0] - site["x"]
+            y_dif = agent.location[1] - site["y"]
+            tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
+
             if tot_dif <= site["radius"]:
                 info = self.info_stations[i]
                 if not agent.atSite:
@@ -165,6 +209,7 @@ class BeeEnvironment(Environment):
                     agent.atSite = True
                     agent.siteIndex = i
                     #TODO: move this to agents, which would be faster
+
                     info.check_for_changes(agent,agent.parameters, agent.param_time_stamp)
                     agent.infoStation = info
                 # return the q_value as a linear gradient. The center of the site will return 100% of the q_value,

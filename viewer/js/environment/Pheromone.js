@@ -14,10 +14,10 @@ class Pheromone
 
     ctx.fillStyle = Pheromone.FILL_STYLE;
 
-    for (let pheromone of this.pheromones)
-    {
-        ctx.fillRect(pheromone.x - 3, -pheromone.y - 3, 9, 9);
-    }
+    //for (let pheromone of this.pheromones)
+    //{
+        ctx.fillRect(this.pheromones.x - 3, -this.pheromones.y - 3, 9, 9);
+    //}
 
     ctx.restore();
   }

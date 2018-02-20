@@ -9,7 +9,7 @@ from .debug import *
 import logging
 '''
 When a UAV1 spots another UAV tracking a target, do the following:
-    - decrease last visit time for UAV1 in a normally shaped curve 
+    - decrease last visit time for UAV1 in a normally shaped curve
     around the target, where time last seen is increasing from target center
 
     This will occur in the pheromone patrol section of code.
@@ -48,7 +48,7 @@ class UAV(HubAgent):
 
         self.param_time_stamp = 0
         self.velocity = self.parameters["Velocity"] * .95
-
+        self.view = 2;
         self.attractor = None
         self.attracted = None
 
@@ -212,7 +212,7 @@ class UAV_PheromonePatrol(UAV_State):
             for n in agent.neighbors:
                 if(n.__class__.__name__ == "UAV" and n.target is not None):
                     agent.targetsOfOthers.add(n.target)
-        else:    
+        else:
             agent.targetsOfOthers.clear()
             for n in agent.neighbors:
                 if(n.__class__.__name__ == "UAV" and n.target is not None):
@@ -230,14 +230,14 @@ class UAV_PheromonePatrol(UAV_State):
                     agent.destination = nodeClosestToTarget.position
                     eprint(agent.pheromoneMap)
                     break
-            ''' 
+            '''
             if(agent.timer1 < 1 and n.__class__.__name__ == "UAV" and n.target is not None):
                 agent.targetsOfOthers.add(n.target)
                 d = agent.environment.hubController.pheromoneMap.distanceBetweenNodes
 
                 x0 = n.target.location[0] - (n.target.location[0] % d)
                 y0 = n.target.location[1] - (n.target.location[1] % d)
-                
+
                 p0 = [x0 , y0]
                 p1 = [x0 + d , y0]
                 p2 = [x0 , y0 + d]
@@ -249,7 +249,7 @@ class UAV_PheromonePatrol(UAV_State):
                 #!!!! floating point danger here
                 xi = center[0] / d
                 yi = center[1] / d
-            
+
                 g = agent.pheromoneMap.grid
 
                 for i in range(-3, 3):

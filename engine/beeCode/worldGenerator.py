@@ -40,7 +40,10 @@ class worldGenerator:
             while not ready:
                 site["x"] = random.randint(round(site["radius"]/2), self.dimensions["x_length"] - round(site["radius"]/2)) - self.dimensions["x_length"]/2
                 site["y"] = random.randint(round(site["radius"]/2), self.dimensions["y_length"] - round(site["radius"]/2)) - self.dimensions["y_length"]/2
+                site["acc"]=2
 
+                site["velX"]=0
+                site["velY"]=0
                 if ((site["x"]-self.hub["x"])**2 + (site["y"]-self.hub["y"])**2)**.5 > site["radius"] + self.hub["radius"]:
                     ready = True
                 else:
