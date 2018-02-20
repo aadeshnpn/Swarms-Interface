@@ -7,6 +7,7 @@ class Agent
     this.y             = -agentJson.y;
     this.rotation      =  Math.PI/2 - agentJson.direction; // convert from the engine's coordinate system into what the drawing routine expects
     this.state         =  agentJson.state;
+    //console.log(this.state);
     this.potentialSite =  agentJson.potential_site;
     this.isAlive       =  agentJson.live;
     this.qVal          =  agentJson.qVal;

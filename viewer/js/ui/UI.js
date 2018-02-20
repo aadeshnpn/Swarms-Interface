@@ -9,10 +9,10 @@ class UI {
 		this.canvasElems.push(new SelectionBoxes(this));
 		this.canvasElems.push(new SelectionRect(this));
 		this.canvasElems.push(new RadialControl(this));
-		this.canvasElems.push(new RadialControl(this, {interactive: false, colour: "green", dataset: "agentsIn"}));
+		//this.canvasElems.push(new RadialControl(this, {interactive: false, colour: "green", dataset: "agentsIn"}));
 		this.canvasElems.push(new BaitBombGhost(this));
 		this.canvasElems.push(new MissionLayer(this));
-		this.canvasElems.push(new StateBubbles(this));
+		//this.canvasElems.push(new StateBubbles(this));
 
 		this.documentElems.push(new DebugParams(this));
 		this.documentElems.push(new UIParams(this));

@@ -18,7 +18,9 @@ class World
     this.environment = environmentJson;
     this.test =true;
     this.time=1000;
-
+    this.swarmState = [];
+    //this.stateBubbles = new StateBubbles(this);
+    //console.log(environmentJson);
 
     for (let site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
     for (let obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
@@ -29,6 +31,9 @@ class World
     for (let agent      of environmentJson.agents     ) { this.agents     .push( new Agent     (agent     ) ); }
     for (let dead_agent of environmentJson.dead_agents) { this.dead_agents.push( new DeadAgent (dead_agent) ); }
     //for (var pheromone of environmentJson.pheromones)   { this.pheromones .push( new Pheromone (pheromone)  ); }
+    this.swarmState.push(new SwarmState(JSON.parse('{"state": "exploring"}')));
+    this.swarmState.push(new SwarmState(JSON.parse('{"state": "assessing"}')));
+    this.swarmState.push(new SwarmState(JSON.parse('{"state": "commit"}')));
     this.pheromones = new Pheromone(environmentJson.pheromones);
   }
 
@@ -62,7 +67,8 @@ class World
 
 		  this.agents[i].x = environment.agents[i].x;
 		  this.agents[i].y = -environment.agents[i].y;
-		  this.agents[i].rotation = environment.agents[i].rotation;
+		  this.agents[i].rotation = Math.PI/2 - environment.agents[i].direction;
+      this.agents[i].state = environment.agents[i].state;
 	  }
 
   }
@@ -93,6 +99,6 @@ class World
     for (let dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
     for (let fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
     //for (let fog        of fogBlock        ) { fog       .draw(ctx); }
-
+    for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
   }
 }
