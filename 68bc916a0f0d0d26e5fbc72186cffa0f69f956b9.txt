@@ -34,7 +34,7 @@ class worldGenerator:
         sitesNum = random.randint(2, max_sites)
         for proposed_site in range(sitesNum):
             site = {"radius": random.randint(1, 20), "q_value": random.random()}
-
+            
             ready = False
 
             while not ready:
