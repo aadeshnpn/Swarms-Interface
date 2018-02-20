@@ -1,7 +1,0 @@
-$(document).ready(() =>
-{
-  $.get("/database", json =>
-  {
-    console.log("here");
-  });
-});
