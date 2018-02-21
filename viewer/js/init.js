@@ -160,6 +160,7 @@ function draw(environment)
   if(simType=="Drone"){
      ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height);
   }
+
    ctx.globalAlpha = 1;
 
    ctx.restore();

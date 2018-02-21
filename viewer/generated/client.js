@@ -976,13 +976,14 @@ class SelectionRect
    }
 }
 
+
 class StateBubbles
 {
   constructor(ui)
   {
     this.states = {};
     this.totalAgentsInStates = 0;
-    this.initialised = false
+    this.initialised = false;
 
     ui.register("setStates", this.init.bind(this));
     ui.register("stateCounts", this.update.bind(this));
@@ -993,9 +994,13 @@ class StateBubbles
 
   init(json)
   {
+    //console.log(json);
     for (let name of json.states)
     {
+      //console.log(name);
       this.states[name] = {count: 0, radius: 0};
+      //console.log(this.states);
+
     }
 
     this.initialised = true;
@@ -1003,21 +1008,26 @@ class StateBubbles
 
   update(json)
   {
-    this.totalAgentsInStates = 0
+    this.totalAgentsInStates = 100;
+    //console.log(json);
 
     for (let [state, count] of Object.entries(json))
     {
+      //console.log(json.states);
+      console.log(count);
       if (this.states[state])
       {
         this.states[state].count = count;
         this.totalAgentsInStates += count;
+
       }
     }
 
     for (let [name, state] of Object.entries(this.states))
     {
+      //console.log(count);
       state.radius = state.count / this.totalAgentsInStates * StateBubbles.MAX_RADIUS;
-
+      //console.log(state.radius);
       if (state.radius < StateBubbles.MIN_RADIUS)
         state.radius = StateBubbles.MIN_RADIUS;
     }
@@ -1052,11 +1062,13 @@ class StateBubbles
 
     for (let [name, state] of Object.entries(this.states))
     {
+      //console.log(state.radius);
       x += state.radius;
 
       ctx.fillStyle = "rgb(108, 163, 252)";
       ctx.beginPath();
       ctx.arc(x, 0, state.radius, 0, Math.PI * 2, false);
+      //ctx.arc(100, 0, 50, 0, 2 * Math.PI);
       ctx.fill();
 
       ctx.font = "8pt sans-serif";
@@ -1074,7 +1086,7 @@ class StateBubbles
 
 StateBubbles.MAX_RADIUS = 20;
 StateBubbles.MIN_RADIUS = 2;
-StateBubbles.BUBBLE_SPACING = 40; // in px
+StateBubbles.BUBBLE_SPACING = 60; // in px
 StateBubbles.LABEL_SPACING = 30;
 
 class Cursor
@@ -1731,10 +1743,10 @@ class UI {
 		this.canvasElems.push(new SelectionBoxes(this));
 		this.canvasElems.push(new SelectionRect(this));
 		this.canvasElems.push(new RadialControl(this));
-		this.canvasElems.push(new RadialControl(this, {interactive: false, colour: "green", dataset: "agentsIn"}));
+		//this.canvasElems.push(new RadialControl(this, {interactive: false, colour: "green", dataset: "agentsIn"}));
 		this.canvasElems.push(new BaitBombGhost(this));
 		this.canvasElems.push(new MissionLayer(this));
-		this.canvasElems.push(new StateBubbles(this));
+		//this.canvasElems.push(new StateBubbles(this));
 
 		this.documentElems.push(new DebugParams(this));
 		this.documentElems.push(new UIParams(this));
@@ -1830,6 +1842,7 @@ class Agent
     this.y             = -agentJson.y;
     this.rotation      =  Math.PI/2 - agentJson.direction; // convert from the engine's coordinate system into what the drawing routine expects
     this.state         =  agentJson.state;
+    //console.log(this.state);
     this.potentialSite =  agentJson.potential_site;
     this.isAlive       =  agentJson.live;
     this.qVal          =  agentJson.qVal;
@@ -2368,6 +2381,87 @@ class Site
   }
 }
 
+class SwarmState {
+  constructor(stateJson){
+    this.state = stateJson.state;
+    this.size = 0;
+    this.total = 0;
+    this.radius = 0;
+  }
+
+  draw(ctx, agents){
+    //console.log(Object.entries(this.state));
+    //console.log(this.state);this.total++
+    this.size = 0;
+    this.total = 0;//agents.length;
+    //console.log(agents.length);
+    for (let agent of agents){
+      //console.log(this.state);
+      //console.log(agent);
+      if (agent.state == "exploring" || agent.state == "assessing" || agent.state == "site assess" || agent.state == "piping" || agent.state == "commit"){
+        this.total++;
+      }
+      if (this.state == "exploring" && agent.state == "exploring"){
+        this.size++;
+        //this.total++;
+      }
+      if (this.state == "assessing" && (agent.state == "assessing" || agent.state == "site assess")){
+        this.size++;
+        //this.total++;
+      }
+      if (this.state == "commit" && (agent.state == "piping" || agent.state == "commit")){
+        this.size++;
+        //this.total++;
+      }
+    }
+    //console.log(this.total);
+    let x = -world.x_limit + StateBubbles.BUBBLE_SPACING;
+    let y = world.y_limit - StateBubbles.MAX_RADIUS - StateBubbles.LABEL_SPACING;
+
+    //let x, y = [0, 0];
+    //let x = 0;
+
+    ctx.save();
+    ctx.translate(x, y);
+    x = 0;
+    this.radius = this.size/this.total*SwarmState.MAX_RADIUS;
+    if (this.radius < SwarmState.MIN_RADIUS){
+      this.radius = SwarmState.MIN_RADIUS;
+    }
+    /*if (this.state == "exploring"){
+      x += SwarmState.MAX_RADIUS;
+    }*/
+    if (this.state == "assessing"){
+      x += /*2 * SwarmState.MAX_RADIUS +*/ SwarmState.BUBBLE_SPACING;
+    }
+    if (this.state == "commit"){
+      x += /*3 * SwarmState.MAX_RADIUS + */ 2 * SwarmState.BUBBLE_SPACING;
+    }
+
+    ctx.fillStyle = "rgb(108, 163, 252)";
+    ctx.beginPath();
+    ctx.arc(x, 0, this.radius, 0, Math.PI * 2, false);
+    //ctx.arc(100, 0, 50, 0, 2 * Math.PI);
+    ctx.fill();
+
+    ctx.font = "8pt sans-serif";
+    ctx.fillStyle = "rgb(0, 0, 0)";
+    let width = ctx.measureText(`${this.state}/${this.size}`).width;
+    //let name1 = name[0].toUpperCase();
+    ctx.fillText(`${this.state}/${this.size}`, x-width/2, SwarmState.LABEL_SPACING);
+
+    x += this.radius + SwarmState.BUBBLE_SPACING;
+    ctx.restore();
+  }
+
+
+}
+
+SwarmState.MAX_RADIUS = 20;
+SwarmState.MIN_RADIUS = 2;
+SwarmState.BUBBLE_SPACING = 100; // in px
+SwarmState.LABEL_SPACING = 30;
+
 class Trap
 {
   constructor(trapJson)
@@ -2435,7 +2529,9 @@ class World
     this.environment = environmentJson;
     this.test =true;
     this.time=1000;
-
+    this.swarmState = [];
+    //this.stateBubbles = new StateBubbles(this);
+    //console.log(environmentJson);
 
     for (let site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
     for (let obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
@@ -2446,6 +2542,9 @@ class World
     for (let agent      of environmentJson.agents     ) { this.agents     .push( new Agent     (agent     ) ); }
     for (let dead_agent of environmentJson.dead_agents) { this.dead_agents.push( new DeadAgent (dead_agent) ); }
     //for (var pheromone of environmentJson.pheromones)   { this.pheromones .push( new Pheromone (pheromone)  ); }
+    this.swarmState.push(new SwarmState(JSON.parse('{"state": "exploring"}')));
+    this.swarmState.push(new SwarmState(JSON.parse('{"state": "assessing"}')));
+    this.swarmState.push(new SwarmState(JSON.parse('{"state": "commit"}')));
     this.pheromones = new Pheromone(environmentJson.pheromones);
   }
 
@@ -2464,49 +2563,26 @@ class World
     //console.log(environment.agents.length)
 
 
-//<<<<<<< HEAD
 
-    for(var i=0; i< this.sites.length;i++){
-      this.sites[i].x=environment.sites[i].x
-      this.sites[i].y=-environment.sites[i]["y"]
-    }
+	  //Update Dead Agents
+	  for (let i = 0; i < this.sites.length; i++) {
+		  this.sites[i].x = environment.sites[i].x;
+		  this.sites[i].y = -environment.sites[i]["y"];
+	  }
+	  for (let i = 0; i < this.dead_agents.length; i++) {
 
-    //Update Alive Agents
-    for(var i =0; i < this.agents.length-this.dead_agents.length;i++){
+		  this.dead_agents[i].x = environment.dead_agents[i].x;
+		  this.dead_agents[i].y = -environment.dead_agents[i].y;
+	  }
+	  //Update Alive Agents
+	  for (let i = 0; i < this.agents.length - this.dead_agents.length; i++) {
 
-      for(var dead of environment.dead_agents){
+		  this.agents[i].x = environment.agents[i].x;
+		  this.agents[i].y = -environment.agents[i].y;
+		  this.agents[i].rotation = Math.PI/2 - environment.agents[i].direction;
+      this.agents[i].state = environment.agents[i].state;
+	  }
 
-              if(this.agents[i].id == dead.id ){
-                this.agents.splice(i,1)
-                this.dead_agents.push(new DeadAgent(dead))
-              }
-      }
-
-      this.agents[i].x= environment.agents[i].x
-      this.agents[i].y= -environment.agents[i].y
-      this.agents[i].rotation = Math.PI/2 -environment.agents[i].direction
-      this.agents[i].state=environment.agents[i].state
-
-    }
-//=======
-	  // //Update Dead Agents
-	  // for (let i = 0; i < this.sites.length; i++) {
-		//   this.sites[i].x = environment.sites[i].x;
-		//   this.sites[i].y = -environment.sites[i]["y"];
-	  // }
-	  // for (let i = 0; i < this.dead_agents.length; i++) {
-    //
-		//   this.dead_agents[i].x = environment.dead_agents[i].x;
-		//   this.dead_agents[i].y = -environment.dead_agents[i].y;
-	  // }
-	  // //Update Alive Agents
-	  // for (let i = 0; i < this.agents.length - this.dead_agents.length; i++) {
-    //
-		//   this.agents[i].x = environment.agents[i].x;
-		//   this.agents[i].y = -environment.agents[i].y;
-		//   this.agents[i].rotation = environment.agents[i].rotation;
-	  // }
-//>>>>>>> 0039f9a7c85313d08902ab5a03211a77db5832b0
 
   }
   // Draw the whole world recursively. Takes a 2dRenderingContext obj from
@@ -2555,7 +2631,11 @@ class World
     // for (let dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
     // for (let fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
     //for (let fog        of fogBlock        ) { fog       .draw(ctx); }
+
+    for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
+
 //>>>>>>> 0039f9a7c85313d08902ab5a03211a77db5832b0
+
 
   }
 }
@@ -2722,6 +2802,7 @@ function draw(environment)
   if(simType=="Drone"){
      ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height);
   }
+
    ctx.globalAlpha = 1;
 
    ctx.restore();

@@ -18,7 +18,9 @@ class World
     this.environment = environmentJson;
     this.test =true;
     this.time=1000;
-
+    this.swarmState = [];
+    //this.stateBubbles = new StateBubbles(this);
+    //console.log(environmentJson);
 
     for (let site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
     for (let obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
@@ -29,6 +31,9 @@ class World
     for (let agent      of environmentJson.agents     ) { this.agents     .push( new Agent     (agent     ) ); }
     for (let dead_agent of environmentJson.dead_agents) { this.dead_agents.push( new DeadAgent (dead_agent) ); }
     //for (var pheromone of environmentJson.pheromones)   { this.pheromones .push( new Pheromone (pheromone)  ); }
+    this.swarmState.push(new SwarmState(JSON.parse('{"state": "exploring"}')));
+    this.swarmState.push(new SwarmState(JSON.parse('{"state": "assessing"}')));
+    this.swarmState.push(new SwarmState(JSON.parse('{"state": "commit"}')));
     this.pheromones = new Pheromone(environmentJson.pheromones);
   }
 
@@ -47,49 +52,26 @@ class World
     //console.log(environment.agents.length)
 
 
-//<<<<<<< HEAD
 
-    for(var i=0; i< this.sites.length;i++){
-      this.sites[i].x=environment.sites[i].x
-      this.sites[i].y=-environment.sites[i]["y"]
-    }
+	  //Update Dead Agents
+	  for (let i = 0; i < this.sites.length; i++) {
+		  this.sites[i].x = environment.sites[i].x;
+		  this.sites[i].y = -environment.sites[i]["y"];
+	  }
+	  for (let i = 0; i < this.dead_agents.length; i++) {
 
-    //Update Alive Agents
-    for(var i =0; i < this.agents.length-this.dead_agents.length;i++){
+		  this.dead_agents[i].x = environment.dead_agents[i].x;
+		  this.dead_agents[i].y = -environment.dead_agents[i].y;
+	  }
+	  //Update Alive Agents
+	  for (let i = 0; i < this.agents.length - this.dead_agents.length; i++) {
 
-      for(var dead of environment.dead_agents){
+		  this.agents[i].x = environment.agents[i].x;
+		  this.agents[i].y = -environment.agents[i].y;
+		  this.agents[i].rotation = Math.PI/2 - environment.agents[i].direction;
+      this.agents[i].state = environment.agents[i].state;
+	  }
 
-              if(this.agents[i].id == dead.id ){
-                this.agents.splice(i,1)
-                this.dead_agents.push(new DeadAgent(dead))
-              }
-      }
-
-      this.agents[i].x= environment.agents[i].x
-      this.agents[i].y= -environment.agents[i].y
-      this.agents[i].rotation = Math.PI/2 -environment.agents[i].direction
-      this.agents[i].state=environment.agents[i].state
-
-    }
-//=======
-	  // //Update Dead Agents
-	  // for (let i = 0; i < this.sites.length; i++) {
-		//   this.sites[i].x = environment.sites[i].x;
-		//   this.sites[i].y = -environment.sites[i]["y"];
-	  // }
-	  // for (let i = 0; i < this.dead_agents.length; i++) {
-    //
-		//   this.dead_agents[i].x = environment.dead_agents[i].x;
-		//   this.dead_agents[i].y = -environment.dead_agents[i].y;
-	  // }
-	  // //Update Alive Agents
-	  // for (let i = 0; i < this.agents.length - this.dead_agents.length; i++) {
-    //
-		//   this.agents[i].x = environment.agents[i].x;
-		//   this.agents[i].y = -environment.agents[i].y;
-		//   this.agents[i].rotation = environment.agents[i].rotation;
-	  // }
-//>>>>>>> 0039f9a7c85313d08902ab5a03211a77db5832b0
 
   }
   // Draw the whole world recursively. Takes a 2dRenderingContext obj from
@@ -138,7 +120,11 @@ class World
     // for (let dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
     // for (let fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
     //for (let fog        of fogBlock        ) { fog       .draw(ctx); }
+
+    for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
+
 //>>>>>>> 0039f9a7c85313d08902ab5a03211a77db5832b0
+
 
   }
 }
