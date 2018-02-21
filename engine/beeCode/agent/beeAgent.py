@@ -8,7 +8,7 @@ import time
 from utils.geomUtil import distance
 
 #input = Enum('input', 'nestFound exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
-input = Enum('input', 'nestFound maxAgents exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
+input = Enum('input', 'nestFound report maxAgents exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
 
 class Bee(HubAgent):
 
@@ -68,7 +68,8 @@ class Bee(HubAgent):
 
         # bee agent variables
         self.live = True
-        self.view=2
+        self.numberOfFollowers=0;
+        self.view=35
         self.swarmLoc=0;
         self.location = [hub["x"], hub["y"]]
         self.velocity = self.parameters["Velocity"]
@@ -89,7 +90,7 @@ class Bee(HubAgent):
         # create table here.
         self.transitionTable = {
                 (Exploring(self).__class__, input.nestFound): [None, followSite(self)],
-                (followSite(self).__class__, input.maxAgents): [self.exploreTransition, Exploring(self)],
+                (followSite(self).__class__, input.report): [None, ReportToHub(self)],
                 (Exploring(self).__class__, input.exploreTime): [self.observeTransition, Observing(self)],
                 (Observing(self).__class__, input.observeTime): [self.exploreTransition, Exploring(self)],
                 (Observing(self).__class__, input.dancerFound): [None, Assessing(self)],
@@ -172,7 +173,10 @@ class Exploring(State):
         agent.checkAgentLeave()
 
         new_q = environment.get_q(agent)["q"]
-        site_id=environment.get_id(agent)
+        if new_q !=0 :
+            site_id=environment.get_q(agent)["id"]
+
+
 
         agent.q_value = new_q
         if agent.q_value > 0:
@@ -213,8 +217,9 @@ class Assessing(State):
         self.siteFound = False
 
     def sense(self, agent, environment):
+
         if not agent.checkAgentLeave(): #if probs check if agent.goingToSite
-            self.siteFound = agent.checkAgentReturn() #if probs, check if not agent.goingToSite
+           self.siteFound = agent.checkAgentReturn() #if probs, check if not agent.goingToSite
     #TODO TODO repeated code in sense and update????
     def act(self, agent):
         if agent.goingToSite:
@@ -358,16 +363,42 @@ class Observing(State):
                 return input.quit
             return input.observeTime
 
-class followSite(State):
+class ReportToHub(State):
     def __init__(self, agent=None):
-            self.name = "follow_site"
+            self.name = "reportToHub"
             self.siteRadius = 9
 
 
     def sense(self, agent, environment):
+
+        return
+
+
+
+    def act(self, agent):
+        #eprint("Follow Site act")
+        # eprint(agent.parameters["PheromoneStrength"])
+        agent.move(agent.hub)
+        return
+
+
+    def update(self, agent):
+        #eprint("Follow Site update")
+        return
+
+class followSite(State):
+    def __init__(self, agent=None):
+            self.name = "follow_site"
+            self.siteRadius = 9
+            self.agentReporting=False
+
+
+    def sense(self, agent, environment):
         site_id =agent.potential_site[2]
-        # if(environment.get_numberOfAgentsInState(site_id) > 4):
-        #     return input.maxAgents
+        agent.numberOfFollowers=environment.get_numberOfAgentsInState(site_id)
+        if(agent.numberOfFollowers > 4):
+            agent.velocity=1.6
+            return input.report
         for site in environment.sites:
             if site_id == site["id"]:
                 dist=distance(agent.location[0],agent.location[1],site["x"],site["y"])
@@ -408,6 +439,7 @@ class followSite(State):
     def update(self, agent):
 
         agent.move(agent.potential_site)
+
         #eprint("Follow Site update")
         return
 

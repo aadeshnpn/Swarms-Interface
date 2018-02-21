@@ -19,7 +19,7 @@ class BeeEnvironment(Environment):
         self.influenceActions = {"turns": 0, "stateChanges": 0}
         self.totalInfluence = []
 
-        self.states = {"exploring": {},"follow_site": {}, "observing":{},"resting":{},'dancing':{},'assessing':{},'siteSearch':{},'site assess':{},'piping':{},'commit':{}}
+        self.states = {"exploring": {},"reportToHub":{},"follow_site": {}, "observing":{},"resting":{},'dancing':{},'assessing':{},'siteSearch':{},'site assess':{},'piping':{},'commit':{}}
         self.pheromoneList = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])
         self.xPos = []
         self.yPos = []
@@ -202,7 +202,7 @@ class BeeEnvironment(Environment):
             y_dif = agent.location[1] - site["y"]
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
 
-            if tot_dif <= site["radius"]:
+            if tot_dif -agent.view <= site["radius"]:
                 info = self.info_stations[i]
                 if not agent.atSite:
                     self.info_stations[i].bee_count += 1
@@ -216,7 +216,8 @@ class BeeEnvironment(Environment):
                 # the edge will return 75% of the q_value
                 return {
                     "radius": site["radius"],
-                    "q": site["q_value"] - (tot_dif / site["radius"] * .25 * site["q_value"]) #gradient!
+                    "q": site["q_value"] - (tot_dif / site["radius"] * .25 * site["q_value"]),
+                    "id": site["id"] #gradient!
                 }
 
         return {"radius": -1, "q": 0}
