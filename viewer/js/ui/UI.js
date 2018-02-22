@@ -12,7 +12,7 @@ class UI {
 		//this.canvasElems.push(new RadialControl(this, {interactive: false, colour: "green", dataset: "agentsIn"}));
 		this.canvasElems.push(new BaitBombGhost(this));
 		this.canvasElems.push(new MissionLayer(this));
-		//this.canvasElems.push(new StateBubbles(this));
+		this.canvasElems.push(new StateBubbles(this));
 
 		this.documentElems.push(new DebugParams(this));
 		this.documentElems.push(new UIParams(this));
@@ -35,8 +35,11 @@ class UI {
 	}
 
 	on(msg) {
+		
 		for (let cb of this.eventCallbacks[msg.type]) {
-			cb(msg.data);
+			// console.log(cb);
+				cb(msg.data);
+
 		}
 	}
 

@@ -285,7 +285,10 @@ class MissionLayer {
 	}
 
 	onMouseMove(e) {
-		let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+		let worldRelative={x: e.offsetX, y:e.offsetY }
+		if(world){
+			let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+		}
 
 		this.hoveredPoint = null;
 		// check every point to see if it is hovered
@@ -524,7 +527,12 @@ class RadialControl
    }
 
 	startHandleHover(e) {
-		let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+    let worldRelative={x: e.offsetX, y:e.offsetY }
+    if(world){
+      let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+    }
+
+
 		/* TODO remove these two lines.
 		 * I don't know why they are here. If they are uncommented, then the hover of
 		 * the mouse is based on the center of the radial control, not the center of
@@ -810,7 +818,6 @@ RadialControl.HANDLE_COLOUR = 'blue';
    }
 }*/
 
-
 class SelectionBoxes
 {
    constructor()
@@ -1044,6 +1051,7 @@ class StateBubbles
 
   draw(ctx, debug = false)
   {
+    return
     if (!this.initialised)
       return;
 
@@ -1746,7 +1754,7 @@ class UI {
 		//this.canvasElems.push(new RadialControl(this, {interactive: false, colour: "green", dataset: "agentsIn"}));
 		this.canvasElems.push(new BaitBombGhost(this));
 		this.canvasElems.push(new MissionLayer(this));
-		//this.canvasElems.push(new StateBubbles(this));
+		this.canvasElems.push(new StateBubbles(this));
 
 		this.documentElems.push(new DebugParams(this));
 		this.documentElems.push(new UIParams(this));
@@ -1769,8 +1777,11 @@ class UI {
 	}
 
 	on(msg) {
+		
 		for (let cb of this.eventCallbacks[msg.type]) {
-			cb(msg.data);
+			// console.log(cb);
+				cb(msg.data);
+
 		}
 	}
 
@@ -2272,14 +2283,14 @@ class Pheromone
 
     //for (let pheromone of this.pheromones)
     //{
-        ctx.fillRect(this.pheromones.x - 3, -this.pheromones.y - 3, 9, 9);
+        ctx.fillRect(this.pheromones.x - 3, -this.pheromones.y - 3, this.pheromones.r, 9);
     //}
-
+    this.pheromones.r+=1
     ctx.restore();
   }
 }
 
-Pheromone.FILL_STYLE = "rgba(255, 255, 0, 0.75)";
+Pheromone.FILL_STYLE = "rgba(255, 255, 0, 0.25)";
 
 class Repulsor
 {
@@ -2384,9 +2395,11 @@ class Site
 class SwarmState {
   constructor(stateJson){
     this.state = stateJson.state;
+
     this.size = 0;
     this.total = 0;
     this.radius = 0;
+    //ui.register("stateCounts", this.update.bind(this));
   }
 
   draw(ctx, agents){
@@ -2526,6 +2539,7 @@ class World
     this.repulsors   = [];
     this.agents      = [];
     this.dead_agents = [];
+    this.pheromones  = [];
     this.environment = environmentJson;
     this.test =true;
     this.time=1000;
@@ -2545,12 +2559,13 @@ class World
     this.swarmState.push(new SwarmState(JSON.parse('{"state": "exploring"}')));
     this.swarmState.push(new SwarmState(JSON.parse('{"state": "assessing"}')));
     this.swarmState.push(new SwarmState(JSON.parse('{"state": "commit"}')));
-    this.pheromones = new Pheromone(environmentJson.pheromones);
+
   }
 
   canvasToWorldCoords(x, y)
   {
-     return {x: (x - this.x_limit), y: -(y - this.y_limit)};
+    
+    return {x: (x - this.x_limit), y: -(y - this.y_limit)};
   }
 
   update(environment){
@@ -2561,10 +2576,29 @@ class World
     // }
 
     //console.log(environment.agents.length)
+    // for(let i =0;i<environment.pheromones.length;i++){
+    //   if(environment.pheromones[i].strength>=.5){
+    //     this.pheromones.push(new Pheromone(environment.pheromones[i]))
+    //   }
+    //   else if(environment.pheromones[i].strength<=0){
+    //     //console.log(environment.pheromones[i].strength);
+    //     this.pheromones.splice(0,3)
+    //   }
+    //   else{
+    //     for(let pher in this.pheromones){
+    //       console.log(pher);
+    //       let ep=environment.pheromones[i]
+    //       // if(ep["agent"]==pher["agent"]){
+    //       //   pher["r"]=ep["r"]
+    //       //   pher["strength"]=ep["strength"]
+    //       // }
+    //     }
+    //   }
+    // }
+    //console.log(this.pheromones.length);
 
 
 
-	  //Update Dead Agents
 	  for (let i = 0; i < this.sites.length; i++) {
 		  this.sites[i].x = environment.sites[i].x;
 		  this.sites[i].y = -environment.sites[i]["y"];
@@ -2608,8 +2642,9 @@ class World
     for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
     for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
     for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
-    this.pheromones.draw(ctx, debug);
+    //this.pheromones.draw(ctx, debug);
     this.hub.draw(ctx, debug, this.agents);
+    for (var pheromone  of this.pheromones ) { pheromone.draw(ctx,debug)}
     for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
     for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
     for (var fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
@@ -2665,7 +2700,7 @@ const cursors =
 $("#deadBees").click(function(){
   window.location.replace("http://localhost:3000");
 })
-const ui = new UI();
+
 var bee;
 var beeDead;
 var obstacle;
@@ -2698,7 +2733,7 @@ socket.on('simType', function(type)
 
 
 var finishedDrawing = true;
-
+var ui = new UI();
 
 // In order to associate a client with a specific engine process,
 // the server sends us a unique id to send back once socket.io has
@@ -2722,11 +2757,14 @@ socket.on('connect', function()
 // server, it'll come through here.
 socket.on('update', function(worldUpdate)
 {
+
    // First update
    if (world === null)
    {
      //console.log("HERE!")
+
       world = new World(worldUpdate.data);
+
       canvas.setAttribute("width", world.width);
       canvas.setAttribute("height", world.height);
 
@@ -2764,7 +2802,7 @@ socket.on('update', function(worldUpdate)
    {
       world.update(worldUpdate.data) //= new World(worldUpdate.data); <---- This creates a new world every update which causes issues with
       //saving info that is not from the engine (E.G - the fog system)
-
+      ui.on(worldUpdate);
       //try implementing an array and stack
       //you'd push worldupdate.data into array, and then pop it off the stack when you need it
       // "need it" means you've finished a draw cycle, which is happening in browser
@@ -2779,7 +2817,7 @@ socket.on('update', function(worldUpdate)
       //ui.RadialControl.updateActual(world.hub.directions);
    }
 
-   ui.on(worldUpdate);
+
 });
 var ctx;
 

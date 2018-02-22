@@ -2,6 +2,7 @@ from Environment import *
 from beeCode.beeHubController import BeeHubController
 from Measurements import *
 from beeCode.agent.beeAgent import *
+from Pheromone import *
 import time
 
 
@@ -12,6 +13,7 @@ class BeeEnvironment(Environment):
         #eprint("file_name = " + str(file_name))
         self.info_stations = []
         self.number_of_agents = 100
+
         self.sites = []
         self.x_limit=0;
         self.y_limit=0;
@@ -20,7 +22,7 @@ class BeeEnvironment(Environment):
         self.totalInfluence = []
 
         self.states = {"exploring": {},"reportToHub":{},"follow_site": {}, "observing":{},"resting":{},'dancing':{},'assessing':{},'siteSearch':{},'site assess':{},'piping':{},'commit':{}}
-        self.pheromoneList = np.zeros([int(self.x_limit*2)+1,int(self.y_limit*2)+1])
+        self.pheromoneList =[]
         self.xPos = []
         self.yPos = []
         self.dataStates = []
@@ -240,7 +242,7 @@ class BeeEnvironment(Environment):
                             "repulsors": list(map(lambda r: r.toJson(), self.flowController.repulsors)),
                             "agents": self.agents_to_json(),
                             "dead_agents": self.dead_agents_to_json(),
-                            "pheromones": ""
+                            "pheromones": self.pheromones_to_json()
                         }
                 })
         )

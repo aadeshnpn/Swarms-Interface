@@ -15,6 +15,7 @@ class World
     this.repulsors   = [];
     this.agents      = [];
     this.dead_agents = [];
+    this.pheromones  = [];
     this.environment = environmentJson;
     this.test =true;
     this.time=1000;
@@ -34,12 +35,13 @@ class World
     this.swarmState.push(new SwarmState(JSON.parse('{"state": "exploring"}')));
     this.swarmState.push(new SwarmState(JSON.parse('{"state": "assessing"}')));
     this.swarmState.push(new SwarmState(JSON.parse('{"state": "commit"}')));
-    this.pheromones = new Pheromone(environmentJson.pheromones);
+
   }
 
   canvasToWorldCoords(x, y)
   {
-     return {x: (x - this.x_limit), y: -(y - this.y_limit)};
+    
+    return {x: (x - this.x_limit), y: -(y - this.y_limit)};
   }
 
   update(environment){
@@ -50,10 +52,29 @@ class World
     // }
 
     //console.log(environment.agents.length)
+    // for(let i =0;i<environment.pheromones.length;i++){
+    //   if(environment.pheromones[i].strength>=.5){
+    //     this.pheromones.push(new Pheromone(environment.pheromones[i]))
+    //   }
+    //   else if(environment.pheromones[i].strength<=0){
+    //     //console.log(environment.pheromones[i].strength);
+    //     this.pheromones.splice(0,3)
+    //   }
+    //   else{
+    //     for(let pher in this.pheromones){
+    //       console.log(pher);
+    //       let ep=environment.pheromones[i]
+    //       // if(ep["agent"]==pher["agent"]){
+    //       //   pher["r"]=ep["r"]
+    //       //   pher["strength"]=ep["strength"]
+    //       // }
+    //     }
+    //   }
+    // }
+    //console.log(this.pheromones.length);
 
 
 
-	  //Update Dead Agents
 	  for (let i = 0; i < this.sites.length; i++) {
 		  this.sites[i].x = environment.sites[i].x;
 		  this.sites[i].y = -environment.sites[i]["y"];
@@ -97,8 +118,9 @@ class World
     for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
     for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
     for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
-    this.pheromones.draw(ctx, debug);
+    //this.pheromones.draw(ctx, debug);
     this.hub.draw(ctx, debug, this.agents);
+    for (var pheromone  of this.pheromones ) { pheromone.draw(ctx,debug)}
     for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
     for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
     for (var fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }

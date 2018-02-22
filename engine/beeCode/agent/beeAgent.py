@@ -5,6 +5,7 @@ from .abstractAgent import HubAgent
 from utils.debug import *
 import math
 import time
+from Pheromone import *
 from utils.geomUtil import distance
 
 #input = Enum('input', 'nestFound exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
@@ -68,7 +69,7 @@ class Bee(HubAgent):
 
         # bee agent variables
         self.live = True
-        self.numberOfFollowers=0;
+        self.reporting=False;
         self.view=35
         self.swarmLoc=0;
         self.location = [hub["x"], hub["y"]]
@@ -243,20 +244,6 @@ class Assessing(State):
             self.siteFound = False
             return input.siteFound
 
-class SiteSearch(State):
-    def __init__(self, agent=None):
-        self.name = "siteSearch"
-        self.siteFound = False
-
-    def sense(self, agent, environment):
-        if not agent.checkAgentLeave(): #if probs check if agent.goingToSite
-            self.siteFound = agent.checkAgentReturn() #if probs, check if not agent.goingToSite
-    #TODO TODO repeated code in sense and update????
-    def act(self, agent):
-        return
-
-    def update(self, agent):
-        return input.siteFound
 
 class Resting(State):
     def __init__(self, agent=None):
@@ -390,18 +377,36 @@ class followSite(State):
     def __init__(self, agent=None):
             self.name = "follow_site"
             self.siteRadius = 9
-            self.agentReporting=False
 
 
     def sense(self, agent, environment):
         site_id =agent.potential_site[2]
-        agent.numberOfFollowers=environment.get_numberOfAgentsInState(site_id)
-        if(agent.numberOfFollowers > 4):
-            agent.velocity=1.6
-            return input.report
+        #TODO Add new pheromone every second instead of every frame
+        if time.time()%2==0:
+            environment.pheromoneList.append({"agent":agent.id,"pheromone":Pheromone(agent.location)})
+
+        i=0
+        for pheromone in environment.pheromoneList:
+            if pheromone["agent"]==agent.id:
+                if(pheromone["pheromone"].strength<=0):
+                    environment.pheromoneList.pop(i)
+                else:
+                    pheromone["pheromone"].strength-=.1
+                    pheromone["pheromone"].r+=.1
+            i+=1
+        # eprint(len(environment.pheromoneList))
+        # if environment.pheromoneList[0]["agent"] == agent.id:
+        #     eprint(environment.pheromoneList[0]["agent"])
+
         for site in environment.sites:
             if site_id == site["id"]:
                 dist=distance(agent.location[0],agent.location[1],site["x"],site["y"])
+                # agent.numberOfFollowers=environment.get_numberOfAgentsInState(site_id)
+                environment.agentsFollowSite[site_id]["number"]=environment.get_numberOfAgentsInState(site_id)
+                if environment.agentsFollowSite[site_id]["number"] > 4 and environment.agentsFollowSite[site_id]["reporting"] ==False:
+                    environment.agentsFollowSite[site_id]["reporting"]=True
+                    agent.reporting=True;
+                # agent.agentsFollowingSite=environment.agentsFollowSite[site_id]
 
 
                 if dist<50:
@@ -420,11 +425,6 @@ class followSite(State):
                         agent.swarmLoc-=.1
                 else:
                     agent.potential_site=[site["x"], site["y"],site_id]
-        # x, y = environment.worldToPher(agent.location[0], agent.location[1])
-        # environment.pheromoneList[x, y] += agent.parameters["PheromoneStrength"] * np.sqrt(agent.q_value)
-        # environment.pheromoneList[x-3:x+3,y-3:y+3] += 2 * np.sqrt(agent.q_value)
-        # if np.random.random() < .2:
-        #     environment.pheromoneView[x, y] += agent.parameters["PheromoneStrength"] * np.sqrt(agent.q_value)
         return
 
 
@@ -439,7 +439,13 @@ class followSite(State):
     def update(self, agent):
 
         agent.move(agent.potential_site)
-
+        if agent.reporting:
+            # eprint ("Switching to Report")
+            agent.velocity=1.6
+            return input.report
+        # if(agent.numberOfFollowers > 4):
+        #     agent.velocity=1.6
+        #     return input.report
         #eprint("Follow Site update")
         return
 

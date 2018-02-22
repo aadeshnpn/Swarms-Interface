@@ -79,7 +79,7 @@ class Environment(ABC):
         self.dead_agents = []
         self.frames_per_sec = 100
         self.numberOfSwarms = 1
-
+        self.agentsFollowSite={};
         self.init_parameters()
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
 
@@ -131,6 +131,9 @@ class Environment(ABC):
         self.y_limit = data["dimensions"]["y_length"] / 2
         self.hub = data["hub"]
         self.sites = data["sites"]
+        for site in self.sites:
+            self.agentsFollowSite[site["id"]]={"number":0,"reporting":False}
+
         self.obstacles = data["obstacles"]
         self.traps = data["traps"]
         self.rough = data["rough terrain"]
@@ -502,6 +505,16 @@ class Environment(ABC):
         for agent_id in self.agents:
             agents.append(self.agents[agent_id].to_json())
         return agents
+
+    def pheromones_to_json(self):
+        pheromones = []
+
+        for pheromone in self.pheromoneList:
+            p=pheromone["pheromone"]
+            Id=pheromone["agent"]
+            pheromones.append({"id":Id,"x":p.x,"y":p.y,"r":p.r,"strength":p.strength})
+        return pheromones
+
 
     def parametersToJson(self):
         paramDict = {}

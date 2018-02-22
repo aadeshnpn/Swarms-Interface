@@ -684,18 +684,18 @@ class Environment:
                 "type": "update",
                 "data":
                 {
-                    "x_limit"   : self.x_limit,
-                    "y_limit"   : self.y_limit,
-                    "hub"       : self.hub,
-                    "sites"     : self.sites,
-                    "obstacles" : self.obstacles,
-                    "traps"     : self.traps,
-                    "rough"     : self.rough,
-                    "attractors": list(map(lambda a: a.toJson(), self.attractors)),
-                    "repulsors" : list(map(lambda r: r.toJson(), self.repulsors )),
-                    "agents"    : self.agents_to_json(),
+                    "x_limit"    : self.x_limit,
+                    "y_limit"    : self.y_limit,
+                    "hub"        : self.hub,
+                    "sites"      : self.sites,
+                    "obstacles"  : self.obstacles,
+                    "traps"      : self.traps,
+                    "rough"      : self.rough,
+                    "attractors" : list(map(lambda a: a.toJson(), self.attractors)),
+                    "repulsors"  : list(map(lambda r: r.toJson(), self.repulsors )),
+                    "agents"     : self.agents_to_json(),
                     "dead_agents": self.dead_agents_to_json(),
-                    "pheromones": self.pheromone_trails_to_json()
+                    "pheromones" : self.pheromone_trails_to_json()
                 }
             })
         )

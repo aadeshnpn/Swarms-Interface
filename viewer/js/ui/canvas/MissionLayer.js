@@ -187,7 +187,10 @@ class MissionLayer {
 	}
 
 	onMouseMove(e) {
-		let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+		let worldRelative={x: e.offsetX, y:e.offsetY }
+		if(world){
+			let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+		}
 
 		this.hoveredPoint = null;
 		// check every point to see if it is hovered

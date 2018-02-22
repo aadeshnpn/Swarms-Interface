@@ -188,7 +188,12 @@ class RadialControl
    }
 
 	startHandleHover(e) {
-		let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+    let worldRelative={x: e.offsetX, y:e.offsetY }
+    if(world){
+      let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+    }
+
+
 		/* TODO remove these two lines.
 		 * I don't know why they are here. If they are uncommented, then the hover of
 		 * the mouse is based on the center of the radial control, not the center of
@@ -473,4 +478,3 @@ RadialControl.HANDLE_COLOUR = 'blue';
       return component;
    }
 }*/
-

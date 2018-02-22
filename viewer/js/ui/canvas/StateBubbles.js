@@ -66,6 +66,7 @@ class StateBubbles
 
   draw(ctx, debug = false)
   {
+    return
     if (!this.initialised)
       return;
 

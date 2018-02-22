@@ -1,9 +1,11 @@
 class SwarmState {
   constructor(stateJson){
     this.state = stateJson.state;
+
     this.size = 0;
     this.total = 0;
     this.radius = 0;
+    //ui.register("stateCounts", this.update.bind(this));
   }
 
   draw(ctx, agents){

@@ -23,7 +23,7 @@ const cursors =
 $("#deadBees").click(function(){
   window.location.replace("http://localhost:3000");
 })
-const ui = new UI();
+
 var bee;
 var beeDead;
 var obstacle;
@@ -56,7 +56,7 @@ socket.on('simType', function(type)
 
 
 var finishedDrawing = true;
-
+var ui = new UI();
 
 // In order to associate a client with a specific engine process,
 // the server sends us a unique id to send back once socket.io has
@@ -80,11 +80,14 @@ socket.on('connect', function()
 // server, it'll come through here.
 socket.on('update', function(worldUpdate)
 {
+
    // First update
    if (world === null)
    {
      //console.log("HERE!")
+
       world = new World(worldUpdate.data);
+
       canvas.setAttribute("width", world.width);
       canvas.setAttribute("height", world.height);
 
@@ -122,7 +125,7 @@ socket.on('update', function(worldUpdate)
    {
       world.update(worldUpdate.data) //= new World(worldUpdate.data); <---- This creates a new world every update which causes issues with
       //saving info that is not from the engine (E.G - the fog system)
-
+      ui.on(worldUpdate);
       //try implementing an array and stack
       //you'd push worldupdate.data into array, and then pop it off the stack when you need it
       // "need it" means you've finished a draw cycle, which is happening in browser
@@ -137,7 +140,7 @@ socket.on('update', function(worldUpdate)
       //ui.RadialControl.updateActual(world.hub.directions);
    }
 
-   ui.on(worldUpdate);
+
 });
 var ctx;
 

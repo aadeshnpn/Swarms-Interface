@@ -16,11 +16,11 @@ class Pheromone
 
     //for (let pheromone of this.pheromones)
     //{
-        ctx.fillRect(this.pheromones.x - 3, -this.pheromones.y - 3, 9, 9);
+        ctx.fillRect(this.pheromones.x - 3, -this.pheromones.y - 3, this.pheromones.r, 9);
     //}
-
+    this.pheromones.r+=1
     ctx.restore();
   }
 }
 
-Pheromone.FILL_STYLE = "rgba(255, 255, 0, 0.75)";
+Pheromone.FILL_STYLE = "rgba(255, 255, 0, 0.25)";
