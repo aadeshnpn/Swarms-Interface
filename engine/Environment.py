@@ -19,6 +19,7 @@ from beeCode.worldGenerator import *
 import utils.flowController as flowController
 import utils.geomUtil as geomUtil
 from utils.potentialField import PotentialField
+from Sites import *
 
 import argparse
 
@@ -130,9 +131,9 @@ class Environment(ABC):
         self.x_limit = data["dimensions"]["x_length"] / 2
         self.y_limit = data["dimensions"]["y_length"] / 2
         self.hub = data["hub"]
-        self.sites = data["sites"]
+        self.sites = Sites(25, self.hub["x"], self.hub["y"])
         for site in self.sites:
-            self.agentsFollowSite[site["id"]]={"number":0,"reporting":False}
+            self.agentsFollowSite[site.id]={"number":0,"reporting":False}
 
         self.obstacles = data["obstacles"]
         self.traps = data["traps"]
@@ -274,45 +275,8 @@ class Environment(ABC):
     # Move all of the agents
 
     def moveSites(self):
-        maxVel =1
         for site in self.sites:
-            random1=random.randint(0,1)
-            if random1 ==0:
-                site['velX'] -=site['acc']*.008
-            if random1 ==1:
-                site['velX'] +=site['acc']*.008
-
-            if site['velX'] >maxVel:
-                site['velX']=maxVel
-            if site['velX'] <-maxVel:
-                site['velX']=-maxVel
-
-
-            site['x']+=site['velX']
-            if site['x'] +site['radius']>= self.x_limit:
-                site['velX']*=-1
-
-            elif site['x']-site['radius'] < self.x_limit * -1:
-                site['velX']*=-1
-
-            random1=random.randint(0,1)
-            if random1 ==0:
-                site['velY'] -=site['acc']*.008
-            if random1 ==1:
-                site['velY'] +=site['acc']*.008
-
-            if site['velY'] >maxVel:
-                site['velY']=maxVel
-
-            if site['velY'] <-maxVel:
-                site['velY']=-maxVel
-
-            site['y']+=site['velY']
-
-            if site['y']+site['radius'] >= self.y_limit:
-                site['velY']*=-1
-            elif site['y']-site['radius'] < self.y_limit * -1:
-                site['velY']*=-1
+            site.move()
 
 
     def run(self):

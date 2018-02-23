@@ -159,11 +159,11 @@ class BeeEnvironment(Environment):
             self.info_stations.append(InfoStation(self.parameters))
     def get_id(self,agent):
         for i, site in enumerate(self.sites):
-            x_dif = agent.location[0] - site["x"]
-            y_dif = agent.location[1] - site["y"]
+            x_dif = agent.location[0] - site.x
+            y_dif = agent.location[1] - site.y
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
-            if tot_dif <= site["radius"]:
-                return site["id"]
+            if tot_dif <= site.radius:
+                return site.id
     def get_pheromone(self,agent):
         #x=int(int(agent.location[0]+self.x_limit)/3)
         #y=int(int(agent.location[1]+self.y_limit)/3)
@@ -200,11 +200,11 @@ class BeeEnvironment(Environment):
         for info in self.info_stations:
             info.radius+=.1
         for i, site in enumerate(self.sites):
-            x_dif = agent.location[0] - site["x"]
-            y_dif = agent.location[1] - site["y"]
+            x_dif = agent.location[0] - site.x
+            y_dif = agent.location[1] - site.y
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
 
-            if tot_dif -agent.view <= site["radius"]:
+            if tot_dif -agent.view <= site.radius:
                 info = self.info_stations[i]
                 if not agent.atSite:
                     self.info_stations[i].bee_count += 1
@@ -217,9 +217,9 @@ class BeeEnvironment(Environment):
                 # return the q_value as a linear gradient. The center of the site will return 100% of the q_value,
                 # the edge will return 75% of the q_value
                 return {
-                    "radius": site["radius"],
-                    "q": site["q_value"] - (tot_dif / site["radius"] * .25 * site["q_value"]),
-                    "id": site["id"] #gradient!
+                    "radius": site.radius,
+                    "q": site.q_value - (tot_dif / site.radius * .25 * site.q_value),
+                    "id": site.id #gradient!
                 }
 
         return {"radius": -1, "q": 0}
@@ -234,7 +234,7 @@ class BeeEnvironment(Environment):
                             "x_limit": self.x_limit,
                             "y_limit": self.y_limit,
                             "hub": self.hub,
-                            "sites": self.sites,
+                            "sites": self.sites.to_json(),
                             "obstacles": self.obstacles,
                             "traps": self.traps,
                             "rough": self.rough,

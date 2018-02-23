@@ -399,8 +399,8 @@ class followSite(State):
         #     eprint(environment.pheromoneList[0]["agent"])
 
         for site in environment.sites:
-            if site_id == site["id"]:
-                dist=distance(agent.location[0],agent.location[1],site["x"],site["y"])
+            if site_id == site.id:
+                dist=distance(agent.location[0],agent.location[1],site.x,site.y)
                 # agent.numberOfFollowers=environment.get_numberOfAgentsInState(site_id)
                 environment.agentsFollowSite[site_id]["number"]=environment.get_numberOfAgentsInState(site_id)
                 if environment.agentsFollowSite[site_id]["number"] > 4 and environment.agentsFollowSite[site_id]["reporting"] ==False:
@@ -410,12 +410,12 @@ class followSite(State):
 
 
                 if dist<50:
-                    agent.velocity=math.sqrt(site["x"]**2+ site["y"]**2)/10
+                    agent.velocity=math.sqrt(site.x**2+ site.y**2)/10
                     if agent.velocity>2:
                         agent.velocity=2;
 
-                    x= (math.cos(agent.swarmLoc)*10)+site["x"]
-                    y= (math.sin(agent.swarmLoc)*10)+site["y"]
+                    x= (math.cos(agent.swarmLoc)*10)+site.x
+                    y= (math.sin(agent.swarmLoc)*10)+site.y
 
                     agent.potential_site=[x, y,site_id]
                     # eprint(agent.swarmDir)
@@ -424,7 +424,7 @@ class followSite(State):
                     else:
                         agent.swarmLoc-=.1
                 else:
-                    agent.potential_site=[site["x"], site["y"],site_id]
+                    agent.potential_site=[site.x, site.y,site_id]
         return
 
 
