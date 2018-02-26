@@ -274,7 +274,7 @@ class Environment(ABC):
     # Move all of the agents
 
     def moveSites(self):
-        maxVel =1
+        maxVel =.5
         for site in self.sites:
             random1=random.randint(0,1)
             if random1 ==0:
@@ -512,7 +512,9 @@ class Environment(ABC):
         for pheromone in self.pheromoneList:
             p=pheromone["pheromone"]
             Id=pheromone["agent"]
-            pheromones.append({"id":Id,"x":p.x,"y":p.y,"r":p.r,"strength":p.strength})
+
+            pheromones.append({"id":Id,"x":p.x,"y":p.y,"r":p.r,"strength":p.strength,"site":pheromone["site"]})
+
         return pheromones
 
 
