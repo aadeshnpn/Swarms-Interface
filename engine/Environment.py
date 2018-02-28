@@ -132,7 +132,7 @@ class Environment(ABC):
         self.hub = data["hub"]
         self.sites = data["sites"]
         for site in self.sites:
-            self.agentsFollowSite[site["id"]]={"number":0,"reporting":False}
+            self.agentsFollowSite[site["id"]]={"number":0,"reporting":False,"agentDropPheromone":0,"reportTime":1500}
 
         self.obstacles = data["obstacles"]
         self.traps = data["traps"]
