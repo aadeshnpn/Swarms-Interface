@@ -131,7 +131,7 @@ class Environment(ABC):
         self.x_limit = data["dimensions"]["x_length"] / 2
         self.y_limit = data["dimensions"]["y_length"] / 2
         self.hub = data["hub"]
-        self.sites = Sites(25, self.hub["x"], self.hub["y"])
+        self.sites = Sites(70, self.hub["x"], self.hub["y"])
         for site in self.sites:
             self.agentsFollowSite[site.id]={"number":0,"reporting":False}
 
