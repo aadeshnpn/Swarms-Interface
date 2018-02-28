@@ -368,9 +368,9 @@ class ReturnToSite(State):
     def checkIfAtSite(self,agent,environment):
         for site in environment.sites:
 
-            if site["id"] == agent.potential_site[2]:
-                x_dif = agent.location[0] - site["x"]
-                y_dif = agent.location[1] - site["y"]
+            if site.id == agent.potential_site[2]:
+                x_dif = agent.location[0] - site.x
+                y_dif = agent.location[1] - site.y
                 tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
                 if tot_dif <=agent.view:
                     environment.agentsFollowSite[agent.potential_site[2]]["reporting"]=False
@@ -495,8 +495,8 @@ class followSite(State):
         site_id =agent.potential_site[2]
         for site in environment.sites:
             #Make sure the site they are following is the correct site
-            if site_id == site["id"]:
-                dist=distance(agent.location[0],agent.location[1],site["x"],site["y"])
+            if site_id == site.id:
+                dist=distance(agent.location[0],agent.location[1],site.x,site.y)
                 environment.agentsFollowSite[site_id]["number"]=environment.get_numberOfAgentsInState(site_id)
                 #if there are 2 or more agents, have one report to hub
 
@@ -508,12 +508,12 @@ class followSite(State):
                     # eprint("Agent is now returning to hub from site "+ str(agent.potential_site[2]))
 
                 if dist<50:
-                    agent.velocity=math.sqrt(site["x"]**2+ site["y"]**2)/10
+                    agent.velocity=math.sqrt(site.x**2+ site.y**2)/10
                     if agent.velocity>2:
                         agent.velocity=2;
 
-                    x= (math.cos(agent.swarmLoc)*10)+site["x"]
-                    y= (math.sin(agent.swarmLoc)*10)+site["y"]
+                    x= (math.cos(agent.swarmLoc)*10)+site.x
+                    y= (math.sin(agent.swarmLoc)*10)+site.y
 
                     agent.potential_site=[x, y,site_id]
                     # eprint(agent.swarmDir)
@@ -522,7 +522,7 @@ class followSite(State):
                     else:
                         agent.swarmLoc-=.1
                 else:
-                    agent.potential_site=[site["x"], site["y"],site_id]
+                    agent.potential_site=[site.x, site.y,site_id]
 
 
     def sense(self, agent, environment):

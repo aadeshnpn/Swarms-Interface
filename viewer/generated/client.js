@@ -2644,8 +2644,8 @@ class World
     if(debug ){
       for(let pheromone of this.pheromones){
         ctx.beginPath()
-        console.log(pheromone.site);
-        let x=(255-(pheromone.site*31)).toString();
+
+        let x=(255-(pheromone.site*(255/this.sites.length))).toString();
         if(x <=0){
           x=0;
         }
