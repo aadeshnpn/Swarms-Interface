@@ -35,20 +35,17 @@ class SwarmState {
         this.size++;
         //this.total++;
       }*/
-      if (agent.state == "exploring" || agent.state == "follow_site" || agent.state == "reportToHub"){
+      if (agent.state == "exploring" || agent.state == "observing" || agent.state == "follow_site" || agent.state == "reportToHub" || agent.state == "returnToSite"){
         this.total++;
       }
       if (this.state == "Exploring" && agent.state == "exploring"){
         this.size++;
-        //this.total++;
       }
-      if (this.state == "Following site" && agent.state == "follow_site"){
+      if (this.state == "Observing" && agent.state == "observing"){
         this.size++;
-        //this.total++;
       }
-      if (this.state == "Reporting to hub" && agent.state == "reportToHub"){
+      if (this.state == "Following site" && (agent.state == "follow_site" || agent.state == "reportToHub" || agent.state == "returnToSite")){
         this.size++;
-        //this.total++;
       }
     }
     //console.log(this.total);
@@ -75,10 +72,10 @@ class SwarmState {
     if (this.state == "commit"){
       x += 2 * SwarmState.BUBBLE_SPACING;
     }*/
-    if (this.state == "Following site"){
+    if (this.state == "Observing"){
       x += SwarmState.BUBBLE_SPACING;
     }
-    if (this.state == "Reporting to hub"){
+    if (this.state == "Following site"){
       x += 2 * SwarmState.BUBBLE_SPACING;
     }
 
