@@ -30,7 +30,7 @@ class StateBubbles
 
   update(json)
   {
-    this.totalAgentsInStates = 100;
+    this.totalAgentsInStates = 0;
     //console.log(json);
 
     for (let [state, count] of Object.entries(json))

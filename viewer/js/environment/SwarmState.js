@@ -8,7 +8,9 @@ class SwarmState {
     //ui.register("stateCounts", this.update.bind(this));
   }
 
+  
   draw(ctx, agents){
+    
     //console.log(Object.entries(this.state));
     //console.log(this.state);this.total++
     this.size = 0;
@@ -17,6 +19,7 @@ class SwarmState {
     for (let agent of agents){
       //console.log(this.state);
       //console.log(agent);
+      /*
       if (agent.state == "exploring" || agent.state == "assessing" || agent.state == "site assess" || agent.state == "piping" || agent.state == "commit"){
         this.total++;
       }
@@ -29,6 +32,21 @@ class SwarmState {
         //this.total++;
       }
       if (this.state == "commit" && (agent.state == "piping" || agent.state == "commit")){
+        this.size++;
+        //this.total++;
+      }*/
+      if (agent.state == "exploring" || agent.state == "follow_site" || agent.state == "reportToHub"){
+        this.total++;
+      }
+      if (this.state == "Exploring" && agent.state == "exploring"){
+        this.size++;
+        //this.total++;
+      }
+      if (this.state == "Following site" && agent.state == "follow_site"){
+        this.size++;
+        //this.total++;
+      }
+      if (this.state == "Reporting to hub" && agent.state == "reportToHub"){
         this.size++;
         //this.total++;
       }
@@ -50,11 +68,25 @@ class SwarmState {
     /*if (this.state == "exploring"){
       x += SwarmState.MAX_RADIUS;
     }*/
+    /*
     if (this.state == "assessing"){
-      x += /*2 * SwarmState.MAX_RADIUS +*/ SwarmState.BUBBLE_SPACING;
+      x += SwarmState.BUBBLE_SPACING;
     }
     if (this.state == "commit"){
-      x += /*3 * SwarmState.MAX_RADIUS + */ 2 * SwarmState.BUBBLE_SPACING;
+      x += 2 * SwarmState.BUBBLE_SPACING;
+    }*/
+    if (this.state == "Following site"){
+      x += SwarmState.BUBBLE_SPACING;
+    }
+    if (this.state == "Reporting to hub"){
+      x += 2 * SwarmState.BUBBLE_SPACING;
+    }
+
+    if (this.state == "Exploring"){
+      ctx.globalAlpha = .7;
+      ctx.fillStyle = "black";
+      ctx.fillRect(-40,-30,295,70);
+      ctx.globalAlpha = 1;
     }
 
     ctx.fillStyle = "rgb(108, 163, 252)";
@@ -62,9 +94,11 @@ class SwarmState {
     ctx.arc(x, 0, this.radius, 0, Math.PI * 2, false);
     //ctx.arc(100, 0, 50, 0, 2 * Math.PI);
     ctx.fill();
-
+    
+    
+    
     ctx.font = "8pt sans-serif";
-    ctx.fillStyle = "rgb(0, 0, 0)";
+    ctx.fillStyle = "rgb(255, 255, 255)";
     let width = ctx.measureText(`${this.state}/${this.size}`).width;
     //let name1 = name[0].toUpperCase();
     ctx.fillText(`${this.state}/${this.size}`, x-width/2, SwarmState.LABEL_SPACING);
@@ -77,6 +111,6 @@ class SwarmState {
 }
 
 SwarmState.MAX_RADIUS = 20;
-SwarmState.MIN_RADIUS = 2;
+SwarmState.MIN_RADIUS = 1;
 SwarmState.BUBBLE_SPACING = 100; // in px
 SwarmState.LABEL_SPACING = 30;
