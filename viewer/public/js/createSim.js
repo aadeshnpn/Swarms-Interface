@@ -271,6 +271,7 @@ $("#logo").click(function(){
 
 })
 $("#startSim").click(function(){
+  var siteNumber=$("#siteNumber").val()
   var name = simName
   if(name= "Sim Name"){
     name=""
@@ -278,6 +279,7 @@ $("#startSim").click(function(){
   var simInfo={
                 name:name,
                 agentNum:agentNumber.value,
+                siteNum:siteNumber,
                 model:agentType.split(" ")[0],
                 worldType:worldType,
                 hubController:toggleState.get("hubController"),

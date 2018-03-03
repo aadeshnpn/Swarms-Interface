@@ -8,14 +8,16 @@ class Site:
     def __init__(self, id, is_flank, goal_x, goal_y):
         self.id = id
 
+        #Flank Scenario (more realistic)
+
         if is_flank:
             northwest = random.randint(0, 1)
             if northwest == 0:
-                self.x = random.randint(-585, -580)
-                self.y = random.randint(250, 255)
+                self.x = random.randint(-885, -880)
+                self.y = random.randint(500, 555)
             else:
-                self.x = random.randint(580, 585)
-                self.y = random.randint(-380, -377)
+                self.x = random.randint(800, 885)
+                self.y = random.randint(-590, -580)
         else:
             self.x = random.randint(400, 590)
             self.y = random.randint(250, 380)
@@ -30,20 +32,20 @@ class Site:
 
 
         self.radius = 4
-        self.q_value = 0.7          #how do we want to determine this?
+        self.q_value = 0.5          #how do we want to determine this?
         self.acc = 2
         self.velX = self.acc * .008
         self.velY = self.acc * .008
         self.goal_x = goal_x
         self.goal_y = goal_y
-        self.velocity = random.uniform(0.03, 0.1)
+        self.velocity = random.uniform(0.04, 0.1)
 
     def move(self):
         move_to_goal = random.randint(0, 3)
         xdif = self.goal_x - self.x
         ydif = self.goal_y - self.y
 
-        if abs(xdif) < 30 and abs(ydif) < 30:
+        if abs(xdif) < 60 and abs(ydif) < 60:
             return
 
         distance = np.sqrt(xdif**2 + ydif**2)

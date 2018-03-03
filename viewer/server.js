@@ -166,6 +166,8 @@ require('sticky-cluster')(function (callback)
             break;
           case 'agentNum':
             args.push('--agentNum', val)
+          case 'siteNum':
+            args.push('--siteNum', val)
         }
       }
 

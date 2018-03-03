@@ -28,6 +28,7 @@ class BeeEnvironment(Environment):
         self.dataStates = []
         if args.agentNum:
             self.number_of_agents = args.agentNum
+
         super().__init__(file_name)
 
     def init_hubController(self):
@@ -216,10 +217,11 @@ class BeeEnvironment(Environment):
                     agent.infoStation = info
                 # return the q_value as a linear gradient. The center of the site will return 100% of the q_value,
                 # the edge will return 75% of the q_value
+                # eprint(site.id)
                 return {
                     "radius": site.radius,
-                    "q": site.q_value - (tot_dif / site.radius * .25 * site.q_value),
-                    "id": site.id #gradient!
+                    "q": site.q_value - (tot_dif / site.radius * .25 * site.q_value),     #gradient!
+                    "id": site.id
                 }
 
         return {"radius": -1, "q": 0}
