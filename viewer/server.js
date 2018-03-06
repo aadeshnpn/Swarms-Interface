@@ -168,6 +168,8 @@ require('sticky-cluster')(function (callback)
             args.push('--agentNum', val)
           case 'siteNum':
             args.push('--siteNum', val)
+          case 'scenarioType':
+            args.push('--scenarioType',val)
         }
       }
 

@@ -37,6 +37,7 @@ parser.add_argument("-e", "--seed", type=int, help="Run the simulation with the 
 parser.add_argument("-p", "--pipe", type=str, help="Connect to the specified named pipe")
 parser.add_argument("-a", "--agentNum", type=int, help="specifies number of agents")
 parser.add_argument("-x", "--siteNum", type=int, help="specifies number of sites")
+parser.add_argument("-z", "--scenarioType", type=int, help="specifies enemy attack scenario")
 
 
 args = parser.parse_args()
@@ -132,7 +133,9 @@ class Environment(ABC):
         self.x_limit = data["dimensions"]["x_length"] / 2
         self.y_limit = data["dimensions"]["y_length"] / 2
         self.hub = data["hub"]
-        self.sites = Sites(args.siteNum, self.hub["x"], self.hub["y"])
+
+        eprint('ScenarioType: ', args.scenarioType)
+        self.sites = Sites(args.siteNum, self.hub["x"], self.hub["y"], args.scenarioType)
         for site in self.sites:
             self.agentsFollowSite[site.id]={"number":0,"reporting":False}
 

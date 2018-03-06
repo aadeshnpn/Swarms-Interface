@@ -6,6 +6,7 @@ var width;
 var height;
 var simName="Sim Name";
 var worldType="Static"
+var scenType
 var agentType="Drone Agent"
 var toggleState=new Map()
 var hubX
@@ -208,9 +209,14 @@ $(document).ready(() =>{
   window.requestAnimationFrame(draw)
 });
 
+$( "#scenarioType" ).change(function(){
+    scenType = $("#scenarioType").val()
+    console.log(scenType)
+});
+
 $( "#agentNumber" ).change(function() {
   let num =$("#agentNumber").val()
-  //console.log(num);
+  console.log(num);
 
   if(num > agents.length){
     for(var i=0;i<num-agents.length;i++){
@@ -272,6 +278,10 @@ $("#logo").click(function(){
 })
 $("#startSim").click(function(){
   var siteNumber=$("#siteNumber").val()
+
+//  var e = document.getElementById("#scenarioType")
+//  scenType = e.options[e.selectedIndex].value
+scenType = $("#scenarioType").val()
   var name = simName
   if(name= "Sim Name"){
     name=""
@@ -280,6 +290,7 @@ $("#startSim").click(function(){
                 name:name,
                 agentNum:agentNumber.value,
                 siteNum:siteNumber,
+                scenarioType:scenType,
                 model:agentType.split(" ")[0],
                 worldType:worldType,
                 hubController:toggleState.get("hubController"),
