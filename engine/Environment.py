@@ -137,7 +137,7 @@ class Environment(ABC):
         eprint('ScenarioType: ', args.scenarioType)
         self.sites = Sites(args.siteNum, self.hub["x"], self.hub["y"], args.scenarioType)
         for site in self.sites:
-            self.agentsFollowSite[site.id]={"number":0,"reporting":False}
+            self.agentsFollowSite[site.id]={"number":0,"reporting":False,"agentDropPheromone":0,"reportTime":1500}
 
         self.obstacles = data["obstacles"]
         self.traps = data["traps"]
@@ -480,7 +480,9 @@ class Environment(ABC):
         for pheromone in self.pheromoneList:
             p=pheromone["pheromone"]
             Id=pheromone["agent"]
-            pheromones.append({"id":Id,"x":p.x,"y":p.y,"r":p.r,"strength":p.strength})
+
+            pheromones.append({"id":Id,"x":p.x,"y":p.y,"r":p.r,"strength":p.strength,"site":pheromone["site"]})
+
         return pheromones
 
 

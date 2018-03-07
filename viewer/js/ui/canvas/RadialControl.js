@@ -425,7 +425,7 @@ RadialControl.HANDLE_COLOUR = 'blue';
 
          if (component < 0.1 * RadialControl.RADIUS_SCALE)
          {
-            component = 0.1 * RadialControl.RADIUS_SCALE
+            component = 0.1 * RadialControl.RAD108IUS_SCALE
          }
          else if (component > 3.0 * RadialControl.RADIUS_SCALE)
          {

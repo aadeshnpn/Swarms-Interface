@@ -3,24 +3,36 @@ class Pheromone
   constructor(pheromonesJson)
   {
     this.pheromones = pheromonesJson;
+    this.color=self.pickColor()
+  }
+
+  pickColor(){
+    let x=255-(this.pheromone.site_id*8);
+    if(x <=0){
+      x=0;
+    }
+    return "rgb("+x.toString()+","+x.toString()+","+x.toString()+")"
   }
 
   draw(ctx, debug = false)
   {
     if (!debug || !this.pheromones || this.pheromones.length == 0)
         return;
-
     ctx.save();
 
-    ctx.fillStyle = Pheromone.FILL_STYLE;
+    ctx.fillStyle = this.color;
 
     //for (let pheromone of this.pheromones)
     //{
-        ctx.fillRect(this.pheromones.x - 3, -this.pheromones.y - 3, this.pheromones.r, 9);
+    //console.log(this.pheromones);
+    ctx.globalAlpha = this.pheromones.strength
+    ctx.beginPath()
+    ctx.arc(this.pheromones.x, -this.pheromones.y, this.pheromones.r,0,Math.PI*2);
     //}
-    this.pheromones.r+=1
+    ctx.fill();
+    ctx.globalAlpha = 1
     ctx.restore();
   }
 }
 
-Pheromone.FILL_STYLE = "rgba(255, 255, 0, 0.25)";
+Pheromone.FILL_STYLE = "rgb(255, 255, 0)";

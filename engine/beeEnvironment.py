@@ -20,8 +20,8 @@ class BeeEnvironment(Environment):
         self.actions = {"turns": 0, "stateChanges": 0}
         self.influenceActions = {"turns": 0, "stateChanges": 0}
         self.totalInfluence = []
-
-        self.states = {"exploring": {},"reportToHub":{},"follow_site": {}, "observing":{},"resting":{},'dancing':{},'assessing':{},'siteSearch':{},'site assess':{},'piping':{},'commit':{}}
+        
+        self.states = {"exploring": {},"reportToHub":{},"follow_site": {},"returnToSite":{}, "observing":{},"resting":{},'dancing':{},'assessing':{},'siteSearch':{},'site assess':{},'piping':{},'commit':{}}
         self.pheromoneList =[]
         self.xPos = []
         self.yPos = []

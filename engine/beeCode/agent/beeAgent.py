@@ -9,7 +9,7 @@ from Pheromone import *
 from utils.geomUtil import distance
 
 #input = Enum('input', 'nestFound exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
-input = Enum('input', 'nestFound report maxAgents exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
+input = Enum('input', 'nestFound report maxAgents tooManyAgents reportingFailed finishedReporting returnToSite exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
 
 class Bee(HubAgent):
 
@@ -66,11 +66,17 @@ class Bee(HubAgent):
 
         # This time-stamp should be updated whenever the bee receives new parameters
         self.param_time_stamp = 0
-
+        self.following=False;
         # bee agent variables
+        self.droppingPheromone=False
+        self.nextPheromone={"x":None,"y":None}
+        self.pheromoneTimer=0;
         self.live = True
+        self.refound=False
+        self.reportTimer=1500
         self.reporting=False;
         self.view=35
+        self.returned=False;
         self.swarmLoc=0;
         self.location = [hub["x"], hub["y"]]
         self.velocity = self.parameters["Velocity"]
@@ -87,11 +93,16 @@ class Bee(HubAgent):
         self.infoStation = None
         self.assessCounter = 1 #makes sure that they assess at least once.
         self.priorities = None
-
+        self.reportTime=300;
         # create table here.
         self.transitionTable = {
                 (Exploring(self).__class__, input.nestFound): [None, followSite(self)],
                 (followSite(self).__class__, input.report): [None, ReportToHub(self)],
+                (followSite(self).__class__, input.tooManyAgents): [None, Exploring(self)],
+                (ReportToHub(self).__class__, input.finishedReporting): [None, ReturnToSite(self)],
+                (ReturnToSite(self).__class__, input.reportingFailed): [self.exploreTransition, Exploring(self)],
+                (ReturnToSite(self).__class__, input.nestFound): [None, followSite(self)],
+                (ReturnToSite(self).__class__, input.reportingFailed): [self.exploreTransition, Exploring(self)],
                 (Exploring(self).__class__, input.exploreTime): [self.observeTransition, Observing(self)],
                 (Observing(self).__class__, input.observeTime): [self.exploreTransition, Exploring(self)],
                 (Observing(self).__class__, input.dancerFound): [None, Assessing(self)],
@@ -203,6 +214,7 @@ class Exploring(State):
     def update(self, agent):
         agent.counter -= 1
         if agent.q_value > 0:
+            agent.following=True
             return input.nestFound
             #agent.potential_site = [agent.location[0], agent.location[1]]
 
@@ -210,7 +222,6 @@ class Exploring(State):
             return input.exploreTime
         else:
             return None
-
 
 class Assessing(State):
     def __init__(self, agent=None):
@@ -243,7 +254,6 @@ class Assessing(State):
             agent.goingToSite = True
             self.siteFound = False
             return input.siteFound
-
 
 class Resting(State):
     def __init__(self, agent=None):
@@ -350,27 +360,106 @@ class Observing(State):
                 return input.quit
             return input.observeTime
 
-class ReportToHub(State):
+class ReturnToSite(State):
     def __init__(self, agent=None):
-            self.name = "reportToHub"
-            self.siteRadius = 9
+        self.name = "returnToSite"
 
+
+    def checkIfAtSite(self,agent,environment):
+        for site in environment.sites:
+
+            if site.id == agent.potential_site[2]:
+                x_dif = agent.location[0] - site.x
+                y_dif = agent.location[1] - site.y
+                tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
+                if tot_dif <=agent.view:
+                    environment.agentsFollowSite[agent.potential_site[2]]["reporting"]=False
+                    environment.agentsFollowSite[agent.potential_site[2]]["reportTimer"]=1500
+                    agent.reportTimer=1500
+                    agent.refound=True
 
     def sense(self, agent, environment):
+        site_id =agent.potential_site[2]
+        x_dif = agent.location[0] - agent.potential_site[0]
+        y_dif = agent.location[1] - agent.potential_site[1]
+        tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
+        if environment.agentsFollowSite[site_id]["reporting"]:
+            environment.agentsFollowSite[site_id]["reportTime"]-=1
+        if tot_dif  <=agent.view:
+            agent.returned=True
+        if agent.returned:
+            for pheromone in environment.pheromoneList:
 
+                if agent.potential_site[2] == pheromone["site"]:
+                    p =pheromone["pheromone"]
+                    x_dif = agent.location[0] - p.x
+                    y_dif = agent.location[1] - p.y
+                    tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
+                    if tot_dif <= agent.view:
+                        if p.x ==agent.nextPheromone["x"]:
+                            agent.reportTimer=0
+                            environment.agentsFollowSite[site_id]["reportTime"]=0
+                        else:
+                            agent.nextPheromone["x"]=p.x
+                            agent.nextPheromone["y"]=p.y
+                            # eprint(str(agent.nextPheromone)+" " + str(agent.id))
+
+        self.checkIfAtSite(agent,environment)
+        # eprint(str(agent.id)+" " +str(agent.reportTimer))
         return
 
 
 
     def act(self, agent):
-        #eprint("Follow Site act")
-        # eprint(agent.parameters["PheromoneStrength"])
-        agent.move(agent.hub)
+        if not agent.returned :
+            agent.move(agent.potential_site)
+        elif agent.returned:
+            if agent.nextPheromone["x"] and agent.nextPheromone["y"]:
+                pheromoneTrail=[agent.nextPheromone["x"],agent.nextPheromone["y"]]
+                agent.move(pheromoneTrail)
+        agent.reportTimer-=1
+
         return
 
 
     def update(self, agent):
+        if agent.refound:
+            agent.reporting=False
+            # eprint ("Agent refound site "+str(agent.potential_site[2]))
+            return input.nestFound
+        if agent.reportTimer<=0:
+            # eprint ("Agent unable to return to site "+str(agent.potential_site[2]))
+            return input.reportingFailed
         #eprint("Follow Site update")
+        return
+
+class ReportToHub(State):
+    def __init__(self, agent=None):
+        self.name = "reportToHub"
+
+    def sense(self, agent, environment):
+        site_id =agent.potential_site[2]
+        if environment.agentsFollowSite[site_id]["reporting"]:
+            environment.agentsFollowSite[site_id]["reportTime"]-=1
+        return
+
+    def act(self, agent):
+        agent.reportTimer-=1
+        agent.wander(agent.hub, agent.hubRadius)
+
+        return
+
+    def update(self, agent):
+        x_dif = agent.location[0] - agent.hub[0]
+        y_dif = agent.location[1] - agent.hub[1]
+        tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
+
+        if tot_dif -agent.view <= agent.hubRadius:
+            agent.reportTime-=1;
+        if agent.reportTime <=0:
+            return input.finishedReporting;
+        if agent.reportTimer<=0:
+            return input.reportingFailed
         return
 
 class followSite(State):
@@ -378,36 +467,45 @@ class followSite(State):
             self.name = "follow_site"
             self.siteRadius = 9
 
-
-    def sense(self, agent, environment):
+    def pheromonePhase(self,agent,environment):
         site_id =agent.potential_site[2]
-        #TODO Add new pheromone every second instead of every frame
-        if time.time()%2==0:
-            environment.pheromoneList.append({"agent":agent.id,"pheromone":Pheromone(agent.location)})
+        if environment.agentsFollowSite[site_id]["agentDropPheromone"]<=10:
+            agent.droppingPheromone=True
+            environment.agentsFollowSite[site_id]["agentDropPheromone"]+=1
+        if not agent.droppingPheromone:
+            return
+        if agent.pheromoneTimer >=50:
+             environment.pheromoneList.append({"agent":agent.id,"pheromone":Pheromone(agent.location),"site":site_id})
+             agent.pheromoneTimer=0
+        agent.pheromoneTimer+=1
 
-        i=0
         for pheromone in environment.pheromoneList:
             if pheromone["agent"]==agent.id:
-                if(pheromone["pheromone"].strength<=0):
-                    environment.pheromoneList.pop(i)
-                else:
-                    pheromone["pheromone"].strength-=.1
-                    pheromone["pheromone"].r+=.1
-            i+=1
-        # eprint(len(environment.pheromoneList))
-        # if environment.pheromoneList[0]["agent"] == agent.id:
-        #     eprint(environment.pheromoneList[0]["agent"])
 
+                if not pheromone["pheromone"].fresh:
+                    pheromone["pheromone"].enlarge()
+                else:
+                    pheromone["pheromone"].fresh = False;
+        i=0
+        for pheromone in environment.pheromoneList:
+            if(pheromone["pheromone"].strength<=0):
+                environment.pheromoneList.pop(i)
+            i+=1
+    def followClosestSite(self,agent,environment):
+        site_id =agent.potential_site[2]
         for site in environment.sites:
+            #Make sure the site they are following is the correct site
             if site_id == site.id:
                 dist=distance(agent.location[0],agent.location[1],site.x,site.y)
-                # agent.numberOfFollowers=environment.get_numberOfAgentsInState(site_id)
                 environment.agentsFollowSite[site_id]["number"]=environment.get_numberOfAgentsInState(site_id)
-                if environment.agentsFollowSite[site_id]["number"] > 4 and environment.agentsFollowSite[site_id]["reporting"] ==False:
+                #if there are 2 or more agents, have one report to hub
+
+                if environment.agentsFollowSite[site_id]["number"] >= 2 and environment.agentsFollowSite[site_id]["reporting"] ==False:
                     environment.agentsFollowSite[site_id]["reporting"]=True
                     agent.reporting=True;
-                # agent.agentsFollowingSite=environment.agentsFollowSite[site_id]
-
+                    if agent.droppingPheromone:
+                        environment.agentsFollowSite[site_id]["agentDropPheromone"]-=1
+                    # eprint("Agent is now returning to hub from site "+ str(agent.potential_site[2]))
 
                 if dist<50:
                     agent.velocity=math.sqrt(site.x**2+ site.y**2)/10
@@ -425,28 +523,35 @@ class followSite(State):
                         agent.swarmLoc-=.1
                 else:
                     agent.potential_site=[site.x, site.y,site_id]
+
+
+    def sense(self, agent, environment):
+        site_id =agent.potential_site[2]
+        #Emits Pheromones and deletes when the pheromone's strength <=0
+        self.pheromonePhase(agent,environment)
+        #Once the agent finds the site, it will track the site, and fly in a circular pattern around it
+        self.followClosestSite(agent,environment)
+        if environment.agentsFollowSite[site_id]["number"] >10:
+            agent.following=False
+        if environment.agentsFollowSite[site_id]["reportTime"]<=0:
+            environment.agentsFollowSite[site_id]["reportTime"]=1500
+            environment.agentsFollowSite[site_id]["reporting"]=False
         return
 
 
 
     def act(self, agent):
-        #eprint("Follow Site act")
-        # eprint(agent.parameters["PheromoneStrength"])
-
         return
 
 
     def update(self, agent):
-
         agent.move(agent.potential_site)
         if agent.reporting:
-            # eprint ("Switching to Report")
             agent.velocity=1.6
+
             return input.report
-        # if(agent.numberOfFollowers > 4):
-        #     agent.velocity=1.6
-        #     return input.report
-        #eprint("Follow Site update")
+        if not agent.following:
+            return
         return
 
 

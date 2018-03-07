@@ -1,0 +1,4 @@
+
+> hive-client@1.0.0 start /home/jacobliv/Documents/Work/Swarm/byuswarms_python/viewer
+> node server.js
+

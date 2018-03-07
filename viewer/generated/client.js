@@ -2270,27 +2270,39 @@ class Pheromone
   constructor(pheromonesJson)
   {
     this.pheromones = pheromonesJson;
+    this.color=self.pickColor()
+  }
+
+  pickColor(){
+    let x=255-(this.pheromone.site_id*8);
+    if(x <=0){
+      x=0;
+    }
+    return "rgb("+x.toString()+","+x.toString()+","+x.toString()+")"
   }
 
   draw(ctx, debug = false)
   {
     if (!debug || !this.pheromones || this.pheromones.length == 0)
         return;
-
     ctx.save();
 
-    ctx.fillStyle = Pheromone.FILL_STYLE;
+    ctx.fillStyle = this.color;
 
     //for (let pheromone of this.pheromones)
     //{
-        ctx.fillRect(this.pheromones.x - 3, -this.pheromones.y - 3, this.pheromones.r, 9);
+    //console.log(this.pheromones);
+    ctx.globalAlpha = this.pheromones.strength
+    ctx.beginPath()
+    ctx.arc(this.pheromones.x, -this.pheromones.y, this.pheromones.r,0,Math.PI*2);
     //}
-    this.pheromones.r+=1
+    ctx.fill();
+    ctx.globalAlpha = 1
     ctx.restore();
   }
 }
 
-Pheromone.FILL_STYLE = "rgba(255, 255, 0, 0.25)";
+Pheromone.FILL_STYLE = "rgb(255, 255, 0)";
 
 class Repulsor
 {
@@ -2564,38 +2576,14 @@ class World
 
   canvasToWorldCoords(x, y)
   {
-    
+
     return {x: (x - this.x_limit), y: -(y - this.y_limit)};
   }
 
   update(environment){
-    //Update Sites (will be implemented with moving sites)
-    // for(var i =0; i < this.sites.length;i++){
-    //   this.sites[i].x= environment.sites[i].x
-    //   this.sites[i].y= -environment.sites[i].y
-    // }
 
-    //console.log(environment.agents.length)
-    // for(let i =0;i<environment.pheromones.length;i++){
-    //   if(environment.pheromones[i].strength>=.5){
-    //     this.pheromones.push(new Pheromone(environment.pheromones[i]))
-    //   }
-    //   else if(environment.pheromones[i].strength<=0){
-    //     //console.log(environment.pheromones[i].strength);
-    //     this.pheromones.splice(0,3)
-    //   }
-    //   else{
-    //     for(let pher in this.pheromones){
-    //       console.log(pher);
-    //       let ep=environment.pheromones[i]
-    //       // if(ep["agent"]==pher["agent"]){
-    //       //   pher["r"]=ep["r"]
-    //       //   pher["strength"]=ep["strength"]
-    //       // }
-    //     }
-    //   }
-    // }
-    //console.log(this.pheromones.length);
+    this.pheromones.splice(0,this.pheromones.length)
+    this.pheromones=environment.pheromones
 
 
 
@@ -2644,7 +2632,7 @@ class World
     for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
     //this.pheromones.draw(ctx, debug);
     this.hub.draw(ctx, debug, this.agents);
-    for (var pheromone  of this.pheromones ) { pheromone.draw(ctx,debug)}
+    //for (var pheromone  of this.pheromones ) { pheromone.draw(ctx,debug)}
     for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
     for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
     for (var fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
@@ -2652,23 +2640,37 @@ class World
       for (var fog        of fogBlock        ) { fog       .draw(ctx); }
 
     }
-//=======
-    // for (let site       of this.sites      ) { site      .draw(ctx, debug); }
-    // for (let obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
-    // for (let trap       of this.traps      ) { trap      .draw(ctx, debug); }
-    // for (let rough      of this.rough      ) { rough     .draw(ctx, debug); }
-    // for (let attractor  of this.attractors ) { attractor .draw(ctx, debug); }
-    // for (let repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
-    // this.pheromones.draw(ctx, debug);
-    // this.hub.draw(ctx, debug, this.agents);
-    //
-    // for (let agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
-    // for (let dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
-    // for (let fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
-    //for (let fog        of fogBlock        ) { fog       .draw(ctx); }
-
     for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
+    if(debug ){
+      for(let pheromone of this.pheromones){
+        ctx.beginPath()
 
+        let x=(255-(pheromone.site*(255/this.sites.length))).toString();
+        if(x <=0){
+          x=0;
+        }
+
+
+        ctx.fillStyle = "rgb("+x.toString()+","+x.toString()+","+x.toString()+")";
+
+        //for (let pheromone of this.pheromones)
+        //{
+        //console.log(this.pheromones);
+        if(pheromone.strength <=0){
+          ctx.globalAlpha = .00001
+
+        }else{
+          ctx.globalAlpha = pheromone.strength
+
+        }
+        ctx.beginPath()
+        ctx.arc(pheromone.x, -pheromone.y, pheromone.r,0,Math.PI*2);
+        //}
+        ctx.fill();
+        ctx.globalAlpha = 1
+
+      }
+    }
 //>>>>>>> 0039f9a7c85313d08902ab5a03211a77db5832b0
 
 
