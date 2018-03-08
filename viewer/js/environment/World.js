@@ -32,9 +32,9 @@ class World
     for (let agent      of environmentJson.agents     ) { this.agents     .push( new Agent     (agent     ) ); }
     for (let dead_agent of environmentJson.dead_agents) { this.dead_agents.push( new DeadAgent (dead_agent) ); }
     //for (var pheromone of environmentJson.pheromones)   { this.pheromones .push( new Pheromone (pheromone)  ); }
-    this.swarmState.push(new SwarmState(JSON.parse('{"state": "exploring"}')));
-    this.swarmState.push(new SwarmState(JSON.parse('{"state": "assessing"}')));
-    this.swarmState.push(new SwarmState(JSON.parse('{"state": "commit"}')));
+    this.swarmState.push(new SwarmState(JSON.parse('{"state": "Exploring"}')));
+    this.swarmState.push(new SwarmState(JSON.parse('{"state": "Observing"}')));
+    this.swarmState.push(new SwarmState(JSON.parse('{"state": "Following site"}')));
 
   }
 
