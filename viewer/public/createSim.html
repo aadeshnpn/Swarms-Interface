@@ -23,6 +23,22 @@
     <br><br>
   </div>
 
+  <div class="panel" id="siteNumberPanel">Number of sites<br>
+      <input type="number" class="text" id="siteNumber" name="siteNum" min="1" value="70" >
+    <span id="siteNumToolTip" class="toolTip">Enter Number of Sites(enemies)</span>
+    <br><br>
+  </div>
+
+  <div class="panel" id="scenarioPanel">Scenario Type<br>
+      <select id="scenarioType">
+        <option value="0">Flank</option>
+        <option value="1">Delayed Flank</option>
+        <option value="2">Surround</option>
+      </select>
+    <span id="scenarioToolTip" class="toolTip">Select the scenario type you would like to simulate</span>
+    <br><br>
+  </div>
+
   <div class="panel" id="agentType">Simulation Agent<br>
       <div id="droneAgent" class="agentTypes" name="Drone"></div>
       <div id="beeAgent" class="agentTypes" name="Bee"></div>
@@ -43,8 +59,8 @@
       <span class="slider round"></span>
     </label>
     <span id="hubToolTip" class="toolTip">Turn On/Off Hub Controller. The Hub Controller allows you to suggest directions for the agents</span>
-
   </div>
+
   <div class="panel modes" id="baitDiv" >Bait<br>
     <label class="switch" >
       <input type="checkbox" id="baitPanel">
