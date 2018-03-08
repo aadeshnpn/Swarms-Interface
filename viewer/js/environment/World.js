@@ -109,7 +109,7 @@ class World
       for(let pheromone of this.pheromones){
         ctx.beginPath()
 
-        let x=(255-(pheromone.site*(255/this.sites.length))).toString();
+        let x=255//(255-(pheromone.site*(255/this.sites.length))).toString();
         if(x <=0){
           x=0;
         }

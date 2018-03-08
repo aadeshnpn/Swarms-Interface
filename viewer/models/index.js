@@ -13,7 +13,7 @@ mongo.on('error', console.error.bind(console, 'connection error: '));
 
 mongo.once('open', function()
 {
-  console.log("Connected to db")
+  //console.log("Connected to db")
 
 });
 //mongo.openUri('mongodb://localhost/hivemind', {}).then(function(){console.log('connected to db')});
