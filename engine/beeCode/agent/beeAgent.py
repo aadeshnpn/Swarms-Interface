@@ -469,9 +469,10 @@ class followSite(State):
 
     def pheromonePhase(self,agent,environment):
         site_id =agent.potential_site[2]
-        if environment.agentsFollowSite[site_id]["agentDropPheromone"]<=10:
+        if environment.agentsFollowSite[site_id]["agentDropPheromone"]<=8:
             agent.droppingPheromone=True
             environment.agentsFollowSite[site_id]["agentDropPheromone"]+=1
+
         if not agent.droppingPheromone:
             return
         if agent.pheromoneTimer >=50:
@@ -531,8 +532,10 @@ class followSite(State):
         self.pheromonePhase(agent,environment)
         #Once the agent finds the site, it will track the site, and fly in a circular pattern around it
         self.followClosestSite(agent,environment)
+
         if environment.agentsFollowSite[site_id]["number"] >10:
             agent.following=False
+
         if environment.agentsFollowSite[site_id]["reportTime"]<=0:
             environment.agentsFollowSite[site_id]["reportTime"]=1500
             environment.agentsFollowSite[site_id]["reporting"]=False
@@ -547,11 +550,11 @@ class followSite(State):
     def update(self, agent):
         agent.move(agent.potential_site)
         if agent.reporting:
-            agent.velocity=1.6
-
+            
             return input.report
         if not agent.following:
-            return
+            agent.velocity=1.6
+            return input.tooManyAgents
         return
 
 
