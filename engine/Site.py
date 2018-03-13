@@ -17,6 +17,7 @@ class Site:
         self.id = id
         delay = 2
         self.scenario = scenario
+        self.split_right = False
         if is_neutral:
             self.x = random.randint(-500,500)
             self.y = random.randint(-300,300)
@@ -68,8 +69,7 @@ class Site:
             split_direction = random.randint(0,1)
             if split_direction == 1:
                 self.split_right = True
-            else:
-                self.split_right = False
+
 
 
         self.is_splitting = False
@@ -103,9 +103,9 @@ class Site:
 
         if self.is_splitting:
             if self.split_right:
-                self.split_angle += self.velocity
+                self.split_angle += self.velocity * 0.01
             else:
-                self.split_angle -= self.velocity
+                self.split_angle -= self.velocity * 0.01
             self.x = self.split_origin_x + 255/2 * np.cos(self.split_angle)
             self.y = self.split_origin_y + 255/2 * np.sin(self.split_angle)
 
