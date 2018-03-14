@@ -35,7 +35,7 @@ class UI {
 	}
 
 	on(msg) {
-		
+
 		for (let cb of this.eventCallbacks[msg.type]) {
 			// console.log(cb);
 				cb(msg.data);
@@ -55,6 +55,7 @@ class UI {
 
 	draw(ctx, debug = false) {
 		for (let element of this.canvasElems)
+
 			element.draw(ctx, debug);
 	}
 

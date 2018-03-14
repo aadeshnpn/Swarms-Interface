@@ -68,6 +68,8 @@ class Bee(HubAgent):
         self.param_time_stamp = 0
         self.following=False;
         # bee agent variables
+        self.unfollowRest=200
+        self.unfollowing=False;
         self.droppingPheromone=False
         self.nextPheromone={"x":None,"y":None}
         self.pheromoneTimer=0;
@@ -197,6 +199,10 @@ class Exploring(State):
         agent.senseAndProcessRepulsor(environment)
 
     def act(self, agent):
+        if agent.unfollowing:
+            agent.unfollowRest-=1
+        if agent.unfollowRest <=0:
+            agent.unfollowing=False
         if(agent.isInfluencedByNearestAttractor()):
             agent.orientTowardsNearestAttractor()
             agent.environment.influenceActions["turns"] +=1
@@ -213,7 +219,7 @@ class Exploring(State):
 
     def update(self, agent):
         agent.counter -= 1
-        if agent.q_value > 0:
+        if agent.q_value > 0 and not agent.unfollowing:
             agent.following=True
             return input.nestFound
             #agent.potential_site = [agent.location[0], agent.location[1]]
@@ -550,10 +556,12 @@ class followSite(State):
     def update(self, agent):
         agent.move(agent.potential_site)
         if agent.reporting:
-            
+
             return input.report
         if not agent.following:
             agent.velocity=1.6
+            agent.unfollowing=True
+            agent.unfollowRest=200
             return input.tooManyAgents
         return
 

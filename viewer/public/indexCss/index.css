@@ -9,6 +9,14 @@
 	border: 1px solid #757575;
 
 }
+.drone{
+	background-color: red;
+	position: absolute;
+	top:0;
+	left:0;
+	right:0;
+	bottom:0;
+}
 
 h2{
 	text-align: center;

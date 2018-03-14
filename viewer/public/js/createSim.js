@@ -211,12 +211,26 @@ $(document).ready(() =>{
 
 $( "#scenarioType" ).change(function(){
     scenType = $("#scenarioType").val()
-    console.log(scenType)
+
+});
+
+$( ".panel" ).mouseover(function(e){
+    //console.log(e.target.id)
+    loc=e.target.id
+    panel = loc.substr(loc.length-5)
+    if(panel =="Panel" ||panel =="panel" ){
+      name=loc.substr(0,loc.length-5)
+      console.log(name);
+      tooltip=name+"ToolTip"
+      //$("#"+tooltip).toggle("slide")
+    }
+
+
 });
 
 $( "#agentNumber" ).change(function() {
   let num =$("#agentNumber").val()
-  console.log(num);
+
 
   if(num > agents.length){
     for(var i=0;i<num-agents.length;i++){

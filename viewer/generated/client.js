@@ -21,6 +21,7 @@ class BaitBombGhost
     this.cursorCoords = {x: null, y: null};
     this.radius = 40;
     this.active = false;
+    this.baitBombs=[]
 
     ui.register('restart', this.reset.bind(this));
   }
@@ -62,6 +63,7 @@ class BaitBombGhost
     ctx.stroke();
 
     ctx.restore();
+
   }
 
   onMouseMove(e)
@@ -78,7 +80,9 @@ class BaitBombGhost
   {
     let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
     var entityType = (cursors.placeBaitBomb.mode == CursorPlaceBaitBomb.MODE_BAIT) ? 'attractor' : 'repulsor';
-    socket.emit('input', {type: entityType, x: worldRelative.x, y: worldRelative.y, radius: this.radius});
+    var info={type: entityType, x: worldRelative.x, y: worldRelative.y, radius: this.radius}
+    socket.emit('input', info);
+    //this.baitBombs.push({type: entityType, x: worldRelative.x, y: worldRelative.y, radius: this.radius})
     this.active = false;
     ui.setActiveCursor(cursors.default);
   }
@@ -764,7 +768,7 @@ RadialControl.HANDLE_COLOUR = 'blue';
 
          if (component < 0.1 * RadialControl.RADIUS_SCALE)
          {
-            component = 0.1 * RadialControl.RADIUS_SCALE
+            component = 0.1 * RadialControl.RAD108IUS_SCALE
          }
          else if (component > 3.0 * RadialControl.RADIUS_SCALE)
          {
@@ -1015,7 +1019,7 @@ class StateBubbles
 
   update(json)
   {
-    this.totalAgentsInStates = 100;
+    this.totalAgentsInStates = 0;
     //console.log(json);
 
     for (let [state, count] of Object.entries(json))
@@ -1215,6 +1219,7 @@ var bombButton = document.getElementById('buttonBugBomb');
 
 baitButton.addEventListener('click', function()
 {
+
   cursors.placeBaitBomb.setMode(CursorPlaceBaitBomb.MODE_BAIT);
   ui.setActiveCursor(cursors.placeBaitBomb);
 });
@@ -1637,11 +1642,65 @@ rebugCheckbox.addEventListener('click', function(e)
 var showMenus1 = false;
 var showOptions1 = false;
 var openSound = document.getElementById("audio0")
-
+var showAgentStateDescription=false;
 var closeSound = document.getElementById("audio1");
 var menuArray=['messengerIcon','menu','agentInfoIcon']
 var optionsArray=['options','showAgentState','dontShowAgentState','backgroundTransparency','showFogIcon','dontShowFogIcon','showAgents','dontShowAgents','debugIcon']
 //var optionsArray.push('')
+
+$("#agentStateDescriptionButton").click(function(){
+  if(!showAgentStateDescription){
+    stateInfoOn.set("Exploring", false)
+    stateInfoOn.set("Observing", false)
+    stateInfoOn.set("Following Site", false)
+    $("#statesInfoText").empty()
+    $("#defaultStateDescript").html(defaultStateDescript)
+  }
+  $("#agentStateDescriptionDiv").fadeToggle();
+  showAgentStateDescription=!showAgentStateDescription
+
+})
+
+$("#agentStateDescriptionDiv").on('click',function(e){
+  name=e.target.innerHTML;
+  if(name=="Exploring" ||name=="Observing" ||name=="Following Site" ){
+    switch(name){
+      case 'Exploring':
+        stateInfoOn.set("Exploring", true)
+        stateInfoOn.set("Observing", false)
+        stateInfoOn.set("Following Site", false)
+        $("#statesInfoText").empty()
+        $("#defaultStateDescript").empty()
+        $("#statesInfoText").html(`<h3>Exploring</h3>There are currently <span id='numberInState'></span> agent(s) Exploring
+        <br>The Exploring state is when an agent moves in a random-walk around the map to attempt to locate sites. If they spot a site within their
+        field of view, they will start following it`)
+        break;
+      case 'Observing':
+        stateInfoOn.set("Exploring", false)
+        stateInfoOn.set("Observing", true)
+        stateInfoOn.set("Following Site", false)
+        $("#statesInfoText").empty()
+        $("#defaultStateDescript").empty()
+        $("#statesInfoText").html(`<h3>Observing</h3>There are currently <span id='numberInState'></span> agent(s) Observing
+        <br>The Observing state is when an agent is at the hub, observing agents that are returning from a site. They will then
+        follow an agent back to a site. Only a small portion of the agents will be in this state at a time`)
+        break;
+      case 'Following Site':
+        stateInfoOn.set("Exploring", false)
+        stateInfoOn.set("Observing", false)
+        stateInfoOn.set("Following Site", true)
+        $("#statesInfoText").empty()
+        $("#defaultStateDescript").empty()
+        $("#statesInfoText").html(`<h3>Following Site</h3>There are currently <span id='numberInState'></span> agent(s) Following Site
+        <br>The Following Site state is comprised of 3 sub-states. Follow Site, Report to Hub, and Return to Site.
+        <br>These states allow the agent to follow a site (once it has found one), report the info about the site back to the hub,
+         and then return to the site by following a trail of pheromones.
+        `)
+        break;
+  }
+  }
+})
+
 $("body").click(function(e){
 
   let inMenu =false;
@@ -1666,6 +1725,7 @@ $("body").click(function(e){
     $('#myRange').fadeOut()
     $('#debugArea').fadeOut();
   }
+
   // console.log(e.target.id);
   // console.log($(e.target).attr('class'));
 })
@@ -1777,7 +1837,7 @@ class UI {
 	}
 
 	on(msg) {
-		
+
 		for (let cb of this.eventCallbacks[msg.type]) {
 			// console.log(cb);
 				cb(msg.data);
@@ -1797,6 +1857,7 @@ class UI {
 
 	draw(ctx, debug = false) {
 		for (let element of this.canvasElems)
+
 			element.draw(ctx, debug);
 	}
 
@@ -2414,7 +2475,9 @@ class SwarmState {
     //ui.register("stateCounts", this.update.bind(this));
   }
 
+
   draw(ctx, agents){
+
     //console.log(Object.entries(this.state));
     //console.log(this.state);this.total++
     this.size = 0;
@@ -2423,6 +2486,7 @@ class SwarmState {
     for (let agent of agents){
       //console.log(this.state);
       //console.log(agent);
+      /*
       if (agent.state == "exploring" || agent.state == "assessing" || agent.state == "site assess" || agent.state == "piping" || agent.state == "commit"){
         this.total++;
       }
@@ -2437,8 +2501,37 @@ class SwarmState {
       if (this.state == "commit" && (agent.state == "piping" || agent.state == "commit")){
         this.size++;
         //this.total++;
+      }*/
+      if (agent.state == "exploring" || agent.state == "observing" || agent.state == "follow_site" || agent.state == "reportToHub" || agent.state == "returnToSite"){
+        this.total++;
       }
+      if (this.state == "Exploring" && agent.state == "exploring"){
+
+
+        this.size++;
+      }
+      if (this.state == "Observing" && agent.state == "observing"){
+        this.size++;
+      }
+      if (this.state == "Following site" && (agent.state == "follow_site" || agent.state == "reportToHub" || agent.state == "returnToSite")){
+        this.size++;
+      }
+
     }
+
+    if($("#numberInState").html() !=undefined){
+      if(this.state=="Exploring" &&stateInfoOn.get("Exploring")){
+        $("#numberInState").html(this.size)
+      }
+      if(this.state=="Observing" &&stateInfoOn.get("Observing")){
+        $("#numberInState").html(this.size)
+      }
+      if(this.state=="Following site" &&stateInfoOn.get("Following Site")){
+        $("#numberInState").html(this.size)
+      }
+
+    }
+
     //console.log(this.total);
     let x = -world.x_limit + StateBubbles.BUBBLE_SPACING;
     let y = world.y_limit - StateBubbles.MAX_RADIUS - StateBubbles.LABEL_SPACING;
@@ -2456,11 +2549,25 @@ class SwarmState {
     /*if (this.state == "exploring"){
       x += SwarmState.MAX_RADIUS;
     }*/
+    /*
     if (this.state == "assessing"){
-      x += /*2 * SwarmState.MAX_RADIUS +*/ SwarmState.BUBBLE_SPACING;
+      x += SwarmState.BUBBLE_SPACING;
     }
     if (this.state == "commit"){
-      x += /*3 * SwarmState.MAX_RADIUS + */ 2 * SwarmState.BUBBLE_SPACING;
+      x += 2 * SwarmState.BUBBLE_SPACING;
+    }*/
+    if (this.state == "Observing"){
+      x += SwarmState.BUBBLE_SPACING;
+    }
+    if (this.state == "Following site"){
+      x += 2 * SwarmState.BUBBLE_SPACING;
+    }
+
+    if (this.state == "Exploring"){
+      ctx.globalAlpha = .7;
+      ctx.fillStyle = "black";
+      ctx.fillRect(-40,-30,295,70);
+      ctx.globalAlpha = 1;
     }
 
     ctx.fillStyle = "rgb(108, 163, 252)";
@@ -2469,8 +2576,10 @@ class SwarmState {
     //ctx.arc(100, 0, 50, 0, 2 * Math.PI);
     ctx.fill();
 
+
+
     ctx.font = "8pt sans-serif";
-    ctx.fillStyle = "rgb(0, 0, 0)";
+    ctx.fillStyle = "rgb(255, 255, 255)";
     let width = ctx.measureText(`${this.state}/${this.size}`).width;
     //let name1 = name[0].toUpperCase();
     ctx.fillText(`${this.state}/${this.size}`, x-width/2, SwarmState.LABEL_SPACING);
@@ -2483,7 +2592,7 @@ class SwarmState {
 }
 
 SwarmState.MAX_RADIUS = 20;
-SwarmState.MIN_RADIUS = 2;
+SwarmState.MIN_RADIUS = 1;
 SwarmState.BUBBLE_SPACING = 100; // in px
 SwarmState.LABEL_SPACING = 30;
 
@@ -2568,9 +2677,9 @@ class World
     for (let agent      of environmentJson.agents     ) { this.agents     .push( new Agent     (agent     ) ); }
     for (let dead_agent of environmentJson.dead_agents) { this.dead_agents.push( new DeadAgent (dead_agent) ); }
     //for (var pheromone of environmentJson.pheromones)   { this.pheromones .push( new Pheromone (pheromone)  ); }
-    this.swarmState.push(new SwarmState(JSON.parse('{"state": "exploring"}')));
-    this.swarmState.push(new SwarmState(JSON.parse('{"state": "assessing"}')));
-    this.swarmState.push(new SwarmState(JSON.parse('{"state": "commit"}')));
+    this.swarmState.push(new SwarmState(JSON.parse('{"state": "Exploring"}')));
+    this.swarmState.push(new SwarmState(JSON.parse('{"state": "Observing"}')));
+    this.swarmState.push(new SwarmState(JSON.parse('{"state": "Following site"}')));
 
   }
 
@@ -2660,7 +2769,7 @@ class World
           ctx.globalAlpha = .00001
 
         }else{
-          ctx.globalAlpha = pheromone.strength
+          ctx.globalAlpha = (pheromone.strength)*.8
 
         }
         ctx.beginPath()
@@ -2691,7 +2800,9 @@ var showAgentStates = false;
 
 // get a reference to the canvas element
 var canvas = document.getElementById("canvas");
-
+socket.on("input",function(i){
+  console.log("here");
+})
 const cursors =
 {
    default: new CursorDefault(),
@@ -2702,6 +2813,24 @@ const cursors =
 $("#deadBees").click(function(){
   window.location.replace("http://localhost:3000");
 })
+var defaultStateDescript="<p id='defaultStateDescript'>Info on the different states of the Agents</p>"
+var stateInfoOn=new Map()
+stateInfoOn.set("Exploring", false)
+stateInfoOn.set("Observing", false)
+stateInfoOn.set("Following Site", false)
+$("#agentStateDescriptionDiv").append(`<table id="statesInfo"><caption id="stateTitle">States</caption>
+<tr>
+<th class="statesHeader">Exploring</th>
+<th class="statesHeader">Observing</th>
+<th class="statesHeader">Following Site</th>
+</tr>
+</table>
+<div id="statesInfoTextDiv">
+<p id="statesInfoText">`+defaultStateDescript+`</p>
+
+</div>`)
+
+
 
 var bee;
 var beeDead;

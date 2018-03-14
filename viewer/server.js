@@ -332,6 +332,7 @@ require('sticky-cluster')(function (callback)
           this.engineOutputListener.on("message", this.sendUpdate.bind(this));
           this.socket.on('disconnect', this.disconnect.bind(this));
           this.socket.on('input', this.userInput.bind(this));
+
         });
     }
 
@@ -576,6 +577,7 @@ require('sticky-cluster')(function (callback)
 
           let channels = info.channels;
           let options = info.options;
+
           socket.emit('simType',options.model);
           if(options.bait){
             socket.emit('baitToggle', options.bait);

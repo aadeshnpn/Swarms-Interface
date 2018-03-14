@@ -124,7 +124,7 @@ class World
           ctx.globalAlpha = .00001
 
         }else{
-          ctx.globalAlpha = pheromone.strength
+          ctx.globalAlpha = (pheromone.strength)*.8
 
         }
         ctx.beginPath()

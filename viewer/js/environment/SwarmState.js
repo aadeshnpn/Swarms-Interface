@@ -8,9 +8,9 @@ class SwarmState {
     //ui.register("stateCounts", this.update.bind(this));
   }
 
-  
+
   draw(ctx, agents){
-    
+
     //console.log(Object.entries(this.state));
     //console.log(this.state);this.total++
     this.size = 0;
@@ -39,6 +39,8 @@ class SwarmState {
         this.total++;
       }
       if (this.state == "Exploring" && agent.state == "exploring"){
+
+
         this.size++;
       }
       if (this.state == "Observing" && agent.state == "observing"){
@@ -47,7 +49,22 @@ class SwarmState {
       if (this.state == "Following site" && (agent.state == "follow_site" || agent.state == "reportToHub" || agent.state == "returnToSite")){
         this.size++;
       }
+
     }
+
+    if($("#numberInState").html() !=undefined){
+      if(this.state=="Exploring" &&stateInfoOn.get("Exploring")){
+        $("#numberInState").html(this.size)
+      }
+      if(this.state=="Observing" &&stateInfoOn.get("Observing")){
+        $("#numberInState").html(this.size)
+      }
+      if(this.state=="Following site" &&stateInfoOn.get("Following Site")){
+        $("#numberInState").html(this.size)
+      }
+
+    }
+
     //console.log(this.total);
     let x = -world.x_limit + StateBubbles.BUBBLE_SPACING;
     let y = world.y_limit - StateBubbles.MAX_RADIUS - StateBubbles.LABEL_SPACING;
@@ -91,9 +108,9 @@ class SwarmState {
     ctx.arc(x, 0, this.radius, 0, Math.PI * 2, false);
     //ctx.arc(100, 0, 50, 0, 2 * Math.PI);
     ctx.fill();
-    
-    
-    
+
+
+
     ctx.font = "8pt sans-serif";
     ctx.fillStyle = "rgb(255, 255, 255)";
     let width = ctx.measureText(`${this.state}/${this.size}`).width;

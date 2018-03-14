@@ -21,6 +21,7 @@ class BaitBombGhost
     this.cursorCoords = {x: null, y: null};
     this.radius = 40;
     this.active = false;
+    this.baitBombs=[]
 
     ui.register('restart', this.reset.bind(this));
   }
@@ -62,6 +63,7 @@ class BaitBombGhost
     ctx.stroke();
 
     ctx.restore();
+
   }
 
   onMouseMove(e)
@@ -78,7 +80,9 @@ class BaitBombGhost
   {
     let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
     var entityType = (cursors.placeBaitBomb.mode == CursorPlaceBaitBomb.MODE_BAIT) ? 'attractor' : 'repulsor';
-    socket.emit('input', {type: entityType, x: worldRelative.x, y: worldRelative.y, radius: this.radius});
+    var info={type: entityType, x: worldRelative.x, y: worldRelative.y, radius: this.radius}
+    socket.emit('input', info);
+    //this.baitBombs.push({type: entityType, x: worldRelative.x, y: worldRelative.y, radius: this.radius})
     this.active = false;
     ui.setActiveCursor(cursors.default);
   }

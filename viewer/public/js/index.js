@@ -2,6 +2,7 @@ let currentSort = [[0, 0]]; // first column, descending
 
 $(document).ready(() =>
 {
+
   getSims();
   window.setInterval(getSims, 5000);
   let simListTable = $('#simList');
@@ -19,15 +20,20 @@ $(document).ready(() =>
     for (var i = 0; i < form.length; i++){
       data[form[i].name] = form[i].value;
     }
+
     $.post("/sims/", data, res =>{
       getSims();
     });
+
   });
 
   $('#limitUsers').change((event) =>{
     $('#newSim input[name=maxUsers]').prop("disabled", !$(event.target).prop('checked'));
   });
 });
+
+
+
 
 $("#redirectToCreate").click(function(){
   window.location.replace("http://localhost:3000/createSim.html");

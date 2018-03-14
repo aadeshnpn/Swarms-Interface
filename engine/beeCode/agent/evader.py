@@ -11,7 +11,7 @@ class Evader(Agent):
             "states": ["Evading"],
             "transitions": {"Evading" : []}
         }
-
+        
     def to_json(self):
         return super().to_json()
 

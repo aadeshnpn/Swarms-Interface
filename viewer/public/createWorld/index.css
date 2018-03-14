@@ -3,7 +3,7 @@ body{
 }
 :root{
 --panelWidth:220px;
---headerHeight:calc(100%/8);
+--headerHeight:calc(100%/10);
 }
 #title{
   font-size: 200%;
@@ -99,7 +99,7 @@ canvas{
 
 .panel{
   width: var(--panelWidth);
-  height:calc(100%/8);
+  height:calc(100%/10);
   text-align: center;
   color:white;
   border-left: 1px solid black;
@@ -135,11 +135,11 @@ canvas{
 .agentTypes:active{
   box-shadow: 1px 1px 0px black;
 }
-#agentType{
+#agentTypePanel{
   font-size: 20px;
   line-height: 50px;
 }
-#agentType #agentTypeToolTip{
+#agentTypePanel #agentTypeToolTip{
   visibility: hidden;
   background-color: rgba(85, 85, 85, 0.86);
   color: #fff;
@@ -148,13 +148,13 @@ canvas{
   padding: 0 0;
   position: absolute;
   z-index: 1;
-  top: calc(37.5% - 10px);
+  top: calc(54% - 10px);
 
   margin-right: -60px;
   opacity: 0;
   transition: opacity .5s;
 }
-#agentType #agentTypeToolTip::after {
+#agentTypePanel #agentTypeToolTip::after {
   content: "";
   position: absolute;
   top: 45%;
@@ -164,16 +164,16 @@ canvas{
   border-style: solid;
   border-color:  transparent #555 transparent transparent ;
 }
-#agentType:hover #agentTypeToolTip {
+#agentTypePanel:hover #agentTypeToolTip {
   visibility: visible;
   opacity: 1;
 }
 
-#worldType{
+#worldTypePanel{
   line-height: 50px;
   height:calc(100%/10);
 }
-#worldType #worldTypeToolTip{
+#worldTypePanel #worldTypeToolTip{
   visibility: hidden;
   background-color: rgba(85, 85, 85, 0.86);
   color: #fff;
@@ -182,13 +182,13 @@ canvas{
   padding: 0 0;
   position: absolute;
   z-index: 1;
-  top: calc(50% - 25px);
+  top: calc(64% - 10px);
 
   margin-right: -60px;
   opacity: 0;
   transition: opacity .5s;
 }
-#worldType #worldTypeToolTip::after {
+#worldTypePanel #worldTypeToolTip::after {
   content: "";
   position: absolute;
   top: 45%;
@@ -198,7 +198,7 @@ canvas{
   border-style: solid;
   border-color:  transparent #555 transparent transparent ;
 }
-#worldType:hover #worldTypeToolTip {
+#worldTypePanel:hover #worldTypeToolTip {
   visibility: visible;
   opacity: 1;
 }
@@ -312,12 +312,12 @@ input{
   margin-top:  10px;
 }
 
-#simName{
+#simNamePanel{
   line-height: 50px;
   font-size: 20px;
   height:calc(100%/10);
 }
-#simName #simNameToolTip{
+#simNamePanel #simNameToolTip{
   visibility: hidden;
   background-color: rgba(85, 85, 85, 0.86);
   color: #fff;
@@ -326,13 +326,13 @@ input{
   padding: 0 0;
   position: absolute;
   z-index: 1;
-  top: calc(12.5% + 30px);
+  top: calc(10.5% + 30px);
 
   margin-right: -60px;
   opacity: 0;
   transition: opacity .5s;
 }
-#simName #simNameToolTip::after {
+#simNamePanel #simNameToolTip::after {
   content: "";
   position: absolute;
   top: 45%;
@@ -342,7 +342,7 @@ input{
   border-style: solid;
   border-color:  transparent #555 transparent transparent ;
 }
-#simName:hover #simNameToolTip {
+#simNamePanel:hover #simNameToolTip {
   visibility: visible;
   opacity: 1;
 }
@@ -368,7 +368,7 @@ input{
   padding: 0 0;
   position: absolute;
   z-index: 1;
-  top: calc(25% + 0px);
+  top: calc(22.5% + 0px);
 
   margin-right: -60px;
   opacity: 0;
@@ -389,7 +389,12 @@ input{
   opacity: 1;
 }
 
-#siteNumberPanel #siteNumToolTip{
+#siteNumberPanel{
+  line-height: 50px;
+  height:calc(100%/10);
+}
+
+#siteNumberPanel #siteNumberToolTip{
   visibility: hidden;
   background-color: rgba(85, 85, 85, 0.86);
   color: #fff;
@@ -398,13 +403,13 @@ input{
   padding: 0 0;
   position: absolute;
   z-index: 1;
-  top: calc(50% - 25px);
+  top: calc(32% + 0px);
 
   margin-right: -60px;
   opacity: 0;
   transition: opacity .5s;
 }
-#siteNumberPanel #siteNumToolTip::after {
+#siteNumberPanel #siteNumberToolTip::after {
   content: "";
   position: absolute;
   top: 45%;
@@ -414,9 +419,28 @@ input{
   border-style: solid;
   border-color:  transparent #555 transparent transparent ;
 }
-#siteNumberPanel:hover #siteNumToolTip {
+#siteNumberPanel:hover #siteNumberToolTip {
   visibility: visible;
   opacity: 1;
+}
+
+#scenarioType{
+  border-radius: 10px;
+  width:80%;
+  height:30%;
+  background-color: white;
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.36) inset;
+  padding-left: 10px;
+
+  -webkit-border-radius:1n0px;
+}
+#scenarioType:focus {
+  outline: none;
+}
+
+#scenarioPanel{
+  line-height: 50px;
+  height:calc(100%/10);
 }
 
 #scenarioPanel #scenarioToolTip{
@@ -428,7 +452,7 @@ input{
   padding: 0 0;
   position: absolute;
   z-index: 1;
-  top: calc(50% - 25px);
+  top: calc(45% - 25px);
 
   margin-right: -60px;
   opacity: 0;
@@ -449,7 +473,7 @@ input{
   opacity: 1;
 }
 
-#hubDiv #hubToolTip{
+#hubDivPanel #hubToolTip{
   visibility: hidden;
   background-color: rgba(85, 85, 85, 0.86);
   color: #fff;
@@ -458,12 +482,12 @@ input{
   padding: 0 0;
   position: absolute;
   z-index: 1;
-  top: calc(58%);
+  top: calc(74% - 10px);
   margin-right: -60px;
   opacity: 0;
   transition: opacity .5s;
 }
-#hubDiv #hubToolTip::after {
+#hubDivPanel #hubToolTip::after {
   content: "";
   position: absolute;
   top: 45%;
@@ -473,12 +497,12 @@ input{
   border-style: solid;
   border-color:  transparent #555 transparent transparent ;
 }
-#hubDiv:hover #hubToolTip {
+#hubDivPanel:hover #hubToolTip {
   visibility: visible;
   opacity: 1;
 }
 
-#baitDiv #baitToolTip{
+#baitDivPanel #baitToolTip{
   visibility: hidden;
   background-color: rgba(85, 85, 85, 0.86);
   color: #fff;
@@ -487,13 +511,13 @@ input{
   padding: 0 0;
   position: absolute;
   z-index: 1;
-  top: calc(68%);
+  top: calc(84% - 10px);
 
   margin-right: -60px;
   opacity: 0;
   transition: opacity .5s;
 }
-#baitDiv #baitToolTip::after {
+#baitDivPanel #baitToolTip::after {
   content: "";
   position: absolute;
   top: 45%;
@@ -503,12 +527,12 @@ input{
   border-style: solid;
   border-color:  transparent #555 transparent transparent ;
 }
-#baitDiv:hover #baitToolTip {
+#baitDivPanel:hover #baitToolTip {
   visibility: visible;
   opacity: 1;
 }
 
-#bombDiv #bombToolTip{
+#bombDivPanel #bombToolTip{
   visibility: hidden;
   background-color: rgba(85, 85, 85, 0.86);
   color: #fff;
@@ -517,13 +541,13 @@ input{
   padding: 0 0;
   position: absolute;
   z-index: 1;
-  top: calc(78%);
+  top: calc(92%);
 
   margin-right: -60px;
   opacity: 0;
   transition: opacity .5s;
 }
-#bombDiv #bombToolTip::after {
+#bombDivPanel #bombToolTip::after {
   content: "";
   position: absolute;
   top: 45%;
@@ -533,7 +557,7 @@ input{
   border-style: solid;
   border-color:  transparent #555 transparent transparent ;
 }
-#bombDiv:hover #bombToolTip {
+#bombDivPanel:hover #bombToolTip {
   visibility: visible;
   opacity: 1;
 }

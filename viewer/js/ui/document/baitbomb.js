@@ -3,6 +3,7 @@ var bombButton = document.getElementById('buttonBugBomb');
 
 baitButton.addEventListener('click', function()
 {
+
   cursors.placeBaitBomb.setMode(CursorPlaceBaitBomb.MODE_BAIT);
   ui.setActiveCursor(cursors.placeBaitBomb);
 });

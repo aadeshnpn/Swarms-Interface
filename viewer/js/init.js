@@ -12,7 +12,9 @@ var showAgentStates = false;
 
 // get a reference to the canvas element
 var canvas = document.getElementById("canvas");
-
+socket.on("input",function(i){
+  console.log("here");
+})
 const cursors =
 {
    default: new CursorDefault(),
@@ -23,6 +25,24 @@ const cursors =
 $("#deadBees").click(function(){
   window.location.replace("http://localhost:3000");
 })
+var defaultStateDescript="<p id='defaultStateDescript'>Info on the different states of the Agents</p>"
+var stateInfoOn=new Map()
+stateInfoOn.set("Exploring", false)
+stateInfoOn.set("Observing", false)
+stateInfoOn.set("Following Site", false)
+$("#agentStateDescriptionDiv").append(`<table id="statesInfo"><caption id="stateTitle">States</caption>
+<tr>
+<th class="statesHeader">Exploring</th>
+<th class="statesHeader">Observing</th>
+<th class="statesHeader">Following Site</th>
+</tr>
+</table>
+<div id="statesInfoTextDiv">
+<p id="statesInfoText">`+defaultStateDescript+`</p>
+
+</div>`)
+
+
 
 var bee;
 var beeDead;
