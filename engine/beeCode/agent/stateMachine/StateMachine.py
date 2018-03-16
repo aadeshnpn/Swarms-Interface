@@ -1,5 +1,6 @@
 import copy
 from abc import ABC, abstractmethod
+from utils.debug import *
 class StateMachine(ABC):
     def __init__(self, initialState, tranTable, id):
         self.state = initialState
@@ -12,6 +13,9 @@ class StateMachine(ABC):
         currState = self.transitionTable[(self.state.__class__, input)]
 
         self.state = copy.copy(currState[1])        # environment.sort_by_state(self.id, self.state.__class__, currState[1].__class__)
+        if currState[1]=="reportToHub":
+            self.state="reportToHub"
+        # eprint(str(self.state) + " outside hub")
         self.transition()
         if currState[0] is not None:
             currState[0]()

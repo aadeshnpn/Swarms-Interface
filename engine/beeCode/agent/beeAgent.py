@@ -445,8 +445,10 @@ class ReportToHub(State):
 
     def sense(self, agent, environment):
         site_id =agent.potential_site[2]
+        # eprint(agent.state)
         if environment.agentsFollowSite[site_id]["reporting"]:
             environment.agentsFollowSite[site_id]["reportTime"]-=1
+        agent.checkAgentReturn()
         return
 
     def act(self, agent):
@@ -466,6 +468,7 @@ class ReportToHub(State):
             return input.finishedReporting;
         if agent.reportTimer<=0:
             return input.reportingFailed
+
         return
 
 class followSite(State):

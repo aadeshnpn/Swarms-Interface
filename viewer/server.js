@@ -329,6 +329,7 @@ require('sticky-cluster')(function (callback)
             });
 
           this.engineOutputListener.subscribe(this.channels.output);
+
           this.engineOutputListener.on("message", this.sendUpdate.bind(this));
           this.socket.on('disconnect', this.disconnect.bind(this));
           this.socket.on('input', this.userInput.bind(this));
@@ -341,6 +342,7 @@ require('sticky-cluster')(function (callback)
       //The start info and update info need to be seperated so that we can eliminate the need to recreate
       //a new world object every time through the init draw function.
       const obj = JSON.parse(data);
+      //console.log(obj.type);
       this.socket.emit(obj.type, obj);
     }
 

@@ -27,17 +27,20 @@ class UI {
 	}
 
 	register(event, callback) {
-		//console.log(event)
+
 		if (!this.eventCallbacks[event]) {
 			this.eventCallbacks[event] = [];
 		}
 		this.eventCallbacks[event].push(callback);
+		//console.log(this.eventCallbacks.length);
 	}
 
 	on(msg) {
-
+//console.log(msg.type)
 		for (let cb of this.eventCallbacks[msg.type]) {
-			// console.log(cb);
+
+
+			//console.log("------------")
 				cb(msg.data);
 
 		}

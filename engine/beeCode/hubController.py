@@ -126,9 +126,10 @@ class HubController:
         if isinstance(bee.state, Piping):
             self.piperCount += 1
 
-        if (isinstance(bee.state, Assessing) and not self.no_viewer):
+        if (isinstance(bee.state, ReportToHub) and not self.no_viewer):
+            # eprint(str(bee.state) + " in the hub")
             print(json.dumps({"type": "updateMission",
-                              "data": {"x": bee.potential_site[0], "y": bee.potential_site[1], "q": bee.q_value}}))
+                              "data": {"x": bee.potential_site[0], "y": bee.potential_site[1],"id":bee.potential_site[2], "q": bee.q_value}}))
 
 
     def handleRadialControl(self, jsonInput):

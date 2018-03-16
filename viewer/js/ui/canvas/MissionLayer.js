@@ -36,13 +36,18 @@ class MissionLayer {
 		this.loadSiteImages();
 
 		ui.register('updateMission', this.update.bind(this));
+		//console.log(this.update.bind(this));
 		ui.register('restart', this.reset.bind(this));
 
 		cursors.default.addEventListener('mousemove', this.onMouseMove.bind(this));
 	}
 
 	update(data) {
+		// console.log(data);
+
 		this.points.push(data);
+
+
 		// this can really slow down the ui if it gets out of hand
 		if (this.points.length > 200) { // only keep the most recent 200 points
 			this.points.shift();
@@ -62,6 +67,7 @@ class MissionLayer {
 					break clusterLoop;
 				}
 			}
+
 		}
 
 		if (!added) {
@@ -85,7 +91,7 @@ class MissionLayer {
 			// green value multiplier
 			let gVal = (point.q > 0.5) ? 1.0 : point.q * 2;
 			// set the fill and stroke colors
-			ctx.fillStyle = `rgba(${Math.round(255 * rVal)}, ${Math.round(255 * gVal)}, 70, 0.8)`;
+			ctx.fillStyle = "white"//`rgba(${Math.round(255 * rVal)}, ${Math.round(255 * gVal)}, 70, 0.8)`;
 			ctx.strokeStyle = "rgb(20, 20, 20)";
 
 			// draw the circle
@@ -96,8 +102,9 @@ class MissionLayer {
 			ctx.closePath();
 
 			// if hovered, draw image
+			// console.log(this.hoveredPoint);
 			if (point === this.hoveredPoint) {
-
+				// console.log(point);
 				// get natural size of image
 
 				let width = this.image.width;
@@ -190,12 +197,13 @@ class MissionLayer {
 		let worldRelative={x: e.offsetX, y:e.offsetY }
 		if(world){
 			let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+			//let worldRelative = {x:world.x,y:world.y};
 		}
 
 		this.hoveredPoint = null;
 		// check every point to see if it is hovered
 		for (let point of this.points) {
-			if (this.isHovered(point, worldRelative)) {
+			if (this.isHovered(point, worldRelative, world)) {
 				// if hovered point changed, check cluster for new image
 				if (this.hoveredPoint !== point) {
 					this.hoveredPoint = point;
@@ -231,10 +239,14 @@ class MissionLayer {
 
 	dist(point1, point2) {
 		// use distance formula sqrt(x^2+y^2)
-		return Math.sqrt(Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2));
+		return Math.sqrt(Math.pow(point1.x - (point2.x-(world.width/2)), 2) + Math.pow(point1.y - -(point2.y-(world.height/2)), 2));
 	}
 
-	isHovered(point, mouse) {
+	isHovered(point, mouse,world) {
+		// console.log(point.y + " dist");
+		// // console.log(world);
+		// console.log(mouse.y-(world.height/2) + " dist");
+		// console.log(this.dist(point, mouse) <= this.radius);
 		return this.dist(point, mouse) <= this.radius;
 	}
 }

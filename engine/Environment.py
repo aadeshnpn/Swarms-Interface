@@ -134,7 +134,7 @@ class Environment(ABC):
         self.y_limit = data["dimensions"]["y_length"] / 2
         self.hub = data["hub"]
 
-        eprint('ScenarioType: ', args.scenarioType)
+        # eprint('ScenarioType: ', args.scenarioType)
         self.sites = Sites(args.siteNum, self.hub["x"], self.hub["y"], args.scenarioType)
         for site in self.sites:
             self.agentsFollowSite[site.id]={"number":0,"reporting":False,"agentDropPheromone":0,"reportTime":1500}
