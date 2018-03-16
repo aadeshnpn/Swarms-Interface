@@ -17,7 +17,7 @@ class BaitBombGhost
   {
     cursors.placeBaitBomb.addEventListener('mousemove', this.onMouseMove.bind(this));
     cursors.placeBaitBomb.addEventListener('mousedown', this.onMouseDown.bind(this)); //the this-this syntax is to help js be oo
-    cursors.placeBaitBomb.addEventListener('wheel', this.onWheel.bind(this));
+    // cursors.placeBaitBomb.addEventListener('wheel', this.onWheel.bind(this));
     this.cursorCoords = {x: null, y: null};
     this.radius = 40;
     this.active = false;
