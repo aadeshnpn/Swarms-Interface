@@ -2,7 +2,7 @@ class MissionLayer {
 	constructor(ui) {
 
 		this.points =[]
-
+		this.hoveredPoint=false;
 		// create list of images
 		this.siteImages = [];
 		this.loadSiteImages();
@@ -61,12 +61,28 @@ class MissionLayer {
 		}
 		// check every point to see if it is hovered
 		for(let point of this.points){
-			if(point.isHovered(worldRelative,world)){
-				point.hovered=true;
+			if(!this.hoveredPoint||point.hovered){
+				if(point.isHovered(worldRelative,world) ){
+					point.hovered=true;
+					this.hoveredPoint=true
+					if(point.pictureHovered(worldRelative,world)||point.pictureHover){
+						console.log("HERE"+ worldRelative.x);
+						point.pictureHover=true
+						if(point.bottomOfImage(worldRelative,world)){
+							point.bottomHovered=true
+						}else{
+							point.bottomHovered=false
+						}
+					}
+				}
+				else if(!point.isHovered(worldRelative,world)&&!point.pictureHovered(worldRelative,world)){
+					point.hovered=false;
+					this.hoveredPoint=false;
+					point.bottomHovered=false
+					point.pictureHover=false
+				}
 			}
-			else{
-				point.hovered=false;
-			}
+
 		}
 
 	}

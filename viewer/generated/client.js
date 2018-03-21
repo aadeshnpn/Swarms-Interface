@@ -104,7 +104,7 @@ class MissionLayer {
 	constructor(ui) {
 
 		this.points =[]
-
+		this.hoveredPoint=false;
 		// create list of images
 		this.siteImages = [];
 		this.loadSiteImages();
@@ -163,12 +163,28 @@ class MissionLayer {
 		}
 		// check every point to see if it is hovered
 		for(let point of this.points){
-			if(point.isHovered(worldRelative,world)){
-				point.hovered=true;
+			if(!this.hoveredPoint||point.hovered){
+				if(point.isHovered(worldRelative,world) ){
+					point.hovered=true;
+					this.hoveredPoint=true
+					if(point.pictureHovered(worldRelative,world)||point.pictureHover){
+						console.log("HERE"+ worldRelative.x);
+						point.pictureHover=true
+						if(point.bottomOfImage(worldRelative,world)){
+							point.bottomHovered=true
+						}else{
+							point.bottomHovered=false
+						}
+					}
+				}
+				else if(!point.isHovered(worldRelative,world)&&!point.pictureHovered(worldRelative,world)){
+					point.hovered=false;
+					this.hoveredPoint=false;
+					point.bottomHovered=false
+					point.pictureHover=false
+				}
 			}
-			else{
-				point.hovered=false;
-			}
+
 		}
 
 	}
@@ -230,6 +246,12 @@ class Point{
     this.pin=new Image()
     this.pin.src="../img/pin.png"
     this.fontSize=20
+    this.left;
+    this.top;
+    this.pictureHover=false
+    this.width;
+    this.height
+    this.bottomHovered=false
     // console.log(mouse);
 
   }
@@ -272,84 +294,94 @@ class Point{
   drawImages(ctx){
     // console.log(this.images.length);
     this.image.src=this.images[this.currentImage]
-    let width = this.image.width;
-    let height = this.image.height;
+    this.width = this.image.width;
+    this.height = this.image.height;
     // console.log(width);
     // scale image size
 
-    if (width > this.imageMaxWidth) {
-      let scale = this.imageMaxWidth / width;
-      width = this.imageMaxWidth;
-      height = height * scale;
+    if (this.width > this.imageMaxWidth) {
+      let scale = this.imageMaxWidth / this.width;
+      this.width = this.imageMaxWidth;
+      this.height = this.height * scale;
     }
 
-    if (height > this.imageMaxHeight) {
-      let scale = this.imageMaxHeight / height;
-      height = this.imageMaxHeight;
-      width = width * scale;
+    if (this.height > this.imageMaxHeight) {
+      let scale = this.imageMaxHeight / this.height;
+      this.height = this.imageMaxHeight;
+      this.width = this.width * scale;
     }
 
-    // add border width
+    // add border this.width
 
-    width += 2 * this.imageBorderWidth;
-    height += 2 * this.imageBorderWidth;
+    this.width += 2 * this.imageBorderWidth;
+    this.height += 2 * this.imageBorderWidth;
 
     // determine bounds for image to stay in view
 
     let xLimit = ctx.canvas.clientWidth / 2;
     let yLimit = ctx.canvas.clientHeight / 2;
 
-    let left = this.x - width / 2;
+    this.left = this.x - this.width / 2;
 
-    if (left < -xLimit) {
-      left = -xLimit;
+    if (this.left < -xLimit) {
+      this.left = -xLimit;
     }
 
-    let right = left + width;
+    let right = this.left + this.width;
     if (right > xLimit) {
       right = xLimit;
-      left = right - width;
+      this.left = right - this.width;
     }
 
-    let top = this.y + height;
-    if (top > yLimit) {
-      top = yLimit;
+    this.top = this.y + this.height;
+    if (this.top > yLimit) {
+      this.top = yLimit;
     }
 
-    let bottom = top - height;
+    let bottom = this.top - this.height;
     if (bottom < -yLimit) {
       bottom = -yLimit;
-      top = bottom + height;
+      this.top = bottom + this.height;
     }
     // console.log(this.image);
     // ctx.drawImage(this.image,0,0,20,20)
-    // console.log(left);
+    // console.log(this.left);
     // log
     ctx.lineWidth=3
     ctx.fillStyle="black"
     ctx.beginPath();
-    ctx.moveTo(left, -bottom);
+    ctx.moveTo(this.left, -bottom);
     ctx.lineTo(right, -bottom);
-    ctx.lineTo(right, -top);
-    ctx.lineTo(left, -top);
-    ctx.lineTo(left, -bottom);
+    ctx.lineTo(right, -this.top);
+    ctx.lineTo(this.left, -this.top);
+    ctx.lineTo(this.left, -bottom);
     ctx.fill()
     ctx.stroke();
     ctx.closePath();
     ctx.lineWidth=1
 
 
-    ctx.drawImage(this.image, left + this.imageBorderWidth, -top + this.imageBorderWidth,
-      width - 2 * this.imageBorderWidth, height - 2 * this.imageBorderWidth);
+    ctx.drawImage(this.image, this.left + this.imageBorderWidth, -this.top + this.imageBorderWidth,
+      this.width - 2 * this.imageBorderWidth, this.height - 2 * this.imageBorderWidth);
+
+    if(this.bottomHovered){
+      ctx.fillStyle="rgb(0,0,150)"
+      ctx.globalAlpha=.3
+      ctx.fillRect(this.left,-this.top+(this.height-10),this.width,10)
+      // ctx.fill()
+      ctx.globalAlpha=1
+    }
+
     let currImString=(this.currentImage+1).toString()
+    let totalImString=(this.images.length).toString()
     // console.log(currImString);
     ctx.fillStyle="rgba(0,0,0,.5)"
     ctx.beginPath();
-    ctx.moveTo(left, -top);
-    ctx.lineTo(left, -top+this.fontSize*1.4);
-    ctx.lineTo(left+this.fontSize*(currImString.length)*.8, -top+this.fontSize*1.4);
-    ctx.lineTo(left+this.fontSize*(currImString.length)*.8, -top);
-    // ctx.lineTo(left, -bottom);
+    ctx.moveTo(this.left, -this.top);
+    ctx.lineTo(this.left, -this.top+this.fontSize*1.4);
+    ctx.lineTo(this.left+this.fontSize*(currImString.length*.8+totalImString.length*.9), -this.top+this.fontSize*1.4);
+    ctx.lineTo(this.left+this.fontSize*(currImString.length*.8+totalImString.length*.9), -this.top);
+    // ctx.lineTo(this.left, -bottom);
     ctx.fill()
     ctx.stroke();
     ctx.closePath();
@@ -360,7 +392,8 @@ class Point{
     ctx.shadowOffsetY = 2;
     ctx.shadowBlur=2
     ctx.shadowColor = 'black';
-    ctx.fillText(this.currentImage+1,left+3,-top+this.fontSize);
+    let imageNum=(this.currentImage+1).toString()
+    ctx.fillText(imageNum+"/"+(this.images.length).toString(),this.left+3,-this.top+this.fontSize);
     ctx.shawdowBlur=0
     ctx.shadowOffsetX =0
     ctx.shadowOffsetY = 0;
@@ -375,7 +408,23 @@ class Point{
 
 		return this.dist( mouse) <= this.radius+this.hoverDistance;
 	}
-
+  pictureHovered(mouse,world){
+    let xLim=mouse.x-(world.width/2)>this.left && mouse.x-(world.width/2)<this.left+this.width
+    let yLim=-(mouse.y-(world.height/2))<this.top && -(mouse.y-(world.height/2)) > this.top-this.height
+    // console.log(-(mouse.y-(world.height/2)));
+    // console.log(this.top +" image Top");
+    // console.log(yLim);
+    return xLim &&yLim;
+  }
+  bottomOfImage(mouse,world){
+    let xLim=mouse.x-(world.width/2)>this.left && mouse.x-(world.width/2)<this.left+this.width
+    let yLim=-(mouse.y-(world.height/2))<this.top-(this.height/2) && -(mouse.y-(world.height/2)) > this.top-this.height
+    // console.log(-(mouse.y-(world.height/2)));
+    // console.log(this.top +" image Top");
+    // console.log(yLim);
+    console.log(xLim &&yLim);
+    return xLim &&yLim;
+  }
 
 }
 
