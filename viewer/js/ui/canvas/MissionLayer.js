@@ -38,6 +38,9 @@ class MissionLayer {
 		for(let point of this.points){
 			if(point.hovered){
 				point.drawImages(ctx)
+				if(point.bottomHovered){
+					point.drawButtons(ctx);
+				}
 			}else{
 				point.currentImage=0
 			}
@@ -66,13 +69,9 @@ class MissionLayer {
 					point.hovered=true;
 					this.hoveredPoint=true
 					if(point.pictureHovered(worldRelative,world)||point.pictureHover){
-						console.log("HERE"+ worldRelative.x);
+						// console.log("HERE"+ worldRelative.x);
 						point.pictureHover=true
-						if(point.bottomOfImage(worldRelative,world)){
-							point.bottomHovered=true
-						}else{
-							point.bottomHovered=false
-						}
+
 					}
 				}
 				else if(!point.isHovered(worldRelative,world)&&!point.pictureHovered(worldRelative,world)){
@@ -80,6 +79,15 @@ class MissionLayer {
 					this.hoveredPoint=false;
 					point.bottomHovered=false
 					point.pictureHover=false
+				}
+			}
+			if(point.hovered && point.bottom){
+				if(point.bottomOfImage(worldRelative,world)){
+					point.bottomHovered=true
+					document.getElementById("canvas").style.cursor = "pointer";
+				}else{
+					point.bottomHovered=false
+					document.getElementById("canvas").style.cursor = "default";
 				}
 			}
 

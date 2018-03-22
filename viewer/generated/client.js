@@ -140,6 +140,9 @@ class MissionLayer {
 		for(let point of this.points){
 			if(point.hovered){
 				point.drawImages(ctx)
+				if(point.bottomHovered){
+					point.drawButtons(ctx);
+				}
 			}else{
 				point.currentImage=0
 			}
@@ -168,13 +171,9 @@ class MissionLayer {
 					point.hovered=true;
 					this.hoveredPoint=true
 					if(point.pictureHovered(worldRelative,world)||point.pictureHover){
-						console.log("HERE"+ worldRelative.x);
+						// console.log("HERE"+ worldRelative.x);
 						point.pictureHover=true
-						if(point.bottomOfImage(worldRelative,world)){
-							point.bottomHovered=true
-						}else{
-							point.bottomHovered=false
-						}
+
 					}
 				}
 				else if(!point.isHovered(worldRelative,world)&&!point.pictureHovered(worldRelative,world)){
@@ -182,6 +181,15 @@ class MissionLayer {
 					this.hoveredPoint=false;
 					point.bottomHovered=false
 					point.pictureHover=false
+				}
+			}
+			if(point.hovered && point.bottom){
+				if(point.bottomOfImage(worldRelative,world)){
+					point.bottomHovered=true
+					document.getElementById("canvas").style.cursor = "pointer";
+				}else{
+					point.bottomHovered=false
+					document.getElementById("canvas").style.cursor = "default";
 				}
 			}
 
@@ -246,12 +254,14 @@ class Point{
     this.pin=new Image()
     this.pin.src="../img/pin.png"
     this.fontSize=20
-    this.left;
-    this.top;
+    this.left=null;
+    this.top=null;
+    this.bottom=null;
     this.pictureHover=false
     this.width;
     this.height
     this.bottomHovered=false
+
     // console.log(mouse);
 
   }
@@ -291,6 +301,36 @@ class Point{
 
 
   }
+
+  drawButtons(ctx){
+    ctx.fillStyle="rgb(150,0,0)"
+      ctx.globalAlpha=.3
+      ctx.fillRect(this.left,-this.bottom,this.width,-this.height/4)
+      ctx.beginPath();
+      // ctx.globalAlpha=.5
+      // ctx.moveTo(this.left+this.width/2, -this.bottom);
+      // ctx.lineTo(this.left+this.width/2, -this.bottom-this.height/4);
+      // ctx.stroke();
+      // ctx.moveTo(this.left, -this.bottom-this.height/4);
+      // ctx.lineTo(this.left+this.width, -this.bottom-this.height/4);
+      // ctx.stroke();
+
+      // ctx.closePath();
+      // ctx.fill()
+      ctx.globalAlpha=1
+      ctx.font = this.fontSize.toString()+"px Arial";
+      ctx.fillStyle="white"
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+      ctx.shadowBlur=2
+      ctx.shadowColor = 'black';
+      let imageNum=(this.currentImage+1).toString()
+      ctx.fillText("Deny Site",this.left+this.width/4,-this.bottom-this.height/8+(this.fontSize/3));
+      ctx.shawdowBlur=0
+      ctx.shadowOffsetX =0
+      ctx.shadowOffsetY = 0;
+  }
+
   drawImages(ctx){
     // console.log(this.images.length);
     this.image.src=this.images[this.currentImage]
@@ -338,10 +378,10 @@ class Point{
       this.top = yLimit;
     }
 
-    let bottom = this.top - this.height;
-    if (bottom < -yLimit) {
-      bottom = -yLimit;
-      this.top = bottom + this.height;
+    this.bottom = this.top - this.height;
+    if (this.bottom < -yLimit) {
+      this.bottom = -yLimit;
+      this.top = this.bottom + this.height;
     }
     // console.log(this.image);
     // ctx.drawImage(this.image,0,0,20,20)
@@ -350,11 +390,11 @@ class Point{
     ctx.lineWidth=3
     ctx.fillStyle="black"
     ctx.beginPath();
-    ctx.moveTo(this.left, -bottom);
-    ctx.lineTo(right, -bottom);
+    ctx.moveTo(this.left, -this.bottom);
+    ctx.lineTo(right, -this.bottom);
     ctx.lineTo(right, -this.top);
     ctx.lineTo(this.left, -this.top);
-    ctx.lineTo(this.left, -bottom);
+    ctx.lineTo(this.left, -this.bottom);
     ctx.fill()
     ctx.stroke();
     ctx.closePath();
@@ -364,13 +404,13 @@ class Point{
     ctx.drawImage(this.image, this.left + this.imageBorderWidth, -this.top + this.imageBorderWidth,
       this.width - 2 * this.imageBorderWidth, this.height - 2 * this.imageBorderWidth);
 
-    if(this.bottomHovered){
-      ctx.fillStyle="rgb(0,0,150)"
-      ctx.globalAlpha=.3
-      ctx.fillRect(this.left,-this.top+(this.height-10),this.width,10)
-      // ctx.fill()
-      ctx.globalAlpha=1
-    }
+    // if(this.bottomHovered){
+    //   ctx.fillStyle="rgb(0,0,150)"
+    //   ctx.globalAlpha=.3
+    //   ctx.fillRect(this.left,-this.top+(this.height-10),this.width,10)
+    //   // ctx.fill()
+    //   ctx.globalAlpha=1
+    // }
 
     let currImString=(this.currentImage+1).toString()
     let totalImString=(this.images.length).toString()
@@ -418,11 +458,8 @@ class Point{
   }
   bottomOfImage(mouse,world){
     let xLim=mouse.x-(world.width/2)>this.left && mouse.x-(world.width/2)<this.left+this.width
-    let yLim=-(mouse.y-(world.height/2))<this.top-(this.height/2) && -(mouse.y-(world.height/2)) > this.top-this.height
-    // console.log(-(mouse.y-(world.height/2)));
-    // console.log(this.top +" image Top");
-    // console.log(yLim);
-    console.log(xLim &&yLim);
+    let yLim=-(mouse.y-(world.height/2))<this.bottom+(this.height/4) && -(mouse.y-(world.height/2)) > this.bottom
+
     return xLim &&yLim;
   }
 
