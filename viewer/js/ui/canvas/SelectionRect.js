@@ -8,7 +8,7 @@ class SelectionRect
       this.width = 0;
       this.height = 0;
 
-      cursors.default  .addEventListener('mousedown', this.onMouseDown.bind(this));
+      // cursors.default  .addEventListener('mousedown', this.onMouseDown.bind(this));
       cursors.selecting.addEventListener('mousemove', this.onMouseMove.bind(this));
       cursors.selecting.addEventListener('mouseup'  , this.onMouseUp  .bind(this));
 

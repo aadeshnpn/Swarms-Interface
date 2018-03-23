@@ -115,11 +115,25 @@ class MissionLayer {
 
 		cursors.default.addEventListener('mousemove', this.onMouseMove.bind(this));
 		cursors.default.addEventListener('wheel', this.onMouseWheel.bind(this));
+		cursors.default.addEventListener('mousedown', this.onMouseDown.bind(this));
+		cursors.default.addEventListener('mouseup', this.onMouseUp.bind(this));
 	}
 
 
 	update(data) {
-		this.points.push(new Point({x:data.x,y:data.y},data.id,this.siteImages))
+		// console.log(data.id);
+		let update=false;
+		for(let point of this.points){
+			if(point.siteId==data.id){
+				update=true
+				point.x=data.x
+				point.y=data.y
+				point.images.push(this.siteImages[Math.floor(Math.random() *this.siteImages.length)])
+			}
+		}
+		if(!update){
+			this.points.push(new Point({x:data.x,y:data.y},data.id,[this.siteImages[Math.floor(Math.random() *this.siteImages.length)]]))
+		}
 		// }
 		// this can really slow down the ui if it gets out of hand
 		if (this.points.length > 200) { // only keep the most recent 200 points
@@ -234,10 +248,30 @@ class MissionLayer {
 			}
 		}
 	}
+
+	onMouseDown(e){
+		let i=0
+		for(let point of this.points){
+			if(point.bottomHovered){
+				point.buttonShadow=.5;
+				socket.emit("input",{type:"denySite",id:point.siteId})
+				this.points.splice(i,1)
+				this.hoveredPoint=false
+				document.getElementById("canvas").style.cursor = "default"
+			}
+			i+=1
+		}
+	}
+	onMouseUp(e){
+		for(let point of this.points){
+			point.buttonShadow=1.5
+		}
+	}
 }
 
 class Point{
   constructor(pos,id,images){
+
     this.x=pos.x
     this.y=pos.y;
     this.radius=5
@@ -261,6 +295,7 @@ class Point{
     this.width;
     this.height
     this.bottomHovered=false
+    this.buttonShadow=1.5;
 
     // console.log(mouse);
 
@@ -304,31 +339,36 @@ class Point{
 
   drawButtons(ctx){
     ctx.fillStyle="rgb(150,0,0)"
-      ctx.globalAlpha=.3
-      ctx.fillRect(this.left,-this.bottom,this.width,-this.height/4)
-      ctx.beginPath();
-      // ctx.globalAlpha=.5
-      // ctx.moveTo(this.left+this.width/2, -this.bottom);
-      // ctx.lineTo(this.left+this.width/2, -this.bottom-this.height/4);
-      // ctx.stroke();
-      // ctx.moveTo(this.left, -this.bottom-this.height/4);
-      // ctx.lineTo(this.left+this.width, -this.bottom-this.height/4);
-      // ctx.stroke();
+    ctx.shadowBlur=0
+    ctx.shadowOffsetY = -this.buttonShadow;
+    ctx.shadowColor = 'black';
+    ctx.globalAlpha=.3
+    ctx.fillRect(this.left,-this.bottom,this.width,-this.height/4)
 
-      // ctx.closePath();
-      // ctx.fill()
-      ctx.globalAlpha=1
-      ctx.font = this.fontSize.toString()+"px Arial";
-      ctx.fillStyle="white"
-      ctx.shadowOffsetX = 2;
-      ctx.shadowOffsetY = 2;
-      ctx.shadowBlur=2
-      ctx.shadowColor = 'black';
-      let imageNum=(this.currentImage+1).toString()
-      ctx.fillText("Deny Site",this.left+this.width/4,-this.bottom-this.height/8+(this.fontSize/3));
-      ctx.shawdowBlur=0
-      ctx.shadowOffsetX =0
-      ctx.shadowOffsetY = 0;
+    ctx.beginPath();
+    ctx.globalAlpha=.5
+    // ctx.moveTo(this.left+this.width/2, -this.bottom);
+    // ctx.lineTo(this.left+this.width/2, -this.bottom-this.height/4);
+    // ctx.stroke();
+    ctx.lineWidth=2;
+    ctx.moveTo(this.left, -this.bottom-this.height/4);
+    ctx.lineTo(this.left+this.width, -this.bottom-this.height/4);
+    ctx.stroke();
+    ctx.lineWidth=1
+    // ctx.closePath();
+    // ctx.fill()
+    ctx.globalAlpha=1
+    ctx.font = this.fontSize.toString()+"px Arial";
+    ctx.fillStyle="white"
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.shadowBlur=2
+    ctx.shadowColor = 'black';
+    let imageNum=(this.currentImage+1).toString()
+    ctx.fillText("Deny Site",this.left+this.width/4,-this.bottom-this.height/8+(this.fontSize/3));
+    ctx.shawdowBlur=0
+    ctx.shadowOffsetX =0
+    ctx.shadowOffsetY = 0;
   }
 
   drawImages(ctx){
@@ -448,6 +488,7 @@ class Point{
 
 		return this.dist( mouse) <= this.radius+this.hoverDistance;
 	}
+
   pictureHovered(mouse,world){
     let xLim=mouse.x-(world.width/2)>this.left && mouse.x-(world.width/2)<this.left+this.width
     let yLim=-(mouse.y-(world.height/2))<this.top && -(mouse.y-(world.height/2)) > this.top-this.height
@@ -456,6 +497,7 @@ class Point{
     // console.log(yLim);
     return xLim &&yLim;
   }
+
   bottomOfImage(mouse,world){
     let xLim=mouse.x-(world.width/2)>this.left && mouse.x-(world.width/2)<this.left+this.width
     let yLim=-(mouse.y-(world.height/2))<this.bottom+(this.height/4) && -(mouse.y-(world.height/2)) > this.bottom
@@ -1000,7 +1042,7 @@ class SelectionRect
       this.width = 0;
       this.height = 0;
 
-      cursors.default  .addEventListener('mousedown', this.onMouseDown.bind(this));
+      // cursors.default  .addEventListener('mousedown', this.onMouseDown.bind(this));
       cursors.selecting.addEventListener('mousemove', this.onMouseMove.bind(this));
       cursors.selecting.addEventListener('mouseup'  , this.onMouseUp  .bind(this));
 
@@ -1239,7 +1281,7 @@ class Cursor
    {
       if (this.events[event] == undefined)
          this.events[event] = [];
-
+      // console.log(event);
       this.events[event].push(listener);
 
       if (this.active)
@@ -1682,6 +1724,7 @@ const showChat =document.getElementById('messengerIcon');
 const debugButton =document.getElementById('debugIcon');
 const fogButton =document.getElementById('showFogIcon');
 var showAgent = false;
+var showPheromone = true;
 var showFog=true;
 var showDebug = false;
 var showSlider = false;
@@ -1689,6 +1732,18 @@ var showAgentInfo = false;
 var showChatWindow = false;
 
 
+$("#showPheromoneIcon").click(function(){
+  if(showPheromone){
+      //console.log($('#showFogIcon').attr('id'));
+    $('#showPheromoneIcon').attr('id',"dontShowPheromoneIcon")
+    showPheromone = false;
+  }
+  else{
+    //console.log($('#dontShowFogIcon').attr('id'));
+    $('#dontShowPheromoneIcon').attr('id',"showPheromoneIcon")
+    showPheromone=true;
+  }
+})
 
 $("#debugIcon").click(function(){
   $('#debugArea').fadeToggle();
@@ -1755,7 +1810,7 @@ rebugCheckbox.addEventListener('click', function(e)
       $('#dontShowAgents').attr('id',"showAgents")
     }
     else{
-      console.log("Agent Off")
+      // console.log("Agent Off")
       debug = false;
       showAgent=false;
       $('#showAgents').attr('id',"dontShowAgents")
@@ -1769,7 +1824,7 @@ var openSound = document.getElementById("audio0")
 var showAgentStateDescription=false;
 var closeSound = document.getElementById("audio1");
 var menuArray=['messengerIcon','menu','agentInfoIcon']
-var optionsArray=['options','showAgentState','dontShowAgentState','backgroundTransparency','showFogIcon','dontShowFogIcon','showAgents','dontShowAgents','debugIcon']
+var optionsArray=['options',"showPheromoneIcon","dontShowPheromoneIcon",'showAgentState','dontShowAgentState','backgroundTransparency','showFogIcon','dontShowFogIcon','showAgents','dontShowAgents','debugIcon']
 //var optionsArray.push('')
 
 $("#agentStateDescriptionButton").click(function(){
@@ -2037,8 +2092,8 @@ class Agent
   constructor(agentJson)
   {
     this.id            =  agentJson.id;
-    this.x             =  agentJson.x;
-    this.y             = -agentJson.y;
+    this.x             =  Math.round(agentJson.x);
+    this.y             = Math.round(-agentJson.y);
     this.rotation      =  Math.PI/2 - agentJson.direction; // convert from the engine's coordinate system into what the drawing routine expects
     this.state         =  agentJson.state;
     //console.log(this.state);
@@ -2051,7 +2106,16 @@ class Agent
 
   draw(ctx, debug = false, showAgentStates = false,hub)
   {
-
+    // console.log(hub);
+    // console.log(this.x);
+    // console.log(Math.sqrt(this.x**2+this.y**2));
+    let distX=this.x - hub.x
+    let distY=this.y - hub.y
+    // console.log(Math.sqrt(distY**2+distX**2));
+    // console.log(hub.radius);
+    // if(Math.sqrt(distY**2+distX**2)<hub.radius+10){
+    //   return
+    // }
     if (!debug) return;
 
 
@@ -2292,6 +2356,8 @@ class Hub
     this.x      =  hubJson.hub["x"];
     this.y      = -hubJson.hub["y"];
     this.radius =  hubJson.hub["radius"];
+    this.agentsIn = hubJson.hub["agentsIn"]
+    // console.log(hubJson.hub);
     this.paths=[]
     for(var i=0;i <= hubJson.agents.length;i++){
       this.paths[i]=new Array()
@@ -2344,7 +2410,7 @@ class Hub
     }
 
 
-    ctx.fillStyle = "rgba(242, 179, 19, 0.4)";
+    ctx.fillStyle = "rgba(242, 179, 19, .5)";
     ctx.strokeStyle = "rgb(242, 179, 19)";
     ctx.lineWidth = 2;
     ctx.translate(this.x, this.y);
@@ -2360,6 +2426,20 @@ class Hub
 
     ctx.fill();
     ctx.stroke();
+
+    // ctx.globalAlpha=1
+    // ctx.font = "20px Arial";
+    // ctx.fillStyle="white"
+    // ctx.shadowOffsetX = 2;
+    // ctx.shadowOffsetY = 2;
+    // ctx.shadowBlur=2
+    // ctx.shadowColor = 'black';
+    // // let imageNum=(this.currentImage+1).toString()
+    // ctx.fillText(this.agentsIn,this.x-15,this.y+35);
+    // ctx.shawdowBlur=0
+    // ctx.shadowOffsetX =0
+    // ctx.shadowOffsetY = 0;
+
 
     ctx.restore();
   }
@@ -2792,9 +2872,34 @@ class World
     this.test =true;
     this.time=1000;
     this.swarmState = [];
+    // this.pheromoneMatrix=[]
+    // this.matrix=new Matrix()
+    // this.matrix[5]=5
+
     //this.stateBubbles = new StateBubbles(this);
     //console.log(environmentJson);
-
+    // this.cellSize=5
+    // let i=0
+    // for (var x=0; x<(this.width/this.cellSize);x+=this.cellSize)
+    // {
+    //   this.pheromoneMatrix.push(new Array())
+    //   for(var y=0;y<(this.height/this.cellSize);y+=this.cellSize)
+    //   {
+    //     // console.log("here");
+    //     let string=x.toString()+" "+y.toString()
+    //         this.matrix[string]=false;
+    //   }
+    //   i+=1
+    // }
+    // for(let cell in this.matrix){
+    //   console.log(this.matrix[cell]);
+    // }
+    // for(let array of this.pheromoneMatrix){
+    //   // console.log(array);
+    //   for(let cell of array){
+    //     console.log(cell);
+    //   }
+    // }
     for (let site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
     for (let obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
     for (let trap       of environmentJson.traps      ) { this.traps      .push( new Trap      (trap      ) ); }
@@ -2821,7 +2926,7 @@ class World
     this.pheromones.splice(0,this.pheromones.length)
     this.pheromones=environment.pheromones
 
-
+    this.hub.agentsIn=environment.hub["agentsIn"]
 
 	  for (let i = 0; i < this.sites.length; i++) {
 		  this.sites[i].x = environment.sites[i].x;
@@ -2835,8 +2940,8 @@ class World
 	  //Update Alive Agents
 	  for (let i = 0; i < this.agents.length - this.dead_agents.length; i++) {
 
-		  this.agents[i].x = environment.agents[i].x;
-		  this.agents[i].y = -environment.agents[i].y;
+		  this.agents[i].x = Math.round(environment.agents[i].x);
+		  this.agents[i].y = Math.round(-environment.agents[i].y);
 		  this.agents[i].rotation = Math.PI/2 - environment.agents[i].direction;
       this.agents[i].state = environment.agents[i].state;
 	  }
@@ -2857,7 +2962,6 @@ class World
     // ctx.shadowBlur = 10;
     //path.draw(ctx,this.environment);
 
-//<<<<<<< HEAD
 
     //TODO: Find the place where the info stations are drawn
     for (var site       of this.sites      ) { site      .draw(ctx, debug); }
@@ -2877,7 +2981,7 @@ class World
 
     }
     for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
-    if(debug ){
+    if(debug && showPheromone){
       for(let pheromone of this.pheromones){
         ctx.beginPath()
 
@@ -2911,7 +3015,14 @@ class World
 
 
   }
+
 }
+
+// class Matrix{
+//   constructor(){
+//
+//   }
+// }
 
 //*****************************************************************************
 // Globals

@@ -333,6 +333,7 @@ require('sticky-cluster')(function (callback)
           this.engineOutputListener.on("message", this.sendUpdate.bind(this));
           this.socket.on('disconnect', this.disconnect.bind(this));
           this.socket.on('input', this.userInput.bind(this));
+          // this.socket.on('denySite',this.userInput.bind(this))
 
         });
     }
@@ -348,6 +349,7 @@ require('sticky-cluster')(function (callback)
 
     userInput(data)
     {
+      // console.log(data);
       this.userInputBroadcaster.publish(this.channels.input, JSON.stringify(data) + '\n');
     }
 

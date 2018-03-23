@@ -20,9 +20,34 @@ class World
     this.test =true;
     this.time=1000;
     this.swarmState = [];
+    // this.pheromoneMatrix=[]
+    // this.matrix=new Matrix()
+    // this.matrix[5]=5
+
     //this.stateBubbles = new StateBubbles(this);
     //console.log(environmentJson);
-
+    // this.cellSize=5
+    // let i=0
+    // for (var x=0; x<(this.width/this.cellSize);x+=this.cellSize)
+    // {
+    //   this.pheromoneMatrix.push(new Array())
+    //   for(var y=0;y<(this.height/this.cellSize);y+=this.cellSize)
+    //   {
+    //     // console.log("here");
+    //     let string=x.toString()+" "+y.toString()
+    //         this.matrix[string]=false;
+    //   }
+    //   i+=1
+    // }
+    // for(let cell in this.matrix){
+    //   console.log(this.matrix[cell]);
+    // }
+    // for(let array of this.pheromoneMatrix){
+    //   // console.log(array);
+    //   for(let cell of array){
+    //     console.log(cell);
+    //   }
+    // }
     for (let site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
     for (let obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
     for (let trap       of environmentJson.traps      ) { this.traps      .push( new Trap      (trap      ) ); }
@@ -49,7 +74,7 @@ class World
     this.pheromones.splice(0,this.pheromones.length)
     this.pheromones=environment.pheromones
 
-
+    this.hub.agentsIn=environment.hub["agentsIn"]
 
 	  for (let i = 0; i < this.sites.length; i++) {
 		  this.sites[i].x = environment.sites[i].x;
@@ -63,8 +88,8 @@ class World
 	  //Update Alive Agents
 	  for (let i = 0; i < this.agents.length - this.dead_agents.length; i++) {
 
-		  this.agents[i].x = environment.agents[i].x;
-		  this.agents[i].y = -environment.agents[i].y;
+		  this.agents[i].x = Math.round(environment.agents[i].x);
+		  this.agents[i].y = Math.round(-environment.agents[i].y);
 		  this.agents[i].rotation = Math.PI/2 - environment.agents[i].direction;
       this.agents[i].state = environment.agents[i].state;
 	  }
@@ -85,7 +110,6 @@ class World
     // ctx.shadowBlur = 10;
     //path.draw(ctx,this.environment);
 
-//<<<<<<< HEAD
 
     //TODO: Find the place where the info stations are drawn
     for (var site       of this.sites      ) { site      .draw(ctx, debug); }
@@ -105,7 +129,7 @@ class World
 
     }
     for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
-    if(debug ){
+    if(debug && showPheromone){
       for(let pheromone of this.pheromones){
         ctx.beginPath()
 
@@ -139,4 +163,11 @@ class World
 
 
   }
+
 }
+
+// class Matrix{
+//   constructor(){
+//
+//   }
+// }

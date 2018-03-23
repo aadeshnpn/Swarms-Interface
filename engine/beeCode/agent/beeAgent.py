@@ -9,7 +9,7 @@ from Pheromone import *
 from utils.geomUtil import distance
 
 #input = Enum('input', 'nestFound exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
-input = Enum('input', 'nestFound report maxAgents tooManyAgents reportingFailed finishedReporting returnToSite exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
+input = Enum('input', 'nestFound report maxAgents goingToSite tooManyAgents reportingFailed finishedReporting returnToSite exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
 
 class Bee(HubAgent):
 
@@ -74,6 +74,7 @@ class Bee(HubAgent):
         self.nextPheromone={"x":None,"y":None}
         self.pheromoneTimer=0;
         self.live = True
+        self.seesReporter=False
         self.refound=False
         self.reportTimer=1500
         self.reporting=False;
@@ -107,6 +108,7 @@ class Bee(HubAgent):
                 (ReturnToSite(self).__class__, input.reportingFailed): [self.exploreTransition, Exploring(self)],
                 (Exploring(self).__class__, input.exploreTime): [self.observeTransition, Observing(self)],
                 (Observing(self).__class__, input.observeTime): [self.exploreTransition, Exploring(self)],
+                (Observing(self).__class__, input.goingToSite): [None, ReturnToSite(self)],
                 (Observing(self).__class__, input.dancerFound): [None, Assessing(self)],
                 (Observing(self).__class__, input.startPipe): [self.pipingTransition, Piping(self)],
                 (Observing(self).__class__, input.quit): [self.restingTransition, Resting(self)],
@@ -185,15 +187,19 @@ class Exploring(State):
 
     def sense(self, agent, environment):
         agent.checkAgentLeave()
-
+        site_id=None
         new_q = environment.get_q(agent)["q"]
-        if new_q !=0 :
+        if new_q !=0:
             site_id=environment.get_q(agent)["id"]
-
+            # eprint({site_id}.issubset(environment.sitesToIgnore))
+# numbers2.issubset(numbers1)
 
 
         agent.q_value = new_q
-        if agent.q_value > 0:
+        if site_id is not None:
+            if {site_id}.issubset(environment.sitesToIgnore):
+                agent.q_value=0
+        if agent.q_value > 0 and not {site_id}.issubset(environment.sitesToIgnore):
             agent.potential_site = [agent.location[0], agent.location[1],site_id]
         agent.senseAndProcessAttractor(environment)
         agent.senseAndProcessRepulsor(environment)
@@ -324,6 +330,7 @@ class Observing(State):
         self.name = "observing"
         self.seesDancer = False
         self.seesPiper = False
+        self.seesReporter=False
 
     def sense(self, agent, environment):
         # get nearby bees from environment and check for dancers
@@ -336,6 +343,10 @@ class Observing(State):
             if isinstance(bee.state, Dancing().__class__):
                 if np.random.random()<(bee.q_value*np.sqrt(bee.q_value)*.02):#maybe get rid of the second part
                     self.seesDancer = True
+                    agent.potential_site = bee.potential_site
+            if isinstance(bee.state, ReportToHub().__class__):
+                if np.random.random()<(bee.q_value*np.sqrt(bee.q_value)*.02):#maybe get rid of the second part
+                    self.seesReporter = True
                     agent.potential_site = bee.potential_site
         '''if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
                 and agent.inHub is False:
@@ -361,6 +372,8 @@ class Observing(State):
         if self.seesDancer is True:
             agent.goingToSite = True
             return input.dancerFound
+        if self.seesReporter is True:
+            return input.goingToSite
         elif agent.counter < 1:
             if np.random.uniform(0, 1) < 0.1:  # 10% chance a bee goes back to rest after observing
                 return input.quit
@@ -541,7 +554,8 @@ class followSite(State):
         self.pheromonePhase(agent,environment)
         #Once the agent finds the site, it will track the site, and fly in a circular pattern around it
         self.followClosestSite(agent,environment)
-
+        if {site_id}.issubset(environment.sitesToIgnore):
+            agent.following=False
         if environment.agentsFollowSite[site_id]["number"] >10:
             agent.following=False
 

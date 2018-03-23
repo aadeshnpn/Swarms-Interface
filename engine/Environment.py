@@ -73,6 +73,7 @@ class Environment(ABC):
         self.x_limit = 0
         self.y_limit = 0
         self.hub = {}
+        self.sitesToIgnore=set()
         self.hubController = None
         self.obstacles = []
         self.potential_fields = []
@@ -132,6 +133,7 @@ class Environment(ABC):
 
         self.x_limit = data["dimensions"]["x_length"] / 2
         self.y_limit = data["dimensions"]["y_length"] / 2
+
         self.hub = data["hub"]
 
         # eprint('ScenarioType: ', args.scenarioType)
@@ -296,6 +298,7 @@ class Environment(ABC):
             self.inputEventManager.subscribe('restart', self.restart_sim)
             self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
             self.inputEventManager.subscribe('requestStates', self.getUiStates)
+            self.inputEventManager.subscribe('denySite', self.denySite)
             #self.inputEventManager.subscribe('requestParams', self.getParams)
 
             self.inputEventManager.subscribe('message', self.processMessage)
@@ -498,6 +501,12 @@ class Environment(ABC):
                 }
         }
         return json.dumps(parameterJson)
+
+    def denySite(self,json):
+        self.sitesToIgnore.add(json["id"])
+        # eprint(self.sitesToIgnore)
+
+
 
     def updateParameters(self, json):
         eprint("updateParameters")

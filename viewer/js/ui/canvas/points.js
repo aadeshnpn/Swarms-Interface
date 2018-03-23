@@ -1,5 +1,6 @@
 class Point{
   constructor(pos,id,images){
+
     this.x=pos.x
     this.y=pos.y;
     this.radius=5
@@ -23,6 +24,7 @@ class Point{
     this.width;
     this.height
     this.bottomHovered=false
+    this.buttonShadow=1.5;
 
     // console.log(mouse);
 
@@ -66,31 +68,36 @@ class Point{
 
   drawButtons(ctx){
     ctx.fillStyle="rgb(150,0,0)"
-      ctx.globalAlpha=.3
-      ctx.fillRect(this.left,-this.bottom,this.width,-this.height/4)
-      ctx.beginPath();
-      // ctx.globalAlpha=.5
-      // ctx.moveTo(this.left+this.width/2, -this.bottom);
-      // ctx.lineTo(this.left+this.width/2, -this.bottom-this.height/4);
-      // ctx.stroke();
-      // ctx.moveTo(this.left, -this.bottom-this.height/4);
-      // ctx.lineTo(this.left+this.width, -this.bottom-this.height/4);
-      // ctx.stroke();
+    ctx.shadowBlur=0
+    ctx.shadowOffsetY = -this.buttonShadow;
+    ctx.shadowColor = 'black';
+    ctx.globalAlpha=.3
+    ctx.fillRect(this.left,-this.bottom,this.width,-this.height/4)
 
-      // ctx.closePath();
-      // ctx.fill()
-      ctx.globalAlpha=1
-      ctx.font = this.fontSize.toString()+"px Arial";
-      ctx.fillStyle="white"
-      ctx.shadowOffsetX = 2;
-      ctx.shadowOffsetY = 2;
-      ctx.shadowBlur=2
-      ctx.shadowColor = 'black';
-      let imageNum=(this.currentImage+1).toString()
-      ctx.fillText("Deny Site",this.left+this.width/4,-this.bottom-this.height/8+(this.fontSize/3));
-      ctx.shawdowBlur=0
-      ctx.shadowOffsetX =0
-      ctx.shadowOffsetY = 0;
+    ctx.beginPath();
+    ctx.globalAlpha=.5
+    // ctx.moveTo(this.left+this.width/2, -this.bottom);
+    // ctx.lineTo(this.left+this.width/2, -this.bottom-this.height/4);
+    // ctx.stroke();
+    ctx.lineWidth=2;
+    ctx.moveTo(this.left, -this.bottom-this.height/4);
+    ctx.lineTo(this.left+this.width, -this.bottom-this.height/4);
+    ctx.stroke();
+    ctx.lineWidth=1
+    // ctx.closePath();
+    // ctx.fill()
+    ctx.globalAlpha=1
+    ctx.font = this.fontSize.toString()+"px Arial";
+    ctx.fillStyle="white"
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.shadowBlur=2
+    ctx.shadowColor = 'black';
+    let imageNum=(this.currentImage+1).toString()
+    ctx.fillText("Deny Site",this.left+this.width/4,-this.bottom-this.height/8+(this.fontSize/3));
+    ctx.shawdowBlur=0
+    ctx.shadowOffsetX =0
+    ctx.shadowOffsetY = 0;
   }
 
   drawImages(ctx){
@@ -210,6 +217,7 @@ class Point{
 
 		return this.dist( mouse) <= this.radius+this.hoverDistance;
 	}
+
   pictureHovered(mouse,world){
     let xLim=mouse.x-(world.width/2)>this.left && mouse.x-(world.width/2)<this.left+this.width
     let yLim=-(mouse.y-(world.height/2))<this.top && -(mouse.y-(world.height/2)) > this.top-this.height
@@ -218,6 +226,7 @@ class Point{
     // console.log(yLim);
     return xLim &&yLim;
   }
+
   bottomOfImage(mouse,world){
     let xLim=mouse.x-(world.width/2)>this.left && mouse.x-(world.width/2)<this.left+this.width
     let yLim=-(mouse.y-(world.height/2))<this.bottom+(this.height/4) && -(mouse.y-(world.height/2)) > this.bottom

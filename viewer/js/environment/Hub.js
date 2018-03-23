@@ -5,6 +5,8 @@ class Hub
     this.x      =  hubJson.hub["x"];
     this.y      = -hubJson.hub["y"];
     this.radius =  hubJson.hub["radius"];
+    this.agentsIn = hubJson.hub["agentsIn"]
+    // console.log(hubJson.hub);
     this.paths=[]
     for(var i=0;i <= hubJson.agents.length;i++){
       this.paths[i]=new Array()
@@ -57,7 +59,7 @@ class Hub
     }
 
 
-    ctx.fillStyle = "rgba(242, 179, 19, 0.4)";
+    ctx.fillStyle = "rgba(242, 179, 19, .5)";
     ctx.strokeStyle = "rgb(242, 179, 19)";
     ctx.lineWidth = 2;
     ctx.translate(this.x, this.y);
@@ -73,6 +75,20 @@ class Hub
 
     ctx.fill();
     ctx.stroke();
+
+    // ctx.globalAlpha=1
+    // ctx.font = "20px Arial";
+    // ctx.fillStyle="white"
+    // ctx.shadowOffsetX = 2;
+    // ctx.shadowOffsetY = 2;
+    // ctx.shadowBlur=2
+    // ctx.shadowColor = 'black';
+    // // let imageNum=(this.currentImage+1).toString()
+    // ctx.fillText(this.agentsIn,this.x-15,this.y+35);
+    // ctx.shawdowBlur=0
+    // ctx.shadowOffsetX =0
+    // ctx.shadowOffsetY = 0;
+
 
     ctx.restore();
   }

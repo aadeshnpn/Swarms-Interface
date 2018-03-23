@@ -20,7 +20,7 @@ class BeeEnvironment(Environment):
         self.actions = {"turns": 0, "stateChanges": 0}
         self.influenceActions = {"turns": 0, "stateChanges": 0}
         self.totalInfluence = []
-        
+
         self.states = {"exploring": {},"reportToHub":{},"follow_site": {},"returnToSite":{}, "observing":{},"resting":{},'dancing':{},'assessing':{},'siteSearch':{},'site assess':{},'piping':{},'commit':{}}
         self.pheromoneList =[]
         self.xPos = []
@@ -227,6 +227,8 @@ class BeeEnvironment(Environment):
         return {"radius": -1, "q": 0}
 
     def to_json(self):
+        # eprint(len(self.hubController.agentsInHub))
+        self.hub["agentsIn"]=len(self.hubController.agentsInHub)
         return(
             json.dumps(
                 {

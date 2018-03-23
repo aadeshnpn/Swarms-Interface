@@ -20,10 +20,72 @@
 .optionsContent{
   display:none;
   position: absolute;
-  bottom:130px;
+  bottom:190px;
   right:5px;
   width:var(--buttonSize);
   height:var(--optionsContentSize);
+}
+
+#showPheromoneIcon{
+  width:var(--buttonSize);
+  height: var(--buttonSize);
+  margin: 0 auto;
+  position: relative;
+  background-image: url("../../img/pheromoneOn.png");
+  background-size: 40px 40px;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+#showPheromoneIcon:hover{
+  background-image: url("../../img/pheromoneOnHover.png");
+  background-size: 40px 40px;
+  background-repeat: no-repeat;
+}
+#dontShowPheromoneIcon{
+  width:var(--buttonSize);
+  height: var(--buttonSize);
+  margin: 0 auto;
+  position: relative;
+  background-image: url("../../img/pheromoneOff.png");
+  background-size: 40px 40px;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+#dontShowPheromoneIcon:hover{
+  background-image: url("../../img/pheromoneOffHover.png");
+  background-size: 40px 40px;
+  background-repeat: no-repeat;
+}
+
+#showPheromoneIcon #pheromoneToolTip, #dontShowPheromoneIcon #pheromoneToolTip{
+  visibility: hidden;
+  width: 150px;
+  background-color: rgba(85, 85, 85, 0.86);
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 0 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 0%;
+  left: -95px;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity .5s;
+}
+#showPheromoneIcon #pheromoneToolTip::after, #dontShowPheromoneIcon #pheromoneToolTip::after {
+  content: "";
+  position: absolute;
+  top: 45%;
+  right: -10px;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color:  transparent  transparent transparent #555;
+}
+#showPheromoneIcon:hover #pheromoneToolTip, #dontShowPheromoneIcon:hover #pheromoneToolTip {
+  visibility: visible;
+  opacity: 1;
 }
 
 #debugIcon{

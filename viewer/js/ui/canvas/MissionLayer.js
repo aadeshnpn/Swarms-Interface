@@ -13,11 +13,25 @@ class MissionLayer {
 
 		cursors.default.addEventListener('mousemove', this.onMouseMove.bind(this));
 		cursors.default.addEventListener('wheel', this.onMouseWheel.bind(this));
+		cursors.default.addEventListener('mousedown', this.onMouseDown.bind(this));
+		cursors.default.addEventListener('mouseup', this.onMouseUp.bind(this));
 	}
 
 
 	update(data) {
-		this.points.push(new Point({x:data.x,y:data.y},data.id,this.siteImages))
+		// console.log(data.id);
+		let update=false;
+		for(let point of this.points){
+			if(point.siteId==data.id){
+				update=true
+				point.x=data.x
+				point.y=data.y
+				point.images.push(this.siteImages[Math.floor(Math.random() *this.siteImages.length)])
+			}
+		}
+		if(!update){
+			this.points.push(new Point({x:data.x,y:data.y},data.id,[this.siteImages[Math.floor(Math.random() *this.siteImages.length)]]))
+		}
 		// }
 		// this can really slow down the ui if it gets out of hand
 		if (this.points.length > 200) { // only keep the most recent 200 points
@@ -130,6 +144,25 @@ class MissionLayer {
 					point.currentImage=0
 				}
 			}
+		}
+	}
+
+	onMouseDown(e){
+		let i=0
+		for(let point of this.points){
+			if(point.bottomHovered){
+				point.buttonShadow=.5;
+				socket.emit("input",{type:"denySite",id:point.siteId})
+				this.points.splice(i,1)
+				this.hoveredPoint=false
+				document.getElementById("canvas").style.cursor = "default"
+			}
+			i+=1
+		}
+	}
+	onMouseUp(e){
+		for(let point of this.points){
+			point.buttonShadow=1.5
 		}
 	}
 }

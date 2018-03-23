@@ -33,7 +33,7 @@ class HubController:
         self.reset(radius, agents, environment, exploreTime)
         self.siteDistancePriority = 0
         self.siteSizePriority = 0
-
+        # self.agentsInHub={}
         self.no_viewer = environment.args.no_viewer
 
         environment.inputEventManager.subscribe('priorityUpdate', self.handlePriorityUpdate)

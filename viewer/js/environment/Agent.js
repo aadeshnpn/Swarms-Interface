@@ -3,8 +3,8 @@ class Agent
   constructor(agentJson)
   {
     this.id            =  agentJson.id;
-    this.x             =  agentJson.x;
-    this.y             = -agentJson.y;
+    this.x             =  Math.round(agentJson.x);
+    this.y             = Math.round(-agentJson.y);
     this.rotation      =  Math.PI/2 - agentJson.direction; // convert from the engine's coordinate system into what the drawing routine expects
     this.state         =  agentJson.state;
     //console.log(this.state);
@@ -17,7 +17,16 @@ class Agent
 
   draw(ctx, debug = false, showAgentStates = false,hub)
   {
-
+    // console.log(hub);
+    // console.log(this.x);
+    // console.log(Math.sqrt(this.x**2+this.y**2));
+    let distX=this.x - hub.x
+    let distY=this.y - hub.y
+    // console.log(Math.sqrt(distY**2+distX**2));
+    // console.log(hub.radius);
+    // if(Math.sqrt(distY**2+distX**2)<hub.radius+10){
+    //   return
+    // }
     if (!debug) return;
 
 

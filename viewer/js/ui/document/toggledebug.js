@@ -4,6 +4,7 @@ const showChat =document.getElementById('messengerIcon');
 const debugButton =document.getElementById('debugIcon');
 const fogButton =document.getElementById('showFogIcon');
 var showAgent = false;
+var showPheromone = true;
 var showFog=true;
 var showDebug = false;
 var showSlider = false;
@@ -11,6 +12,18 @@ var showAgentInfo = false;
 var showChatWindow = false;
 
 
+$("#showPheromoneIcon").click(function(){
+  if(showPheromone){
+      //console.log($('#showFogIcon').attr('id'));
+    $('#showPheromoneIcon').attr('id',"dontShowPheromoneIcon")
+    showPheromone = false;
+  }
+  else{
+    //console.log($('#dontShowFogIcon').attr('id'));
+    $('#dontShowPheromoneIcon').attr('id',"showPheromoneIcon")
+    showPheromone=true;
+  }
+})
 
 $("#debugIcon").click(function(){
   $('#debugArea').fadeToggle();
@@ -77,7 +90,7 @@ rebugCheckbox.addEventListener('click', function(e)
       $('#dontShowAgents').attr('id',"showAgents")
     }
     else{
-      console.log("Agent Off")
+      // console.log("Agent Off")
       debug = false;
       showAgent=false;
       $('#showAgents').attr('id',"dontShowAgents")

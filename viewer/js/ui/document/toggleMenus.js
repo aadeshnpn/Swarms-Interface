@@ -4,7 +4,7 @@ var openSound = document.getElementById("audio0")
 var showAgentStateDescription=false;
 var closeSound = document.getElementById("audio1");
 var menuArray=['messengerIcon','menu','agentInfoIcon']
-var optionsArray=['options','showAgentState','dontShowAgentState','backgroundTransparency','showFogIcon','dontShowFogIcon','showAgents','dontShowAgents','debugIcon']
+var optionsArray=['options',"showPheromoneIcon","dontShowPheromoneIcon",'showAgentState','dontShowAgentState','backgroundTransparency','showFogIcon','dontShowFogIcon','showAgents','dontShowAgents','debugIcon']
 //var optionsArray.push('')
 
 $("#agentStateDescriptionButton").click(function(){
