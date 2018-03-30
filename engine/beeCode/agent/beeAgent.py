@@ -190,7 +190,9 @@ class Exploring(State):
         site_id=None
         new_q = environment.get_q(agent)["q"]
         if new_q !=0:
-            site_id=environment.get_q(agent)["id"]
+            # site_id=environment.get_q(agent)["id"]
+            site_id=environment.get_siteIDs(agent)
+            site_id=site_id[np.random.randint(0, len(site_id))]
             # eprint({site_id}.issubset(environment.sitesToIgnore))
 # numbers2.issubset(numbers1)
 
@@ -402,8 +404,8 @@ class ReturnToSite(State):
         x_dif = agent.location[0] - agent.potential_site[0]
         y_dif = agent.location[1] - agent.potential_site[1]
         tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
-        if environment.agentsFollowSite[site_id]["reporting"]:
-            environment.agentsFollowSite[site_id]["reportTime"]-=1
+        # if environment.agentsFollowSite[site_id]["reporting"]:
+        #     environment.agentsFollowSite[site_id]["reportTime"]-=1
         if tot_dif  <=agent.view:
             agent.returned=True
         if agent.returned:
@@ -502,18 +504,7 @@ class followSite(State):
              agent.pheromoneTimer=0
         agent.pheromoneTimer+=1
 
-        for pheromone in environment.pheromoneList:
-            if pheromone["agent"]==agent.id:
 
-                if not pheromone["pheromone"].fresh:
-                    pheromone["pheromone"].enlarge()
-                else:
-                    pheromone["pheromone"].fresh = False;
-        i=0
-        for pheromone in environment.pheromoneList:
-            if(pheromone["pheromone"].strength<=0):
-                environment.pheromoneList.pop(i)
-            i+=1
     def followClosestSite(self,agent,environment):
         site_id =agent.potential_site[2]
         for site in environment.sites:
@@ -573,12 +564,12 @@ class followSite(State):
     def update(self, agent):
         agent.move(agent.potential_site)
         if agent.reporting:
-
             return input.report
         if not agent.following:
             agent.velocity=1.6
             agent.unfollowing=True
             agent.unfollowRest=200
+            agent.potential_site=None
             return input.tooManyAgents
         return
 

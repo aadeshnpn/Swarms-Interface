@@ -195,6 +195,17 @@ class BeeEnvironment(Environment):
             if self.agents[ID].potential_site != None and self.agents[ID].potential_site[2] == site_id:
                 num+=1
         return num
+    def get_siteIDs(self,agent):
+        ids=[]
+        for i, site in enumerate(self.sites):
+            x_dif = agent.location[0] - site.x
+            y_dif = agent.location[1] - site.y
+            tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
+
+            if tot_dif -agent.view <= site.radius:
+                ids.append(site.id)
+        # eprint(ids)
+        return ids
     def get_q(self, agent):
         # Calculate the distance between the coordinates and the center of each site, then compare that distance with
         # the radius of the obstacles, traps, rough spots, and sites

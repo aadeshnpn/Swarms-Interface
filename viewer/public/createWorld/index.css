@@ -76,6 +76,7 @@ canvas{
 #canvasDiv:hover  #startSim {
   display: block;
 }
+
 #startSim{
   display: none;
   background-color: rgba(0, 0, 0,.5);
@@ -96,7 +97,9 @@ canvas{
 #startSim:active{
   box-shadow: 2px 2px 4px rgba(0,0,0,.9);
 }
-
+#startSim:hover{
+  background-color: rgba(50, 50, 50,.5);
+}
 .panel{
   width: var(--panelWidth);
   height:calc(100%/10);

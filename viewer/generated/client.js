@@ -122,12 +122,15 @@ class MissionLayer {
 
 	update(data) {
 		// console.log(data.id);
+		if(!this.hoveredPoint){
+			document.getElementById("canvas").style.cursor = "default";
+		}
 		let update=false;
 		for(let point of this.points){
 			if(point.siteId==data.id){
 				update=true
-				point.x=data.x
-				point.y=data.y
+				point.x=Math.round(data.x)
+				point.y=Math.round(data.y)
 				point.images.push(this.siteImages[Math.floor(Math.random() *this.siteImages.length)])
 			}
 		}
@@ -272,8 +275,8 @@ class MissionLayer {
 class Point{
   constructor(pos,id,images){
 
-    this.x=pos.x
-    this.y=pos.y;
+    this.x=Math.round(pos.x)
+    this.y=Math.round(pos.y);
     this.radius=5
     this.siteId=id
     this.hovered=false;
@@ -326,7 +329,7 @@ class Point{
       ctx.beginPath()
       ctx.fillStyle="blue"
       ctx.globalAlpha=.5
-      ctx.arc(this.x, -this.y, this.radius+this.hoverDistance, 0, 2 * Math.PI);
+      ctx.arc(Math.round(this.x), Math.round(-this.y), this.radius+this.hoverDistance, 0, 2 * Math.PI);
       ctx.fill()
       ctx.stroke()
       ctx.closePath()
@@ -430,19 +433,19 @@ class Point{
     ctx.lineWidth=3
     ctx.fillStyle="black"
     ctx.beginPath();
-    ctx.moveTo(this.left, -this.bottom);
-    ctx.lineTo(right, -this.bottom);
-    ctx.lineTo(right, -this.top);
-    ctx.lineTo(this.left, -this.top);
-    ctx.lineTo(this.left, -this.bottom);
+    ctx.moveTo(Math.round(this.left), Math.round(-this.bottom));
+    ctx.lineTo(Math.round(right), Math.round(-this.bottom));
+    ctx.lineTo(Math.round(right), Math.round(-this.top));
+    ctx.lineTo(Math.round(this.left), Math.round(-this.top));
+    ctx.lineTo(Math.round(this.left), Math.round(-this.bottom));
     ctx.fill()
     ctx.stroke();
     ctx.closePath();
     ctx.lineWidth=1
 
 
-    ctx.drawImage(this.image, this.left + this.imageBorderWidth, -this.top + this.imageBorderWidth,
-      this.width - 2 * this.imageBorderWidth, this.height - 2 * this.imageBorderWidth);
+    ctx.drawImage(this.image, Math.round(this.left) + Math.round(this.imageBorderWidth), Math.round(-this.top) + Math.round(this.imageBorderWidth),
+      Math.round(this.width) - 2 * Math.round(this.imageBorderWidth), Math.round(this.height) - 2 * Math.round(this.imageBorderWidth));
 
     // if(this.bottomHovered){
     //   ctx.fillStyle="rgb(0,0,150)"
@@ -2113,9 +2116,7 @@ class Agent
     let distY=this.y - hub.y
     // console.log(Math.sqrt(distY**2+distX**2));
     // console.log(hub.radius);
-    // if(Math.sqrt(distY**2+distX**2)<hub.radius+10){
-    //   return
-    // }
+
     if (!debug) return;
 
 
@@ -2128,9 +2129,9 @@ class Agent
 
     ctx.rotate(this.rotation);
     ctx.shadowColor = 'rgba(0,0,0,.7)';
-    ctx.shadowOffsetY = 2;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowBlur=10;
+    // ctx.shadowOffsetY = 2;
+    // ctx.shadowOffsetX = 2;
+    // ctx.shadowBlur=10;
 
     ctx.drawImage(bee, -bee.width/2, -bee.height/2);;
     ctx.shadowOffsetY = 0;
@@ -2929,8 +2930,8 @@ class World
     this.hub.agentsIn=environment.hub["agentsIn"]
 
 	  for (let i = 0; i < this.sites.length; i++) {
-		  this.sites[i].x = environment.sites[i].x;
-		  this.sites[i].y = -environment.sites[i]["y"];
+		  this.sites[i].x = Math.round(environment.sites[i].x);
+		  this.sites[i].y = Math.round(-environment.sites[i]["y"]);
 	  }
 	  for (let i = 0; i < this.dead_agents.length; i++) {
 
@@ -2981,21 +2982,24 @@ class World
 
     }
     for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
+
     if(debug && showPheromone){
+      // let i=0;
       for(let pheromone of this.pheromones){
+        // console.log(i);
+
+        // console.log(i%2);
+        // if(i%2==0 && this.pheromones.length >10){
+          // break;
+        // }
+        // i+=1
         ctx.beginPath()
 
         let x=255//(255-(pheromone.site*(255/this.sites.length))).toString();
         if(x <=0){
           x=0;
         }
-
-
-        ctx.fillStyle = "rgb("+x.toString()+","+x.toString()+","+x.toString()+")";
-
-        //for (let pheromone of this.pheromones)
-        //{
-        //console.log(this.pheromones);
+        ctx.fillStyle = "white";
         if(pheromone.strength <=0){
           ctx.globalAlpha = .00001
 
@@ -3004,7 +3008,7 @@ class World
 
         }
         ctx.beginPath()
-        ctx.arc(pheromone.x, -pheromone.y, pheromone.r,0,Math.PI*2);
+        ctx.arc(Math.round(pheromone.x), Math.round(-pheromone.y), pheromone.r,0,Math.PI*2);
         //}
         ctx.fill();
         ctx.globalAlpha = 1

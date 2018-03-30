@@ -24,9 +24,7 @@ class Agent
     let distY=this.y - hub.y
     // console.log(Math.sqrt(distY**2+distX**2));
     // console.log(hub.radius);
-    // if(Math.sqrt(distY**2+distX**2)<hub.radius+10){
-    //   return
-    // }
+
     if (!debug) return;
 
 
@@ -39,9 +37,9 @@ class Agent
 
     ctx.rotate(this.rotation);
     ctx.shadowColor = 'rgba(0,0,0,.7)';
-    ctx.shadowOffsetY = 2;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowBlur=10;
+    // ctx.shadowOffsetY = 2;
+    // ctx.shadowOffsetX = 2;
+    // ctx.shadowBlur=10;
 
     ctx.drawImage(bee, -bee.width/2, -bee.height/2);;
     ctx.shadowOffsetY = 0;

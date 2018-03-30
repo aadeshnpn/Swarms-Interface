@@ -284,7 +284,24 @@ class Environment(ABC):
         for site in self.sites:
             site.move()
 
+    def pheromones(self):
+        for pheromone in self.pheromoneList:
+            # if pheromone["agent"]==agent.id:
 
+            if not pheromone["pheromone"].fresh:
+                pheromone["pheromone"].enlarge()
+            else:
+                pheromone["pheromone"].fresh = False;
+        i=0
+        for pheromone in self.pheromoneList:
+            if(pheromone["pheromone"].strength<=0):
+                self.pheromoneList.pop(i)
+            i+=1
+    def updateSiteInfo(self):
+        # eprint(len(self.agentsFollowSite))
+        for i in range(0,len(self.agentsFollowSite)-1):
+            if self.agentsFollowSite[i]["reporting"]:
+                self.agentsFollowSite[i]["reportTime"]-=1
     def run(self):
 
         if (not args.no_viewer):
@@ -312,6 +329,8 @@ class Environment(ABC):
 
         while True:
             self.moveSites()
+            self.pheromones()
+            self.updateSiteInfo()
             try:
 
                 if args.tick_limit != None and self.stats["ticks"] >= args.tick_limit:

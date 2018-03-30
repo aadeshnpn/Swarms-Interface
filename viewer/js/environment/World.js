@@ -77,8 +77,8 @@ class World
     this.hub.agentsIn=environment.hub["agentsIn"]
 
 	  for (let i = 0; i < this.sites.length; i++) {
-		  this.sites[i].x = environment.sites[i].x;
-		  this.sites[i].y = -environment.sites[i]["y"];
+		  this.sites[i].x = Math.round(environment.sites[i].x);
+		  this.sites[i].y = Math.round(-environment.sites[i]["y"]);
 	  }
 	  for (let i = 0; i < this.dead_agents.length; i++) {
 
@@ -129,21 +129,24 @@ class World
 
     }
     for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
+
     if(debug && showPheromone){
+      // let i=0;
       for(let pheromone of this.pheromones){
+        // console.log(i);
+
+        // console.log(i%2);
+        // if(i%2==0 && this.pheromones.length >10){
+          // break;
+        // }
+        // i+=1
         ctx.beginPath()
 
         let x=255//(255-(pheromone.site*(255/this.sites.length))).toString();
         if(x <=0){
           x=0;
         }
-
-
-        ctx.fillStyle = "rgb("+x.toString()+","+x.toString()+","+x.toString()+")";
-
-        //for (let pheromone of this.pheromones)
-        //{
-        //console.log(this.pheromones);
+        ctx.fillStyle = "white";
         if(pheromone.strength <=0){
           ctx.globalAlpha = .00001
 
@@ -152,7 +155,7 @@ class World
 
         }
         ctx.beginPath()
-        ctx.arc(pheromone.x, -pheromone.y, pheromone.r,0,Math.PI*2);
+        ctx.arc(Math.round(pheromone.x), Math.round(-pheromone.y), pheromone.r,0,Math.PI*2);
         //}
         ctx.fill();
         ctx.globalAlpha = 1

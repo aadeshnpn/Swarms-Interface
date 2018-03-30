@@ -20,12 +20,15 @@ class MissionLayer {
 
 	update(data) {
 		// console.log(data.id);
+		if(!this.hoveredPoint){
+			document.getElementById("canvas").style.cursor = "default";
+		}
 		let update=false;
 		for(let point of this.points){
 			if(point.siteId==data.id){
 				update=true
-				point.x=data.x
-				point.y=data.y
+				point.x=Math.round(data.x)
+				point.y=Math.round(data.y)
 				point.images.push(this.siteImages[Math.floor(Math.random() *this.siteImages.length)])
 			}
 		}

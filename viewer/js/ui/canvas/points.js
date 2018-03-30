@@ -1,8 +1,8 @@
 class Point{
   constructor(pos,id,images){
 
-    this.x=pos.x
-    this.y=pos.y;
+    this.x=Math.round(pos.x)
+    this.y=Math.round(pos.y);
     this.radius=5
     this.siteId=id
     this.hovered=false;
@@ -55,7 +55,7 @@ class Point{
       ctx.beginPath()
       ctx.fillStyle="blue"
       ctx.globalAlpha=.5
-      ctx.arc(this.x, -this.y, this.radius+this.hoverDistance, 0, 2 * Math.PI);
+      ctx.arc(Math.round(this.x), Math.round(-this.y), this.radius+this.hoverDistance, 0, 2 * Math.PI);
       ctx.fill()
       ctx.stroke()
       ctx.closePath()
@@ -159,19 +159,19 @@ class Point{
     ctx.lineWidth=3
     ctx.fillStyle="black"
     ctx.beginPath();
-    ctx.moveTo(this.left, -this.bottom);
-    ctx.lineTo(right, -this.bottom);
-    ctx.lineTo(right, -this.top);
-    ctx.lineTo(this.left, -this.top);
-    ctx.lineTo(this.left, -this.bottom);
+    ctx.moveTo(Math.round(this.left), Math.round(-this.bottom));
+    ctx.lineTo(Math.round(right), Math.round(-this.bottom));
+    ctx.lineTo(Math.round(right), Math.round(-this.top));
+    ctx.lineTo(Math.round(this.left), Math.round(-this.top));
+    ctx.lineTo(Math.round(this.left), Math.round(-this.bottom));
     ctx.fill()
     ctx.stroke();
     ctx.closePath();
     ctx.lineWidth=1
 
 
-    ctx.drawImage(this.image, this.left + this.imageBorderWidth, -this.top + this.imageBorderWidth,
-      this.width - 2 * this.imageBorderWidth, this.height - 2 * this.imageBorderWidth);
+    ctx.drawImage(this.image, Math.round(this.left) + Math.round(this.imageBorderWidth), Math.round(-this.top) + Math.round(this.imageBorderWidth),
+      Math.round(this.width) - 2 * Math.round(this.imageBorderWidth), Math.round(this.height) - 2 * Math.round(this.imageBorderWidth));
 
     // if(this.bottomHovered){
     //   ctx.fillStyle="rgb(0,0,150)"
