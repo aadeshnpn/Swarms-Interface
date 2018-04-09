@@ -221,10 +221,11 @@ class BeeEnvironment(Environment):
                 return {
                     "radius": site.radius,
                     "q": site.q_value - (tot_dif / site.radius * .25 * site.q_value),     #gradient!
-                    "id": site.id
+                    "id": site.id,
+                    "site_q": site.q_value
                 }
 
-        return {"radius": -1, "q": 0}
+        return {"radius": -1, "q": 0, "site_q": 0}
 
     def to_json(self):
         # eprint(len(self.hubController.agentsInHub))

@@ -85,6 +85,7 @@ class Bee(HubAgent):
         self.velocity = self.parameters["Velocity"]
         self.potential_site = None  # array [x,y]
         self.q_value = 0
+        self.site_q = 0
         self.assessments = 1
         self.dist=np.random.randint(25,500)
         self.swarmDir=np.random.randint(0,2)
@@ -194,7 +195,7 @@ class Exploring(State):
             # eprint({site_id}.issubset(environment.sitesToIgnore))
 # numbers2.issubset(numbers1)
 
-
+        agent.site_q = environment.get_q(agent)["site_q"]
         agent.q_value = new_q
         if site_id is not None:
             if {site_id}.issubset(environment.sitesToIgnore):

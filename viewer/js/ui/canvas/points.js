@@ -1,17 +1,20 @@
 class Point{
   constructor(pos,id,images){
+    if(images.length == 0){
+        console.log('No images in point: ', id)
+    }
 
     this.x=pos.x
     this.y=pos.y;
     this.radius=5
     this.siteId=id
     this.hovered=false;
-    this.images=images.slice()
+    this.images=images
     this.shuffle(this.images)
     this.hoverDistance=10
     this.currentImage=0
     this.imageMaxWidth = 200;
-		this.imageMaxHeight = 200;
+	this.imageMaxHeight = 200;
     this.imageBorderWidth = 2;
     this.image=new Image()
     this.pin=new Image()
@@ -24,9 +27,13 @@ class Point{
     this.width;
     this.height
     this.bottomHovered=false
+    this.topHovered=false
     this.buttonShadow=1.5;
-
+    this.range = null
+    this.pct = .8
     // console.log(mouse);
+//        console.log(this.images)
+
 
   }
 
@@ -98,11 +105,55 @@ class Point{
     ctx.shawdowBlur=0
     ctx.shadowOffsetX =0
     ctx.shadowOffsetY = 0;
+
   }
+
+  makeRangeControl(x,y,width,height){
+    var range={x:x,y:y,width:width,height:height};
+    range.x1=range.x+range.width;
+    range.y1=range.y;
+    //
+    range.pct=this.pct;
+    return(range);
+    console.log('Making range Control')
+  }
+
+  drawRangeSlider(ctx){
+//   // bar
+//
+//
+//    ctx.lineWidth=6;
+//    ctx.lineCap='round';
+//    ctx.beginPath();
+//    ctx.moveTo(this.range.x,this.range.y);
+//    ctx.lineTo(this.range.x1,this.range.y);
+//    ctx.strokeStyle='black';
+//    ctx.stroke();
+//    // thumb
+//    ctx.beginPath();
+//    var thumbX=this.range.x+this.range.width*this.range.pct;
+//    ctx.moveTo(thumbX,this.range.y - this.range.height/4);
+//    ctx.lineTo(thumbX,this.range.y + this.range.height/4);
+//    ctx.strokeStyle='rgba(255,0,0,0.25)';
+//    ctx.stroke();
+//    ctx.lineWidth=1
+//    // legend
+////    ctx.fillStyle='blue';
+////    ctx.textAlign='center';
+////    ctx.textBaseline='top';
+////    ctx.font='10px arial';
+////    ctx.fillText(parseInt(range.pct*100)+'%',range.x+range.width/2,range.y-range.height/2-2);
+  }
+
+
+
 
   drawImages(ctx){
     // console.log(this.images.length);
+//    console.log(this.currentImage)
+//    console.log(this.images[this.currentImage])
     this.image.src=this.images[this.currentImage]
+//    console.log(this.image)
     this.width = this.image.width;
     this.height = this.image.height;
     // console.log(width);
@@ -216,7 +267,7 @@ class Point{
   isHovered(mouse,world) {
 
 		return this.dist( mouse) <= this.radius+this.hoverDistance;
-	}
+  }
 
   pictureHovered(mouse,world){
     let xLim=mouse.x-(world.width/2)>this.left && mouse.x-(world.width/2)<this.left+this.width
@@ -232,6 +283,17 @@ class Point{
     let yLim=-(mouse.y-(world.height/2))<this.bottom+(this.height/4) && -(mouse.y-(world.height/2)) > this.bottom
 
     return xLim &&yLim;
+  }
+
+  topOfImage(mouse,world){
+    let xLim=mouse.x-(world.width/2)>this.left && mouse.x-(world.width/2)<this.left+this.width
+    let yLim=-(mouse.y-(world.height/2))<this.bottom+this.height && -(mouse.y-(world.height/2)) > this.bottom
+
+    return xLim &&yLim;
+  }
+
+  isDown(mouse,world){
+    return mouse.x-(world.width/2)>this.range.x && mouse.x-(world.width/2) < this.range.x+this.range.width && mouse.y - (world.height/2)>this.range.y-this.range.height/2 && mouse.y-(world.height/2)<this.range.y+this.range.height/2;
   }
 
 }

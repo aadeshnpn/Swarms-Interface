@@ -14,8 +14,8 @@ class Site
     if (!debug)
       return;
 
-    var rVal = (this.q > 0.5) ? (1.0 - this.q) * 2 : 1.0;
-    var gVal = (this.q > 0.5) ? 1.0 : this.q * 2;
+    var rVal = (this.q < 0.5) ? (1.0 - this.q) * 2 : 1.0;
+    var gVal = (this.q < 0.5) ? 1.0 : this.q * 2;
 
     ctx.save();
 
