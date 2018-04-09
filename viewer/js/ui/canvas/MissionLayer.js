@@ -5,6 +5,22 @@ class MissionLayer {
 		this.hoveredPoint=false;
 		// create list of images
 		this.siteImages = [];
+		this.armyGuy1=[]
+		this.armyGuy2=[]
+		this.armyGuy3=[]
+		this.armyGuy4=[]
+		this.armyTruck=[]
+		this.cat=[]
+		this.cow=[]
+		this.sheep=[]
+		this.legoGuy1=[]
+		this.legoGuy2=[]
+		this.legoGuy3=[]
+		this.legoTruck=[]
+
+
+
+
 		this.loadSiteImages();
 
 		ui.register('updateMission', this.update.bind(this));

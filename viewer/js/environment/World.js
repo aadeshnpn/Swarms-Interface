@@ -17,37 +17,19 @@ class World
     this.dead_agents = [];
     this.pheromones  = [];
     this.environment = environmentJson;
-    this.test =true;
-    this.time=1000;
     this.swarmState = [];
-    // this.pheromoneMatrix=[]
-    // this.matrix=new Matrix()
-    // this.matrix[5]=5
-
-    //this.stateBubbles = new StateBubbles(this);
-    //console.log(environmentJson);
-    // this.cellSize=5
-    // let i=0
-    // for (var x=0; x<(this.width/this.cellSize);x+=this.cellSize)
-    // {
-    //   this.pheromoneMatrix.push(new Array())
-    //   for(var y=0;y<(this.height/this.cellSize);y+=this.cellSize)
-    //   {
-    //     // console.log("here");
-    //     let string=x.toString()+" "+y.toString()
-    //         this.matrix[string]=false;
-    //   }
-    //   i+=1
-    // }
-    // for(let cell in this.matrix){
-    //   console.log(this.matrix[cell]);
-    // }
-    // for(let array of this.pheromoneMatrix){
-    //   // console.log(array);
-    //   for(let cell of array){
-    //     console.log(cell);
-    //   }
-    // }
+    let fogBlockSize= 7;
+    this.fogBlock    = [];
+    //console.log(((this.width/this.fogBlockSize)*(this.height/this.fogBlockSize)))
+    // console.log(this.height);
+    for (let y=0; y<(this.height+fogBlockSize);y+=fogBlockSize){
+      for(let x=0;x<(this.width+fogBlockSize);x+=fogBlockSize){
+        if(Math.sqrt((x - this.hub.x/2-this.x_limit)**2+(y - this.hub.y-this.y_limit)**2) > this.hub.radius+30){
+          this.fogBlock.push(new Fog(x,y,fogBlockSize,this.hub));
+        }
+      }
+    }
+    // console.log(this.fogBlock);
     for (let site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
     for (let obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
     for (let trap       of environmentJson.traps      ) { this.traps      .push( new Trap      (trap      ) ); }
@@ -123,10 +105,10 @@ class World
     //for (var pheromone  of this.pheromones ) { pheromone.draw(ctx,debug)}
     for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
     for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
-    for (var fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
+    for (var fog        of this.fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
     if(showFog){
-      for (var fog        of fogBlock        ) { fog       .draw(ctx); }
-
+      for (var fog        of this.fogBlock        ) { fog       .draw(ctx); }
+      // console.log(this.fogBlock);
     }
     for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
 

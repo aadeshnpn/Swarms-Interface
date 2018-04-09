@@ -547,7 +547,7 @@ class followSite(State):
         self.followClosestSite(agent,environment)
         if {site_id}.issubset(environment.sitesToIgnore):
             agent.following=False
-        if environment.agentsFollowSite[site_id]["number"] >10:
+        if environment.agentsFollowSite[site_id]["number"] >5:
             agent.following=False
 
         if environment.agentsFollowSite[site_id]["reportTime"]<=0:

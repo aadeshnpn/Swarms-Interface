@@ -196,6 +196,7 @@ class BeeEnvironment(Environment):
                 num+=1
         return num
     def get_siteIDs(self,agent):
+        
         ids=[]
         for i, site in enumerate(self.sites):
             x_dif = agent.location[0] - site.x

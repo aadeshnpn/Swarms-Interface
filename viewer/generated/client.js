@@ -2239,10 +2239,11 @@ class DeadAgent
 
 class Fog
 {
-  constructor(x,y,fogBlockSize)
+  constructor(x,y,fogBlockSize,hub)
   {
     this.fogBlockSize=fogBlockSize;
-
+    // console.log(x);
+    this.hub=hub
     this.visitObj;
     this.opacity=.95;
     this.color='rgb(255, 255, 255)';
@@ -2271,10 +2272,10 @@ class Fog
     for(var agent of agents)
     {
       //console.log(agent.x)
-      if(agent.x > -world.x_limit+this.x - (fogBlockSize-1)*this.view &&
-          agent.x < -world.x_limit+this.x+(fogBlockSize-1)*this.view &&
-            agent.y > -world.y_limit+this.y - (fogBlockSize-1)*this.view &&
-              agent.y < -world.y_limit+this.y+(fogBlockSize-1)*this.view)
+      if(agent.x > -world.x_limit+this.x - (this.fogBlockSize-1)*this.view &&
+          agent.x < -world.x_limit+this.x+(this.fogBlockSize-1)*this.view &&
+            agent.y > -world.y_limit+this.y - (this.fogBlockSize-1)*this.view &&
+              agent.y < -world.y_limit+this.y+(this.fogBlockSize-1)*this.view)
       {
         if(!(Math.sqrt((hub.x - agent.x)*(hub.x - agent.x) +(hub.y - agent.y)*(hub.y - agent.y)) < hub.radius-5))
         {
@@ -2292,57 +2293,27 @@ class Fog
 
 
   draw(ctx,id){
-    ctx.fillStyle = this.color;
-    // if(this.agentTime.get(id.toString()) != undefined){
-    //   this.time = this.agentTime.get(id.toString());
+    // console.log(this.x_limit);
+    // console.log(Math.sqrt((this.x - this.hub.x/2-world.x_limit)**2+(this.y - this.hub.y-world.y_limit)**2) );
+    // if(Math.sqrt((this.x - this.hub.x/2-this.x_limit)**2+(this.y - this.hub.y-this.y_limit)**2) > this.hub.radius+20){
+    //   console.log("HERE");
+    //
     // }
-    //console.log(this.inside)
-    // var start=this.time;
-    // var end= Date.now()
-    // this.opacity=(end-start)/10000
+    ctx.beginPath()
+    ctx.fillStyle = this.color;
 
     ctx.globalAlpha=this.opacity
-    ctx.fillRect(-world.x_limit+this.x, -world.y_limit+this.y, this.fogBlockSize, this.fogBlockSize);
+    // ctx.fillRect(-world.x_limit+this.x-1, -world.y_limit+this.y-1, this.fogBlockSize+1, this.fogBlockSize+1);
+    ctx.arc(-world.x_limit+this.x,-world.y_limit+this.y,4.4,0,2*Math.PI)
+    ctx.fill()
+    ctx.closePath()
     ctx.globalAlpha=1;
     this.opacity+=.001
     if(this.opacity >.95){
       this.opacity = .95
     }
   }
-  // draw(agents)
-  // {
-  //   for(var agent of agents)
-  //   {
-  //     //console.log(agent.x)
-  //     if(agent.x > -world.x_limit+this.x - (fogBlockSize-1)*this.view &&
-  //         agent.x < -world.x_limit+this.x+(fogBlockSize-1)*this.view &&
-  //           agent.y > -world.y_limit+this.y - (fogBlockSize-1)*this.view &&
-  //             agent.y < -world.y_limit+this.y+(fogBlockSize-1)*this.view)
-  //     {
-  //       this.numberVisited+=.5;
-  //       //console.log(this.numberVisited)
-  //       this.time=0;
-  //     }
-  //   }
-  //
-  //   if(this.time<this.timeMax)
-  //   {
-  //     this.time++;
-  //   }
-  //
-  //   var ctx = canvas.getContext("2d");
-  //   ctx.fillStyle = this.color;
-  //   if(this.numberVisited> 1){
-  //     ctx.fillStyle = 'rgb(106, 99, 102)';
-  //   }
-  //
-  //   ctx.globalAlpha=this.opacity*(this.time/this.timeMax);
-  //   ctx.fillRect(-world.x_limit+this.x, -world.y_limit+this.y, this.fogBlockSize, this.fogBlockSize);
-  //   //Resets the global Alpha for the rest of the draw
-  //   ctx.globalAlpha=1;
-  //   this.numberVisited+=-.1
-  //
-  // }
+
 
 
 
@@ -2870,37 +2841,19 @@ class World
     this.dead_agents = [];
     this.pheromones  = [];
     this.environment = environmentJson;
-    this.test =true;
-    this.time=1000;
     this.swarmState = [];
-    // this.pheromoneMatrix=[]
-    // this.matrix=new Matrix()
-    // this.matrix[5]=5
-
-    //this.stateBubbles = new StateBubbles(this);
-    //console.log(environmentJson);
-    // this.cellSize=5
-    // let i=0
-    // for (var x=0; x<(this.width/this.cellSize);x+=this.cellSize)
-    // {
-    //   this.pheromoneMatrix.push(new Array())
-    //   for(var y=0;y<(this.height/this.cellSize);y+=this.cellSize)
-    //   {
-    //     // console.log("here");
-    //     let string=x.toString()+" "+y.toString()
-    //         this.matrix[string]=false;
-    //   }
-    //   i+=1
-    // }
-    // for(let cell in this.matrix){
-    //   console.log(this.matrix[cell]);
-    // }
-    // for(let array of this.pheromoneMatrix){
-    //   // console.log(array);
-    //   for(let cell of array){
-    //     console.log(cell);
-    //   }
-    // }
+    let fogBlockSize= 7;
+    this.fogBlock    = [];
+    //console.log(((this.width/this.fogBlockSize)*(this.height/this.fogBlockSize)))
+    // console.log(this.height);
+    for (let y=0; y<(this.height+fogBlockSize);y+=fogBlockSize){
+      for(let x=0;x<(this.width+fogBlockSize);x+=fogBlockSize){
+        if(Math.sqrt((x - this.hub.x/2-this.x_limit)**2+(y - this.hub.y-this.y_limit)**2) > this.hub.radius+30){
+          this.fogBlock.push(new Fog(x,y,fogBlockSize,this.hub));
+        }
+      }
+    }
+    // console.log(this.fogBlock);
     for (let site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
     for (let obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
     for (let trap       of environmentJson.traps      ) { this.traps      .push( new Trap      (trap      ) ); }
@@ -2976,10 +2929,10 @@ class World
     //for (var pheromone  of this.pheromones ) { pheromone.draw(ctx,debug)}
     for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
     for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
-    for (var fog        of fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
+    for (var fog        of this.fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
     if(showFog){
-      for (var fog        of fogBlock        ) { fog       .draw(ctx); }
-
+      for (var fog        of this.fogBlock        ) { fog       .draw(ctx); }
+      // console.log(this.fogBlock);
     }
     for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
 
@@ -3152,23 +3105,7 @@ socket.on('update', function(worldUpdate)
       // request that the browser call the draw() function when its ready for
       // the next animation frame
       window.requestAnimationFrame(draw);
-      fogBlockSize= 10;
-      fogBlock    = [];
-      var fogX=0;
-      var fogY=0;
-      //console.log(((this.width/this.fogBlockSize)*(this.height/this.fogBlockSize)))
-      for (var i=0; i<(world.height/fogBlockSize);i++)
-      {
-        for(var j=0;j<(world.width/fogBlockSize);j++)
-        {
 
-            fogBlock.push(new Fog(fogX,fogY,fogBlockSize));
-
-          fogX+=fogBlockSize;
-        }
-        fogX=0;
-        fogY+=fogBlockSize;
-      }
       //console.log(fogBlock)
    }
    else if (finishedDrawing)

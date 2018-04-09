@@ -1,9 +1,10 @@
 class Fog
 {
-  constructor(x,y,fogBlockSize)
+  constructor(x,y,fogBlockSize,hub)
   {
     this.fogBlockSize=fogBlockSize;
-
+    // console.log(x);
+    this.hub=hub
     this.visitObj;
     this.opacity=.95;
     this.color='rgb(255, 255, 255)';
@@ -32,10 +33,10 @@ class Fog
     for(var agent of agents)
     {
       //console.log(agent.x)
-      if(agent.x > -world.x_limit+this.x - (fogBlockSize-1)*this.view &&
-          agent.x < -world.x_limit+this.x+(fogBlockSize-1)*this.view &&
-            agent.y > -world.y_limit+this.y - (fogBlockSize-1)*this.view &&
-              agent.y < -world.y_limit+this.y+(fogBlockSize-1)*this.view)
+      if(agent.x > -world.x_limit+this.x - (this.fogBlockSize-1)*this.view &&
+          agent.x < -world.x_limit+this.x+(this.fogBlockSize-1)*this.view &&
+            agent.y > -world.y_limit+this.y - (this.fogBlockSize-1)*this.view &&
+              agent.y < -world.y_limit+this.y+(this.fogBlockSize-1)*this.view)
       {
         if(!(Math.sqrt((hub.x - agent.x)*(hub.x - agent.x) +(hub.y - agent.y)*(hub.y - agent.y)) < hub.radius-5))
         {
@@ -53,57 +54,27 @@ class Fog
 
 
   draw(ctx,id){
-    ctx.fillStyle = this.color;
-    // if(this.agentTime.get(id.toString()) != undefined){
-    //   this.time = this.agentTime.get(id.toString());
+    // console.log(this.x_limit);
+    // console.log(Math.sqrt((this.x - this.hub.x/2-world.x_limit)**2+(this.y - this.hub.y-world.y_limit)**2) );
+    // if(Math.sqrt((this.x - this.hub.x/2-this.x_limit)**2+(this.y - this.hub.y-this.y_limit)**2) > this.hub.radius+20){
+    //   console.log("HERE");
+    //
     // }
-    //console.log(this.inside)
-    // var start=this.time;
-    // var end= Date.now()
-    // this.opacity=(end-start)/10000
+    ctx.beginPath()
+    ctx.fillStyle = this.color;
 
     ctx.globalAlpha=this.opacity
-    ctx.fillRect(-world.x_limit+this.x, -world.y_limit+this.y, this.fogBlockSize, this.fogBlockSize);
+    // ctx.fillRect(-world.x_limit+this.x-1, -world.y_limit+this.y-1, this.fogBlockSize+1, this.fogBlockSize+1);
+    ctx.arc(-world.x_limit+this.x,-world.y_limit+this.y,4.4,0,2*Math.PI)
+    ctx.fill()
+    ctx.closePath()
     ctx.globalAlpha=1;
     this.opacity+=.001
     if(this.opacity >.95){
       this.opacity = .95
     }
   }
-  // draw(agents)
-  // {
-  //   for(var agent of agents)
-  //   {
-  //     //console.log(agent.x)
-  //     if(agent.x > -world.x_limit+this.x - (fogBlockSize-1)*this.view &&
-  //         agent.x < -world.x_limit+this.x+(fogBlockSize-1)*this.view &&
-  //           agent.y > -world.y_limit+this.y - (fogBlockSize-1)*this.view &&
-  //             agent.y < -world.y_limit+this.y+(fogBlockSize-1)*this.view)
-  //     {
-  //       this.numberVisited+=.5;
-  //       //console.log(this.numberVisited)
-  //       this.time=0;
-  //     }
-  //   }
-  //
-  //   if(this.time<this.timeMax)
-  //   {
-  //     this.time++;
-  //   }
-  //
-  //   var ctx = canvas.getContext("2d");
-  //   ctx.fillStyle = this.color;
-  //   if(this.numberVisited> 1){
-  //     ctx.fillStyle = 'rgb(106, 99, 102)';
-  //   }
-  //
-  //   ctx.globalAlpha=this.opacity*(this.time/this.timeMax);
-  //   ctx.fillRect(-world.x_limit+this.x, -world.y_limit+this.y, this.fogBlockSize, this.fogBlockSize);
-  //   //Resets the global Alpha for the rest of the draw
-  //   ctx.globalAlpha=1;
-  //   this.numberVisited+=-.1
-  //
-  // }
+
 
 
 

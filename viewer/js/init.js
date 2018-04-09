@@ -122,23 +122,7 @@ socket.on('update', function(worldUpdate)
       // request that the browser call the draw() function when its ready for
       // the next animation frame
       window.requestAnimationFrame(draw);
-      fogBlockSize= 10;
-      fogBlock    = [];
-      var fogX=0;
-      var fogY=0;
-      //console.log(((this.width/this.fogBlockSize)*(this.height/this.fogBlockSize)))
-      for (var i=0; i<(world.height/fogBlockSize);i++)
-      {
-        for(var j=0;j<(world.width/fogBlockSize);j++)
-        {
 
-            fogBlock.push(new Fog(fogX,fogY,fogBlockSize));
-
-          fogX+=fogBlockSize;
-        }
-        fogX=0;
-        fogY+=fogBlockSize;
-      }
       //console.log(fogBlock)
    }
    else if (finishedDrawing)

@@ -299,6 +299,7 @@ class Environment(ABC):
             i+=1
     def updateSiteInfo(self):
         # eprint(len(self.agentsFollowSite))
+        # eprint("Here")
         for i in range(0,len(self.agentsFollowSite)-1):
             if self.agentsFollowSite[i]["reporting"]:
                 self.agentsFollowSite[i]["reportTime"]-=1
