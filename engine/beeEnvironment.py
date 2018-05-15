@@ -20,7 +20,7 @@ class BeeEnvironment(Environment):
         self.actions = {"turns": 0, "stateChanges": 0}
         self.influenceActions = {"turns": 0, "stateChanges": 0}
         self.totalInfluence = []
-
+        # self.patrolLocations={};
         self.states = {"exploring": {},"reportToHub":{},"follow_site": {},"returnToSite":{}, "observing":{},"resting":{},'dancing':{},'assessing':{},'siteSearch':{},'site assess':{},'piping':{},'commit':{}}
         self.pheromoneList =[]
         self.xPos = []
@@ -196,7 +196,7 @@ class BeeEnvironment(Environment):
                 num+=1
         return num
     def get_siteIDs(self,agent):
-        
+
         ids=[]
         for i, site in enumerate(self.sites):
             x_dif = agent.location[0] - site.x
@@ -259,7 +259,8 @@ class BeeEnvironment(Environment):
                             "repulsors": list(map(lambda r: r.toJson(), self.flowController.repulsors)),
                             "agents": self.agents_to_json(),
                             "dead_agents": self.dead_agents_to_json(),
-                            "pheromones": self.pheromones_to_json()
+                            "pheromones": self.pheromones_to_json(),
+                            "patrolUpdate": len(self.patrolList)
                         }
                 })
         )

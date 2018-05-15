@@ -586,12 +586,26 @@ require('sticky-cluster')(function (callback)
   // On any new connection, we're passed a socket object representing that
   // that specific connection. Any socket specific setup has to be done on that
   // object, not the global io object
+  var connectionTypes=["add","avoid","observe"]
 
   io.on('connection', function(socket)
   {
     // We only need to set up the client here; it will take care of other events,
     // disconnects, etc.
-    console.log(socket.id);
+    // console.log(socket.id);
+    console.log(connectionTypes);
+    if(connectionTypes.length <=1){
+
+      socket.emit("connectionType",connectionTypes[0])
+
+    }
+    else{
+      console.log("Connection Made");
+      socket.emit("connectionType",connectionTypes[0])
+      connectionTypes.splice(0,1)
+      console.log(connectionTypes[0]);
+
+    }
     socket.on('simId', function(id)
     {
       var client = new Client(socket, id);

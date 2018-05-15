@@ -1,0 +1,932 @@
+    1  sudo apt-get clean
+    2  reboot
+    3  ls
+    4  rm *.mp4
+    5  ls
+    6  cd .local
+    7  cd share
+    8  cd fil
+    9  cd Trash/
+   10  cd files/
+   11  ls
+   12  ls -al
+   13  sudo rm Maya2017_64-2017.0-1720.x86_64.rpm 
+   14  ls
+   15  ls -al
+   16  rm *
+   17  ls
+   18  rm -r *
+   19  ls
+   20  rm -rf *
+   21  sudo rm -rf *
+   22  ls
+   23  df
+   24  df -h
+   25  cd Documents/Work/Swarm/byuswarms_python/
+   26  cd viewer/
+   27  npm start
+   28  ls
+   29  node server.js 
+   30  npm i -g npm
+   31  npm start
+   32  npm install connect serve-static
+   33  npm start
+   34  node server.js 
+   35  npm install
+   36  node server.js 
+   37  cd ..
+   38  git fsck
+   39  git fsck >fix.txt
+   40  du -f
+   41  df -f
+   42  du -h
+   43  ssh jacobliv@pyramids.cs.byu.edu
+   44  exit
+   45  df -h
+   46  cd /home/
+   47  ls
+   48  du -sh *
+   49  sudo du -sh *
+   50  cd jacobliv/
+   51  sudo du -sh *
+   52  cd Documents/
+   53  ls
+   54  sudo du -sh *
+   55  cd Work/Swarm/byuswarms_python/
+   56  ls
+   57  cd viewer/
+   58  ls
+   59  sudo du -sh *
+   60  cd
+   61  cd Documents/
+   62  ls
+   63  cd Personal\ Projects/
+   64  sudo du -sh *
+   65  rm -rf cppGraphics/
+   66  ls
+   67  sudo du -sh *
+   68  cd ..
+   69  sudo du -sh *
+   70  cd cs235
+   71  sudo du -sh *
+   72  cd LinkedList/
+   73  ls
+   74  sudo du -sh *
+   75  cd ..
+   76  sudo du -sh *
+   77  file LinkedList/
+   78  cd LinkedList/
+   79  sudo du -sh *
+   80  cd ..
+   81  sudo du -sh *
+   82  cd LinkedList/
+   83  ls
+   84  cd ..
+   85  mv LinkedList/ LinkedList1/
+   86  sudo du -sh *
+   87  rm -rf LinkedList1/
+   88  ls
+   89  sudo du -sh *
+   90  sudo gparted
+   91  killall gparted
+   92  sudo killall gparted
+   93  sudo gparted
+   94  cd ..
+   95  cd Work/
+   96  cd Swarm/
+   97  cd byuswarms_python/
+   98  bash bashfix.sh 
+   99  bash bashfix.sh
+  100  bash bashfix.sh fix.txt 
+  101  cd viewer/
+  102  npm start
+  103  make
+  104  npm start
+  105  git branch
+  106  git add
+  107  git add *
+  108  git commit -m "Fix"
+  109  git push
+  110  cd ..
+  111  git add *
+  112  git commit -m "Fix"
+  113  git push
+  114  git remote add "JacobsFix"
+  115  git remote add JacobsFix
+  116  git checkout -b JacobFix
+  117  git add *
+  118  git commit -m "Fixes"
+  119  git push
+  120  git checkout -b JacobsEdit
+  121  git checkout JacobsEdit
+  122  git pull
+  123  cd viewer/q
+  124  cd viewer/
+  125  npm start
+  126  git push -u origin JacobsFix
+  127  git push -u origin JacobFix
+  128  git add *
+  129  git commit -m "Without dangles"
+  130  git push
+  131  cd ..
+  132  git commit -m "Without dangles"
+  133  git add *
+  134  git commit -m "Without dangles"
+  135  git push
+  136  git config --global user.name
+  137  git config --global user.name "Jacob Livingston"
+  138  git add *
+  139  git commit -m "Without dangles"
+  140  git rm
+  141  git add -u
+  142  git commit -m "Without dangles"
+  143  git push
+  144  npm start
+  145  cd vi
+  146  cd viewer/
+  147  npm start
+  148  ssh jacobliv@pyramids.cs.byu.edu
+  149  npm start
+  150  git pull
+  151  cd ..
+  152  git pull
+  153  git add *
+  154  git commit -m "Working on Reporting"
+  155  git push
+  156  git pull
+  157  git status
+  158  git pull
+  159  git rm -f engine/beeCode/agent/__pycache__/beeAgent.cpython-35.pyc 
+  160  git commit -m "Working on Reporting"
+  161  git push
+  162  cd ..
+  163  ls
+  164  cd Desktop/
+  165  rm *.mp4
+  166  cd Documents/cs236/
+  167  ls
+  168  mkdir classNotes
+  169  mv jan* classNotes/
+  170  ls
+  171  mkdir projects
+  172  mv project1 project2 projects/
+  173  ls
+  174  less scanner1.txt 
+  175  cd viewer/
+  176  npm start
+  177  cd viewer/
+  178  npm start
+  179  cd viewer/
+  180  npm start
+  181  exit
+  182  cd viewer/
+  183  npm start
+  184  cd Documents/cs224/
+  185  ls
+  186  exit
+  187  ssh jacobliv@pyramids.cs.byu.edu
+  188  history
+  189  sudo du -sh *
+  190  cd Videos/
+  191  ls
+  192  rm *
+  193  ls
+  194  cd ..
+  195  sudo du -sh *
+  196  cd Downloads/
+  197  ls
+  198  rm -rf *.rpm
+  199  ls
+  200  rm -rf *.deb
+  201  ls
+  202  rm -rf *.png
+  203  ls
+  204  rm -rf *.jpg
+  205  ls
+  206  rm -rf *.mov
+  207  rm -rf *.mp4
+  208  ls
+  209  rm -rf *.ico
+  210  rm -rf *.svg
+  211  rm -rf *.mp3
+  212  rm -rf *.pdf
+  213  ls
+  214  rm -rf *.zip
+  215  ls
+  216  rm -rf *.tgz
+  217  ls
+  218  rm -rf *.docx
+  219  ls
+  220  cd *
+  221  ls
+  222  rm -rf *
+  223  ls
+  224  cd ..
+  225  sudo du -sh *
+  226  rm gtk-recordMyDesktop-crash.log 
+  227  ls
+  228  ls -a
+  229  rm searchPatters.xcf 
+  230  ls -al
+  231  sudo du -sh *
+  232  rm -rf Dijkstra-master/
+  233  ls
+  234  rm -rf Dijkstra-master/
+  235  sudo du -sh *
+  236  cd Documents/
+  237  ks
+  238  ls
+  239  cd cs236
+  240  ls
+  241  cp -r project2 project3
+  242  cd project
+  243  cd project3
+  244  atom .
+  245  make
+  246  cd ..
+  247  cd Work/
+  248  cd Swarm/byuswarms_python/
+  249  cd viewer/
+  250  npm start
+  251  npm install
+  252  npm start
+  253  cd ..
+  254  cd cs236
+  255  cd project3
+  256  make
+  257  clean
+  258  clear
+  259  make
+  260  cd ..
+  261  cp -r project3 project3Backup
+  262  cd project3
+  263  git init
+  264  git add *
+  265  git commit -m "Infrastructure"
+  266  git push
+  267  git remote add Interpreter
+  268  git remote add Interpreter git@github.com:jacobliv/Interpreter
+  269  git push -u Interpreter master
+  270  git remote add origin https://github.com/jacobliv/Interpreter
+  271  git push -u origin master
+  272  git remote add origin https://github.com/jacobliv/Interpreter.git
+  273  git remote -v
+  274  git remote rm origin
+  275  git remote -
+  276  git remote rm Interpreter
+  277  git remote -v
+  278  git remote add origin https://github.com/jacobliv/Interpreter.git
+  279  git push -u origin master
+  280  make
+  281  ./interpreter in62.txt
+  282  make
+  283  cd ..
+  284  cd Work/Swarm/
+  285  ls
+  286  atom byuswarms_python/
+  287  cd byuswarms_python/
+  288  atom .
+  289  ssh jacobliv@pyramids.cs.byu.edu
+  290  printenv
+  291  _
+  292  atom .
+  293  cd viewer/
+  294  npm start
+  295  cd viewer/
+  296  npm start
+  297  google-chrome localhost:3000
+  298  make
+  299  atom .
+  300  make
+  301  sudo apt-get install lolcat
+  302  sudo apt-get install ddate
+  303  ddate | lolcat
+  304  ls
+  305  cd Desktop/
+  306  ls
+  307  cat dynamicResize.html | lolcat
+  308  lolcat
+  309  exit
+  310  git log
+  311  cd Documents/Work/Swarm/byuswarms_python/
+  312  git log
+  313  git log --full-diff -p 238386974951f72781152ab2c51753099a3abe98
+  314  git log --full-diff -p 238386974951f72781152ab2c51753099a3abe98 > edits.txt
+  315  git show HEAD~1:./server.js
+  316  git show HEAD~4:src/main.c
+  317  git show HEAD@{2018-02-20}:./viewer/server.js 
+  318  gitk viewer/server.js
+  319  sudo apt install gitk
+  320  gitk viewer/server.js
+  321  gitk viewer
+  322  git pull
+  323  git add *
+  324  git commit -m "Minor bug fixes"
+  325  git push
+  326  cd viewer/
+  327  npm star
+  328  npm start
+  329  npm start > running.txt
+  330  npm start
+  331  git pull
+  332  cd ..
+  333  git pull
+  334  git add *
+  335  git commit -m "Agents follow pheromones!"
+  336  git push
+  337  npm start
+  338  cd viewer/
+  339  npm start
+  340  cd 
+  341  cd Desktop/'
+  342  cd Desktop/
+  343  sudo apt install ffmpeg
+  344  ffmpeg -i swarmPheromones.ogv -s 2 swarmPheromones.mp4
+  345  ffmpeg -i swarmPheromones.ogv -strict 2 swarmPheromones.mp4
+  346  ffmpeg -i swarmPheromones.ogv -strict -2 swarmPheromones.mp4
+  347  vlc swarmPheromones.mp4 
+  348  cd
+  349  cd Documents/cs236
+  350  cd project3
+  351  ls
+  352  git config
+  353  git config --global user.name
+  354  git config --global user.email
+  355  git config --global user.email "jacob.m.livingston@gmail.com"
+  356  git config --global user.email
+  357  git init
+  358  git remote add origin https://gitlab.com/jacobliv/Interpreter.git
+  359  git add *
+  360  git commit -m "initial commit"
+  361  git push -u origin master
+  362  atom .
+  363  atom ..
+  364  make
+  365  git add *
+  366  git commit -m "Right before evaluating queries"
+  367  git push
+  368  make
+  369  pause
+  370  make
+  371  pause
+  372  cd
+  373  cd Documents/Work/Swarm/byuswarms_python/viewer/
+  374  npm start
+  375  atom ..
+  376  npm start
+  377  ffmpeg -i swarmPheromones.ogv -strict -2 swarmPheromones.mp4
+  378  cd
+  379  cd Desktop/
+  380  ffmpeg -i pheromonesWorking.ogv -strict -2 pheromonesWorking.mp4 
+  381  cd
+  382  cd Documents/Work/Swarm/byuswarms_python/viewer/
+  383  npm start
+  384  npm start > testing.txt
+  385  npm start
+  386  cd ..
+  387  ls
+  388  df -h
+  389  cd /
+  390  cd /tmp
+  391  ls
+  392  du -sh *
+  393  top
+  394  df -h
+  395  cd Documents/Work/Swarm/
+  396  cp -r byuswarms_python/ copy
+  397  ls
+  398  cd byuswarms_python/
+  399  git pull origin ChandlersEnemyAttack 
+  400  git add *
+  401  git commit -m "More effecient Pheromones"
+  402  git push
+  403  git pull origin ChandlersEnemyAttack 
+  404  gtk
+  405  gitk
+  406  cd viewer/
+  407  npm sdotart
+  408  node server
+  409  npm start
+  410  cd ..
+  411  git add *
+  412  git commit -m "Merged with Attack Scenario 1"
+  413  git push
+  414  cd viewer/
+  415  npm start
+  416  cd
+  417  ls
+  418  cd Documents/
+  419  cd cs224/
+  420  ls
+  421  vim Makefile 
+  422  cd
+  423  cd Desktop/
+  424  gcc main.o -o main
+  425  gcc main.c -c main.o
+  426  gcc main.c -o main.o
+  427  cd ..
+  428  cd Documents/cs224/homework3/problem-10/
+  429  ls
+  430  vim main.c 
+  431  cd
+  432  cd Desktop/
+  433  gcc main.c -o main.o
+  434  gcc main.o -o main
+  435  gcc main.c -o main.o
+  436  gcc main.o -o main
+  437  gcc main.c -o main.o
+  438  gcc main.o -o main
+  439  cd ..
+  440  cd Documents/cs224/
+  441  ls
+  442  cd homework3/
+  443  cd problem-10/
+  444  make
+  445  gdb main
+  446  make
+  447  gdb main
+  448  make
+  449  gdb main
+  450  make
+  451  gdb main
+  452  gcc main.o -o main
+  453  gcc main.c -o main.o
+  454  gcc main.o -o main
+  455  make
+  456  make clean
+  457  make
+  458  objdump main
+  459  objdump -d main
+  460  make
+  461  gdb main 
+  462  make
+  463  gdb main 
+  464  make
+  465  gdb main 
+  466  make
+  467  gdb main 
+  468  make
+  469  gdb main 
+  470  cd 
+  471  cd Documents/Work/Swarm/
+  472  atom byuswarms_python/
+  473  cd byuswarms_python/
+  474  cd viewer/
+  475  npm start
+  476  cd Documents/Work/Swarm/byuswarms_python/viewer/
+  477  npm start
+  478  npm -v
+  479  npm start
+  480  cd 
+  481  cd Desktop/
+  482  ffmpeg -i demoForConference.ogv -strict -2 demoForConference.mp4 
+  483  cd
+  484  cd Downloads/
+  485  ls
+  486  tar -xvf target13.tar 
+  487  ls
+  488  cp -r target13 ../Desktop/
+  489  cd
+  490  cd des
+  491  cd Dee
+  492  cd Desktop/
+  493  ls
+  494  cd target13/
+  495  ls
+  496  strings ctarget 
+  497  strings ctarget > less
+  498  strings ctarget | less
+  499  scp -r . jacobliv@schizo.cs.byu.edu:/users/guest/j/jacobliv/Desktop/
+  500  scp -r . kruth99@schizo.cs.byu.edu:/users/guest/k/kruth99/Desktop/
+  501  cd ..
+  502  ssh jacobliv@pyramids.cs.byu.edu
+  503  scp -r target13/ kruth99@schizo.cs.byu.edu:/users/guest/k/kruth99/Desktop/
+  504  scp -r target13/ jacobliv@schizo.cs.byu.edu:/users/guest/j/jacobliv/Desktop/
+  505  ssh jacobliv@pyramids.cs.byu.edu
+  506  exit
+  507  man ascii
+  508  ssh jacobliv@pyramids.cs.byu.edu
+  509  cd Documents/cs236
+  510  cd project3
+  511  atom .
+  512  make
+  513  ssh jacobliv@pyramids.cs.byu.edu
+  514  cd 
+  515  cd Documents/Work/Swarm/byuswarms_python/viewer/
+  516  npm start
+  517  cd Documents/cs236
+  518  cd project1
+  519  ls
+  520  cd projects/
+  521  cd project1/
+  522  ls
+  523  halo
+  524  palo
+  525  man palo
+  526  man halo
+  527  exit
+  528  ssh jacobliv@pyramids.cs.byu.edu
+  529  exit
+  530  ssh jacobliv@pyramids.cs.byu.edu
+  531  cd Documents/Work/
+  532  cd Swarm/byuswarms_python/
+  533  git pull
+  534  git commit -m "changes"
+  535  git add *
+  536  git commit -m "changes"
+  537  git pull
+  538  cd viewer/
+  539  npm start
+  540  git pull origin ChandlersEnemyAttack 
+  541  cd ..
+  542  git pull origin ChandlersEnemyAttack 
+  543  cd vi
+  544  cd viewer/
+  545  npm start
+  546  cd ..
+  547  cd Personal\ Projects/
+  548  cd studyNotes/
+  549  touch eternalBeing.h
+  550  touch eternalBeing.cpp
+  551  cd ..
+  552  cd cs236
+  553  cd project3
+  554  make
+  555  cd ..
+  556  cd Personal\ Projects/studyNotes/
+  557  make
+  558  touch spirit.h
+  559  touch spirit.cpp
+  560  make
+  561  touch person.h
+  562  touch person.cpp
+  563  make
+  564  touch body.h
+  565  touch body.cpp
+  566  make
+  567  clear
+  568  ssh jacobliv@pyramids.cs.byu.edu
+  569  cd ..
+  570  cd Work/Swarm/byuswarms_python/
+  571  atom .
+  572  cd viewer/
+  573  npm start
+  574  sudo  /etc/init.d/bluetooth  restart
+  575  sudo service -f bluetooth
+  576  sudo service  bluetooth
+  577  sudo service bluetooth force-reload 
+  578  sudo service bluetooth status 
+  579  sudo service bluetooth stop
+  580  sudo service bluetooth start
+  581  sudo service bluetooth restart
+  582  sudo service bluetooth force-reload 
+  583  cowsay
+  584  who
+  585  cowsay
+  586  cd Documents/cs236/project3
+  587  make
+  588  vim interpreter.cpp 
+  589  make
+  590  vim interpreter.cpp 
+  591  vim parser.cpp 
+  592  vim interpreter.cpp 
+  593  exit
+  594  ls
+  595  vim Rockfield.hipnc 
+  596  clear
+  597  exit
+  598  pwd
+  599  exit
+  600  cd Documents/cs236/
+  601  ls
+  602  cd project3
+  603  make
+  604  cd ../..
+  605  cd Work/Swarm/byuswarms_python/
+  606  atom .
+  607  cd viewer/
+  608  npm start
+  609  cd
+  610  cd Documents/cs236/
+  611  cd project3
+  612  make
+  613  time
+  614  clear
+  615  make
+  616  make]
+  617  make
+  618  \make
+  619  make
+  620  mnake
+  621  make
+  622  pmccabe *.h *.cpp
+  623  make
+  624  cd
+  625  cd Desktop/
+  626  ssh jacobliv@schizo.cs.byu.edu
+  627  scp jacobliv@schizo.cs.byu.edu:~/terrainRockfield.hipnc
+  628  scp jacobliv@schizo.cs.byu.edu:~/terrainRockfield.hipnc .
+  629  cd
+  630  cd Documents/cs236/
+  631  cd project3
+  632  make
+  633  cd
+  634  cd Documents/Work/Swarm/
+  635  ls
+  636  cd byuswarms_python/
+  637  git add *
+  638  git commit -m "Additional Features"
+  639  git push
+  640  git pull origin ChandlersEnemyAttack 
+  641  git status
+  642  git add *
+  643  git commit -m "With Attacks"
+  644  git push
+  645  cd viewer/
+  646  npm start
+  647  cd
+  648  cd Documents/cs236
+  649  ls
+  650  cd project3
+  651  make
+  652  pmccabe *.h *.cpp
+  653  make
+  654  pmccabe *.h *.cpp
+  655  git add*
+  656  git add *
+  657  git commit -m "Finished Hard part"
+  658  git push
+  659  make
+  660  pmccabe *.h *.cpp
+  661  git add *
+  662  git commit -m "Less Complex"
+  663  git push
+  664  make
+  665  pmccabe *.h *.cpp
+  666  make
+  667  pmccabe *.h *.cpp
+  668  make
+  669  c
+  670  cd
+  671  cd Desktop/
+  672  scp terrainRockfield1.hipnc jacobliv@schizo.cs.byu.edu:~
+  673  cd 
+  674  cd Documents/cs236/project3
+  675  pmccabe *.h *.cpp
+  676  make
+  677  pmccabe *.h *.cpp
+  678  make
+  679  pmccabe *.h *.cpp
+  680  make
+  681  pmccabe *.h *.cpp
+  682  $ valgrind --leak-check=full ./interpreter in30.txt 
+  683  valgrind --leak-check=full ./interpreter in30.txt 
+  684  zip lab3.zip *.h *.cpp
+  685  git add *
+  686  git commit -m 
+  687  git commit -m "Final"
+  688  git push
+  689  cd
+  690  cd Documents/cs224/homework5/
+  691  gcc *.c -o main
+  692  ls
+  693  gcc *.c -o main
+  694  ./main
+  695  objdump -d main >assembly.txt
+  696  cd ..
+  697  cd Downloads/
+  698  mv archlab-handout.tar ../Documents/cs224/
+  699  cd ..
+  700  cd Documents/cs224/
+  701  tar xvf archlab-handout.tar 
+  702  cd archlab-handout/
+  703  ls
+  704  tar xvf sim.tar 
+  705  ls
+  706  cd sim/
+  707  make clean
+  708  ls
+  709  cd misc/
+  710  ;s
+  711  ls
+  712  cd
+  713  cd Documents/Work/Swarm/byuswarms_python/
+  714  cd viewer/
+  715  npm start
+  716  cd //
+  717  cd
+  718  cd Documents/Work/Swarm/byuswarms_python/
+  719  git add *
+  720  git commit -m "Site Images Work again"
+  721  git pull
+  722  git push
+  723  cd viewer/
+  724  npm start
+  725  cd ..
+  726  git add *
+  727  git commit -m "Multiple Images"
+  728  git push
+  729  git pull
+  730  git push
+  731  cd viewer/
+  732  cd Documents/Work/Swarm/byuswarms_python/viewer/
+  733  npm star
+  734  npm start
+  735  mount
+  736  exit
+  737  cd Documents/cs236
+  738  ls
+  739  cp -r project3 project4
+  740  ls
+  741  mv project3 project3Backup/ projects/
+  742  ls
+  743  cd project4/
+  744  ls
+  745  rm *.txt
+  746  ls
+  747  rm interpreter
+  748  rm parser
+  749  ls
+  750  atom .
+  751  make
+  752  time make
+  753  make
+  754  cd ..
+  755  cd Work/Swarm/byuswarms_python/
+  756  cd viewer/
+  757  npm start
+  758  cd ..
+  759  cd
+  760  cd Documents/
+  761  ls
+  762  cd animScript/
+  763  ls
+  764  scp jacobliv@schizo.cs.byu.edu:~/terrainRockfield1.hipnc .
+  765  scp terrainRockfield1.hipnc jacobliv@schizo.cs.byu.edu:~/terrainRockfield2.hipnc
+  766  cd ..
+  767  cd Work/Swarm/
+  768  cd byuswarms_python/
+  769  cd viewer/
+  770  npm start
+  771  atom ..
+  772  cd ..
+  773  git add *
+  774  git commit -m "Working on Chosing Sites"
+  775  git push
+  776  git pull
+  777  git push
+  778  cd
+  779  cd Documents/cs236
+  780  cd project4/
+  781  atom.
+  782  atom .
+  783  make
+  784  cd
+  785  cd Documents/Work/Swarm/byuswarms_python/viewer/
+  786  npm start
+  787  cd ..
+  788  git add *
+  789  git commit -m "Button to Deny site (Non-functional)"
+  790  git pull
+  791  git push
+  792  xkill
+  793  cd Desktop/
+  794  ls
+  795  cd homework5
+  796  cd
+  797  cd Documents/cs224/
+  798  ls
+  799  cd homework
+  800  cd homework5/
+  801  ls
+  802  cd ..
+  803  cd archlab-handout/
+  804  ls
+  805  cd sim/
+  806  ls
+  807  cd seq/
+  808  ls
+  809  cd ..
+  810  cd Work/Swarm/byuswarms_python/
+  811  atom .
+  812  cd viewer/
+  813  npm start
+  814  cd
+  815  cd Desktop/
+  816  ls
+  817  ssh jacobliv@schizo.cs.byu.edu
+  818  ls
+  819  cd
+  820  cd Documents/Work/Swarm/byuswarms_python/
+  821  atom .
+  822  cd viewer/
+  823  npm start
+  824  cd ..
+  825  git add*
+  826  git add *
+  827  git commit -m "Sites can be denied"
+  828  git pull
+  829  git push
+  830  ps
+  831  kill 7235
+  832  ps
+  833  kill 7237
+  834  kill 7239
+  835  kill 7256
+  836  ps
+  837  top
+  838  kill 14382
+  839  cd ..
+  840  cd cs236/project4/
+  841  atom .
+  842  make
+  843  git add *
+  844  git commit -m "Working on Evaluate Rules"
+  845  git push
+  846  make
+  847  mae
+  848  make
+  849  cd
+  850  ssh jacobliv@schizo.cs.byu.edu
+  851  exit
+  852  cd Documents/cs236/project4/
+  853  vim interpreter.cpp 
+  854  ls -al
+  855  cd Desktop/
+  856  ls -al
+  857  cd ..
+  858  cd Documents/
+  859  ls -al
+  860  cd animScript/
+  861  ls -al
+  862  exit
+  863  history
+  864  ssh jacobliv@schizo.cs.byu.edu
+  865  cd Downloads/
+  866  ls -al archlab-handout\ \(1\).tar 
+  867  scp archlab-handout\ \(1\).tar jacobliv@schizo.cs.byu.edu:/users/guest/j/jacobliv/Desktop/
+  868  ls
+  869  cd Downloads/
+  870  ls
+  871  lpr Resume\ 14.docx
+  872  man lpr
+  873  lpr -P hcmi Resume\ 14.docx
+  874  lpr -P Hcmi Resume\ 14.docx
+  875  lpr -P HCMI Resume\ 14.docx
+  876  netstat
+  877  arp -a
+  878  man lpr
+  879  lpoptions
+  880  man lpoptions 
+  881  man lpr
+  882  lpr -H 192.168.27.25  Resume\ 14.docx
+  883  cd Downloads/
+  884  lpr t.txt 
+  885  lpq
+  886  ls
+  887  cd Desktop/
+  888  ls -al
+  889  cd ..
+  890  cd Documents/animScript/
+  891  ls -al
+  892  exit
+  893  cd Documents/cs236/project4/
+  894  make
+  895  ./interpreter 49out.txt 
+  896  ./interpreter in49.txt 
+  897  ./interpreter in54.txt 
+  898  ./interpreter in50.txt 
+  899  make
+  900  ./interpreter in54.txt 
+  901  make
+  902  ./interpreter 49out.txt 
+  903  ./interpreter in49.txt 
+  904  ./interpreter in54.txt 
+  905  ./interpreter in64.txt 
+  906  make
+  907  ./interpreter in64.txt 
+  908  make
+  909  ./interpreter in64.txt 
+  910  make
+  911  ./interpreter in64.txt 
+  912  make
+  913  ./interpreter in64.txt 
+  914  make
+  915  cd ..
+  916  cd Work/Swarm/byuswarms_python/
+  917  git pull
+  918  git pull origin ChandlersEnemyAttack 
+  919  git add *
+  920  git commit -m "Minor Fixers"
+  921  git add *
+  922  git commit -m "Minor Fixers"
+  923  git push
+  924  git pull origin ChandlersEnemyAttack 
+  925  cd viewer/
+  926  npm start
+  927  cd ..
+  928  cd byuswarms_python/
+  929  cd demonstrations/
+  930  ffmpeg -i agentWithFog.ogv -crf 18 agentWithFog.ogv 
+  931  ffmpeg -i agentWithFog.ogv -crf 18 agentWithFog.mp4 
+  932  history>s.txt

@@ -3454,6 +3454,10 @@ socket.on('connect', function(){
    socket.emit('simId', simId);
 });
 
+socket.on("connectionType",function(type){
+  console.log(type);
+})
+
 // This is where the magic happens. When we emit an "update" event from the
 // server, it'll come through here.
 socket.on('update', function(worldUpdate){

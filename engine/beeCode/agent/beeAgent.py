@@ -9,39 +9,9 @@ from Pheromone import *
 from utils.geomUtil import distance
 
 #input = Enum('input', 'nestFound exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
-input = Enum('input', 'nestFound report maxAgents goingToSite tooManyAgents reportingFailed finishedReporting returnToSite exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
+input = Enum('input', 'nestFound report maxAgents startPatrolling goingToSite tooManyAgents reportingFailed finishedReporting returnToSite exploreTime observeTime dancerFound searchingSites siteFound  tiredDance notTiredDance restingTime siteAssess finAssess startPipe quorum quit')
 
 class Bee(HubAgent):
-
-    def updateParams(self, params,timeStamp):
-        self.parameters = params
-        self.velocity = self.parameters["Velocity"]
-        self.param_time_stamp = timeStamp
-
-    def getUiRepresentation(self):
-        return {
-            # these names should match the state.name property for each state
-            "states": ["searching", "assessing", "commit"],
-            "transitions": {
-                "exploring": ["assessing", "commit"],
-                "assessing": ["exploring"],
-                "commit": []
-            }
-        }
-    def update(self, environment):
-        #eprint(self.state.__class__.__name__)
-        old = self.state.name
-
-        if(self.nextState(self.state.update(self))):
-            if self.id in environment.states[old]:
-                del environment.states[old][self.id]
-            environment.states[self.state.name][self.id] = self.id
-    @HubAgent.direction.setter
-    def direction(self, value):
-        self.environment.actions["turns"] += 1
-        HubAgent.direction.fset(self, value)
-
-
     def __init__(self, environment, agentId, initialstate, hub, params, count=1000):
         super().__init__(environment, agentId, initialstate, params, hub)
 
@@ -68,19 +38,32 @@ class Bee(HubAgent):
         self.param_time_stamp = 0
         self.following=False;
         # bee agent variables
+        self.followSiteInfo={"droppingPheromone":False,
+                            "pheromoneTimer":0,
+                            "pheromoneMaxEmitTime":20,
+                            "swarmLoc":0,
+                            "swarmDir":np.random.randint(0,2)}
+
         self.unfollowRest=200
         self.unfollowing=False;
-        self.droppingPheromone=False
+        self.returnedTimer=0;
         self.nextPheromone={"x":None,"y":None}
-        self.pheromoneTimer=0;
-        self.live = True
         self.seesReporter=False
+
         self.refound=False
-        self.reportTimer=1500
+        self.returnTimer=1500
         self.reporting=False;
+        self.failedReporting=False;
+
         self.view=35
         self.returned=False;
-        self.swarmLoc=0;
+        self.reportTime=300;
+
+        self.starting=True;
+        self.patrolChance=np.random.rand(1,1)[0][0];
+        self.patrolIndex=None;
+        self.patrolTo=[]
+
         self.location = [hub["x"], hub["y"]]
         self.velocity = self.parameters["Velocity"]
         self.potential_site = None  # array [x,y]
@@ -88,27 +71,29 @@ class Bee(HubAgent):
         self.site_q = 0
         self.assessments = 1
         self.dist=np.random.randint(25,500)
-        self.swarmDir=np.random.randint(0,2)
-        self.swarmSpeed=np.random.rand()
+
+
         self.atSite = False
         self.siteIndex = None
+
         self.goingToSite = False
         self.quadrant = [] #not sure if this is being used....
         self.infoStation = None
         self.assessCounter = 1 #makes sure that they assess at least once.
         self.priorities = None
-        self.reportTime=300;
+
         # create table here.
         self.transitionTable = {
                 (Exploring(self).__class__, input.nestFound): [None, followSite(self)],
                 (followSite(self).__class__, input.report): [None, ReportToHub(self)],
                 (followSite(self).__class__, input.tooManyAgents): [None, Exploring(self)],
                 (ReportToHub(self).__class__, input.finishedReporting): [None, ReturnToSite(self)],
+                (ReportToHub(self).__class__, input.reportingFailed): [self.exploreTransition, Exploring(self)],
                 (ReturnToSite(self).__class__, input.reportingFailed): [self.exploreTransition, Exploring(self)],
                 (ReturnToSite(self).__class__, input.nestFound): [None, followSite(self)],
-                (ReturnToSite(self).__class__, input.reportingFailed): [self.exploreTransition, Exploring(self)],
                 (Exploring(self).__class__, input.exploreTime): [self.observeTransition, Observing(self)],
                 (Observing(self).__class__, input.observeTime): [self.exploreTransition, Exploring(self)],
+                (Observing(self).__class__, input.startPatrolling): [None, Exploring(self)],
                 (Observing(self).__class__, input.goingToSite): [None, ReturnToSite(self)],
                 (Observing(self).__class__, input.dancerFound): [None, Assessing(self)],
                 (Observing(self).__class__, input.startPipe): [self.pipingTransition, Piping(self)],
@@ -150,6 +135,36 @@ class Bee(HubAgent):
 
         environment.states[self.state.name][self.id] = self.id
 
+    def updateParams(self, params,timeStamp):
+        self.parameters = params
+        self.velocity = self.parameters["Velocity"]
+        self.param_time_stamp = timeStamp
+
+    def getUiRepresentation(self):
+        return {
+            # these names should match the state.name property for each state
+            "states": ["searching", "assessing", "commit"],
+            "transitions": {
+                "exploring": ["assessing", "commit"],
+                "assessing": ["exploring"],
+                "commit": []
+            }
+        }
+    def update(self, environment):
+        #eprint(self.state.__class__.__name__)
+        old = self.state.name
+
+        if(self.nextState(self.state.update(self))):
+            if self.id in environment.states[old]:
+                del environment.states[old][self.id]
+            environment.states[self.state.name][self.id] = self.id
+    @HubAgent.direction.setter
+    def direction(self, value):
+        self.environment.actions["turns"] += 1
+        HubAgent.direction.fset(self, value)
+
+
+
     #TRANSitions
     def transition(self):
         self.environment.actions["stateChanges"] += 1
@@ -181,12 +196,46 @@ class Bee(HubAgent):
         return agent_dict
 
     # so, the exploring part needs to give the input..
+
 class Exploring(State):
     def __init__(self, agent=None):
         self.name = "exploring"
         self.inputExplore = False
 
     def sense(self, agent, environment):
+        if agent.starting:
+            # eprint(agent.patrolChance)
+            if agent.patrolChance>=.2 and agent.patrolIndex == None:
+
+                # eprint(len(environment.patrolList))
+                if len(environment.patrolList)>0:
+                    environment.agentsPatrolling+=1;
+                    # eprint(environment.x_limit)
+                    # eprint(environment.patrolList)
+                    agent.patrolIndex=np.random.randint(0, len(environment.patrolList))
+                    agent.patrolTo=[environment.patrolList[agent.patrolIndex]["x"],environment.patrolList[agent.patrolIndex]["y"]]
+                    # eprint(agent.patrolTo)
+                    del environment.patrolList[agent.patrolIndex]
+                else:
+                    agent.starting=False;
+                    agent.patrolChance=np.random.rand(1,1)[0][0]
+                    agent.patrolIndex=None;
+            elif agent.patrolIndex != None:
+                if ((agent.patrolTo[0] - agent.location[0]) ** 2 + (agent.patrolTo[1] - agent.location[1]) ** 2) ** .5 >= 3 and agent.q_value <= 0:
+                    agent.move(agent.patrolTo)
+                else:
+                    agent.starting=False;
+                    environment.agentsPatrolling-=1;
+                    # eprint(environment.agentsPatrolling)
+                    agent.patrolChance=np.random.rand(1,1)[0][0]
+                    agent.patrolIndex=None;
+            elif agent.patrolChance<.2:
+                # eprint("Agent not in Patrol")
+                agent.starting=False;
+                agent.patrolChance=np.random.rand(1,1)[0][0]
+                agent.patrolIndex=None;
+
+        # eprint(environment.agentsPatrolling)
         agent.checkAgentLeave()
         site_id=None
         new_q = environment.get_q(agent)["q"]
@@ -195,7 +244,7 @@ class Exploring(State):
             site_id=environment.get_siteIDs(agent)
             site_id=site_id[np.random.randint(0, len(site_id))]
             # eprint({site_id}.issubset(environment.sitesToIgnore))
-# numbers2.issubset(numbers1)
+            # numbers2.issubset(numbers1)
 
         agent.site_q = environment.get_q(agent)["site_q"]
         agent.q_value = new_q
@@ -204,8 +253,14 @@ class Exploring(State):
                 agent.q_value=0
         if agent.q_value > 0 and not {site_id}.issubset(environment.sitesToIgnore):
             agent.potential_site = [agent.location[0], agent.location[1],site_id]
+            if(agent.starting):
+                agent.starting=False;
+                environment.agentsPatrolling-=1
         agent.senseAndProcessAttractor(environment)
         agent.senseAndProcessRepulsor(environment)
+        agent.counter -= 1
+        if agent.counter<1 and agent.starting:
+            environment.agentsPatrolling-=1;
 
     def act(self, agent):
         if agent.unfollowing:
@@ -227,106 +282,18 @@ class Exploring(State):
             agent.direction = (agent.direction + delta_d) % (2 * np.pi)
 
     def update(self, agent):
-        agent.counter -= 1
+
         if agent.q_value > 0 and not agent.unfollowing:
             agent.following=True
+
             return input.nestFound
             #agent.potential_site = [agent.location[0], agent.location[1]]
 
         elif agent.counter < 1:
+            # eprint("Here")
             return input.exploreTime
         else:
             return None
-
-class Assessing(State):
-    def __init__(self, agent=None):
-        self.name = "assessing"
-        self.siteFound = False
-
-    def sense(self, agent, environment):
-
-        if not agent.checkAgentLeave(): #if probs check if agent.goingToSite
-           self.siteFound = agent.checkAgentReturn() #if probs, check if not agent.goingToSite
-    #TODO TODO repeated code in sense and update????
-    def act(self, agent):
-        if agent.goingToSite:
-            agent.move(agent.potential_site)
-        else:
-            agent.move(agent.hub)
-        return
-
-    def update(self, agent):
-        '''if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) and (agent.goingToSite is False):
-            agent.goingToSite = True
-            return input.siteFound
-        elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
-            agent.goingToSite = False
-            return input.siteAssess'''
-        if ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
-            agent.goingToSite = False
-            return input.siteAssess
-        if self.siteFound:
-            agent.goingToSite = True
-            self.siteFound = False
-            return input.siteFound
-
-class Resting(State):
-    def __init__(self, agent=None):
-        self.name = "resting"
-        self.seesPiper = False
-
-    def sense(self, agent, environment):
-        if agent.inHub:
-            bee = environment.hubController.observersCheck()
-            if isinstance(bee.state, Piping().__class__):
-                self.seesPiper = True
-                agent.velocity = agent.parameters["Velocity"]
-                agent.potential_site = bee.potential_site
-                environment.hubController.newPiper()
-
-    def act(self, agent):
-        if agent.inHub and not self.seesPiper:
-            agent.velocity = 0
-            agent.counter -= 1
-        else:
-            # if not at hub, move towards it
-            agent.move(agent.hub)
-            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <= 1:
-                agent.velocity = 0
-                agent.inHub = True
-
-    def update(self, agent):
-        if self.seesPiper:
-            return input.startPipe
-        if agent.counter < 1:
-            agent.velocity = agent.parameters["Velocity"]
-            return input.restingTime
-
-class Dancing(State):
-    def __init__(self, agent=None):
-        self.name = "dancing"
-        self.seesPiper = False
-
-    def sense(self, agent, environment):
-        bee = environment.hubController.observersCheck()
-        if isinstance(bee.state, Piping().__class__):
-            self.seesPiper = True
-            agent.potential_site = bee.potential_site
-            environment.hubController.newPiper()
-
-    def act(self, agent):
-        agent.wander(agent.hub, agent.hubRadius)
-
-    def update(self, agent):
-        if self.seesPiper:
-            return input.startPipe
-        if agent.counter < 1:
-            agent.assessments += 1
-            agent.q_value = 0
-            agent.goingToSite=True
-            return input.notTiredDance
-        else:
-            agent.counter -= 1
 
 class Observing(State):
     def __init__(self, agent=None):
@@ -336,26 +303,41 @@ class Observing(State):
         self.seesReporter=False
 
     def sense(self, agent, environment):
+        # if agent.starting:
+
+
+
         # get nearby bees from environment and check for dancers
         if agent.inHub:
+            if len(environment.patrolList) >0:
+                agent.starting=True;
+
+            # if agent.patrolChance>=.2 and agent.patrolIndex == None:
+            #     environment.agentsPatrolling+=1;
+            #     if len(environment.patrolList)>0:
+            #         agent.patrolIndex=np.random.randint(0, len(environment.patrolList))
+            #         agent.patrolTo=[environment.patrolList[agent.patrolIndex]["x"],environment.patrolList[agent.patrolIndex]["y"]]
+            #         del environment.patrolList[agent.patrolIndex]
+            #     else:
+            #         agent.starting=False;
+            # elif agent.patrolIndex != None:
+            #     if ((agent.patrolTo[0] - agent.location[0]) ** 2 + (agent.patrolTo[1] - agent.location[1]) ** 2) ** .5 >= 3 and agent.q_value <= 0:
+            #         agent.move(agent.patrolTo)
+            #     else:
+            #         agent.starting=False;
+            # elif agent.patrolChance<.2:
+            #     # eprint("Agent not in Patrol")
+            #     agent.starting=False;
             bee = environment.hubController.observersCheck()
-            if isinstance(bee.state, Piping().__class__):
-                self.seesPiper = True
-                agent.potential_site = bee.potential_site
-                environment.hubController.newPiper()
-            if isinstance(bee.state, Dancing().__class__):
-                if np.random.random()<(bee.q_value*np.sqrt(bee.q_value)*.02):#maybe get rid of the second part
-                    self.seesDancer = True
-                    agent.potential_site = bee.potential_site
-            if isinstance(bee.state, ReportToHub().__class__):
-                if np.random.random()<(bee.q_value*np.sqrt(bee.q_value)*.02):#maybe get rid of the second part
-                    self.seesReporter = True
-                    agent.potential_site = bee.potential_site
-        '''if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) \
-                and agent.inHub is False:
-                    environment.hubController.beeCheckIn(agent)
-                    agent.inHub = True
-                    return'''
+            # if isinstance(bee.state, Piping().__class__):
+            #     self.seesPiper = True
+            #     agent.potential_site = bee.potential_site
+            #     environment.hubController.newPiper()
+            # if isinstance(bee.state, Dancing().__class__):
+            #     if np.random.random()<(bee.q_value*np.sqrt(bee.q_value)*.02):#maybe get rid of the second part
+            #         self.seesDancer = True
+            #         agent.potential_site = bee.potential_site
+
         agent.checkAgentReturn()
 
     def act(self, agent):
@@ -370,6 +352,8 @@ class Observing(State):
                 agent.inHub = True
                 agent.direction += -89 + 179 * np.random.random()
     def update(self, agent):
+        if agent.starting:
+            return input.startPatrolling
         if self.seesPiper is True:
             return input.startPipe
         if self.seesDancer is True:
@@ -386,21 +370,7 @@ class ReturnToSite(State):
     def __init__(self, agent=None):
         self.name = "returnToSite"
 
-
-    def checkIfAtSite(self,agent,environment):
-        for site in environment.sites:
-
-            if site.id == agent.potential_site[2]:
-                x_dif = agent.location[0] - site.x
-                y_dif = agent.location[1] - site.y
-                tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
-                if tot_dif <=agent.view:
-                    environment.agentsFollowSite[agent.potential_site[2]]["reporting"]=False
-                    environment.agentsFollowSite[agent.potential_site[2]]["reportTimer"]=1500
-                    agent.reportTimer=1500
-                    agent.refound=True
-
-    def sense(self, agent, environment):
+    def getNextPheromone(self,agent,environment):
         site_id =agent.potential_site[2]
         x_dif = agent.location[0] - agent.potential_site[0]
         y_dif = agent.location[1] - agent.potential_site[1]
@@ -419,12 +389,34 @@ class ReturnToSite(State):
                     tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
                     if tot_dif <= agent.view:
                         if p.x ==agent.nextPheromone["x"]:
-                            agent.reportTimer=0
+                            #if the agent's next pheromone is the current one
+                            agent.returnTimer=0
                             environment.agentsFollowSite[site_id]["reportTime"]=0
                         else:
                             agent.nextPheromone["x"]=p.x
                             agent.nextPheromone["y"]=p.y
-                            # eprint(str(agent.nextPheromone)+" " + str(agent.id))
+                    # eprint(str(agent.nextPheromone)+" " + str(agent.id))
+
+    def checkIfAtSite(self,agent,environment):
+        for site in environment.sites:
+
+            if site.id == agent.potential_site[2]:
+                x_dif = agent.location[0] - site.x
+                y_dif = agent.location[1] - site.y
+                tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
+                if tot_dif <=agent.view:
+                    environment.agentsFollowSite[agent.potential_site[2]]["reporting"]=False
+                    environment.agentsFollowSite[agent.potential_site[2]]["reportTimer"]=1500
+                    agent.returnTimer=1500
+                    agent.refound=True
+
+    def sense(self, agent, environment):
+        agent.returnTimer-=1
+        if agent.returnTimer <=0:
+            agent.failedReporting=True;
+            environment.agentsFollowSite[agent.potential_site[2]]["reporting"] =False;
+            environment.agentsFollowSite[agent.potential_site[2]]["reportTime"] =1500;
+        self.getNextPheromone(agent,environment)
 
         self.checkIfAtSite(agent,environment)
         # eprint(str(agent.id)+" " +str(agent.reportTimer))
@@ -439,19 +431,27 @@ class ReturnToSite(State):
             if agent.nextPheromone["x"] and agent.nextPheromone["y"]:
                 pheromoneTrail=[agent.nextPheromone["x"],agent.nextPheromone["y"]]
                 agent.move(pheromoneTrail)
-        agent.reportTimer-=1
+
 
         return
 
 
     def update(self, agent):
-        if agent.refound:
-            agent.reporting=False
-            # eprint ("Agent refound site "+str(agent.potential_site[2]))
-            return input.nestFound
-        if agent.reportTimer<=0:
+
+        if agent.failedReporting:
+            agent.failedReporting=False;
             # eprint ("Agent unable to return to site "+str(agent.potential_site[2]))
+            agent.reporting=False;
+            agent.returnTimer=1500
             return input.reportingFailed
+        if agent.refound:
+            # eprint(str(agent.id)+" refound site")
+            # eprint ("Agent refound site "+str(agent.potential_site[2]))
+            agent.returnedTimer=900;
+            agent.velocity/=2
+            agent.reporting=False
+            return input.nestFound
+
         #eprint("Follow Site update")
         return
 
@@ -460,15 +460,19 @@ class ReportToHub(State):
         self.name = "reportToHub"
 
     def sense(self, agent, environment):
+        # eprint("In report " + str(agent.id))
+        agent.returnTimer-=1
+        if agent.returnTimer <=0:
+            environment.agentsFollowSite[agent.potential_site[2]]["reporting"] =False;
+            environment.agentsFollowSite[agent.potential_site[2]]["reportTime"] =1500;
+
         site_id =agent.potential_site[2]
         # eprint(agent.state)
-        if environment.agentsFollowSite[site_id]["reporting"]:
-            environment.agentsFollowSite[site_id]["reportTime"]-=1
+
         agent.checkAgentReturn()
         return
 
     def act(self, agent):
-        agent.reportTimer-=1
         agent.wander(agent.hub, agent.hubRadius)
 
         return
@@ -478,12 +482,17 @@ class ReportToHub(State):
         y_dif = agent.location[1] - agent.hub[1]
         tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
 
-        if tot_dif -agent.view <= agent.hubRadius:
-            agent.reportTime-=1;
-        if agent.reportTime <=0:
+        # if tot_dif -agent.view <= agent.hubRadius:
+        agent.reportTime-=1;
+        # eprint(agent.reportTime)
+
+        if agent.reportTime <= 0:
             return input.finishedReporting;
-        if agent.reportTimer<=0:
+        if agent.returnTimer <= 0:
+            # eprint("Agent has failed to report site "+str(agent.potential_site[2])+"\nReturning to exploring" )
+            agent.returnTimer=1500
             return input.reportingFailed
+
 
         return
 
@@ -495,15 +504,15 @@ class followSite(State):
     def pheromonePhase(self,agent,environment):
         site_id =agent.potential_site[2]
         if environment.agentsFollowSite[site_id]["agentDropPheromone"]<=8:
-            agent.droppingPheromone=True
+            agent.followSiteInfo["droppingPheromone"]=True
             environment.agentsFollowSite[site_id]["agentDropPheromone"]+=1
 
-        if not agent.droppingPheromone:
+        if not agent.followSiteInfo["droppingPheromone"]:
             return
-        if agent.pheromoneTimer >=50:
+        if agent.followSiteInfo["pheromoneTimer"] >=agent.followSiteInfo["pheromoneMaxEmitTime"]:
              environment.pheromoneList.append({"agent":agent.id,"pheromone":Pheromone(agent.location),"site":site_id})
-             agent.pheromoneTimer=0
-        agent.pheromoneTimer+=1
+             agent.followSiteInfo["pheromoneTimer"]=0
+        agent.followSiteInfo["pheromoneTimer"]+=1
 
 
     def followClosestSite(self,agent,environment):
@@ -515,10 +524,13 @@ class followSite(State):
                 environment.agentsFollowSite[site_id]["number"]=environment.get_numberOfAgentsInState(site_id)
                 #if there are 2 or more agents, have one report to hub
 
-                if environment.agentsFollowSite[site_id]["number"] >= 2 and environment.agentsFollowSite[site_id]["reporting"] ==False:
-                    environment.agentsFollowSite[site_id]["reporting"]=True
+                if (environment.agentsFollowSite[site_id]["number"] >= 2 and
+                 environment.agentsFollowSite[site_id]["reporting"] ==False and
+                 agent.returnedTimer <=0):
+                    # environment.agentsFollowSite[site_id]["reporting"]=True
+                    # eprint("Inside of follow " + str(agent.id))
                     agent.reporting=True;
-                    if agent.droppingPheromone:
+                    if agent.followSiteInfo["droppingPheromone"]:
                         environment.agentsFollowSite[site_id]["agentDropPheromone"]-=1
                     # eprint("Agent is now returning to hub from site "+ str(agent.potential_site[2]))
 
@@ -527,20 +539,24 @@ class followSite(State):
                     if agent.velocity>2:
                         agent.velocity=2;
 
-                    x= (math.cos(agent.swarmLoc)*10)+site.x
-                    y= (math.sin(agent.swarmLoc)*10)+site.y
+                    x= (math.cos(agent.followSiteInfo["swarmLoc"])*10)+site.x
+                    y= (math.sin(agent.followSiteInfo["swarmLoc"])*10)+site.y
 
                     agent.potential_site=[x, y,site_id]
                     # eprint(agent.swarmDir)
-                    if agent.swarmDir==0:
-                        agent.swarmLoc+=.1
+                    if agent.followSiteInfo["swarmDir"]==0:
+                        agent.followSiteInfo["swarmLoc"]+=.1
                     else:
-                        agent.swarmLoc-=.1
+                        agent.followSiteInfo["swarmLoc"]-=.1
                 else:
                     agent.potential_site=[site.x, site.y,site_id]
 
 
     def sense(self, agent, environment):
+        if agent.returnedTimer >0:
+            agent.returnedTimer-=1;
+        else:
+            agent.returnedTimer=0;
         site_id =agent.potential_site[2]
         #Emits Pheromones and deletes when the pheromone's strength <=0
         self.pheromonePhase(agent,environment)
@@ -548,12 +564,13 @@ class followSite(State):
         self.followClosestSite(agent,environment)
         if {site_id}.issubset(environment.sitesToIgnore):
             agent.following=False
-        if environment.agentsFollowSite[site_id]["number"] >5:
+        if environment.agentsFollowSite[site_id]["number"] >3:
             agent.following=False
 
-        if environment.agentsFollowSite[site_id]["reportTime"]<=0:
-            environment.agentsFollowSite[site_id]["reportTime"]=1500
-            environment.agentsFollowSite[site_id]["reporting"]=False
+
+        if agent.reporting:
+            environment.agentsFollowSite[agent.potential_site[2]]["reporting"]=True
+
         return
 
 
@@ -565,6 +582,8 @@ class followSite(State):
     def update(self, agent):
         agent.move(agent.potential_site)
         if agent.reporting:
+            # eprint(str(agent.id)+" reporting")
+            agent.velocity*=2
             return input.report
         if not agent.following:
             agent.velocity=1.6
@@ -573,7 +592,6 @@ class followSite(State):
             agent.potential_site=None
             return input.tooManyAgents
         return
-
 
 class SiteAssess(State):
     def __init__(self, agent=None):
@@ -673,3 +691,93 @@ class Commit(State):
 
     def update(self, agent):
         pass
+
+class Assessing(State):
+    def __init__(self, agent=None):
+        self.name = "assessing"
+        self.siteFound = False
+
+    def sense(self, agent, environment):
+
+        if not agent.checkAgentLeave(): #if probs check if agent.goingToSite
+           self.siteFound = agent.checkAgentReturn() #if probs, check if not agent.goingToSite
+    #TODO TODO repeated code in sense and update????
+    def act(self, agent):
+        if agent.goingToSite:
+            agent.move(agent.potential_site)
+        else:
+            agent.move(agent.hub)
+        return
+
+    def update(self, agent):
+        '''if (((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2) ** .5 < agent.hubRadius) and (agent.goingToSite is False):
+            agent.goingToSite = True
+            return input.siteFound
+        elif ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
+            agent.goingToSite = False
+            return input.siteAssess'''
+        if ((agent.potential_site[0] - agent.location[0]) ** 2 + (agent.potential_site[1] - agent.location[1]) ** 2) < 1 and (agent.goingToSite is True):
+            agent.goingToSite = False
+            return input.siteAssess
+        if self.siteFound:
+            agent.goingToSite = True
+            self.siteFound = False
+            return input.siteFound
+
+class Resting(State):
+    def __init__(self, agent=None):
+        self.name = "resting"
+        self.seesPiper = False
+
+    def sense(self, agent, environment):
+        if agent.inHub:
+            bee = environment.hubController.observersCheck()
+            if isinstance(bee.state, Piping().__class__):
+                self.seesPiper = True
+                agent.velocity = agent.parameters["Velocity"]
+                agent.potential_site = bee.potential_site
+                environment.hubController.newPiper()
+
+    def act(self, agent):
+        if agent.inHub and not self.seesPiper:
+            agent.velocity = 0
+            agent.counter -= 1
+        else:
+            # if not at hub, move towards it
+            agent.move(agent.hub)
+            if ((agent.hub[0] - agent.location[0]) ** 2 + (agent.hub[1] - agent.location[1]) ** 2)**.5 <= 1:
+                agent.velocity = 0
+                agent.inHub = True
+
+    def update(self, agent):
+        if self.seesPiper:
+            return input.startPipe
+        if agent.counter < 1:
+            agent.velocity = agent.parameters["Velocity"]
+            return input.restingTime
+
+class Dancing(State):
+    def __init__(self, agent=None):
+        self.name = "dancing"
+        self.seesPiper = False
+
+    def sense(self, agent, environment):
+        bee = environment.hubController.observersCheck()
+        if isinstance(bee.state, Piping().__class__):
+            self.seesPiper = True
+            agent.potential_site = bee.potential_site
+            environment.hubController.newPiper()
+
+    def act(self, agent):
+        agent.wander(agent.hub, agent.hubRadius)
+
+    def update(self, agent):
+        if self.seesPiper:
+            return input.startPipe
+        if agent.counter < 1:
+            agent.assessments += 1
+            agent.q_value = 0
+            agent.goingToSite=True
+            return input.notTiredDance
+        else:
+            agent.counter -= 1

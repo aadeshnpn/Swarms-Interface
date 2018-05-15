@@ -105,6 +105,7 @@ class HubAgent(Agent):
         return False
     def isInRangeOfNearestAttractor(self):
         #assert(self.attractor is not None)
+
         return distance(self.attractor.point, self.location) < self.attractor.radius
 
     def isInfluencedByNearestAttractor(self):
@@ -123,10 +124,10 @@ class HubAgent(Agent):
     def isRepulsed(self):
         if(self.ignore_repulsor is False): #yeah ignore_repulsor should be "repulsed" or something affirmative instead of negative
             return True
-        return False
 
     def isInRangeOfNearestRepulsor(self):
-        #assert(self.repulsor is not None)
+        assert(self.repulsor is not None)
+
         return distance(self.repulsor.point, self.location) < self.repulsor.radius
 
     def isRepulsedByNearestRepulsor(self):

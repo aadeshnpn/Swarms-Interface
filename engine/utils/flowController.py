@@ -48,6 +48,11 @@ class FlowController:
     def newRepulsor(self, json):
         self.repulsors.append(Repulsor((json['x'], json['y']), json['radius']))
 
+    # def newRepulors(self,avoidList):
+    #     for avoid in avoidList:
+    #         self.repulsors.append(Repulsor((avoid['x'], avoid['y']), avoid['radius']))
+
+
     def getClosestFlowController(self, flowControllers, agent_location):
         if (len(flowControllers) == 0):
             raise ValueError('flowControllers list must not be empty.')

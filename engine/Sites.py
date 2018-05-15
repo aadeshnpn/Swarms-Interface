@@ -16,7 +16,7 @@ class Sites(list):
                     super().append(Site(i, False,  goal_x, goal_y, scenario, False))
                 else: #create flankers
                     super().append(Site(i, True, goal_x, goal_y, scenario, False))
-                eprint(i)
+                # eprint(i)
         else:
             for i in range(num_of_sites):
                 super().append(Site(i, False, goal_x, goal_y, scenario, False))
@@ -24,7 +24,7 @@ class Sites(list):
         neutral_site_count = 4
 
         for i in range(num_of_sites, num_of_sites + neutral_site_count):
-            eprint(i)
+            # eprint(i)
             super().append(Site(i, False, goal_x, goal_y, scenario, True))
 
     def to_json(self):

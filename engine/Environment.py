@@ -22,7 +22,8 @@ from utils.potentialField import PotentialField
 from Sites import *
 
 import argparse
-
+import time
+starttime=time.time()
 
 
 parser = argparse.ArgumentParser()
@@ -38,6 +39,8 @@ parser.add_argument("-p", "--pipe", type=str, help="Connect to the specified nam
 parser.add_argument("-a", "--agentNum", type=int, help="specifies number of agents")
 parser.add_argument("-x", "--siteNum", type=int, help="specifies number of sites")
 parser.add_argument("-z", "--scenarioType", type=int, help="specifies enemy attack scenario")
+parser.add_argument("-q", "--patrolLocations1",type=tuple, help="specifies locations for agents to start exploring")
+parser.add_argument("-u", "--createWorldSize",type=str, help="specifies locations for agents to start exploring")
 
 
 args = parser.parse_args()
@@ -66,7 +69,13 @@ class Environment(ABC):
             self.logfile = open(fname, "w+")
             self.logfile.write("%s\n" % json.dumps({"seed":self.seed}))
 
+        # self.patrolLocations;
+        # eprint (args.patrolLocations1)
 
+        # eprint(self.patrolList)
+        # eprint(self.avoidList)
+        # eprint((self.updatedPatrol))
+        self.timings=[]
         self.args = args
         self.wait=0;
         self.file_name = file_name
@@ -87,6 +96,8 @@ class Environment(ABC):
         self.init_parameters()
         self.build_json_environment()  # Calls the function to read in the initialization data from a file
 
+
+
         self.stats["parameters"]["agent"] = self.parameters
         self.stats["type"] = "stats"
         self.stats["measurements"] = {}
@@ -100,6 +111,26 @@ class Environment(ABC):
         '''
         self.flowController = flowController.FlowController()
         self.isPaused = False
+
+        self.patrolLocations=args.patrolLocations1
+        self.createWorldSize=[int(i) for i in args.createWorldSize.split(",")]
+        # self.windowSizeRatio=[]
+        self.windowSizeRatio=[(self.createWorldSize[0]/(self.x_limit*2)),(self.createWorldSize[1]/(self.y_limit*2))]
+
+
+        self.patrolList=[]
+        self.avoidList=[]
+        # eprint(self.patrolLocations)
+
+        self.updatedPatrol=[]
+        self.parseLocation(self.patrolLocations,self.updatedPatrol)
+        self.patrolToDict()
+        self.agentsPatrolling=0;
+
+        self.livePatrolList=[];
+        self.liveAvoidList=[];
+        self.liveUpdatedPatrol=[];
+        self.liveAgentsPatrolling=0;
         #self.attractors = []
         #self.repulsors = []
 
@@ -108,6 +139,67 @@ class Environment(ABC):
 
         self.chat_history = ""
 
+    def patrolToDict(self):
+        patrol={"x":None,"y":None,"mode":None}
+        for x in range(0,len(self.updatedPatrol),3):
+
+            if int(self.updatedPatrol[x+2])==0:
+                self.patrolList.append({"x":int(self.updatedPatrol[x])/self.windowSizeRatio[0]-self.x_limit,
+                                        "y":-int(self.updatedPatrol[x+1])/self.windowSizeRatio[1]+self.y_limit,
+                                        "mode":int(self.updatedPatrol[x+2])})
+            # patrol["x"]=None
+            # patrol["y"]=None
+            # patrol["mode"]=None
+            elif int(self.updatedPatrol[x+2])==1:
+                self.avoidList.append({"x":int(self.updatedPatrol[x])/self.windowSizeRatio[0]-self.x_limit,
+                                        "y":-int(self.updatedPatrol[x+1])/self.windowSizeRatio[1]+self.y_limit,
+                                        "mode":int(self.updatedPatrol[x+2])})
+                self.flowController.newRepulsor({"x":int(self.updatedPatrol[x])/self.windowSizeRatio[0]-self.x_limit,
+                                        "y":-int(self.updatedPatrol[x+1])/self.windowSizeRatio[1]+self.y_limit,
+                                        "radius":20})
+
+    def parseLocation(self,toParse,insertInto):
+        i=0;
+        digit={"iChange":1,"digit":""}
+        # eprint(toParse)
+        for pos in toParse:
+            # eprint("index " + str(i))
+            if pos.isdigit():
+                # eprint(str(pos)+" at index " + str(i))
+                # eprint(pos)
+
+                digit["digit"]=self.getNumber(i)["digit"]
+                digit["iChange"]=self.getNumber(i)["iChange"]
+
+                # eprint(digit)
+                i+=digit["iChange"]
+                # eprint()
+                if digit["digit"] != "":
+                    insertInto.append(digit["digit"])
+
+
+                        ##
+                        # eprint("COMMA"
+            else:
+                i+=1;
+        # eprint (self.patrolLocations)
+
+    def getNumber(self,i):
+        digit={"iChange":0,"digit":""};
+        # eprint("Should be the same as first")
+        # eprint(self.patrolLocations[i])
+        # eprint(self.patrolLocations)
+        for x in range(i,len(self.patrolLocations)):
+            # eprint(self.patrolLocations[x])
+            if self.patrolLocations[x].isdigit():
+                # eprint(self.patrolLocations[x])
+                digit["digit"]+=self.patrolLocations[x]
+            else:
+                break;
+            digit["iChange"]+=1
+        # eprint("")
+        return digit
+
     @abstractmethod
     def init_hubController(self):
         pass
@@ -115,6 +207,7 @@ class Environment(ABC):
     @abstractmethod
     def init_parameters(self):
         pass
+
     def countUpdate(self, state1, state2):
         pass
 
@@ -137,6 +230,7 @@ class Environment(ABC):
         self.hub = data["hub"]
 
         # eprint('ScenarioType: ', args.scenarioType)
+
         self.sites = Sites(args.siteNum, self.hub["x"], self.hub["y"], args.scenarioType)
         for site in self.sites:
             self.agentsFollowSite[site.id]={"number":0,"reporting":False,"agentDropPheromone":0,"reportTime":1500}
@@ -220,7 +314,9 @@ class Environment(ABC):
                 agent.direction) * agent.velocity * slow_down  # + np.sin(potential_field_d) * potential_field_v
 
         # Postion Vector is in Radians. To reverse the agent's direction, we add PI to its direction.
+        # eprint(self.x_limit)
         if agent.location[0] >= self.x_limit:
+
             #agent.location[0] -= 2 * self.x_limit
             agent.direction += np.pi
             #agent.location[0]=self.x_limit -20
@@ -274,12 +370,11 @@ class Environment(ABC):
     @abstractmethod
     def isFinished(self):
         pass
+
     def finished(self):
         pass
 
-
     # Move all of the agents
-
     def moveSites(self):
         for site in self.sites:
             site.move()
@@ -297,12 +392,98 @@ class Environment(ABC):
             if(pheromone["pheromone"].strength<=0):
                 self.pheromoneList.pop(i)
             i+=1
+
     def updateSiteInfo(self):
         # eprint(len(self.agentsFollowSite))
         # eprint("Here")
+
         for i in range(0,len(self.agentsFollowSite)-1):
+            if self.agentsFollowSite[i]["reportTime"]<=0:
+                self.agentsFollowSite[i]["reportTime"]=1500
+                self.agentsFollowSite[i]["reporting"]=False
             if self.agentsFollowSite[i]["reporting"]:
                 self.agentsFollowSite[i]["reportTime"]-=1
+            if self.agentsFollowSite[i]["reporting"]:
+                self.agentsFollowSite[i]["reportTime"]-=1
+
+                if self.agentsFollowSite[i]["reportTime"]<= 0:
+                    # if i == 2:
+                        # eprint("Agent failed to return to site "+str(i)+"\nSending backup")
+
+                    self.agentsFollowSite[i]["reportTime"]=1500
+                    self.agentsFollowSite[i]["reporting"]=False
+
+    def processDeleted(self, deletePatrol):
+        # eprint(deletePatrol["info"]["deleted"]["mode"])
+        if deletePatrol["info"]["deleted"]["mode"] == 0:
+            # eprint(self.patrolList)
+            i=0;
+            for patrol in self.patrolList:
+                # eprint(deletePatrol["info"]["deleted"]["x"])
+                if deletePatrol["info"]["deleted"]["x"] == patrol["x"] and -deletePatrol["info"]["deleted"]["y"] == patrol["y"]:
+                    eprint("DELETING FROM PATROL")
+                    del self.patrolList[i]
+                i+=1;
+        if deletePatrol["info"]["deleted"]["mode"] == 1:
+            # eprint(self.patrolList)
+            i=0;
+            for avoid in self.avoidList:
+                # eprint(deletePatrol["info"]["deleted"]["x"])
+                if deletePatrol["info"]["deleted"]["x"] == avoid["x"] and -deletePatrol["info"]["deleted"]["y"] == avoid["y"]:
+                    # eprint("DELETING FROM AVOID")
+                    del self.avoidList[i]
+                i+=1;
+            i=0;
+            for repulsor in self.flowController.repulsors:
+                if deletePatrol["info"]["deleted"]["x"] == repulsor.x and -deletePatrol["info"]["deleted"]["y"] == repulsor.y:
+                    # eprint("DELETING FROM REPULSORS")
+                    del self.flowController.repulsors[i]
+                i+=1
+            # eprint(self.flowController.repulsors)
+
+
+
+    def processNew(self, newPatrol):
+        # eprint(newPatrol["info"]["mode"])
+        if newPatrol["info"]["mode"] == 0:
+            check=False;
+            for patrol in self.patrolList:
+                if (patrol["x"] == newPatrol["info"]["x"] and
+                patrol["y"] == -newPatrol["info"]["y"]):
+                    check=True;
+                    break
+
+
+            if not check:
+                # eprint()
+                self.patrolList.append({"x":newPatrol["info"]["x"],
+                                            "y":-newPatrol["info"]["y"],
+                                            "mode":newPatrol["info"]["mode"]})
+                # eprint((self.patrolList))
+        elif newPatrol["info"]["mode"] == 1:
+            check=False;
+            for avoid in self.avoidList:
+                if (avoid["x"] == newPatrol["info"]["x"] and
+                avoid["y"] == -newPatrol["info"]["y"]):
+                    check=True;
+                    break
+            # eprint("Adding new Avoid")
+
+            if not check:
+                # eprint()
+                # eprint("Adding to Avoid")
+                self.avoidList.append({"x":newPatrol["info"]["x"],
+                                            "y":-newPatrol["info"]["y"],
+                                            "mode":newPatrol["info"]["mode"]})
+                self.flowController.newRepulsor({"x":newPatrol["info"]["x"],
+                                        "y":-newPatrol["info"]["y"],
+                                        "radius":20})
+                # eprint((self.patrolList))
+            # eprint(self.flowController.repulsors)
+
+        # self.parseLocation(newPatrol,self.liveUpdatedPatrol)
+        # eprint(self.liveUpdatedPatrol)
+
     def run(self):
 
         if (not args.no_viewer):
@@ -317,11 +498,16 @@ class Environment(ABC):
             self.inputEventManager.subscribe('radialControl', self.hubController.handleRadialControl)
             self.inputEventManager.subscribe('requestStates', self.getUiStates)
             self.inputEventManager.subscribe('denySite', self.denySite)
+            self.inputEventManager.subscribe('patrolLocations', self.processNew)
+            self.inputEventManager.subscribe('patrolLocationsCheck', self.processDeleted)
+
+            # self.inputEventManager.subscribe('patrolLocations', self.patrolLocationsAdd)
+            # eprint(self.patrolLocations)
             #self.inputEventManager.subscribe('requestParams', self.getParams)
 
             self.inputEventManager.subscribe('message', self.processMessage)
 
-            print(self.to_json())
+            # print(self.to_json())
             self.getParams(None)  # this is a shortcut for letting the client know what the initial parameters are.
 
         self.stats["ticks"] = 0
@@ -329,6 +515,7 @@ class Environment(ABC):
         self.stats["deadAgents"] = 0
 
         while True:
+
             self.moveSites()
             self.pheromones()
             self.updateSiteInfo()
@@ -362,7 +549,10 @@ class Environment(ABC):
                         self.agents[agent_id].sense(self)
                         self.agents[agent_id].update(self)
                         self.suggest_new_direction(agent_id)
-
+                    # if self.agentsPatrolling <= 0 and len(self.patrolList) > 0:
+                        # eprint("Clearing Patrol List")
+                        # self.patrolList.clear()
+                    # eprint(len(self.patrolList))
                     self.hubController.hiveAdjust(self.agents)
                     self.compute_measurements()
 
@@ -408,6 +598,7 @@ class Environment(ABC):
                     self.logfile.close()
                 sys.exit()
 
+
         self.stats["committedSites"] = []
 
         for id in self.agents:
@@ -417,6 +608,8 @@ class Environment(ABC):
 
         self.stats["committedSites"] = list(
             dict(y) for y in set(tuple(x.items()) for x in self.stats["committedSites"]))
+
+
 
     def compute_measurements(self):
         pass
@@ -442,7 +635,6 @@ class Environment(ABC):
         self.agents[agent_id] = agent
         #eprint("UAV added to self.agents")
         '''
-
 
     def reset_sim(self):
         self.clear_for_reset()
@@ -508,7 +700,6 @@ class Environment(ABC):
 
         return pheromones
 
-
     def parametersToJson(self):
         paramDict = {}
         for paramKey, paramVal in self.parameters.items():
@@ -523,7 +714,12 @@ class Environment(ABC):
         return json.dumps(parameterJson)
 
     def denySite(self,json):
+        # eprint("HEAF")
         self.sitesToIgnore.add(json["id"])
+        # eprint(self.sitesToIgnore)
+
+
+        # eprint("HEREEEEE")
         # eprint(self.sitesToIgnore)
 
 
