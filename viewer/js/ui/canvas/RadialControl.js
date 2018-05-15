@@ -1,7 +1,5 @@
-class Handle
-{
-   constructor(angle, hub, {interactive = true, colour = RadialControl.LINE_COLOUR} = {})
-   {
+class Handle{
+   constructor(angle, hub, {interactive = true, colour = RadialControl.LINE_COLOUR} = {}){
       this.interactive = interactive;
       this.colour = colour;
       this.actual = null;
@@ -15,50 +13,41 @@ class Handle
       this.prev = null;
       this.next = null;
       this.isRequesting = false;
-      //world.hub.x =hub.x;
-      //world.hub.y=hub.y;
    }
 
-   setPrev(handle)
-   {
+   setPrev(handle){
       this.prev = handle;
    }
 
-   setNext(handle)
-   {
+   setNext(handle){
       this.next = handle;
    }
 
-   updateRequested(value)
-   {
+   updateRequested(value){
       this.isRequesting = true;
       this.requested = value;
       this.requestedX = Math.cos(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value))+world.hub.x;
       this.requestedY = Math.sin(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value))-world.hub.y;
    }
 
-   updateActual(value = 0)
-   {
+   updateActual(value = 0){
       this.actual = value;
 
       this.actualX = (Math.cos(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value)))+world.hub.x;
       this.actualY = (Math.sin(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value)))-world.hub.y;
 
-      if (this.isRequesting && value == this.requested)
-      {
+      if (this.isRequesting && value == this.requested){
          this.isRequesting = false;
       }
 
-      if (!this.isRequesting)
-      {
+      if (!this.isRequesting){
          this.requested = this.actual;
          this.requestedX = this.actualX;
          this.requestedY = this.actualY;
       }
    }
 
-   draw(ctx, debug = false)
-   {
+   draw(ctx, debug = false){
       ctx.save();
 
       ctx.strokeStyle = this.colour;
@@ -69,8 +58,7 @@ class Handle
       ctx.lineTo(this.next.actualX, -this.next.actualY);
       ctx.stroke();
 
-      if (this.actual != this.requested)
-      {
+      if (this.actual != this.requested){
          ctx.setLineDash([5, 5]);
          ctx.strokeStyle = "red";
          ctx.beginPath();
@@ -85,8 +73,7 @@ class Handle
          ctx.arc(this.requestedX, -this.requestedY, 3, 0, 2 * Math.PI, false);
          ctx.fill();
       }
-      else if (this.interactive)
-      {
+      else if (this.interactive){
          ctx.fillStyle = this.colour;
 
          ctx.beginPath();
@@ -97,8 +84,7 @@ class Handle
       ctx.restore();
    }
 
-   beeNumberToRadiusScale(number)
-   {
+   beeNumberToRadiusScale(number){
       // KLUDGE FOR WHEN WORLD HASN'T BEE LOADED
       // TODO: handle this properly
       try
@@ -112,8 +98,7 @@ class Handle
       }
    }
 
-   isHovered(x, y)
-   {
+   isHovered(x, y){
       // use distance formula sqrt(x^2+y^2) to hover within radius
       let dist = Math.sqrt(Math.pow(x - this.requestedX, 2) + Math.pow(y - this.requestedY, 2));
       return dist <= 8;
@@ -124,70 +109,65 @@ class Handle
    }
 }
 
-class RadialControl
-{
-   constructor(ui, {interactive = true, colour = RadialControl.LINE_COLOUR, dataset = "agentDirections"} = {})
-   {
-      this.interactive  = interactive;
-      this.colour       = colour;
-      this.dataset      = dataset;
+class RadialControl{
+  constructor(ui, {interactive = true, colour = RadialControl.LINE_COLOUR, dataset = "agentDirections"} = {}){
+    this.interactive  = interactive;
+    this.colour       = colour;
+    this.dataset      = dataset;
 
-      this.handles = [];
-      this.drag = {active: false, handle: null};
-      this.hover = {active: true, handle: null};
-      //this.hub = {x: world.hub.x, y: world.hub.y}
+    this.handles = [];
+    this.drag = {active: false, handle: null};
+    this.hover = {active: true, handle: null};
+    //this.hub = {x: world.hub.x, y: world.hub.y}
 
-       // create a handle for every 5th degree
-      for (let i = 0; i < (360 / 5); i++)
-      {
-         // we're doing it this way so eventually we can paramaterise the 5
-         this.handles.push(new Handle(i * 5, this.hub, {interactive: this.interactive, colour: this.colour}) );
-      }
+     // create a handle for every 5th degree
+    for (let i = 0; i < (360 / 5); i++)
+    {
+       // we're doing it this way so eventually we can paramaterise the 5
+       this.handles.push(new Handle(i * 5, this.hub, {interactive: this.interactive, colour: this.colour}) );
+    }
 
-      this.handles[0].setPrev(this.handles[this.handles.length - 1]);
-      this.handles[0].setNext(this.handles[1]);
+    this.handles[0].setPrev(this.handles[this.handles.length - 1]);
+    this.handles[0].setNext(this.handles[1]);
+    let handlesLength=this.handles.length
+    for (let i = 1; i < handlesLength; i++)
+    {
+       // this only works because js lets you do negative array indices
+       this.handles[i].setPrev(this.handles[(i - 1) % handlesLength]);
+       this.handles[i].setNext(this.handles[(i + 1) % handlesLength]);
+    }
 
-      for (let i = 1; i < this.handles.length; i++)
-      {
-         // this only works because js lets you do negative array indices
-         this.handles[i].setPrev(this.handles[(i - 1) % this.handles.length]);
-         this.handles[i].setNext(this.handles[(i + 1) % this.handles.length]);
-      }
+    /*if (this.interactive)
+    {
 
-      /*if (this.interactive)
-      {
+    }*/
 
-      }*/
-
-      ui.register("updateRadial", this.update.bind(this));
-      ui.register("restart", this.reset.bind(this));
-      ui.register("hubControllerToggle", this.toggle.bind(this));
+    ui.register("updateRadial", this.update.bind(this));
+    ui.register("restart", this.reset.bind(this));
+    ui.register("hubControllerToggle", this.toggle.bind(this));
+  }
+  toggle(data){
+   if (data && this.interactive){
+     cursors.default.addEventListener('mousemove', this.startHandleHover.bind(this));
+     cursors.radialDrag.addEventListener('mousemove', this.onMouseMove.bind(this));
+     cursors.radialDrag.addEventListener('mousedown', this.onMouseDown.bind(this));
+     cursors.radialDrag.addEventListener('mouseup', this.onMouseUp.bind(this));
    }
-   toggle(data){
-     if (data && this.interactive){
-       cursors.default.addEventListener('mousemove', this.startHandleHover.bind(this));
-       cursors.radialDrag.addEventListener('mousemove', this.onMouseMove.bind(this));
-       cursors.radialDrag.addEventListener('mousedown', this.onMouseDown.bind(this));
-       cursors.radialDrag.addEventListener('mouseup', this.onMouseUp.bind(this));
-     }
-   }
-   update(data)
-   {
-      // data is an array[72] of direction information for every five degrees
+  }
+  update(data){
+    // data is an array[72] of direction information for every five degrees
 
-      for (let i = 0; i < (360 / 5); i++)
-         this.handles[i].updateActual(data.controller[this.dataset][i]);
-   }
+    for (let i = 0; i < (360 / 5); i++)
+       this.handles[i].updateActual(data.controller[this.dataset][i]);
+  }
 
-   draw(ctx, debug = false)
-   {
-      for (let h of this.handles)
-      {
-         h.draw(ctx, debug);
-      }
-   }
+  draw(ctx, debug = false){
+    for (let h of this.handles){
+       h.draw(ctx, debug);
+    }
+  }
 
-	startHandleHover(e) {
+	startHandleHover(e){
     let worldRelative={x: e.offsetX, y:e.offsetY }
     if(world){
       let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
@@ -213,79 +193,77 @@ class RadialControl
 			}
 	}
 
-   onMouseDown(e)
-   {
-      this.drag.active = true;
-      this.drag.handle = this.hover.handle;
-      this.hover.active = false;
-      this.hover.handle = null;
-   }
+  onMouseDown(e){
+    this.drag.active = true;
+    this.drag.handle = this.hover.handle;
+    this.hover.active = false;
+    this.hover.handle = null;
+  }
 
-   onMouseUp(e) {
-      if (this.drag.active) {
-		  this.drag.active = false;
-		  this.drag.handle = null;
-		  ui.setActiveCursor(cursors.default);
-	  }
-   }
+  onMouseUp(e) {
+    if (this.drag.active){
+      this.drag.active = false;
+      this.drag.handle = null;
+      ui.setActiveCursor(cursors.default);
+    }
+  }
 
-   onMouseMove(e)
-   {
-      let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
-      worldRelative.x -= world.hub.x;
-      worldRelative.y += world.hub.y;
+  onMouseMove(e){
+    let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+    worldRelative.x -= world.hub.x;
+    worldRelative.y += world.hub.y;
 
-      if (!this.drag.active)
-      {
-         if (this.hover.active && !this.hover.handle.isHovered(worldRelative.x, worldRelative.y))
-         {
-            ui.setActiveCursor(cursors.default);
-            this.hover.active = false;
-            this.hover.handle = null;
-         }
-      }
-      else
-      {
-         let angle = Math.atan2(worldRelative.y, worldRelative.x);
-         let magnitude = Math.sqrt(Math.pow(worldRelative.x, 2) + Math.pow(worldRelative.y, 2));
+    if (!this.drag.active)
+    {
+       if (this.hover.active && !this.hover.handle.isHovered(worldRelative.x, worldRelative.y))
+       {
+          ui.setActiveCursor(cursors.default);
+          this.hover.active = false;
+          this.hover.handle = null;
+       }
+    }
+    else
+    {
+       let angle = Math.atan2(worldRelative.y, worldRelative.x);
+       let magnitude = Math.sqrt(Math.pow(worldRelative.x, 2) + Math.pow(worldRelative.y, 2));
 
-         if (angle < 0)
-         {
-            angle += Math.PI*2;
-         }
+       if (angle < 0)
+       {
+          angle += Math.PI*2;
+       }
 
-         let component = this.computeMouseComponent(worldRelative, this.drag.handle);
+       let component = this.computeMouseComponent(worldRelative, this.drag.handle);
 
-         if (component < 1 * RadialControl.RADIUS_SCALE)
-         {
-            component = 1 * RadialControl.RADIUS_SCALE
-         } //else if(component <)
-         else if (component > RadialControl.MAX_AGENT_SCALE * RadialControl.RADIUS_SCALE)
-         {
-            component = RadialControl.MAX_AGENT_SCALE * RadialControl.RADIUS_SCALE;
-         }
+       if (component < 1 * RadialControl.RADIUS_SCALE)
+       {
+          component = 1 * RadialControl.RADIUS_SCALE
+       } //else if(component <)
+       else if (component > RadialControl.MAX_AGENT_SCALE * RadialControl.RADIUS_SCALE)
+       {
+          component = RadialControl.MAX_AGENT_SCALE * RadialControl.RADIUS_SCALE;
+       }
 
-         let adjustedComponent = (RadialControl.MAX_AGENT_SCALE / (RadialControl.MAX_AGENT_SCALE - 1)) * (component - 50);
-         this.drag.handle.updateRequested( Math.round( adjustedComponent / (RadialControl.RADIUS_SCALE * RadialControl.MAX_AGENT_SCALE) * world.agents.length ))
+       let adjustedComponent = (RadialControl.MAX_AGENT_SCALE / (RadialControl.MAX_AGENT_SCALE - 1)) * (component - 50);
+       this.drag.handle.updateRequested( Math.round( adjustedComponent / (RadialControl.RADIUS_SCALE * RadialControl.MAX_AGENT_SCALE) * world.agents.length ))
 
-         //this.drag.handle.val = (component / RadialControl.RADIUS_SCALE) * 10;
-         //this.drag.handle.x = component * Math.cos(this.drag.handle.r);
-         //this.drag.handle.y = component * Math.sin(this.drag.handle.r);
+       //this.drag.handle.val = (component / RadialControl.RADIUS_SCALE) * 10;
+       //this.drag.handle.x = component * Math.cos(this.drag.handle.r);
+       //this.drag.handle.y = component * Math.sin(this.drag.handle.r);
 
-         socket.emit('input',
-         {
-            type: 'radialControl',
-            state:
-            {
-               r: this.drag.handle.r,
-               deg: this.drag.handle.deg,
-               val: this.drag.handle.requested
-            },
-            id: clientId});
-      }
-   }
+       socket.emit('input',
+       {
+          type: 'radialControl',
+          state:
+          {
+             r: this.drag.handle.r,
+             deg: this.drag.handle.deg,
+             val: this.drag.handle.requested
+          },
+          id: clientId});
+    }
+  }
 
-	computeMouseComponent(mouseCoords, handle) {
+	computeMouseComponent(mouseCoords, handle){
 		// let handleVector = {x: Math.cos(handle.r), y: -Math.sin(handle.r)};
 		let mouseMagnitude = Math.sqrt(Math.pow(mouseCoords.x, 2) + Math.pow(mouseCoords.y, 2));
 		let mouseAngle = Math.atan2(mouseCoords.y, mouseCoords.x);
@@ -295,7 +273,7 @@ class RadialControl
 		return component;
 	}
 
-	reset() {
+	reset(){
 		this.handles = [];
 		this.drag = {active: false, handle: null};
 		this.hover = {active: true, handle: null};
@@ -307,11 +285,11 @@ class RadialControl
 
 		this.handles[0].setPrev(this.handles[this.handles.length - 1])
 		this.handles[0].setNext(this.handles[1]);
-
-		for (let i = 1; i < this.handles.length; i++) {
+    let handlesLength=this.handles.length
+		for (let i = 1; i < handlesLength; i++) {
 			// this only works because js lets you do negative array indices
-			this.handles[i].setPrev(this.handles[(i - 1) % this.handles.length]);
-			this.handles[i].setNext(this.handles[(i + 1) % this.handles.length]);
+			this.handles[i].setPrev(this.handles[(i - 1) % handlesLength]);
+			this.handles[i].setNext(this.handles[(i + 1) % handlesLength]);
 		}
 	}
 }
@@ -321,160 +299,3 @@ RadialControl.MAX_AGENT_SCALE = 10.0;
 RadialControl.RADIUS_SCALE = 50;
 RadialControl.LINE_COLOUR = 'blue';
 RadialControl.HANDLE_COLOUR = 'blue';
-
-/*class RadialControl
-{
-   constructor()
-   {
-      this.directions = [];
-      this.drag = {active: false, handle: null};
-
-      for (let i = 0; i < (360 / 5); i++)
-      {
-         var rad = (Math.PI/180) * (i * 5);
-         this.directions[i] =
-         {
-            val: 1,
-            x: RadialControl.RADIUS_SCALE * Math.cos(rad),
-            y: RadialControl.RADIUS_SCALE * Math.sin(rad), // drawing to world coords
-            r: rad,
-            deg: (i * 5)
-         };
-      }
-
-      cursors.default.addEventListener('mousemove', this.startHandleHover.bind(this));
-      cursors.radialDrag.addEventListener('mousemove', this.onMouseMove.bind(this));
-      cursors.radialDrag.addEventListener('mousedown', this.onMouseDown.bind(this));
-      cursors.radialDrag.addEventListener('mouseup', this.onMouseUp.bind(this));
-   }
-
-   draw(ctx, debug = false)
-   {
-      ctx.save();
-
-      ctx.translate(0, 0);
-      ctx.save();
-
-      ctx.beginPath();
-
-      for (let i of this.directions)
-      {
-         ctx.lineTo(i.x, -i.y);
-         //ctx.rotate( (Math.PI / 180) * 5 );
-      }
-
-      ctx.strokeStyle = RadialControl.LINE_COLOUR;
-      ctx.stroke();
-
-      ctx.restore();
-      ctx.fillStyle = RadialControl.HANDLE_COLOUR;
-
-      for (let i of this.directions)
-      {
-         ctx.beginPath();
-         ctx.arc(i.x, -i.y, 3, 0, 2 * Math.PI, false);
-         ctx.fill();
-         //ctx.rotate( (Math.PI / 180) * 5 );
-      }
-
-      ctx.restore();
-   }
-
-   reset()
-   {
-      for (let i = 0; i < (360 / 5); i++)
-         this.directions[i] = 1;
-   }
-
-   startHandleHover(e)
-   {
-      if (this.checkHandleHover(e).isHovering)
-         ui.requestActiveCursor(cursors.radialDrag);
-   }
-
-   onMouseDown(e)
-   {
-      var hoverInfo = this.checkHandleHover(e);
-
-      if (hoverInfo.isHovering)
-      {
-         this.drag.active = true;
-         this.drag.handle = hoverInfo.handle;
-      }
-   }
-
-   onMouseMove(e)
-   {
-      if (!this.drag.active)
-      {
-         if (!this.checkHandleHover(e).isHovering)
-            ui.setActiveCursor(cursors.default);
-      }
-      else
-      {
-         var worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
-         var angle = Math.atan2(worldRelative.y, worldRelative.x);
-         var magnitude = Math.sqrt(Math.pow(worldRelative.x, 2) + Math.pow(worldRelative.y, 2));
-
-         if (angle < 0)
-         {
-            angle += Math.PI*2;
-         }
-
-         var component = this.computeMouseComponent(worldRelative, this.drag.handle);
-
-         if (component < 0.1 * RadialControl.RADIUS_SCALE)
-         {
-            component = 0.1 * RadialControl.RAD108IUS_SCALE
-         }
-         else if (component > 3.0 * RadialControl.RADIUS_SCALE)
-         {
-            component = 3.0 * RadialControl.RADIUS_SCALE;
-         }
-
-         this.drag.handle.val = (component / RadialControl.RADIUS_SCALE) * 10;
-         this.drag.handle.x = component * Math.cos(this.drag.handle.r);
-         this.drag.handle.y = component * Math.sin(this.drag.handle.r);
-
-         socket.emit('input', {type:'radialControl', state: this.drag.handle, id: clientId});
-      }
-   }
-
-   onMouseUp(e)
-   {
-      if (this.drag.active)
-      {
-         this.drag.active = false;
-         this.drag.handle = null;
-      }
-   }
-
-   checkHandleHover(e)
-   {
-      // e is the event object, offsetX and offsetY is the canvas-relative cursor coords
-      // (0, 0) it top-left
-      for (let i of this.directions)
-      {
-         var worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
-         var box = {left: i.x - 5, top: i.y - 5, right: i.x + 5, bottom: i.y + 5};
-
-         if (worldRelative.x >= box.left && worldRelative.x <= box.right && worldRelative.y >= box.top && worldRelative.y <= box.bottom)
-         {
-            return {isHovering: true, handle: i};
-         }
-      }
-
-      return {isHovering: false, handle: null};
-   }
-
-   computeMouseComponent(mouseCoords, handle)
-   {
-      var handleVector = {x: Math.cos(handle.r), y: -Math.sin(handle.r)};
-      var mouseMagnitude = Math.sqrt(Math.pow(mouseCoords.x, 2) + Math.pow(mouseCoords.y, 2));
-      var mouseAngle = Math.atan2(mouseCoords.y, mouseCoords.x);
-
-      var component = mouseMagnitude * Math.cos(mouseAngle - handle.r);
-
-      return component;
-   }
-}*/

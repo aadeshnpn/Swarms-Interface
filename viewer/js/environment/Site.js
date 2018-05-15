@@ -4,6 +4,7 @@ class Site
   constructor(siteJson)
   {
     this.x      =  siteJson["x"];
+    this.id     =  siteJson["id"];
     this.y      = -siteJson["y"]; // drawing coordinates have down as positive y
     this.radius =  siteJson["radius"];
     this.q      =  siteJson["q_value"];
@@ -14,8 +15,8 @@ class Site
     if (!debug)
       return;
 
-    var rVal = (this.q > 0.5) ? (1.0 - this.q) * 2 : 1.0;
-    var gVal = (this.q > 0.5) ? 1.0 : this.q * 2;
+    var rVal = (this.q < 0.5) ? (1.0 - this.q) * 2 : 1.0;
+    var gVal = (this.q < 0.5) ? 1.0 : this.q * 2;
 
     ctx.save();
 
@@ -29,10 +30,10 @@ class Site
 
     if (debug == true)
     {
-      /*ctx.font = "14pt sans-serif";
+      ctx.font = "14pt sans-serif";
       ctx.fillStyle = "rgb(0, 0, 0)";
-      let width = ctx.measureText(`Site: ${this.q}`).width;
-      ctx.fillText(`Site: ${this.q}`, -width/2, 20 + this.radius);*/
+      let width = ctx.measureText(`Site: ${this.id}`).width;
+      ctx.fillText(`Site: ${this.id}`, -width/2, 20 + this.radius);
     }
 
     ctx.restore();

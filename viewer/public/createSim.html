@@ -5,6 +5,7 @@
   <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
 </head>
 <body>
+
 <div id="header"> <h1 id="title">Sim Name -- Drone Agent</h1></div>
 <div id="sidePanels">
 
@@ -89,8 +90,12 @@
 
 </div>
 <div id="canvasDiv">
+  <span id="selectMode">Select Mode: <span id ="selectType">Patrol</span><br>
+    <span id="controller">(A and D or ← and →)</span>
+  </span>
+
   <span id="startSim">Start Simulation</span>
-  <canvas id="canvas" width="1230" height="920"></canvas>
+  <canvas id="canvas" onclick="addPoints()" width="1230" height="920"></canvas>
 </div>
 
 <div style="display: none">
@@ -105,11 +110,9 @@
   integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
   crossorigin="anonymous">
 </script>
+<script type="text/javascript" src="js/plugins/jquery.tablesorter.min.js"></script>
 <script
-  type="text/javascript"
-  src="js/plugins/jquery.tablesorter.min.js">
-</script>
-<script src="./js/createSim.js"></script>
+  src="./js/createSim/createSim.js"></script>
 <script
   src="https://code.jquery.com/jquery-3.2.1.min.js"
   integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
@@ -119,7 +122,20 @@
   type="text/javascript"
   src="js/plugins/jquery.tablesorter.min.js">
 </script>
-<script src="./js/index.js">
+<script
+  src="./js/index.js">
+</script>
+<script
+  src="./js/createSim/agent.js">
+</script>
+<script
+  src="./js/createSim/site.js">
+</script>
+<script
+  src="./js/createSim/point.js">
+</script>
+<script
+  src="./js/createSim/coord.js">
 </script>
 </body>
 </html>

@@ -101,13 +101,27 @@ class BaitBombGhost
 }
 
 class MissionLayer {
-	constructor(ui) {
 
+
+	constructor(ui) {
+		this.mouse={x:undefined,y:undefined}
+		this.drawSize=40
+    this.isDown = false
 		this.points =[]
 		this.hoveredPoint=false;
+		this.canvasClicked=false;
+
+		this.worldWidth=undefined
+		this.worldHeight=undefined
+
 		// create list of images
-		this.siteImages = [];
+		// this.siteImages = [];
+		this.enemyImages = [[],[]]
+		this.neutralImages = [[],[]];
 		this.loadSiteImages();
+
+		this.rect=canvas.getBoundingClientRect()
+
 
 		ui.register('updateMission', this.update.bind(this));
 		//console.log(this.update.bind(this));
@@ -117,25 +131,37 @@ class MissionLayer {
 		cursors.default.addEventListener('wheel', this.onMouseWheel.bind(this));
 		cursors.default.addEventListener('mousedown', this.onMouseDown.bind(this));
 		cursors.default.addEventListener('mouseup', this.onMouseUp.bind(this));
+
+
+
 	}
-
-
 	update(data) {
-		// console.log(data.id);
+		// console.log("should be updating point "+data.id);
 		if(!this.hoveredPoint){
 			document.getElementById("canvas").style.cursor = "default";
 		}
 		let update=false;
 		for(let point of this.points){
 			if(point.siteId==data.id){
+
 				update=true
 				point.x=Math.round(data.x)
 				point.y=Math.round(data.y)
-				point.images.push(this.siteImages[Math.floor(Math.random() *this.siteImages.length)])
+				// point.flash.on=true;
+				// point.images.push(this.enemyImages[Math.floor(Math.random() *this.enemyImages.length)])
+        //        console.log( this.enemyImages[Math.floor(Math.random() *this.enemyImages.length)])
+              //  point.images = this.enemyImages[Math.floor(Math.random() *this.enemyImages.length)]
+
 			}
 		}
 		if(!update){
-			this.points.push(new Point({x:data.x,y:data.y},data.id,[this.siteImages[Math.floor(Math.random() *this.siteImages.length)]]))
+			 if(data.site_q == 0.1){
+		        this.points.push(new Point({x:data.x,y:data.y},data.id,this.neutralImages[Math.floor(Math.random() *(this.neutralImages.length - 2))]))
+
+		    }
+		    else{
+		        this.points.push(new Point({x:data.x,y:data.y},data.id,this.enemyImages[Math.floor(Math.random() *(this.enemyImages.length - 2))]))
+		    }
 		}
 		// }
 		// this can really slow down the ui if it gets out of hand
@@ -145,20 +171,57 @@ class MissionLayer {
 		}
 
 	}
-
 	draw(ctx, debug = false) {
 
 		ctx.save();
 		let i=0
-		for(let point of this.points){
-			point.drawPoints(ctx)
 
+
+		for(let point of this.points){
+
+			if(point.flash.on){
+				point.flashOn(ctx);
+				point.flash.timer--;
+				// console.log(point.flash.timer);
+			}
+			point.drawPoints(ctx)
+			// if(point.newLoc.x!=null){
+			// 	point.moveToNewLoc();
+			//
+			// }
+			if(point.flash.timer<=0){
+				point.flash.timer=20;
+				point.flash.on=false;
+			}
 		}
+		if(this.worldWidth ==undefined){
+				this.worldWidth=world.width
+		}
+		if(this.worldHeight==undefined){
+			this.worldHeight=world.height
+		}
+		if(!this.hoveredPoint){
+			ctx.beginPath()
+			ctx.lineWidth=3
+			// console.log(Fog.stateStyles);
+			ctx.arc(this.mouse.x-(world.width/2),this.mouse.y-(world.height/2),this.drawSize,0,Math.PI*2)
+			ctx.strokeStyle=Object.entries(Fog.stateStyles)[currentSelectMode][1];
+			ctx.stroke();
+		}
+
+
+
 		for(let point of this.points){
 			if(point.hovered){
 				point.drawImages(ctx)
+                point.range = point.makeRangeControl(point.left, -point.bottom -point.height, point.width, point.height)
+
 				if(point.bottomHovered){
 					point.drawButtons(ctx);
+					//point.drawRangeSlider(ctx);
+				}
+				if(point.topHovered){
+                    point.drawRangeSlider(ctx);
 				}
 			}else{
 				point.currentImage=0
@@ -166,17 +229,197 @@ class MissionLayer {
 		}
 		ctx.restore();
 	}
-
 	reset() {
 		this.points = [];
 		this.clusters = [];
-		this.siteImages = [];
+		//this.siteImages = [];
+		this.enemyImages = [[],[]]
 		this.hoveredPoint = null;
 		this.loadSiteImages();
 	}
+	loadSiteImages() {
+		//		let numOfImages = 12;
+				// load in names of image files
+		//		for (let i = 1; i <= numOfImages; i++) {
+		//			this.siteImages.push("../siteImages/" + (i < 10 ? "0" : "") + i + ".jpg");
+		//		}
 
+        for( var i=0; i<5; i++){
+            this.enemyImages.push([]);
+        }
+
+        this.enemyImages[0].push("../siteImages2/ArmyGuy1/IMG_1404.JPG")
+        this.enemyImages[0].push("../siteImages2/ArmyGuy1/IMG_1405.JPG")
+        this.enemyImages[0].push("../siteImages2/ArmyGuy1/IMG_1406.JPG")
+        this.enemyImages[0].push("../siteImages2/ArmyGuy1/IMG_1407.JPG")
+        this.enemyImages[0].push("../siteImages2/ArmyGuy1/IMG_1408.JPG")
+        this.enemyImages[0].push("../siteImages2/ArmyGuy1/IMG_1409.JPG")
+        this.enemyImages[0].push("../siteImages2/ArmyGuy1/IMG_1410.JPG")
+        this.enemyImages[0].push("../siteImages2/ArmyGuy1/IMG_1411.JPG")
+        this.enemyImages[0].push("../siteImages2/ArmyGuy1/IMG_1412.JPG")
+
+        this.enemyImages[1].push("../siteImages2/ArmyGuy2/IMG_1395.JPG")
+        this.enemyImages[1].push("../siteImages2/ArmyGuy2/IMG_1396.JPG")
+        this.enemyImages[1].push("../siteImages2/ArmyGuy2/IMG_1397.JPG")
+        this.enemyImages[1].push("../siteImages2/ArmyGuy2/IMG_1398.JPG")
+        this.enemyImages[1].push("../siteImages2/ArmyGuy2/IMG_1399.JPG")
+        this.enemyImages[1].push("../siteImages2/ArmyGuy2/IMG_1400.JPG")
+        this.enemyImages[1].push("../siteImages2/ArmyGuy2/IMG_1401.JPG")
+        this.enemyImages[1].push("../siteImages2/ArmyGuy2/IMG_1402.JPG")
+        this.enemyImages[1].push("../siteImages2/ArmyGuy2/IMG_1403.JPG")
+
+        this.enemyImages[2].push("../siteImages2/ArmyGuy3/IMG_1387.JPG")
+        this.enemyImages[2].push("../siteImages2/ArmyGuy3/IMG_1388.JPG")
+        this.enemyImages[2].push("../siteImages2/ArmyGuy3/IMG_1390.JPG")
+        this.enemyImages[2].push("../siteImages2/ArmyGuy3/IMG_1391.JPG")
+        this.enemyImages[2].push("../siteImages2/ArmyGuy3/IMG_1392.JPG")
+        this.enemyImages[2].push("../siteImages2/ArmyGuy3/IMG_1393.JPG")
+        this.enemyImages[2].push("../siteImages2/ArmyGuy3/IMG_1394.JPG")
+
+        this.enemyImages[3].push("../siteImages2/ArmyGuy4/IMG_1373.JPG")
+        this.enemyImages[3].push("../siteImages2/ArmyGuy4/IMG_1374.JPG")
+        this.enemyImages[3].push("../siteImages2/ArmyGuy4/IMG_1375.JPG")
+        this.enemyImages[3].push("../siteImages2/ArmyGuy4/IMG_1377.JPG")
+        this.enemyImages[3].push("../siteImages2/ArmyGuy4/IMG_1378.JPG")
+        this.enemyImages[3].push("../siteImages2/ArmyGuy4/IMG_1379.JPG")
+        this.enemyImages[3].push("../siteImages2/ArmyGuy4/IMG_1382.JPG")
+        this.enemyImages[3].push("../siteImages2/ArmyGuy4/IMG_1383.JPG")
+
+        this.enemyImages[4].push("../siteImages2/ArmyTruck/IMG_1357.JPG")
+        this.enemyImages[4].push("../siteImages2/ArmyTruck/IMG_1361.JPG")
+        this.enemyImages[4].push("../siteImages2/ArmyTruck/IMG_1363.JPG")
+        this.enemyImages[4].push("../siteImages2/ArmyTruck/IMG_1364.JPG")
+        this.enemyImages[4].push("../siteImages2/ArmyTruck/IMG_1366.JPG")
+        this.enemyImages[4].push("../siteImages2/ArmyTruck/IMG_1367.JPG")
+        this.enemyImages[4].push("../siteImages2/ArmyTruck/IMG_1368.JPG")
+        this.enemyImages[4].push("../siteImages2/ArmyTruck/IMG_1371.JPG")
+        this.enemyImages[4].push("../siteImages2/ArmyTruck/IMG_1372.JPG")
+
+        for( var i=0; i<7; i++){
+            this.neutralImages.push([]);
+        }
+
+        this.neutralImages[0].push("../siteImages2/Cat/IMG_1431.JPG")
+        this.neutralImages[0].push("../siteImages2/Cat/IMG_1432.JPG")
+        this.neutralImages[0].push("../siteImages2/Cat/IMG_1433.JPG")
+        this.neutralImages[0].push("../siteImages2/Cat/IMG_1434.JPG")
+        this.neutralImages[0].push("../siteImages2/Cat/IMG_1435.JPG")
+        this.neutralImages[0].push("../siteImages2/Cat/IMG_1436.JPG")
+        this.neutralImages[0].push("../siteImages2/Cat/IMG_1437.JPG")
+        this.neutralImages[0].push("../siteImages2/Cat/IMG_1438.JPG")
+        this.neutralImages[0].push("../siteImages2/Cat/IMG_1439.JPG")
+        this.neutralImages[0].push("../siteImages2/Cat/IMG_1440.JPG")
+
+        this.neutralImages[1].push("../siteImages2/Cow/IMG_1422.JPG")
+        this.neutralImages[1].push("../siteImages2/Cow/IMG_1423.JPG")
+        this.neutralImages[1].push("../siteImages2/Cow/IMG_1424.JPG")
+        this.neutralImages[1].push("../siteImages2/Cow/IMG_1425.JPG")
+        this.neutralImages[1].push("../siteImages2/Cow/IMG_1426.JPG")
+        this.neutralImages[1].push("../siteImages2/Cow/IMG_1427.JPG")
+        this.neutralImages[1].push("../siteImages2/Cow/IMG_1428.JPG")
+        this.neutralImages[1].push("../siteImages2/Cow/IMG_1429.JPG")
+        this.neutralImages[1].push("../siteImages2/Cow/IMG_1430.JPG")
+
+        this.neutralImages[2].push("../siteImages2/LegoGuy1/IMG_1458.jpeg")
+        this.neutralImages[2].push("../siteImages2/LegoGuy1/IMG_1459.jpeg")
+        this.neutralImages[2].push("../siteImages2/LegoGuy1/IMG_1460.JPG")
+        this.neutralImages[2].push("../siteImages2/LegoGuy1/IMG_1461.JPG")
+        this.neutralImages[2].push("../siteImages2/LegoGuy1/IMG_1462.JPG")
+        this.neutralImages[2].push("../siteImages2/LegoGuy1/IMG_1463.JPG")
+        this.neutralImages[2].push("../siteImages2/LegoGuy1/IMG_1464.JPG")
+        this.neutralImages[2].push("../siteImages2/LegoGuy1/IMG_1465.JPG")
+        this.neutralImages[2].push("../siteImages2/LegoGuy1/IMG_1466.JPG")
+
+        this.neutralImages[3].push("../siteImages2/LegoGuy2/IMG_1450.JPG")
+        this.neutralImages[3].push("../siteImages2/LegoGuy2/IMG_1451.JPG")
+        this.neutralImages[3].push("../siteImages2/LegoGuy2/IMG_1452.JPG")
+        this.neutralImages[3].push("../siteImages2/LegoGuy2/IMG_1454.JPG")
+        this.neutralImages[3].push("../siteImages2/LegoGuy2/IMG_1455.JPG")
+        this.neutralImages[3].push("../siteImages2/LegoGuy2/IMG_1456.JPG")
+        this.neutralImages[3].push("../siteImages2/LegoGuy2/IMG_1457.JPG")
+        this.neutralImages[3].push("../siteImages2/LegoGuy2/IMG_1458.JPG")
+
+        this.neutralImages[4].push("../siteImages2/LegoGuys3/IMG_1441.JPG")
+        this.neutralImages[4].push("../siteImages2/LegoGuys3/IMG_1442.JPG")
+        this.neutralImages[4].push("../siteImages2/LegoGuys3/IMG_1443.JPG")
+        this.neutralImages[4].push("../siteImages2/LegoGuys3/IMG_1445.JPG")
+        this.neutralImages[4].push("../siteImages2/LegoGuys3/IMG_1446.JPG")
+        this.neutralImages[4].push("../siteImages2/LegoGuys3/IMG_1447.JPG")
+        this.neutralImages[4].push("../siteImages2/LegoGuys3/IMG_1448.JPG")
+        this.neutralImages[4].push("../siteImages2/LegoGuys3/IMG_1449.JPG")
+
+        this.neutralImages[5].push("../siteImages2/LegoTruck/IMG_1344.JPG")
+        this.neutralImages[5].push("../siteImages2/LegoTruck/IMG_1345.JPG")
+        this.neutralImages[5].push("../siteImages2/LegoTruck/IMG_1347.JPG")
+        this.neutralImages[5].push("../siteImages2/LegoTruck/IMG_1348.JPG")
+        this.neutralImages[5].push("../siteImages2/LegoTruck/IMG_1349.JPG")
+        this.neutralImages[5].push("../siteImages2/LegoTruck/IMG_1350.JPG")
+        this.neutralImages[5].push("../siteImages2/LegoTruck/IMG_1351.JPG")
+        this.neutralImages[5].push("../siteImages2/LegoTruck/IMG_1352.JPG")
+        this.neutralImages[5].push("../siteImages2/LegoTruck/IMG_1353.JPG")
+        this.neutralImages[5].push("../siteImages2/LegoTruck/IMG_1356.JPG")
+
+        this.neutralImages[6].push("../siteImages2/Sheep/IMG_1413.JPG")
+        this.neutralImages[6].push("../siteImages2/Sheep/IMG_1414.JPG")
+        this.neutralImages[6].push("../siteImages2/Sheep/IMG_1415.JPG")
+        this.neutralImages[6].push("../siteImages2/Sheep/IMG_1416.JPG")
+        this.neutralImages[6].push("../siteImages2/Sheep/IMG_1417.JPG")
+        this.neutralImages[6].push("../siteImages2/Sheep/IMG_1418.JPG")
+        this.neutralImages[6].push("../siteImages2/Sheep/IMG_1419.JPG")
+        this.neutralImages[6].push("../siteImages2/Sheep/IMG_1420.JPG")
+        this.neutralImages[6].push("../siteImages2/Sheep/IMG_1421.JPG")
+
+
+		// shuffle them
+		//		for (let i = 0; i < numOfImages; i++) {
+		//			// choose one at random
+		//			let rand = Math.floor(Math.random() * numOfImages);
+		//			// swap them
+		//			let temp = this.siteImages[rand];
+		//			this.siteImages[rand] = this.siteImages[i];
+		//			this.siteImages[i] = temp;
+		//		}
+	}
+	onMouseWheel(e){
+		if(!this.pointHovered){
+			this.drawSize-=(e.deltaY/53)*4
+			// }else{
+			if(this.drawSize<5){
+				this.drawSize=5
+			}
+		}
+
+
+		for(let point of this.points){
+			//Loops through all points and if they are hovered will change the image they are on
+			if(point.hovered){
+				if(e.deltaY>0){
+					point.currentImage--
+				}
+				else{
+					point.currentImage++
+				}
+				if(point.currentImage <0){
+					point.currentImage=point.images.length-1
+				}else if(point.currentImage >point.images.length-1){
+					point.currentImage=0
+				}
+			}
+		}
+	}
 	onMouseMove(e) {
 		let worldRelative={x: e.offsetX, y:e.offsetY }
+
+
+		this.mouse.x= worldRelative.x
+		this.mouse.y= worldRelative.y
+		if(this.canvasClicked && !this.hoveredPoint){
+			let pX=this.mouse.x-this.worldWidth/2
+			let pY=this.mouse.y-this.worldHeight/2
+			// console.log(this.drawSize);
+			selectedArea.push(new Select(pX,pY,this.drawSize))
+		}
+
 		if(world){
 			let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
 			//let worldRelative = {x:world.x,y:world.y};
@@ -185,13 +428,24 @@ class MissionLayer {
 		for(let point of this.points){
 			if(!this.hoveredPoint||point.hovered){
 				if(point.isHovered(worldRelative,world) ){
+
 					point.hovered=true;
 					this.hoveredPoint=true
 					if(point.pictureHovered(worldRelative,world)||point.pictureHover){
 						// console.log("HERE"+ worldRelative.x);
 						point.pictureHover=true
+					}
+
+					if(  worldRelative.x-(world.width/2)> point.left && worldRelative.x-(world.width/2)<point.left+15){
+						// console.log("HERE");
+						point.leftArrowWidth=2
+					}else{
+						point.leftArrowWidth=.5
 
 					}
+						 //check between point.left and point.left+15
+							//check between -point.bottom-point.height*point.arrowHeight and -point.top+point.height*arrowHeight)
+
 				}
 				else if(!point.isHovered(worldRelative,world)&&!point.pictureHovered(worldRelative,world)){
 					point.hovered=false;
@@ -210,49 +464,36 @@ class MissionLayer {
 				}
 			}
 
-		}
-
-	}
-
-	loadSiteImages() {
-		let numOfImages = 12;
-		// load in names of image files
-		for (let i = 1; i <= numOfImages; i++) {
-			this.siteImages.push("../siteImages/" + (i < 10 ? "0" : "") + i + ".jpg");
-		}
-
-		// shuffle them
-		for (let i = 0; i < numOfImages; i++) {
-			// choose one at random
-			let rand = Math.floor(Math.random() * numOfImages);
-			// swap them
-			let temp = this.siteImages[rand];
-			this.siteImages[rand] = this.siteImages[i];
-			this.siteImages[i] = temp;
-		}
-	}
-
-
-	onMouseWheel(e){
-		for(let point of this.points){
-			//Loops through all points and if they are hovered will change the image they are on
-			if(point.hovered){
-				if(e.deltaY>0){
-					point.currentImage--
-				}
-				else{
-					point.currentImage++
-				}
-				if(point.currentImage <0){
-					point.currentImage=point.images.length-1
-				}else if(point.currentImage >point.images.length-1){
-					point.currentImage=0
-				}
+			if (this.isDown && point.topHovered){
+					console.log('HOVERING and DOWN ' + parseInt(worldRelative.x))
+					point.pct=Math.max(0,Math.min(1,(worldRelative.x - (world.width/2)-point.range.x)/point.range.width));
+					point.range.pct = point.pct
+					console.log(point.range.pct)
+					//ctx.clearRect(point.range.x-12.5,point.range.y-point.range.height/2-15,point.range.width+25,point.range.height+20);
+					point.drawRangeSlider(ctx);
 			}
 		}
-	}
 
+
+	}
 	onMouseDown(e){
+		// console.log(e.);
+		if(e.button==2 ){
+			deletingSelect=true;
+			this.canvasClicked=true;
+			let pX=this.mouse.x-this.worldWidth/2
+			let pY=this.mouse.y-this.worldHeight/2
+			// console.log(this.drawSize);
+			selectedArea.push(new Select(pX,pY,this.drawSize))
+		}
+		if(e.button==0 && !this.hoveredPoint){
+			this.canvasClicked=true;
+			let pX=this.mouse.x-this.worldWidth/2
+			let pY=this.mouse.y-this.worldHeight/2
+			// console.log(this.drawSize);
+			selectedArea.push(new Select(pX,pY,this.drawSize))
+
+		}
 		let i=0
 		for(let point of this.points){
 			if(point.bottomHovered){
@@ -262,45 +503,73 @@ class MissionLayer {
 				this.hoveredPoint=false
 				document.getElementById("canvas").style.cursor = "default"
 			}
+
+
 			i+=1
 		}
+
 	}
 	onMouseUp(e){
+		this.canvasClicked=false;
+		selectedArea=[]
+		deletingSelect=false;
 		for(let point of this.points){
 			point.buttonShadow=1.5
 		}
+
+		this.isDown = false
+		// console.log('IS_UP')
 	}
+
 }
 
 class Point{
   constructor(pos,id,images){
-
+    if(images.length == 0){
+        console.log('No images in point: ', id)
+    }
+    this.newLoc={x:null,y:null}
+    // this.dir={}
+    this.arrowHeight=9/24
+    this.leftArrowWidth=.5
+    this.rightArrowWidth=.5
+    this.rightArrow=false;
+    this.leftArrow=false;
+    this.velX=0;
+    this.velY=0;
     this.x=Math.round(pos.x)
     this.y=Math.round(pos.y);
     this.radius=5
     this.siteId=id
     this.hovered=false;
-    this.images=images.slice()
+    this.images=images
     this.shuffle(this.images)
     this.hoverDistance=10
     this.currentImage=0
     this.imageMaxWidth = 200;
-		this.imageMaxHeight = 200;
+	  this.imageMaxHeight = 200;
     this.imageBorderWidth = 2;
     this.image=new Image()
     this.pin=new Image()
     this.pin.src="../img/pin.png"
     this.fontSize=20
     this.left=null;
+    this.right=null;
     this.top=null;
     this.bottom=null;
     this.pictureHover=false
     this.width;
     this.height
     this.bottomHovered=false
+    this.topHovered=false
     this.buttonShadow=1.5;
+    this.range = null
+    this.pct = .8
+    this.flash={on:false,timer:20};
 
     // console.log(mouse);
+//        console.log(this.images)
+
 
   }
 
@@ -308,13 +577,24 @@ class Point{
     var i = 0
       , j = 0
       , temp = null
-
-    for (i = array.length - 1; i > 0; i -= 1) {
+    let arrayLength=array.length - 1
+    for (i = arrayLength; i > 0; i -= 1) {
       j = Math.floor(Math.random() * (i + 1))
       temp = array[i]
       array[i] = array[j]
       array[j] = temp
     }
+  }
+
+  flashOn(ctx){
+    ctx.beginPath()
+    ctx.fillStyle="blue"
+    ctx.globalAlpha=.5
+    ctx.arc(Math.round(this.x), Math.round(-this.y), this.radius+this.hoverDistance+20, 0, 2 * Math.PI);
+    ctx.fill()
+    ctx.stroke()
+    ctx.closePath()
+    ctx.globalAlpha=1
   }
 
   drawPoints(ctx){
@@ -372,11 +652,47 @@ class Point{
     ctx.shawdowBlur=0
     ctx.shadowOffsetX =0
     ctx.shadowOffsetY = 0;
+
   }
 
-  drawImages(ctx){
-    // console.log(this.images.length);
+  makeRangeControl(x,y,width,height){
+    var range={x:x,y:y,width:width,height:height};
+    range.x1=range.x+range.width;
+    range.y1=range.y;
+    //
+    range.pct=this.pct;
+    return(range);
+    console.log('Making range Control')
+  }
+
+  drawRangeSlider(ctx){
+    // bar
+    //  ctx.lineWidth=6;
+    //  ctx.lineCap='round';
+    //  ctx.beginPath();
+    //  ctx.moveTo(this.range.x,this.range.y);
+    //  ctx.lineTo(this.range.x1,this.range.y);
+    //  ctx.strokeStyle='black';
+    //  ctx.stroke();
+    //  // thumb
+    //  ctx.beginPath();
+    //  var thumbX=this.range.x+this.range.width*this.range.pct;
+    //  ctx.moveTo(thumbX,this.range.y - this.range.height/4);
+    //  ctx.lineTo(thumbX,this.range.y + this.range.height/4);
+    //  ctx.strokeStyle='rgba(255,0,0,0.25)';
+    //  ctx.stroke();
+    //  ctx.lineWidth=1
+     // legend
+    //  ctx.fillStyle='blue';
+    //  ctx.textAlign='center';
+    //  ctx.textBaseline='top';
+    //  ctx.font='10px arial';
+    //  ctx.fillText(parseInt(range.pct*100)+'%',range.x+range.width/2,range.y-range.height/2-2);
+  }
+
+  calculateImageInfo(){
     this.image.src=this.images[this.currentImage]
+
     this.width = this.image.width;
     this.height = this.image.height;
     // console.log(width);
@@ -410,10 +726,10 @@ class Point{
       this.left = -xLimit;
     }
 
-    let right = this.left + this.width;
-    if (right > xLimit) {
-      right = xLimit;
-      this.left = right - this.width;
+    this.right = this.left + this.width;
+    if (this.right > xLimit) {
+      this.right = xLimit;
+      this.left = this.right - this.width;
     }
 
     this.top = this.y + this.height;
@@ -426,35 +742,89 @@ class Point{
       this.bottom = -yLimit;
       this.top = this.bottom + this.height;
     }
-    // console.log(this.image);
-    // ctx.drawImage(this.image,0,0,20,20)
-    // console.log(this.left);
-    // log
+  }
+
+  drawImages(ctx){
+
+    this.calculateImageInfo()
+
+    this.drawImageBackground(ctx)
+
+
+
+    ctx.drawImage(this.image, Math.round(this.left) + Math.round(this.imageBorderWidth), Math.round(-this.top) + Math.round(this.imageBorderWidth),
+      Math.round(this.width) - 2 * Math.round(this.imageBorderWidth), Math.round(this.height) - 2 * Math.round(this.imageBorderWidth));
+
+    this.drawImageNum(ctx)
+    this.drawPointNum(ctx)
+    // this.drawPointNum(ctx)
+
+    this.imageChangers(ctx)
+
+  }
+
+  imageChangers(ctx){
+
+
+    ctx.lineWidth=this.leftArrowWidth
+    ctx.fillStyle="rgb(120, 143, 194)"
+    ctx.beginPath();
+    //check between this.left and this.left+15
+    //check between -this.bottom-this.height*height and -this.top+this.height*height
+    ctx.moveTo(Math.round(this.left),Math.round(-this.bottom-this.height/2))
+
+    ctx.lineTo(Math.round(this.left+10),Math.round(-this.bottom-this.height*this.arrowHeight))
+    ctx.lineTo(Math.round(this.left+15),Math.round(-this.bottom-this.height*this.arrowHeight))
+    ctx.lineTo(Math.round(this.left+5),Math.round(-this.bottom-this.height/2))
+
+    ctx.lineTo(Math.round(this.left+15),Math.round(-this.top+this.height*this.arrowHeight))
+    ctx.lineTo(Math.round(this.left+10),Math.round(-this.top+this.height*this.arrowHeight))
+    ctx.lineTo(Math.round(this.left),Math.round(-this.bottom-this.height/2))
+    // ctx.moveTo(Math.round(this.left), Math.round(-this.bottom)-50);
+    // ctx.lineTo(Math.round(this.left+30), Math.round(-this.bottom)-50);
+    // ctx.lineTo(Math.round(this.left+30), Math.round(-this.top)+50);
+    // ctx.lineTo(Math.round(this.left), Math.round(-this.top)+50);
+    // ctx.lineTo(Math.round(this.left), Math.round(-this.bottom)-50);
+    ctx.fill()
+    ctx.stroke();
+    ctx.closePath();
+
+    ctx.beginPath();
+    ctx.lineWidth=this.rightArrowWidth
+
+    //check between this.right-15 and this.right
+    //check between -this.bottom-this.height*height and -this.top+this.height*height
+    ctx.moveTo(Math.round(this.right),Math.round(-this.bottom-this.height/2))
+
+    ctx.lineTo(Math.round(this.right-10),Math.round(-this.bottom-this.height*this.arrowHeight))
+    ctx.lineTo(Math.round(this.right-15),Math.round(-this.bottom-this.height*this.arrowHeight))
+    ctx.lineTo(Math.round(this.right-5),Math.round(-this.bottom-this.height/2))
+
+    ctx.lineTo(Math.round(this.right-15),Math.round(-this.top+this.height*this.arrowHeight))
+    ctx.lineTo(Math.round(this.right-10),Math.round(-this.top+this.height*this.arrowHeight))
+    ctx.lineTo(Math.round(this.right),Math.round(-this.bottom-this.height/2))
+    ctx.fill()
+    ctx.stroke();
+    ctx.closePath();
+    ctx.lineWidth=1
+  }
+
+  drawImageBackground(ctx){
     ctx.lineWidth=3
     ctx.fillStyle="black"
     ctx.beginPath();
     ctx.moveTo(Math.round(this.left), Math.round(-this.bottom));
-    ctx.lineTo(Math.round(right), Math.round(-this.bottom));
-    ctx.lineTo(Math.round(right), Math.round(-this.top));
+    ctx.lineTo(Math.round(this.right), Math.round(-this.bottom));
+    ctx.lineTo(Math.round(this.right), Math.round(-this.top));
     ctx.lineTo(Math.round(this.left), Math.round(-this.top));
     ctx.lineTo(Math.round(this.left), Math.round(-this.bottom));
     ctx.fill()
     ctx.stroke();
     ctx.closePath();
     ctx.lineWidth=1
+  }
 
-
-    ctx.drawImage(this.image, Math.round(this.left) + Math.round(this.imageBorderWidth), Math.round(-this.top) + Math.round(this.imageBorderWidth),
-      Math.round(this.width) - 2 * Math.round(this.imageBorderWidth), Math.round(this.height) - 2 * Math.round(this.imageBorderWidth));
-
-    // if(this.bottomHovered){
-    //   ctx.fillStyle="rgb(0,0,150)"
-    //   ctx.globalAlpha=.3
-    //   ctx.fillRect(this.left,-this.top+(this.height-10),this.width,10)
-    //   // ctx.fill()
-    //   ctx.globalAlpha=1
-    // }
-
+  drawImageNum(ctx){
     let currImString=(this.currentImage+1).toString()
     let totalImString=(this.images.length).toString()
     // console.log(currImString);
@@ -482,6 +852,34 @@ class Point{
     ctx.shadowOffsetY = 0;
   }
 
+  drawPointNum(ctx){
+    let currImString=(this.siteId).toString()
+    // let totalImString=(this.images.length).toString()
+    // console.log(currImString);
+    ctx.fillStyle="rgba(0,0,0,.5)"
+    ctx.beginPath();
+    ctx.moveTo(this.right, -this.top);
+    ctx.lineTo(this.right, -this.top+this.fontSize*1.4);
+    ctx.lineTo(this.right-this.fontSize*(currImString.length*.8), -this.top+this.fontSize*1.4);
+    ctx.lineTo(this.right-this.fontSize*(currImString.length*.8), -this.top);
+    // ctx.lineTo(this.left, -bottom);
+    ctx.fill()
+    ctx.stroke();
+    ctx.closePath();
+
+    ctx.font = this.fontSize.toString()+"px Arial";
+    ctx.fillStyle="white"
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.shadowBlur=2
+    ctx.shadowColor = 'black';
+    let imageNum=(this.siteId).toString()
+    ctx.fillText(imageNum,this.right-this.fontSize-5,-this.top+this.fontSize);
+    ctx.shawdowBlur=0
+    ctx.shadowOffsetX =0
+    ctx.shadowOffsetY = 0;
+  }
+
   dist(point2) {
     // use distance formula sqrt(x^2+y^2)
     return Math.sqrt(Math.pow(this.x - (point2.x-(world.width/2)), 2) + Math.pow(this.y - -(point2.y-(world.height/2)), 2));
@@ -490,7 +888,14 @@ class Point{
   isHovered(mouse,world) {
 
 		return this.dist( mouse) <= this.radius+this.hoverDistance;
-	}
+  }
+
+  rightArrowHovered(mouse,world){
+
+  }
+  leftArrowHovered(mouse,world){
+
+  }
 
   pictureHovered(mouse,world){
     let xLim=mouse.x-(world.width/2)>this.left && mouse.x-(world.width/2)<this.left+this.width
@@ -508,12 +913,21 @@ class Point{
     return xLim &&yLim;
   }
 
+  topOfImage(mouse,world){
+    let xLim=mouse.x-(world.width/2)>this.left && mouse.x-(world.width/2)<this.left+this.width
+    let yLim=-(mouse.y-(world.height/2))<this.bottom+this.height && -(mouse.y-(world.height/2)) > this.bottom
+
+    return xLim &&yLim;
+  }
+
+  isDown(mouse,world){
+    return mouse.x-(world.width/2)>this.range.x && mouse.x-(world.width/2) < this.range.x+this.range.width && mouse.y - (world.height/2)>this.range.y-this.range.height/2 && mouse.y-(world.height/2)<this.range.y+this.range.height/2;
+  }
+
 }
 
-class Handle
-{
-   constructor(angle, hub, {interactive = true, colour = RadialControl.LINE_COLOUR} = {})
-   {
+class Handle{
+   constructor(angle, hub, {interactive = true, colour = RadialControl.LINE_COLOUR} = {}){
       this.interactive = interactive;
       this.colour = colour;
       this.actual = null;
@@ -527,50 +941,41 @@ class Handle
       this.prev = null;
       this.next = null;
       this.isRequesting = false;
-      //world.hub.x =hub.x;
-      //world.hub.y=hub.y;
    }
 
-   setPrev(handle)
-   {
+   setPrev(handle){
       this.prev = handle;
    }
 
-   setNext(handle)
-   {
+   setNext(handle){
       this.next = handle;
    }
 
-   updateRequested(value)
-   {
+   updateRequested(value){
       this.isRequesting = true;
       this.requested = value;
       this.requestedX = Math.cos(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value))+world.hub.x;
       this.requestedY = Math.sin(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value))-world.hub.y;
    }
 
-   updateActual(value = 0)
-   {
+   updateActual(value = 0){
       this.actual = value;
 
       this.actualX = (Math.cos(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value)))+world.hub.x;
       this.actualY = (Math.sin(this.r) * (RadialControl.RADIUS_SCALE * this.beeNumberToRadiusScale(value)))-world.hub.y;
 
-      if (this.isRequesting && value == this.requested)
-      {
+      if (this.isRequesting && value == this.requested){
          this.isRequesting = false;
       }
 
-      if (!this.isRequesting)
-      {
+      if (!this.isRequesting){
          this.requested = this.actual;
          this.requestedX = this.actualX;
          this.requestedY = this.actualY;
       }
    }
 
-   draw(ctx, debug = false)
-   {
+   draw(ctx, debug = false){
       ctx.save();
 
       ctx.strokeStyle = this.colour;
@@ -581,8 +986,7 @@ class Handle
       ctx.lineTo(this.next.actualX, -this.next.actualY);
       ctx.stroke();
 
-      if (this.actual != this.requested)
-      {
+      if (this.actual != this.requested){
          ctx.setLineDash([5, 5]);
          ctx.strokeStyle = "red";
          ctx.beginPath();
@@ -597,8 +1001,7 @@ class Handle
          ctx.arc(this.requestedX, -this.requestedY, 3, 0, 2 * Math.PI, false);
          ctx.fill();
       }
-      else if (this.interactive)
-      {
+      else if (this.interactive){
          ctx.fillStyle = this.colour;
 
          ctx.beginPath();
@@ -609,8 +1012,7 @@ class Handle
       ctx.restore();
    }
 
-   beeNumberToRadiusScale(number)
-   {
+   beeNumberToRadiusScale(number){
       // KLUDGE FOR WHEN WORLD HASN'T BEE LOADED
       // TODO: handle this properly
       try
@@ -624,8 +1026,7 @@ class Handle
       }
    }
 
-   isHovered(x, y)
-   {
+   isHovered(x, y){
       // use distance formula sqrt(x^2+y^2) to hover within radius
       let dist = Math.sqrt(Math.pow(x - this.requestedX, 2) + Math.pow(y - this.requestedY, 2));
       return dist <= 8;
@@ -636,70 +1037,65 @@ class Handle
    }
 }
 
-class RadialControl
-{
-   constructor(ui, {interactive = true, colour = RadialControl.LINE_COLOUR, dataset = "agentDirections"} = {})
-   {
-      this.interactive  = interactive;
-      this.colour       = colour;
-      this.dataset      = dataset;
+class RadialControl{
+  constructor(ui, {interactive = true, colour = RadialControl.LINE_COLOUR, dataset = "agentDirections"} = {}){
+    this.interactive  = interactive;
+    this.colour       = colour;
+    this.dataset      = dataset;
 
-      this.handles = [];
-      this.drag = {active: false, handle: null};
-      this.hover = {active: true, handle: null};
-      //this.hub = {x: world.hub.x, y: world.hub.y}
+    this.handles = [];
+    this.drag = {active: false, handle: null};
+    this.hover = {active: true, handle: null};
+    //this.hub = {x: world.hub.x, y: world.hub.y}
 
-       // create a handle for every 5th degree
-      for (let i = 0; i < (360 / 5); i++)
-      {
-         // we're doing it this way so eventually we can paramaterise the 5
-         this.handles.push(new Handle(i * 5, this.hub, {interactive: this.interactive, colour: this.colour}) );
-      }
+     // create a handle for every 5th degree
+    for (let i = 0; i < (360 / 5); i++)
+    {
+       // we're doing it this way so eventually we can paramaterise the 5
+       this.handles.push(new Handle(i * 5, this.hub, {interactive: this.interactive, colour: this.colour}) );
+    }
 
-      this.handles[0].setPrev(this.handles[this.handles.length - 1]);
-      this.handles[0].setNext(this.handles[1]);
+    this.handles[0].setPrev(this.handles[this.handles.length - 1]);
+    this.handles[0].setNext(this.handles[1]);
+    let handlesLength=this.handles.length
+    for (let i = 1; i < handlesLength; i++)
+    {
+       // this only works because js lets you do negative array indices
+       this.handles[i].setPrev(this.handles[(i - 1) % handlesLength]);
+       this.handles[i].setNext(this.handles[(i + 1) % handlesLength]);
+    }
 
-      for (let i = 1; i < this.handles.length; i++)
-      {
-         // this only works because js lets you do negative array indices
-         this.handles[i].setPrev(this.handles[(i - 1) % this.handles.length]);
-         this.handles[i].setNext(this.handles[(i + 1) % this.handles.length]);
-      }
+    /*if (this.interactive)
+    {
 
-      /*if (this.interactive)
-      {
+    }*/
 
-      }*/
-
-      ui.register("updateRadial", this.update.bind(this));
-      ui.register("restart", this.reset.bind(this));
-      ui.register("hubControllerToggle", this.toggle.bind(this));
+    ui.register("updateRadial", this.update.bind(this));
+    ui.register("restart", this.reset.bind(this));
+    ui.register("hubControllerToggle", this.toggle.bind(this));
+  }
+  toggle(data){
+   if (data && this.interactive){
+     cursors.default.addEventListener('mousemove', this.startHandleHover.bind(this));
+     cursors.radialDrag.addEventListener('mousemove', this.onMouseMove.bind(this));
+     cursors.radialDrag.addEventListener('mousedown', this.onMouseDown.bind(this));
+     cursors.radialDrag.addEventListener('mouseup', this.onMouseUp.bind(this));
    }
-   toggle(data){
-     if (data && this.interactive){
-       cursors.default.addEventListener('mousemove', this.startHandleHover.bind(this));
-       cursors.radialDrag.addEventListener('mousemove', this.onMouseMove.bind(this));
-       cursors.radialDrag.addEventListener('mousedown', this.onMouseDown.bind(this));
-       cursors.radialDrag.addEventListener('mouseup', this.onMouseUp.bind(this));
-     }
-   }
-   update(data)
-   {
-      // data is an array[72] of direction information for every five degrees
+  }
+  update(data){
+    // data is an array[72] of direction information for every five degrees
 
-      for (let i = 0; i < (360 / 5); i++)
-         this.handles[i].updateActual(data.controller[this.dataset][i]);
-   }
+    for (let i = 0; i < (360 / 5); i++)
+       this.handles[i].updateActual(data.controller[this.dataset][i]);
+  }
 
-   draw(ctx, debug = false)
-   {
-      for (let h of this.handles)
-      {
-         h.draw(ctx, debug);
-      }
-   }
+  draw(ctx, debug = false){
+    for (let h of this.handles){
+       h.draw(ctx, debug);
+    }
+  }
 
-	startHandleHover(e) {
+	startHandleHover(e){
     let worldRelative={x: e.offsetX, y:e.offsetY }
     if(world){
       let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
@@ -725,79 +1121,77 @@ class RadialControl
 			}
 	}
 
-   onMouseDown(e)
-   {
-      this.drag.active = true;
-      this.drag.handle = this.hover.handle;
-      this.hover.active = false;
-      this.hover.handle = null;
-   }
+  onMouseDown(e){
+    this.drag.active = true;
+    this.drag.handle = this.hover.handle;
+    this.hover.active = false;
+    this.hover.handle = null;
+  }
 
-   onMouseUp(e) {
-      if (this.drag.active) {
-		  this.drag.active = false;
-		  this.drag.handle = null;
-		  ui.setActiveCursor(cursors.default);
-	  }
-   }
+  onMouseUp(e) {
+    if (this.drag.active){
+      this.drag.active = false;
+      this.drag.handle = null;
+      ui.setActiveCursor(cursors.default);
+    }
+  }
 
-   onMouseMove(e)
-   {
-      let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
-      worldRelative.x -= world.hub.x;
-      worldRelative.y += world.hub.y;
+  onMouseMove(e){
+    let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
+    worldRelative.x -= world.hub.x;
+    worldRelative.y += world.hub.y;
 
-      if (!this.drag.active)
-      {
-         if (this.hover.active && !this.hover.handle.isHovered(worldRelative.x, worldRelative.y))
-         {
-            ui.setActiveCursor(cursors.default);
-            this.hover.active = false;
-            this.hover.handle = null;
-         }
-      }
-      else
-      {
-         let angle = Math.atan2(worldRelative.y, worldRelative.x);
-         let magnitude = Math.sqrt(Math.pow(worldRelative.x, 2) + Math.pow(worldRelative.y, 2));
+    if (!this.drag.active)
+    {
+       if (this.hover.active && !this.hover.handle.isHovered(worldRelative.x, worldRelative.y))
+       {
+          ui.setActiveCursor(cursors.default);
+          this.hover.active = false;
+          this.hover.handle = null;
+       }
+    }
+    else
+    {
+       let angle = Math.atan2(worldRelative.y, worldRelative.x);
+       let magnitude = Math.sqrt(Math.pow(worldRelative.x, 2) + Math.pow(worldRelative.y, 2));
 
-         if (angle < 0)
-         {
-            angle += Math.PI*2;
-         }
+       if (angle < 0)
+       {
+          angle += Math.PI*2;
+       }
 
-         let component = this.computeMouseComponent(worldRelative, this.drag.handle);
+       let component = this.computeMouseComponent(worldRelative, this.drag.handle);
 
-         if (component < 1 * RadialControl.RADIUS_SCALE)
-         {
-            component = 1 * RadialControl.RADIUS_SCALE
-         } //else if(component <)
-         else if (component > RadialControl.MAX_AGENT_SCALE * RadialControl.RADIUS_SCALE)
-         {
-            component = RadialControl.MAX_AGENT_SCALE * RadialControl.RADIUS_SCALE;
-         }
+       if (component < 1 * RadialControl.RADIUS_SCALE)
+       {
+          component = 1 * RadialControl.RADIUS_SCALE
+       } //else if(component <)
+       else if (component > RadialControl.MAX_AGENT_SCALE * RadialControl.RADIUS_SCALE)
+       {
+          component = RadialControl.MAX_AGENT_SCALE * RadialControl.RADIUS_SCALE;
+       }
 
-         let adjustedComponent = (RadialControl.MAX_AGENT_SCALE / (RadialControl.MAX_AGENT_SCALE - 1)) * (component - 50);
-         this.drag.handle.updateRequested( Math.round( adjustedComponent / (RadialControl.RADIUS_SCALE * RadialControl.MAX_AGENT_SCALE) * world.agents.length ))
+       let adjustedComponent = (RadialControl.MAX_AGENT_SCALE / (RadialControl.MAX_AGENT_SCALE - 1)) * (component - 50);
+       this.drag.handle.updateRequested( Math.round( adjustedComponent / (RadialControl.RADIUS_SCALE * RadialControl.MAX_AGENT_SCALE) * world.agents.length ))
 
-         //this.drag.handle.val = (component / RadialControl.RADIUS_SCALE) * 10;
-         //this.drag.handle.x = component * Math.cos(this.drag.handle.r);
-         //this.drag.handle.y = component * Math.sin(this.drag.handle.r);
+       //this.drag.handle.val = (component / RadialControl.RADIUS_SCALE) * 10;
+       //this.drag.handle.x = component * Math.cos(this.drag.handle.r);
+       //this.drag.handle.y = component * Math.sin(this.drag.handle.r);
 
-         socket.emit('input',
-         {
-            type: 'radialControl',
-            state:
-            {
-               r: this.drag.handle.r,
-               deg: this.drag.handle.deg,
-               val: this.drag.handle.requested
-            },
-            id: clientId});
-      }
-   }
+       socket.emit('input',
+       {
+          type: 'radialControl',
+          state:
+          {
+             r: this.drag.handle.r,
+             deg: this.drag.handle.deg,
+             val: this.drag.handle.requested
+          },
+          id: clientId});
+    }
+  }
 
-	computeMouseComponent(mouseCoords, handle) {
+	computeMouseComponent(mouseCoords, handle){
 		// let handleVector = {x: Math.cos(handle.r), y: -Math.sin(handle.r)};
 		let mouseMagnitude = Math.sqrt(Math.pow(mouseCoords.x, 2) + Math.pow(mouseCoords.y, 2));
 		let mouseAngle = Math.atan2(mouseCoords.y, mouseCoords.x);
@@ -807,7 +1201,7 @@ class RadialControl
 		return component;
 	}
 
-	reset() {
+	reset(){
 		this.handles = [];
 		this.drag = {active: false, handle: null};
 		this.hover = {active: true, handle: null};
@@ -819,11 +1213,11 @@ class RadialControl
 
 		this.handles[0].setPrev(this.handles[this.handles.length - 1])
 		this.handles[0].setNext(this.handles[1]);
-
-		for (let i = 1; i < this.handles.length; i++) {
+    let handlesLength=this.handles.length
+		for (let i = 1; i < handlesLength; i++) {
 			// this only works because js lets you do negative array indices
-			this.handles[i].setPrev(this.handles[(i - 1) % this.handles.length]);
-			this.handles[i].setNext(this.handles[(i + 1) % this.handles.length]);
+			this.handles[i].setPrev(this.handles[(i - 1) % handlesLength]);
+			this.handles[i].setNext(this.handles[(i + 1) % handlesLength]);
 		}
 	}
 }
@@ -834,177 +1228,44 @@ RadialControl.RADIUS_SCALE = 50;
 RadialControl.LINE_COLOUR = 'blue';
 RadialControl.HANDLE_COLOUR = 'blue';
 
-/*class RadialControl
-{
-   constructor()
-   {
-      this.directions = [];
-      this.drag = {active: false, handle: null};
+class Select{
+  constructor(x,y,r){
+    this.x=x;
+    this.y=y
+    // console.log(r);
+    // console.log(r);
 
-      for (let i = 0; i < (360 / 5); i++)
-      {
-         var rad = (Math.PI/180) * (i * 5);
-         this.directions[i] =
-         {
-            val: 1,
-            x: RadialControl.RADIUS_SCALE * Math.cos(rad),
-            y: RadialControl.RADIUS_SCALE * Math.sin(rad), // drawing to world coords
-            r: rad,
-            deg: (i * 5)
-         };
-      }
+    this.r=r||5
+  }
+  draw(ctx){
+    // ctx.globalAlpha=.5
+    ctx.beginPath()
+    ctx.arc(this.x,this.y, this.r, 0, 2 * Math.PI);
+    ctx.strokeStyle="rgba(0,0,0,0.5)";
+    ctx.fillStyle="rgba(255, 255, 255, 1)";
 
-      cursors.default.addEventListener('mousemove', this.startHandleHover.bind(this));
-      cursors.radialDrag.addEventListener('mousemove', this.onMouseMove.bind(this));
-      cursors.radialDrag.addEventListener('mousedown', this.onMouseDown.bind(this));
-      cursors.radialDrag.addEventListener('mouseup', this.onMouseUp.bind(this));
-   }
+    ctx.fill();
+    ctx.globalAlpha=1
+    // ctx.stroke();
+  //
 
-   draw(ctx, debug = false)
-   {
-      ctx.save();
+  }
 
-      ctx.translate(0, 0);
-      ctx.save();
 
-      ctx.beginPath();
 
-      for (let i of this.directions)
-      {
-         ctx.lineTo(i.x, -i.y);
-         //ctx.rotate( (Math.PI / 180) * 5 );
-      }
-
-      ctx.strokeStyle = RadialControl.LINE_COLOUR;
-      ctx.stroke();
-
-      ctx.restore();
-      ctx.fillStyle = RadialControl.HANDLE_COLOUR;
-
-      for (let i of this.directions)
-      {
-         ctx.beginPath();
-         ctx.arc(i.x, -i.y, 3, 0, 2 * Math.PI, false);
-         ctx.fill();
-         //ctx.rotate( (Math.PI / 180) * 5 );
-      }
-
-      ctx.restore();
-   }
-
-   reset()
-   {
-      for (let i = 0; i < (360 / 5); i++)
-         this.directions[i] = 1;
-   }
-
-   startHandleHover(e)
-   {
-      if (this.checkHandleHover(e).isHovering)
-         ui.requestActiveCursor(cursors.radialDrag);
-   }
-
-   onMouseDown(e)
-   {
-      var hoverInfo = this.checkHandleHover(e);
-
-      if (hoverInfo.isHovering)
-      {
-         this.drag.active = true;
-         this.drag.handle = hoverInfo.handle;
-      }
-   }
-
-   onMouseMove(e)
-   {
-      if (!this.drag.active)
-      {
-         if (!this.checkHandleHover(e).isHovering)
-            ui.setActiveCursor(cursors.default);
-      }
-      else
-      {
-         var worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
-         var angle = Math.atan2(worldRelative.y, worldRelative.x);
-         var magnitude = Math.sqrt(Math.pow(worldRelative.x, 2) + Math.pow(worldRelative.y, 2));
-
-         if (angle < 0)
-         {
-            angle += Math.PI*2;
-         }
-
-         var component = this.computeMouseComponent(worldRelative, this.drag.handle);
-
-         if (component < 0.1 * RadialControl.RADIUS_SCALE)
-         {
-            component = 0.1 * RadialControl.RAD108IUS_SCALE
-         }
-         else if (component > 3.0 * RadialControl.RADIUS_SCALE)
-         {
-            component = 3.0 * RadialControl.RADIUS_SCALE;
-         }
-
-         this.drag.handle.val = (component / RadialControl.RADIUS_SCALE) * 10;
-         this.drag.handle.x = component * Math.cos(this.drag.handle.r);
-         this.drag.handle.y = component * Math.sin(this.drag.handle.r);
-
-         socket.emit('input', {type:'radialControl', state: this.drag.handle, id: clientId});
-      }
-   }
-
-   onMouseUp(e)
-   {
-      if (this.drag.active)
-      {
-         this.drag.active = false;
-         this.drag.handle = null;
-      }
-   }
-
-   checkHandleHover(e)
-   {
-      // e is the event object, offsetX and offsetY is the canvas-relative cursor coords
-      // (0, 0) it top-left
-      for (let i of this.directions)
-      {
-         var worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
-         var box = {left: i.x - 5, top: i.y - 5, right: i.x + 5, bottom: i.y + 5};
-
-         if (worldRelative.x >= box.left && worldRelative.x <= box.right && worldRelative.y >= box.top && worldRelative.y <= box.bottom)
-         {
-            return {isHovering: true, handle: i};
-         }
-      }
-
-      return {isHovering: false, handle: null};
-   }
-
-   computeMouseComponent(mouseCoords, handle)
-   {
-      var handleVector = {x: Math.cos(handle.r), y: -Math.sin(handle.r)};
-      var mouseMagnitude = Math.sqrt(Math.pow(mouseCoords.x, 2) + Math.pow(mouseCoords.y, 2));
-      var mouseAngle = Math.atan2(mouseCoords.y, mouseCoords.x);
-
-      var component = mouseMagnitude * Math.cos(mouseAngle - handle.r);
-
-      return component;
-   }
-}*/
+}
 
 class SelectionBoxes
 {
-   constructor()
-   {
+   constructor(){
       cursors.default.addEventListener('mousedown', function(e) { ui.clearSelectedAgents(); });
    }
 
-   update()
-   {
+   update(){
       // no-op
    }
 
-   draw(ctx, debug = false)
-   {
+   draw(ctx, debug = false){
       if (ui.agentsSelected() == 0)
          return;
 
@@ -1172,22 +1433,14 @@ class StateBubbles
     socket.emit("input", {"type": "requestStates"});
   }
 
-  init(json)
-  {
-    //console.log(json);
-    for (let name of json.states)
-    {
-      //console.log(name);
+  init(json){
+    for (let name of json.states){
       this.states[name] = {count: 0, radius: 0};
-      //console.log(this.states);
-
     }
-
     this.initialised = true;
   }
 
-  update(json)
-  {
+  update(json){
     this.totalAgentsInStates = 0;
     //console.log(json);
 
@@ -1213,8 +1466,7 @@ class StateBubbles
     }
   }
 
-  restart()
-  {
+  restart(){
     this.states = {};
     this.totalAgentsInStates = 0;
     this.initialised = false;
@@ -1222,8 +1474,7 @@ class StateBubbles
     socket.emit("input", {"type": "requestStates"});
   }
 
-  draw(ctx, debug = false)
-  {
+  draw(ctx, debug = false){
     return
     if (!this.initialised)
       return;
@@ -1383,6 +1634,38 @@ class CursorSelecting extends Cursor
    }
 }
 
+class Mouse{
+  constructor(x,y){
+    this.x=x;
+    this.y=y;
+    this.clicked=false;
+    this.deltaX=null;
+    this.deltaY=null;
+    // cursors.default.addEventListener('mousemove', this.onMouseMove.bind(this));
+		// cursors.default.addEventListener('wheel', this.onMouseWheel.bind(this));
+		// cursors.default.addEventListener('mousedown', this.onMouseDown.bind(this));
+		// cursors.default.addEventListener('mouseup', this.onMouseUp.bind(this));
+  }
+
+  onMouseMove(e){
+    this.x=world.canvasToWorldCoords(e.offsetX,e.offsetY).x;
+    this.y=world.canvasToWorldCoords(e.offsetX,e.offsetY).y;
+  }
+  onMouseWheel(e){
+    this.deltaX=e.deltaX;
+    this.deltaY=e.deltaY;
+    console.log(this);
+
+  }
+  onMouseDown(e){
+    this.clicked=true;
+  }
+  onMouseUp(e){
+    this.clicked=false;
+
+  }
+}
+
 var baitButton = document.getElementById('buttonBugBait');
 var bombButton = document.getElementById('buttonBugBomb');
 
@@ -1510,6 +1793,7 @@ class DebugParams
          var label = $("<label></label>").text(`${param}`);
          label.append($('<input style="width:40%;">').val(val).attr('type','number').attr('name',`${param}`));
          label.append("<br>");
+        //  console.log(label);
          $('#parameters').after(label);
          //$(`#debugParams input[name=${param}]`).val(val);
       }
@@ -1653,16 +1937,6 @@ buttonPausePlay.addEventListener('click', function(e)
       isPaused = true;
    }
 });
-
-var canvas = document.getElementById('canvas');
-style=window.getComputedStyle(canvas);
-windowWidth=jQuery(window).width();
-windowHeight=jQuery(window).height();
-canvasHeight=style.getPropertyValue('height');
-canvasWidth=style.getPropertyValue('width');
-var menuBar = document.getElementById('menuBar');
-
-//menuBar.style.top=toString(windowHeight-canvasHeight+100)
 
 var buttonRestart = document.getElementById('buttonRestart');
 
@@ -2019,14 +2293,12 @@ class UI {
 		//console.log(this.eventCallbacks.length);
 	}
 
+
+	//The msg variable contains a callback name, and the data to be passed into the callback
+	//The update data is passed through here
 	on(msg) {
-//console.log(msg.type)
 		for (let cb of this.eventCallbacks[msg.type]) {
-
-
-			//console.log("------------")
 				cb(msg.data);
-
 		}
 	}
 
@@ -2041,9 +2313,9 @@ class UI {
 	}*/
 
 	draw(ctx, debug = false) {
-		for (let element of this.canvasElems)
-
+		for (let element of this.canvasElems){
 			element.draw(ctx, debug);
+		}
 	}
 
 	setActiveCursor(cursor) {
@@ -2097,46 +2369,26 @@ class Agent
     this.id            =  agentJson.id;
     this.x             =  Math.round(agentJson.x);
     this.y             = Math.round(-agentJson.y);
-    this.rotation      =  Math.PI/2 - agentJson.direction; // convert from the engine's coordinate system into what the drawing routine expects
+    this.rotation      =  Math.PI/2 - agentJson.direction;
     this.state         =  agentJson.state;
-    //console.log(this.state);
-    this.potentialSite =  agentJson.potential_site;
     this.isAlive       =  agentJson.live;
     this.qVal          =  agentJson.qVal;
     Agent.stateColors  = {};
     this.lastLocations = [];
   }
 
-  draw(ctx, debug = false, showAgentStates = false,hub)
+  draw(ctx, debug = false,hub)
   {
-    // console.log(hub);
-    // console.log(this.x);
-    // console.log(Math.sqrt(this.x**2+this.y**2));
-    let distX=this.x - hub.x
-    let distY=this.y - hub.y
-    // console.log(Math.sqrt(distY**2+distX**2));
-    // console.log(hub.radius);
-
     if (!debug) return;
 
-
     ctx.save();
-    //console.log(this.x)
-    // move the drawing context to the agent's x and y coords
+    // move the drawing context to the agent's x and y coords to rotate around center of image
     ctx.translate(this.x, this.y);
 
-    ctx.save();
-
     ctx.rotate(this.rotation);
-    ctx.shadowColor = 'rgba(0,0,0,.7)';
-    // ctx.shadowOffsetY = 2;
-    // ctx.shadowOffsetX = 2;
-    // ctx.shadowBlur=10;
 
     ctx.drawImage(bee, -bee.width/2, -bee.height/2);;
-    ctx.shadowOffsetY = 0;
-    ctx.shadowOffsetX = 0;
-
+    // will display a colored square around the agent representing the state it is in
     if (showAgentStates && Agent.stateStyles[this.state] !== "" && Agent.stateStyles[this.state] !== undefined) {
        ctx.fillStyle = Agent.stateStyles[this.state];
        ctx.fillRect(-bee.width/2, -bee.height/2, bee.width, bee.height);
@@ -2172,12 +2424,10 @@ class Attractor
     this.x     = attractorJson.x;
     this.y     = attractorJson.y;
     this.timer = attractorJson.timer;
-    this.radius= attractorJson.radius; //add a new property here -done
+    this.radius= attractorJson.radius;
   }
 
-  draw(ctx, debug = false) //then swap out hard coded radius for the dynamic
-  //property you added above. Then consider working on adding user input for radius #done?
-  {
+  draw(ctx, debug = false){
     ctx.save();
 
     ctx.translate(this.x, -this.y);
@@ -2209,7 +2459,7 @@ class DeadAgent
     this.id            =  agentJson.id;
     this.x             =  agentJson.x;
     this.y             = -agentJson.y;
-    this.rotation      =  Math.PI/2 - agentJson.direction; // convert from the engine's coordinate system into what the drawing routine expects
+    this.rotation      =  Math.PI/2 - agentJson.direction;
     this.state         =  agentJson.state;
     this.potentialSite =  agentJson.potential_site;
     this.isAlive       =  agentJson.live;
@@ -2223,10 +2473,8 @@ class DeadAgent
 
     ctx.save();
 
-    // move the drawing context to the agent's x and y coords
+    // Move the drawing context to the agent's x and y coords to rotate around center of image
     ctx.translate(this.x, this.y);
-
-    ctx.save();
 
     ctx.rotate(this.rotation);
     ctx.drawImage(beeDead, -bee.width/2, -bee.height/2);
@@ -2239,16 +2487,20 @@ class DeadAgent
 
 class Fog
 {
-  constructor(x,y,fogBlockSize,hub)
+  constructor(x,y,fogBlockSize,hub,world,id)
   {
+    this.id=id
     this.fogBlockSize=fogBlockSize;
     // console.log(x);
     this.hub=hub
     this.visitObj;
-    this.opacity=.95;
+    this.maxOpacity=.7
+
+    this.opacity=this.maxOpacity;
+
     this.color='rgb(255, 255, 255)';
-    this.x =x;
-    this.y=y;
+    this.x =-world.x_limit+x;
+    this.y=-world.y_limit+y;
     this.timeMax=100;
     this.time=0;
     this.view=2;
@@ -2257,10 +2509,28 @@ class Fog
     this.agentTime=new Map()
     this.agentsInHub=[]
     this.init=false
-  }
+    this.selectMode=-1
+    if(patrolLocations.loc != undefined){
+      for(let patrol of patrolLocations.loc){
+        if(patrol.x+this.fogBlockSize > this.x - (this.fogBlockSize)*1.7&&
+            patrol.x-this.fogBlockSize < this.x+(this.fogBlockSize)*1.7 &&
+              patrol.y+this.fogBlockSize > this.y - (this.fogBlockSize)*1.7 &&
+                patrol.y-this.fogBlockSize <this.y+(this.fogBlockSize)*1.7){
+                  this.selectMode=parseInt(patrol.mode)
+                  this.maxOpacity=.4
+                  this.opacity=this.maxOpacity;
+                  this.selected=true
+                  // console.log("SELECTED");
+                }
+      }
+    }
 
-  visited(agent){
-
+    this.left=this.x-fogBlockSize-(1/8)
+    this.right=this.x+fogBlockSize+(1/8)
+    this.leftX=this.x-(fogBlockSize*(2/3))-(1/8)
+    this.rightX=this.x+(fogBlockSize*(2/3))+(1/8)
+    this.bottom=this.y+fogBlockSize
+    this.top=this.y-fogBlockSize
   }
 
   checkAgent(agents,hub){
@@ -2272,10 +2542,10 @@ class Fog
     for(var agent of agents)
     {
       //console.log(agent.x)
-      if(agent.x > -world.x_limit+this.x - (this.fogBlockSize-1)*this.view &&
-          agent.x < -world.x_limit+this.x+(this.fogBlockSize-1)*this.view &&
-            agent.y > -world.y_limit+this.y - (this.fogBlockSize-1)*this.view &&
-              agent.y < -world.y_limit+this.y+(this.fogBlockSize-1)*this.view)
+      if(agent.x > this.x - (this.fogBlockSize-1)*this.view &&
+          agent.x < this.x+(this.fogBlockSize-1)*this.view &&
+            agent.y > this.y - (this.fogBlockSize-1)*this.view &&
+              agent.y <this.y+(this.fogBlockSize-1)*this.view)
       {
         if(!(Math.sqrt((hub.x - agent.x)*(hub.x - agent.x) +(hub.y - agent.y)*(hub.y - agent.y)) < hub.radius-5))
         {
@@ -2289,35 +2559,74 @@ class Fog
     }
   }
 
+  selecting(points,selectMode){
+    // Will select points that are being selected by the mouse and highlight those selected
+    for(let point of points){
+      var dx = this.x - point.x ;
+      var dy = this.y - point.y ;
+      var distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < point.r+5) {
+        if(deletingSelect){
+          if(this.id in selectedCoords){
+            // console.log(selectedCoords);
+            let infoToSend={fullPatrol:selectedCoords,deleted:selectedCoords[this.id]}
+            // console.log(infoToSend);
+            // console.log(JSON.stringify(selectedCoords));
+            socket.emit("input",{type:"patrolLocationsCheck",info:infoToSend})
+            // console.log(selectedCoords);
+            delete selectedCoords[this.id]
+          }
+          this.selectMode=-1
+          this.selected=false;
+          this.maxOpacity=.7
+        }else{
+          selectedCoords[this.id]={x:this.x,y:this.y,mode:this.selectMode}
+          // console.log(selectedCoords[this.id]);
+          socket.emit("input",{type:"patrolLocations",info:{x:this.x,y:this.y,mode:this.selectMode}})
+          this.selected=true;
+          this.selectMode=selectMode
+          this.flash=true
+          this.maxOpacity=.4
+        }
+      }
+    }
 
-
+  }
 
   draw(ctx,id){
-    // console.log(this.x_limit);
-    // console.log(Math.sqrt((this.x - this.hub.x/2-world.x_limit)**2+(this.y - this.hub.y-world.y_limit)**2) );
-    // if(Math.sqrt((this.x - this.hub.x/2-this.x_limit)**2+(this.y - this.hub.y-this.y_limit)**2) > this.hub.radius+20){
-    //   console.log("HERE");
-    //
-    // }
+
     ctx.beginPath()
     ctx.fillStyle = this.color;
-
+    if(this.selectMode!=-1){
+      // console.log(this.selectMode);
+      ctx.fillStyle = Object.entries(Fog.stateStyles)[this.selectMode][1];
+    }
     ctx.globalAlpha=this.opacity
-    // ctx.fillRect(-world.x_limit+this.x-1, -world.y_limit+this.y-1, this.fogBlockSize+1, this.fogBlockSize+1);
-    ctx.arc(-world.x_limit+this.x,-world.y_limit+this.y,4.4,0,2*Math.PI)
+
+
+    ctx.beginPath()
+    ctx.moveTo(this.left,this.y)
+    ctx.lineTo(this.leftX,this.top)
+    ctx.lineTo(this.rightX,this.top)
+    ctx.lineTo(this.right,this.y)
+    ctx.lineTo(this.rightX,this.bottom)
+    ctx.lineTo(this.leftX,this.bottom)
+    ctx.lineTo(this.left,this.y)
     ctx.fill()
-    ctx.closePath()
+
     ctx.globalAlpha=1;
     this.opacity+=.001
-    if(this.opacity >.95){
-      this.opacity = .95
+    if(this.opacity >this.maxOpacity){
+      this.opacity = this.maxOpacity
     }
   }
 
-
-
-
-
+}
+Fog.stateStyles = {
+  'Patrol'    :'rgb(  0, 0, 255)',                         // No coloring
+  'Avoid'  :'rgb(  255, 0, 0)', // Green
+  'PatrolVisit'  :'rgb(140, 140, 255)', // Green
+  'AvoidAdded'  :'rgb(255, 140, 140)' // Greenrgb(150, 0, 255)
 
 }
 
@@ -2342,9 +2651,10 @@ class Hub
     var i=0;
     var k=0;
 
+    //This allows the fog to dissapate where the agent has been
+    // when an agent returns to the hub
     for(var agent of agents){
       if(Math.sqrt((this.x - agent.x)*(this.x - agent.x) +(this.y - agent.y)*(this.y - agent.y)) < this.radius-5){
-        //console.log("here")
         //i is the agent id
         //2nd parameter creates a new array for that agent
         //3rd line copies agents last locations over to that new array
@@ -2354,9 +2664,6 @@ class Hub
       }
       i++;
     }
-
-    // console.log("Paths Length: " + this.paths.length)
-    // console.log("Paths at Index 0: " + this.paths[0].length)
     var t=0
     for(var agentPaths of this.paths){
       var i=0;
@@ -2446,62 +2753,6 @@ class Obstacle
     ctx.fillText("Obstacle", this.radius - width/2, this.radius + 20 + this.radius);*/
 
     ctx.restore();
-  }
-}
-
-class Path{
-  constructor(prevLocInfo,time){
-
-
-
-    //console.log(prevLocInfo)
-    // this.thickness = 1;
-    // this.opacity=1;
-    // this.hub=null
-    this.key = null;
-    this.x = this.getPos(prevLocInfo,"x");
-    this.y = this.getPos(prevLocInfo,"y");
-    this.enterTime = time || Math.floor(Date.now())
-    this.opacity= (1/(this.enterTime-(this.getPos(prevLocInfo,"time"))))*10 +.5;
-    prevLocInfo.delete(this.key)
-    //console.log(this.opacity)
-    this.color = "red"
-    //'rgb(' + Math.floor(Math.random() * 256).toString() + ',' + Math.floor(Math.random() * 256).toString() + ',' + Math.floor(Math.random() * 256).toString() +')'
-    //this.p = new Path(prevLocInfo,this.enterTime)
-
-
-  }
-  getPos(locInfo,val){
-    for(var loc of locInfo){
-      this.key=loc[0]
-
-      var locArray=this.key.split(",")
-      if(val =="x"){
-        return parseInt(locArray[0])
-      }
-      else if(val =="y"){
-        return parseInt(locArray[1])
-      }
-      else if(val =="time"){
-        return loc[1]
-      }
-    }
-
-  }
-
-
-  draw(ctx, environment){
-    //console.log(this.opacity)
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, 20, 0, 2 * Math.PI);
-    ctx.fillStyle = this.color;
-    ctx.globalAlpha =this.opacity;
-    ctx.fill()
-    //this.opacity-=.1
-    ctx.globalAlpha =1;
-    this.opacity-=.001
-    //console.log(this.opacity)
-    //ctx.stroke();
   }
 }
 
@@ -2609,6 +2860,7 @@ class Site
   constructor(siteJson)
   {
     this.x      =  siteJson["x"];
+    this.id     =  siteJson["id"];
     this.y      = -siteJson["y"]; // drawing coordinates have down as positive y
     this.radius =  siteJson["radius"];
     this.q      =  siteJson["q_value"];
@@ -2619,8 +2871,8 @@ class Site
     if (!debug)
       return;
 
-    var rVal = (this.q > 0.5) ? (1.0 - this.q) * 2 : 1.0;
-    var gVal = (this.q > 0.5) ? 1.0 : this.q * 2;
+    var rVal = (this.q < 0.5) ? (1.0 - this.q) * 2 : 1.0;
+    var gVal = (this.q < 0.5) ? 1.0 : this.q * 2;
 
     ctx.save();
 
@@ -2634,10 +2886,10 @@ class Site
 
     if (debug == true)
     {
-      /*ctx.font = "14pt sans-serif";
+      ctx.font = "14pt sans-serif";
       ctx.fillStyle = "rgb(0, 0, 0)";
-      let width = ctx.measureText(`Site: ${this.q}`).width;
-      ctx.fillText(`Site: ${this.q}`, -width/2, 20 + this.radius);*/
+      let width = ctx.measureText(`Site: ${this.id}`).width;
+      ctx.fillText(`Site: ${this.id}`, -width/2, 20 + this.radius);
     }
 
     ctx.restore();
@@ -2842,19 +3094,49 @@ class World
     this.pheromones  = [];
     this.environment = environmentJson;
     this.swarmState = [];
-    let fogBlockSize= 7;
+    let fogBlockSize= 10;
     this.fogBlock    = [];
+    var ratioX=patrolLocations.windowSize.w/(this.width)
+    var ratioY=patrolLocations.windowSize.h/this.height
+    // console.log(ratioY);
+    // console.log(ratioX);
+    if(patrolLocations.loc != undefined){
+      for(let loc of patrolLocations.loc){
+        loc.x=(loc.x/ratioX)-(this.width/2)
+        loc.y=(loc.y/ratioY)-(this.height/2)
+      }
+    }
     //console.log(((this.width/this.fogBlockSize)*(this.height/this.fogBlockSize)))
     // console.log(this.height);
-    for (let y=0; y<(this.height+fogBlockSize);y+=fogBlockSize){
-      for(let x=0;x<(this.width+fogBlockSize);x+=fogBlockSize){
+    let id=0
+    for (let y=0; y<(this.height+fogBlockSize);y+=2*fogBlockSize){
+      for(let x=0;x<(this.width+fogBlockSize);x+=(10/3)*fogBlockSize){
         if(Math.sqrt((x - this.hub.x/2-this.x_limit)**2+(y - this.hub.y-this.y_limit)**2) > this.hub.radius+30){
-          this.fogBlock.push(new Fog(x,y,fogBlockSize,this.hub));
+          this.fogBlock.push(new Fog(x,y,fogBlockSize,this.hub,this,id));
+          id++
         }
       }
     }
+
+    for (let y=fogBlockSize; y<(this.height+fogBlockSize);y+=2*fogBlockSize){
+      for(let x=(5/3)*fogBlockSize;x<(this.width+fogBlockSize);x+=(10/3)*fogBlockSize){
+        if(Math.sqrt((x - this.hub.x/2-this.x_limit)**2+(y - this.hub.y-this.y_limit)**2) > this.hub.radius+30){
+          this.fogBlock.push(new Fog(x,y,fogBlockSize,this.hub,this,id));
+          id++
+        }
+      }
+    }
+
+    // for (let y=0; y<(this.height+fogBlockSize);y+=fogBlockSize){
+    //   for(let x=0;x<(this.width+fogBlockSize);x+=fogBlockSize){
+    //     if(Math.sqrt((x - this.hub.x/2-this.x_limit)**2+(y - this.hub.y-this.y_limit)**2) > this.hub.radius+30){
+    //       this.fogBlock.push(new Fog(x,y,fogBlockSize,this.hub,this));
+    //     }
+    //   }
+    // }
     // console.log(this.fogBlock);
     for (let site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
+
     for (let obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
     for (let trap       of environmentJson.traps      ) { this.traps      .push( new Trap      (trap      ) ); }
     for (let rough      of environmentJson.rough      ) { this.rough      .push( new Rough     (rough     ) ); }
@@ -2862,6 +3144,8 @@ class World
     for (let repulsor   of environmentJson.repulsors  ) { this.repulsors  .push( new Repulsor  (repulsor  ) ); }
     for (let agent      of environmentJson.agents     ) { this.agents     .push( new Agent     (agent     ) ); }
     for (let dead_agent of environmentJson.dead_agents) { this.dead_agents.push( new DeadAgent (dead_agent) ); }
+    // this.canvasObjects.sites=this.sites
+
     //for (var pheromone of environmentJson.pheromones)   { this.pheromones .push( new Pheromone (pheromone)  ); }
     this.swarmState.push(new SwarmState(JSON.parse('{"state": "Exploring"}')));
     this.swarmState.push(new SwarmState(JSON.parse('{"state": "Observing"}')));
@@ -2876,23 +3160,35 @@ class World
   }
 
   update(environment){
-
+    //This will erase the current array of pheromones and replace it with the current ones (even if the previous ones arent finished)
+    //This could possibly be replaced with an algorithm that wont delete ones that havent dissapated yet.
     this.pheromones.splice(0,this.pheromones.length)
     this.pheromones=environment.pheromones
 
-    this.hub.agentsIn=environment.hub["agentsIn"]
+    //This was part of an attempt to not draw agents that are inside the hub
+    // this.hub.agentsIn=environment.hub["agentsIn"]
 
-	  for (let i = 0; i < this.sites.length; i++) {
+    //This updates the sites. It is only needed if you have moving sites.
+    let siteLength=this.sites.length
+	  for (let i = 0; i < siteLength; i++) {
 		  this.sites[i].x = Math.round(environment.sites[i].x);
 		  this.sites[i].y = Math.round(-environment.sites[i]["y"]);
 	  }
-	  for (let i = 0; i < this.dead_agents.length; i++) {
+
+    //In this current Iteration there is no way for an agent to die. When dead agents were implemented,
+    //this update function didnt exist, but a new world was created every update instead.
+    //When agents do die, this algorithm doesnt work well because It doesnt keep track of which agent needs to be
+    //removed from the alive agents.
+    let deadAgentLength=this.dead_agents.length
+	  for (let i = 0; i < deadAgentLength; i++) {
 
 		  this.dead_agents[i].x = environment.dead_agents[i].x;
 		  this.dead_agents[i].y = -environment.dead_agents[i].y;
 	  }
+
 	  //Update Alive Agents
-	  for (let i = 0; i < this.agents.length - this.dead_agents.length; i++) {
+    let agentLength= this.agents.length - this.dead_agents.length;
+	  for (let i = 0; i <agentLength; i++) {
 
 		  this.agents[i].x = Math.round(environment.agents[i].x);
 		  this.agents[i].y = Math.round(-environment.agents[i].y);
@@ -2900,146 +3196,224 @@ class World
       this.agents[i].state = environment.agents[i].state;
 	  }
 
+    //This is an attempt to allow the front end to know that the patrol has been completed
+    if(environment.patrolUpdate<=0){
+      for(let fog of this.fogBlock){
+        if(fog.selected){
+          if(fog.selectMode != 2 || fog.selectMode !=3 ){
+            fog.selectMode+=2
+
+          }
+          fog.selected=false;
+          fog.maxOpacity=.5
+        }
+      }
+    }
+
 
   }
   // Draw the whole world recursively. Takes a 2dRenderingContext obj from
   // a canvas element
-  draw(ctx, debug = false, showAgentStates = false, environment)
+  draw(ctx, debug = false, showAgentStates = false)
   {
-    let sliderVal = document.getElementById('myRange').value;
-
-    // Ok so this isn't really buying us all that much simplification at this level
-    // right *now*, but the point is if in the future we ever need some sort of
-    // this drawn singly at a world level, it could go right here very nicely.
-    // ctx.shadowColor = 'rgba(51,51,51,.6)';
-    // ctx.shadowOffsetX = sliderVal/10;
-    // ctx.shadowBlur = 10;
-    //path.draw(ctx,this.environment);
-
-
-    //TODO: Find the place where the info stations are drawn
     for (var site       of this.sites      ) { site      .draw(ctx, debug); }
-    for (var obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
-    for (var trap       of this.traps      ) { trap      .draw(ctx, debug); }
-    for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
-    for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
-    for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
-    //this.pheromones.draw(ctx, debug);
+    //These aren't being used currently
+    // for (var obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
+    // for (var trap       of this.traps      ) { trap      .draw(ctx, debug); }
+    // for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
+    // for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
+    // for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
+
     this.hub.draw(ctx, debug, this.agents);
-    //for (var pheromone  of this.pheromones ) { pheromone.draw(ctx,debug)}
-    for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates,this.hub); }
+
+    for (var agent      of this.agents     ) { agent     .draw(ctx, debug,this.hub); }
     for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
-    for (var fog        of this.fogBlock        ) { fog       .checkAgent(this.agents,this.hub); }
-    if(showFog){
-      for (var fog        of this.fogBlock        ) { fog       .draw(ctx); }
-      // console.log(this.fogBlock);
+
+
+
+    for (var fog        of this.fogBlock ) {  if(deleteAll){
+                                                            selectedCoords={}
+                                                            fog.selectMode=-1
+                                                            fog.selected=false;
+                                                            fog.maxOpacity=.7
+                                                                  }
+                                              fog       .selecting(selectedArea,currentSelectMode);
+                                              fog       .checkAgent(this.agents,this.hub);
+                                              if(showFog || fog.selected){
+                                                fog       .draw(ctx);
+                                              }
+                                             }
+    deleteAll=false
+
+
+    if(debug && showPheromone){
+      this.drawPheromones()
+
     }
     for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
 
-    if(debug && showPheromone){
-      // let i=0;
-      for(let pheromone of this.pheromones){
-        // console.log(i);
-
-        // console.log(i%2);
-        // if(i%2==0 && this.pheromones.length >10){
-          // break;
-        // }
-        // i+=1
-        ctx.beginPath()
-
-        let x=255//(255-(pheromone.site*(255/this.sites.length))).toString();
-        if(x <=0){
-          x=0;
-        }
-        ctx.fillStyle = "white";
-        if(pheromone.strength <=0){
-          ctx.globalAlpha = .00001
-
-        }else{
-          ctx.globalAlpha = (pheromone.strength)*.8
-
-        }
-        ctx.beginPath()
-        ctx.arc(Math.round(pheromone.x), Math.round(-pheromone.y), pheromone.r,0,Math.PI*2);
-        //}
-        ctx.fill();
-        ctx.globalAlpha = 1
-
-      }
-    }
-//>>>>>>> 0039f9a7c85313d08902ab5a03211a77db5832b0
 
 
   }
 
-}
+  drawPheromones(){
+    for(let pheromone of this.pheromones){
+      // console.log(i);
 
-// class Matrix{
-//   constructor(){
-//
-//   }
-// }
+      // console.log(i%2);
+      // if(i%2==0 && this.pheromones.length >10){
+        // break;
+      // }
+      // i+=1
+      ctx.beginPath()
+
+      let x=255//(255-(pheromone.site*(255/this.sites.length))).toString();
+      if(x <=0){
+        x=0;
+      }
+      ctx.fillStyle = "white";
+      if(pheromone.strength <=0){
+        ctx.globalAlpha = .00001
+
+      }else{
+        ctx.globalAlpha = (pheromone.strength)*.8
+
+      }
+      ctx.beginPath()
+      ctx.arc(Math.round(pheromone.x), Math.round(-pheromone.y), pheromone.r,0,Math.PI*2);
+      //}
+      ctx.fill();
+      ctx.globalAlpha = 1
+
+    }
+  }
+
+}
 
 //*****************************************************************************
 // Globals
 //*****************************************************************************
+
+console.log('%c To Do List: ', 'font-size:15px;font-weight:900;color: rgb(0, 0, 0)');
+
+console.log("%c 1."+'%c Repulsors need to delete on backend when deleted on front end \n'+
+             ' %c    Add ids to the coords\n'+
+             '     You may also have to do a search for points in an area since the size of the worlds are different\n'+
+             '     Actually, you can just send the list back with things deleted. If it cant find a repulsor hexagon in the area of a current repulsor, it is deleted',
+             'font-size:12px;color: rgb(0, 0, 0);',
+             'font-size:12px;font-weight:700;color: rgb(116, 24, 0); ',
+             'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
+console.log("%c 2."+`%c Interface the selection on the live simulation\n`+
+                              ` %c    Use the "selectedCoords" map`,
+                              'font-size:12px;color: rgb(0, 0, 0);',
+                              'font-size:12px; font-weight:700;color: rgb(116, 24, 0); ',
+                              'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
+console.log("%c 3."+`%c Get rid of scrolling through images\n`+
+                          ` %c    Partially Implemented. Arrows appear, but are not clickable`,
+                          'font-size:12px;color: rgb(0, 0, 0);',
+                          'font-size:12px; font-weight:700;color: rgb(116, 24, 0); ',
+                          'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
+console.log("%c 4."+`%c Visuals for Q-Value\n`+
+                          ` %c    Think of a recycle symbol\n     Add more arrows around as the q Value goes up\n     In our case, put the arrows on the bottom of the image`,
+                          'font-size:12px;color: rgb(0, 0, 0);',
+                          'font-size:12px; font-weight:700;color: rgb(116, 24, 0); ',
+                          'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
+
 
 // get a socket object from the socket.io script included above
 var socket = io();
 var world = null;
 var clientId;
 
+//These are for the pre-planning and live-planning methods of selecting areas of the canvas
+var currentSelectMode=0
+var selectModes=["Patrol","Avoid"]
+var selectedArea=[]
+var deleteAll=false;
+var deletingSelect=false;
+var selectedCoords= {}
+// Gets the previous screens pre-planning
+var patrolLocations;
+socket.on('patrolLocations',function(loc){
+  patrolLocations=loc
+})
+
+
 var debug           = false;
 var showAgentStates = false;
 
+// Background image
+var background = document.getElementById('source');
+var sliderVal =document.getElementById('myRange').value;
+// var date=new Date()
+$("#myRange").change(function(e){
+  sliderVal =document.getElementById('myRange').value;
+})
+$(document).keydown(function(e){
+  // console.log("here");
+  if(e.which==65 ||e.which==37 ){
+    currentSelectMode--;
+    if(currentSelectMode<0){
+      currentSelectMode=selectModes.length-1
+    }
+    $( "#selectType" ).html(selectModes[currentSelectMode])
+    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
+
+  }else if(e.which==68 ||e.which==39 ){
+    currentSelectMode++;
+    if(currentSelectMode>selectModes.length-1){
+      currentSelectMode=0
+    }
+    $( "#selectType" ).html(selectModes[currentSelectMode])
+    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
+  }
+})
+document.getElementById("canvasDiv").addEventListener("dblclick", function(e){
+  deleteAll=true
+})
+document.addEventListener('contextmenu', event => event.preventDefault());
 // get a reference to the canvas element
 var canvas = document.getElementById("canvas");
-socket.on("input",function(i){
-  console.log("here");
-})
-const cursors =
-{
-   default: new CursorDefault(),
-   selecting: new CursorSelecting(),
-   radialDrag: new CursorRadialDrag(),
-   placeBaitBomb: new CursorPlaceBaitBomb()
-};
-$("#deadBees").click(function(){
-  window.location.replace("http://localhost:3000");
-})
-var defaultStateDescript="<p id='defaultStateDescript'>Info on the different states of the Agents</p>"
+
+const cursors ={
+                 default: new CursorDefault(),
+                 selecting: new CursorSelecting(),
+                 radialDrag: new CursorRadialDrag(),
+                 placeBaitBomb: new CursorPlaceBaitBomb()
+               };
+
 var stateInfoOn=new Map()
 stateInfoOn.set("Exploring", false)
 stateInfoOn.set("Observing", false)
 stateInfoOn.set("Following Site", false)
+var defaultStateDescript="<p id='defaultStateDescript'>Info on the different states of the Agents</p>"
+
 $("#agentStateDescriptionDiv").append(`<table id="statesInfo"><caption id="stateTitle">States</caption>
-<tr>
-<th class="statesHeader">Exploring</th>
-<th class="statesHeader">Observing</th>
-<th class="statesHeader">Following Site</th>
-</tr>
-</table>
-<div id="statesInfoTextDiv">
-<p id="statesInfoText">`+defaultStateDescript+`</p>
-
-</div>`)
-
+                                        <tr>
+                                        <th class="statesHeader">Exploring</th>
+                                        <th class="statesHeader">Observing</th>
+                                        <th class="statesHeader">Following Site</th>
+                                        </tr>
+                                        </table>
+                                        <div id="statesInfoTextDiv">
+                                        <p id="statesInfoText">`+defaultStateDescript+`</p>
+                                        </div>`)
 
 
-var bee;
+
+
+
+// Get Image references and other presets
+var bee = document.getElementById("drone");
 var beeDead;
 var obstacle;
 var simType;
-bee      = document.getElementById("drone"     );
-// get image refs
-socket.on('simType', function(type)
-{
+socket.on('simType', function(type){
   simType=type;
-  //console.log(simType);
+
   if(type=="Drone"){
     bee      = document.getElementById("drone"     );
-;
+
     beeDead  = document.getElementById("drone-dead");
   }
   else if(type=="Bee"){
@@ -3055,17 +3429,18 @@ socket.on('simType', function(type)
     beeDead  = document.getElementById("drone-dead");
   }
    obstacle = document.getElementById("obstacle");
+
 });
 
-
-var finishedDrawing = true;
+var finishedDrawing = false;
 var ui = new UI();
+var mouse = new Mouse();
 
+var ctx;
 // In order to associate a client with a specific engine process,
 // the server sends us a unique id to send back once socket.io has
 // established a connection
-socket.on('connect', function()
-{
+socket.on('connect', function(){
    var idx = document.cookie.indexOf("simId");
    var endIdx = document.cookie.indexOf(";", idx);
 
@@ -3081,89 +3456,59 @@ socket.on('connect', function()
 
 // This is where the magic happens. When we emit an "update" event from the
 // server, it'll come through here.
-socket.on('update', function(worldUpdate)
-{
-
-   // First update
-   if (world === null)
-   {
-     //console.log("HERE!")
-
+socket.on('update', function(worldUpdate){
+   // New World
+   if (world === null){
       world = new World(worldUpdate.data);
-
       canvas.setAttribute("width", world.width);
       canvas.setAttribute("height", world.height);
 
-
-
-      // make sure the canvas doesn't get cut off on the screen
+      // Resizes the canvas to the size determined in the Python code
       document.getElementById("canvasDiv").style.width = world.width + "px";
 
-      // move the coordinate system origin from top-left to the centre of the world
-      canvas.getContext("2d").translate(world.x_limit, world.y_limit);
+      ctx = canvas.getContext("2d");
+      // Translate the origin from the top left corner to the center of the screen.
+      // Keep in mind that the canvas's y increases going down, whereas, the world's y
+      // increases going up. To overcome this, there is a function in World called canvasToWorldCoords
+      // that will convert any x-y coridinate to the world's coridinates
+      ctx.translate(world.x_limit, world.y_limit);
 
-      // request that the browser call the draw() function when its ready for
-      // the next animation frame
-      window.requestAnimationFrame(draw);
-
-      //console.log(fogBlock)
+      //Start the drawing cycle
+      draw()
    }
-   else if (finishedDrawing)
-   {
-      world.update(worldUpdate.data) //= new World(worldUpdate.data); <---- This creates a new world every update which causes issues with
-      //saving info that is not from the engine (E.G - the fog system)
+   else if (finishedDrawing){
+      world.update(worldUpdate.data)
+
       ui.on(worldUpdate);
-      //try implementing an array and stack
-      //you'd push worldupdate.data into array, and then pop it off the stack when you need it
-      // "need it" means you've finished a draw cycle, which is happening in browser
-      // if you want to keep everything in draw function like it is, make the array and stack
-      // if you want to split it up you need to move the world.draw function into this function
-      //the idea is to draw the world only when we're ready for it
-      //read through socket documentation, maybe there are options that say
-      //"don't register every single callback" or something
-
-
-      // TODO: split this out into a separate update? worldMeta?
-      //ui.RadialControl.updateActual(world.hub.directions);
    }
-
-
 });
-var ctx;
 
-function draw(environment)
-{
-   var sliderVal=document.getElementById('myRange').value;
-   finishedDrawing = false;
-   // we draw to the 2d context, not the canvas directly
-   ctx = canvas.getContext("2d");
-   var image = document.getElementById('source');
-   //console.log(image)
-   // clear everything
-   ctx.clearRect(-world.x_limit, -world.y_limit, world.width, world.height);
-   ctx.save();
-   ctx.fillStyle = "rgb(160, 160, 160)";
-   ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
+function draw(environment){
+  //The updates will not be let through unless the the current iteration of drawing is finished
+  finishedDrawing = false;
+  // clear canvas
+  ctx.clearRect(-world.x_limit, -world.y_limit, world.width, world.height);
+  ctx.save();
+  ctx.fillStyle = "rgb(160, 160, 160)";
+  ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
 
-   ctx.globalAlpha = sliderVal/100;
 
   if(simType=="Drone"){
-     ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height);
+    ctx.globalAlpha = sliderVal/100;
+    ctx.drawImage(background, -world.x_limit, -world.y_limit,world.width, world.height);
+    ctx.globalAlpha = 1;
   }
 
-   ctx.globalAlpha = 1;
+  world.draw(ctx, debug, showAgentStates, environment);
 
-   ctx.restore();
+  ui.draw(ctx, debug);
+  //Updates will not be allowed
+  finishedDrawing = true;
+  mouse.deltaY=0;
+  mouse.deltaX=0;
+  // console.log(mouse);
+  window.requestAnimationFrame(draw);
 
-   world.draw(ctx, debug, showAgentStates, environment); // move to update path rather than 1/60
-   ui.draw(ctx, debug);
-
-   finishedDrawing = true;
-
-   // maintain a maximum rate of 60fps
-
-   window.setTimeout(() => { window.requestAnimationFrame(draw)}, 1000 / 100);
-   //window.requestAnimationFrame(draw);
 }
 
 // TODO: I don't like where this is going, I should be able to make one subscription

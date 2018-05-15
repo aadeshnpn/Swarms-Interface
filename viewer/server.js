@@ -58,7 +58,9 @@ require('sticky-cluster')(function (callback)
 
   // body-parser enables reading POST data
   const bodyParser = require('body-parser');
-
+  // app.use(bodyParser.json({limit: '50mb'}));
+  app.use(bodyParser.json({limit: '50mb'}));
+  app.use(bodyParser.urlencoded({limit: '50mb', extended: true, parameterLimit: 1000000}));
   //uses mongoose for the mongodb, which is muuuuch easier.
   const mongoose = require("mongoose");
   //const ObjectId = mongoose.Types.ObjectId;
@@ -98,6 +100,7 @@ require('sticky-cluster')(function (callback)
       this.inputListener.subscribe(this.startChannel); //subscribe to channel
       this.inputListener.on("message", this.input.bind(this));
       //bind any message from the channel to input.
+      // console.log(this.options.patrolLocations);
 
       var info = {options: this.options, channels: {input: this.inputChannel, output: this.outputChannel, start: this.startChannel, kill: this.killChannel}};
 
@@ -144,11 +147,11 @@ require('sticky-cluster')(function (callback)
       }
       // TODO: consolidate environments
       args.push(path.join(__dirname, simEnv));
-
+      // console.log(this.options);
       // Build all the arguments to pass to python
       for (let [key, val] of Object.entries(this.options))
       {
-
+        // console.log(val);
         switch (key)
         {
           case 'model':
@@ -166,10 +169,22 @@ require('sticky-cluster')(function (callback)
             break;
           case 'agentNum':
             args.push('--agentNum', val)
+            break
           case 'siteNum':
             args.push('--siteNum', val)
+            break
           case 'scenarioType':
             args.push('--scenarioType',val)
+            break
+          case 'patrolLocations':
+            args.push('--patrolLocations',val)
+            break
+          case 'patrolLocations1':
+            args.push('--patrolLocations1',val)
+            break
+          case 'createWorldSize':
+            args.push('--createWorldSize',val)
+            break
         }
       }
 
@@ -273,7 +288,9 @@ require('sticky-cluster')(function (callback)
          });
 
       }
+      // console.log(data);
       const str = JSON.stringify(data);
+
       this.outputBroadcaster.publish(this.outputChannel, str);
     }
 
@@ -343,6 +360,7 @@ require('sticky-cluster')(function (callback)
       //The start info and update info need to be seperated so that we can eliminate the need to recreate
       //a new world object every time through the init draw function.
       const obj = JSON.parse(data);
+      // console.log(obj);
       //console.log(obj.type);
       this.socket.emit(obj.type, obj);
     }
@@ -350,6 +368,8 @@ require('sticky-cluster')(function (callback)
     userInput(data)
     {
       // console.log(data);
+      // console.log(data);
+      // console.log(data["info"]);
       this.userInputBroadcaster.publish(this.channels.input, JSON.stringify(data) + '\n');
     }
 
@@ -386,7 +406,7 @@ require('sticky-cluster')(function (callback)
 
     const options = req.body;
     let userLimit;
-
+    // console.log(options.patrolLocations);
     if (options.limitUsers === "true"){
       try
       {
@@ -571,6 +591,7 @@ require('sticky-cluster')(function (callback)
   {
     // We only need to set up the client here; it will take care of other events,
     // disconnects, etc.
+    console.log(socket.id);
     socket.on('simId', function(id)
     {
       var client = new Client(socket, id);
@@ -581,8 +602,9 @@ require('sticky-cluster')(function (callback)
 
           let channels = info.channels;
           let options = info.options;
-
+          // console.log(options.patrolLocations);
           socket.emit('simType',options.model);
+          socket.emit('patrolLocations',options.patrolLocations)
           if(options.bait){
             socket.emit('baitToggle', options.bait);
           }

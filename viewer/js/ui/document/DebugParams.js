@@ -32,6 +32,7 @@ class DebugParams
          var label = $("<label></label>").text(`${param}`);
          label.append($('<input style="width:40%;">').val(val).attr('type','number').attr('name',`${param}`));
          label.append("<br>");
+        //  console.log(label);
          $('#parameters').after(label);
          //$(`#debugParams input[name=${param}]`).val(val);
       }

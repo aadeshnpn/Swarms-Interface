@@ -2,61 +2,126 @@
 // Globals
 //*****************************************************************************
 
+console.log('%c To Do List: ', 'font-size:15px;font-weight:900;color: rgb(0, 0, 0)');
+
+console.log("%c 1."+'%c Repulsors need to delete on backend when deleted on front end \n'+
+             ' %c    Add ids to the coords\n'+
+             '     You may also have to do a search for points in an area since the size of the worlds are different\n'+
+             '     Actually, you can just send the list back with things deleted. If it cant find a repulsor hexagon in the area of a current repulsor, it is deleted',
+             'font-size:12px;color: rgb(0, 0, 0);',
+             'font-size:12px;font-weight:700;color: rgb(116, 24, 0); ',
+             'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
+console.log("%c 2."+`%c Interface the selection on the live simulation\n`+
+                              ` %c    Use the "selectedCoords" map`,
+                              'font-size:12px;color: rgb(0, 0, 0);',
+                              'font-size:12px; font-weight:700;color: rgb(116, 24, 0); ',
+                              'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
+console.log("%c 3."+`%c Get rid of scrolling through images\n`+
+                          ` %c    Partially Implemented. Arrows appear, but are not clickable`,
+                          'font-size:12px;color: rgb(0, 0, 0);',
+                          'font-size:12px; font-weight:700;color: rgb(116, 24, 0); ',
+                          'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
+console.log("%c 4."+`%c Visuals for Q-Value\n`+
+                          ` %c    Think of a recycle symbol\n     Add more arrows around as the q Value goes up\n     In our case, put the arrows on the bottom of the image`,
+                          'font-size:12px;color: rgb(0, 0, 0);',
+                          'font-size:12px; font-weight:700;color: rgb(116, 24, 0); ',
+                          'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
+
+
 // get a socket object from the socket.io script included above
 var socket = io();
 var world = null;
 var clientId;
 
+//These are for the pre-planning and live-planning methods of selecting areas of the canvas
+var currentSelectMode=0
+var selectModes=["Patrol","Avoid"]
+var selectedArea=[]
+var deleteAll=false;
+var deletingSelect=false;
+var selectedCoords= {}
+// Gets the previous screens pre-planning
+var patrolLocations;
+socket.on('patrolLocations',function(loc){
+  patrolLocations=loc
+})
+
+
 var debug           = false;
 var showAgentStates = false;
 
+// Background image
+var background = document.getElementById('source');
+var sliderVal =document.getElementById('myRange').value;
+// var date=new Date()
+$("#myRange").change(function(e){
+  sliderVal =document.getElementById('myRange').value;
+})
+$(document).keydown(function(e){
+  // console.log("here");
+  if(e.which==65 ||e.which==37 ){
+    currentSelectMode--;
+    if(currentSelectMode<0){
+      currentSelectMode=selectModes.length-1
+    }
+    $( "#selectType" ).html(selectModes[currentSelectMode])
+    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
+
+  }else if(e.which==68 ||e.which==39 ){
+    currentSelectMode++;
+    if(currentSelectMode>selectModes.length-1){
+      currentSelectMode=0
+    }
+    $( "#selectType" ).html(selectModes[currentSelectMode])
+    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
+  }
+})
+document.getElementById("canvasDiv").addEventListener("dblclick", function(e){
+  deleteAll=true
+})
+document.addEventListener('contextmenu', event => event.preventDefault());
 // get a reference to the canvas element
 var canvas = document.getElementById("canvas");
-socket.on("input",function(i){
-  console.log("here");
-})
-const cursors =
-{
-   default: new CursorDefault(),
-   selecting: new CursorSelecting(),
-   radialDrag: new CursorRadialDrag(),
-   placeBaitBomb: new CursorPlaceBaitBomb()
-};
-$("#deadBees").click(function(){
-  window.location.replace("http://localhost:3000");
-})
-var defaultStateDescript="<p id='defaultStateDescript'>Info on the different states of the Agents</p>"
+
+const cursors ={
+                 default: new CursorDefault(),
+                 selecting: new CursorSelecting(),
+                 radialDrag: new CursorRadialDrag(),
+                 placeBaitBomb: new CursorPlaceBaitBomb()
+               };
+
 var stateInfoOn=new Map()
 stateInfoOn.set("Exploring", false)
 stateInfoOn.set("Observing", false)
 stateInfoOn.set("Following Site", false)
+var defaultStateDescript="<p id='defaultStateDescript'>Info on the different states of the Agents</p>"
+
 $("#agentStateDescriptionDiv").append(`<table id="statesInfo"><caption id="stateTitle">States</caption>
-<tr>
-<th class="statesHeader">Exploring</th>
-<th class="statesHeader">Observing</th>
-<th class="statesHeader">Following Site</th>
-</tr>
-</table>
-<div id="statesInfoTextDiv">
-<p id="statesInfoText">`+defaultStateDescript+`</p>
-
-</div>`)
-
+                                        <tr>
+                                        <th class="statesHeader">Exploring</th>
+                                        <th class="statesHeader">Observing</th>
+                                        <th class="statesHeader">Following Site</th>
+                                        </tr>
+                                        </table>
+                                        <div id="statesInfoTextDiv">
+                                        <p id="statesInfoText">`+defaultStateDescript+`</p>
+                                        </div>`)
 
 
-var bee;
+
+
+
+// Get Image references and other presets
+var bee = document.getElementById("drone");
 var beeDead;
 var obstacle;
 var simType;
-bee      = document.getElementById("drone"     );
-// get image refs
-socket.on('simType', function(type)
-{
+socket.on('simType', function(type){
   simType=type;
-  //console.log(simType);
+
   if(type=="Drone"){
     bee      = document.getElementById("drone"     );
-;
+
     beeDead  = document.getElementById("drone-dead");
   }
   else if(type=="Bee"){
@@ -72,17 +137,18 @@ socket.on('simType', function(type)
     beeDead  = document.getElementById("drone-dead");
   }
    obstacle = document.getElementById("obstacle");
+
 });
 
-
-var finishedDrawing = true;
+var finishedDrawing = false;
 var ui = new UI();
+var mouse = new Mouse();
 
+var ctx;
 // In order to associate a client with a specific engine process,
 // the server sends us a unique id to send back once socket.io has
 // established a connection
-socket.on('connect', function()
-{
+socket.on('connect', function(){
    var idx = document.cookie.indexOf("simId");
    var endIdx = document.cookie.indexOf(";", idx);
 
@@ -98,89 +164,59 @@ socket.on('connect', function()
 
 // This is where the magic happens. When we emit an "update" event from the
 // server, it'll come through here.
-socket.on('update', function(worldUpdate)
-{
-
-   // First update
-   if (world === null)
-   {
-     //console.log("HERE!")
-
+socket.on('update', function(worldUpdate){
+   // New World
+   if (world === null){
       world = new World(worldUpdate.data);
-
       canvas.setAttribute("width", world.width);
       canvas.setAttribute("height", world.height);
 
-
-
-      // make sure the canvas doesn't get cut off on the screen
+      // Resizes the canvas to the size determined in the Python code
       document.getElementById("canvasDiv").style.width = world.width + "px";
 
-      // move the coordinate system origin from top-left to the centre of the world
-      canvas.getContext("2d").translate(world.x_limit, world.y_limit);
+      ctx = canvas.getContext("2d");
+      // Translate the origin from the top left corner to the center of the screen.
+      // Keep in mind that the canvas's y increases going down, whereas, the world's y
+      // increases going up. To overcome this, there is a function in World called canvasToWorldCoords
+      // that will convert any x-y coridinate to the world's coridinates
+      ctx.translate(world.x_limit, world.y_limit);
 
-      // request that the browser call the draw() function when its ready for
-      // the next animation frame
-      window.requestAnimationFrame(draw);
-
-      //console.log(fogBlock)
+      //Start the drawing cycle
+      draw()
    }
-   else if (finishedDrawing)
-   {
-      world.update(worldUpdate.data) //= new World(worldUpdate.data); <---- This creates a new world every update which causes issues with
-      //saving info that is not from the engine (E.G - the fog system)
+   else if (finishedDrawing){
+      world.update(worldUpdate.data)
+
       ui.on(worldUpdate);
-      //try implementing an array and stack
-      //you'd push worldupdate.data into array, and then pop it off the stack when you need it
-      // "need it" means you've finished a draw cycle, which is happening in browser
-      // if you want to keep everything in draw function like it is, make the array and stack
-      // if you want to split it up you need to move the world.draw function into this function
-      //the idea is to draw the world only when we're ready for it
-      //read through socket documentation, maybe there are options that say
-      //"don't register every single callback" or something
-
-
-      // TODO: split this out into a separate update? worldMeta?
-      //ui.RadialControl.updateActual(world.hub.directions);
    }
-
-
 });
-var ctx;
 
-function draw(environment)
-{
-   var sliderVal=document.getElementById('myRange').value;
-   finishedDrawing = false;
-   // we draw to the 2d context, not the canvas directly
-   ctx = canvas.getContext("2d");
-   var image = document.getElementById('source');
-   //console.log(image)
-   // clear everything
-   ctx.clearRect(-world.x_limit, -world.y_limit, world.width, world.height);
-   ctx.save();
-   ctx.fillStyle = "rgb(160, 160, 160)";
-   ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
+function draw(environment){
+  //The updates will not be let through unless the the current iteration of drawing is finished
+  finishedDrawing = false;
+  // clear canvas
+  ctx.clearRect(-world.x_limit, -world.y_limit, world.width, world.height);
+  ctx.save();
+  ctx.fillStyle = "rgb(160, 160, 160)";
+  ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
 
-   ctx.globalAlpha = sliderVal/100;
 
   if(simType=="Drone"){
-     ctx.drawImage(image, -world.x_limit, -world.y_limit,world.width, world.height);
+    ctx.globalAlpha = sliderVal/100;
+    ctx.drawImage(background, -world.x_limit, -world.y_limit,world.width, world.height);
+    ctx.globalAlpha = 1;
   }
 
-   ctx.globalAlpha = 1;
+  world.draw(ctx, debug, showAgentStates, environment);
 
-   ctx.restore();
+  ui.draw(ctx, debug);
+  //Updates will not be allowed
+  finishedDrawing = true;
+  mouse.deltaY=0;
+  mouse.deltaX=0;
+  // console.log(mouse);
+  window.requestAnimationFrame(draw);
 
-   world.draw(ctx, debug, showAgentStates, environment); // move to update path rather than 1/60
-   ui.draw(ctx, debug);
-
-   finishedDrawing = true;
-
-   // maintain a maximum rate of 60fps
-
-   window.setTimeout(() => { window.requestAnimationFrame(draw)}, 1000 / 100);
-   //window.requestAnimationFrame(draw);
 }
 
 // TODO: I don't like where this is going, I should be able to make one subscription

@@ -27,7 +27,7 @@ class Site:
         if is_neutral:
             self.x = random.randint(-500,500)
             self.y = random.randint(-300,300)
-            self.q_value = 0         #how do we want to determine this?
+            self.q_value = 0.1         #how do we want to determine this?
 
         #Flank Scenario (more realistic)
         elif scenario == Scenario.flank or scenario == Scenario.delayed_flank:

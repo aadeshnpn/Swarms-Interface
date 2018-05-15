@@ -19,9 +19,10 @@ class Hub
     var i=0;
     var k=0;
 
+    //This allows the fog to dissapate where the agent has been
+    // when an agent returns to the hub
     for(var agent of agents){
       if(Math.sqrt((this.x - agent.x)*(this.x - agent.x) +(this.y - agent.y)*(this.y - agent.y)) < this.radius-5){
-        //console.log("here")
         //i is the agent id
         //2nd parameter creates a new array for that agent
         //3rd line copies agents last locations over to that new array
@@ -31,9 +32,6 @@ class Hub
       }
       i++;
     }
-
-    // console.log("Paths Length: " + this.paths.length)
-    // console.log("Paths at Index 0: " + this.paths[0].length)
     var t=0
     for(var agentPaths of this.paths){
       var i=0;

@@ -1,17 +1,14 @@
 class SelectionBoxes
 {
-   constructor()
-   {
+   constructor(){
       cursors.default.addEventListener('mousedown', function(e) { ui.clearSelectedAgents(); });
    }
 
-   update()
-   {
+   update(){
       // no-op
    }
 
-   draw(ctx, debug = false)
-   {
+   draw(ctx, debug = false){
       if (ui.agentsSelected() == 0)
          return;
 

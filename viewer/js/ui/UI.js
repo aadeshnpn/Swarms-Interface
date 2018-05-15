@@ -35,14 +35,12 @@ class UI {
 		//console.log(this.eventCallbacks.length);
 	}
 
+
+	//The msg variable contains a callback name, and the data to be passed into the callback
+	//The update data is passed through here
 	on(msg) {
-//console.log(msg.type)
 		for (let cb of this.eventCallbacks[msg.type]) {
-
-
-			//console.log("------------")
 				cb(msg.data);
-
 		}
 	}
 
@@ -57,9 +55,9 @@ class UI {
 	}*/
 
 	draw(ctx, debug = false) {
-		for (let element of this.canvasElems)
-
+		for (let element of this.canvasElems){
 			element.draw(ctx, debug);
+		}
 	}
 
 	setActiveCursor(cursor) {

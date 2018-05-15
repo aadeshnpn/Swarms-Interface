@@ -14,22 +14,14 @@ class StateBubbles
     socket.emit("input", {"type": "requestStates"});
   }
 
-  init(json)
-  {
-    //console.log(json);
-    for (let name of json.states)
-    {
-      //console.log(name);
+  init(json){
+    for (let name of json.states){
       this.states[name] = {count: 0, radius: 0};
-      //console.log(this.states);
-
     }
-
     this.initialised = true;
   }
 
-  update(json)
-  {
+  update(json){
     this.totalAgentsInStates = 0;
     //console.log(json);
 
@@ -55,8 +47,7 @@ class StateBubbles
     }
   }
 
-  restart()
-  {
+  restart(){
     this.states = {};
     this.totalAgentsInStates = 0;
     this.initialised = false;
@@ -64,8 +55,7 @@ class StateBubbles
     socket.emit("input", {"type": "requestStates"});
   }
 
-  draw(ctx, debug = false)
-  {
+  draw(ctx, debug = false){
     return
     if (!this.initialised)
       return;
