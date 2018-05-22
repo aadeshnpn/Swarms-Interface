@@ -126,8 +126,9 @@ class HubAgent(Agent):
             return True
 
     def isInRangeOfNearestRepulsor(self):
-        assert(self.repulsor is not None)
-
+        # assert(self.repulsor is not None)
+        if self.repulsor is None:
+            return None;
         return distance(self.repulsor.point, self.location) < self.repulsor.radius
 
     def isRepulsedByNearestRepulsor(self):

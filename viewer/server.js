@@ -8,7 +8,7 @@ const bluebird = require('bluebird');
 var redis = require('redis');
 bluebird.promisifyAll(redis.RedisClient.prototype);
 bluebird.promisifyAll(redis.Multi.prototype);
-
+var s;
 // sticky-cluster is the faster sticky session module for making socket.io
 // work. It runs our setup when its ready.
 require('sticky-cluster')(function (callback)
@@ -74,7 +74,8 @@ require('sticky-cluster')(function (callback)
 
   // The server's job should be essentially to grab world info from the simulation
   // engine and pass it on to the client, nothing else.
-
+  var connectionTypeList={}
+  var patrolLists={}
   //------------------------------------------------------------------------------
   // Simulation represents a sim that can be attached to and observed by clients
   class Simulation
@@ -90,6 +91,7 @@ require('sticky-cluster')(function (callback)
       // console.log(this.outputChannel)
       this.inputChannel = `sim:${simId}:input`;
       this.killChannel = `sim:${simId}:kill`;
+      // console.log(this.killChannel);
       this.startChannel = `sim:${simId}:start`;
       this.inputListener = redisClient.duplicate();
       this.outputBroadcaster = redisClient.duplicate();
@@ -103,6 +105,7 @@ require('sticky-cluster')(function (callback)
       // console.log(this.options.patrolLocations);
 
       var info = {options: this.options, channels: {input: this.inputChannel, output: this.outputChannel, start: this.startChannel, kill: this.killChannel}};
+
 
       //console.log(this.options);
       // This probably isn't best practice, you'd really want to bring in rejson
@@ -173,8 +176,8 @@ require('sticky-cluster')(function (callback)
           case 'siteNum':
             args.push('--siteNum', val)
             break
-          case 'scenarioType':
-            args.push('--scenarioType',val)
+          case 'attackType':
+            args.push('--attackType',val)
             break
           case 'patrolLocations':
             args.push('--patrolLocations',val)
@@ -233,7 +236,11 @@ require('sticky-cluster')(function (callback)
           break;
 
         case this.killChannel:
+          console.log(data);
           this.stop();
+          break;
+        default:
+          console.err("Invalid input recieved in server")
           break;
       }
     }
@@ -321,31 +328,38 @@ require('sticky-cluster')(function (callback)
       this.engineOutputListener = redisClient.duplicate();
       this.userInputBroadcaster = redisClient.duplicate();
       this.simId = simId;
+      this.channels;
+      this.timer=0;
 
       // get the associated info for a simulation
       // so down the line we can do things like restrict user capabilities
       redisClient.getAsync(`sim:${simId}:info`)
         .then(infoStr =>
         {
+          // console.log("Before Parse in r");
           const info = JSON.parse(infoStr);
-
-          this.channels = info.channels;
-          this.options = info.options;
-
-          redisClient.incrAsync(`sim:${this.simId}:connectedCount`)
-            .then(newCount =>
-            {
-              if (newCount == 1)
+          // console.log("After Parse in r");
+          if(info != undefined && info != null){
+            this.channels = info.channels;
+            this.options = info.options;
+            this.engineOutputListener.subscribe(this.channels.output);
+            redisClient.incrAsync(`sim:${this.simId}:connectedCount`)
+              .then(newCount =>
               {
-                // if we're the first ones, start the simulation
-                // TODO: make this behaviour configurable so we can auto-start
-                //       and auto-stop like we do now, but also have the sim
-                //       run independently if we want
-                this.userInputBroadcaster.publish(this.channels.start, "first");
-              }
-            });
+                if (newCount == 1)
+                {
+                  // if we're the first ones, start the simulation
+                  // TODO: make this behaviour configurable so we can auto-start
+                  //       and auto-stop like we do now, but also have the sim
+                  //       run independently if we want
+                  this.userInputBroadcaster.publish(this.channels.start, "first");
 
-          this.engineOutputListener.subscribe(this.channels.output);
+                }
+              });
+          }
+
+
+
 
           this.engineOutputListener.on("message", this.sendUpdate.bind(this));
           this.socket.on('disconnect', this.disconnect.bind(this));
@@ -359,7 +373,11 @@ require('sticky-cluster')(function (callback)
     {
       //The start info and update info need to be seperated so that we can eliminate the need to recreate
       //a new world object every time through the init draw function.
+      // console.log("Before Parse in u");
+
+      this.timer++;
       const obj = JSON.parse(data);
+      // console.log("After Parse in u")
       // console.log(obj);
       //console.log(obj.type);
       this.socket.emit(obj.type, obj);
@@ -370,6 +388,10 @@ require('sticky-cluster')(function (callback)
       // console.log(data);
       // console.log(data);
       // console.log(data["info"]);
+      if(data.type=="patrolLocations"){
+        patrolLists[this.simId][this.socket.id][(Math.floor(data.info.x)).toString() +" "+ (Math.floor(data.info.y)).toString()]= data.info.mode
+        // console.log(patrolLists);
+      }
       this.userInputBroadcaster.publish(this.channels.input, JSON.stringify(data) + '\n');
     }
 
@@ -380,8 +402,14 @@ require('sticky-cluster')(function (callback)
         {
           if (newCount == 0)
           {
-            this.userInputBroadcaster.publish(this.channels.kill, "done");
-            redisClient.delAsync(`sim:${this.simId}:connectedCount`);
+            // console.log("Hereee");
+            if(this.channels != undefined && this.channels != null  ){
+              console.log("Quit after "+ (this.timer).toString());
+              this.userInputBroadcaster.publish(this.channels.kill, "done");
+              redisClient.delAsync(`sim:${this.simId}:connectedCount`);
+              // new Simulation(this.simId, this.options)
+            }
+
           }
         })
         .then(() =>
@@ -405,6 +433,7 @@ require('sticky-cluster')(function (callback)
   {
 
     const options = req.body;
+    // console.log(req.body);
     let userLimit;
     // console.log(options.patrolLocations);
     if (options.limitUsers === "true"){
@@ -445,7 +474,8 @@ require('sticky-cluster')(function (callback)
         {
 
           new Simulation(id, options);
-
+          connectionTypeList[id]=["add","avoid","observe"]
+          patrolLists[id]={}
           // send back the link for connecting to the simulation
           res.status(200).send(`/sims/${id}`);
         }
@@ -484,11 +514,14 @@ require('sticky-cluster')(function (callback)
     redisClient.getAsync(`sim:${simId}:info`)
       .then((info) =>
       {
+
+
         simInfo = JSON.parse(info);
         return redisClient.getAsync(`sim:${simId}:connectedCount`);
       })
       .then((count) =>
       {
+
         if (simInfo.options.maxUsers && count >= simInfo.options.maxUsers)
         {
           res.status(400).send("Connection limit reached.");
@@ -586,50 +619,68 @@ require('sticky-cluster')(function (callback)
   // On any new connection, we're passed a socket object representing that
   // that specific connection. Any socket specific setup has to be done on that
   // object, not the global io object
-  var connectionTypes=["add","avoid","observe"]
+
 
   io.on('connection', function(socket)
   {
     // We only need to set up the client here; it will take care of other events,
     // disconnects, etc.
     // console.log(socket.id);
-    console.log(connectionTypes);
-    if(connectionTypes.length <=1){
 
-      socket.emit("connectionType",connectionTypes[0])
+    s=socket;
+    socket.on("newConnection",function(ids){
+      // console.log(id);
+      // if(connectionTypeList[ids.id] != undefined){
+      //   if(connectionTypeList[ids.id].length >1){
+      //     socket.emit("connectionType",connectionTypeList[ids.id][0]);
+      //     connectionTypeList[ids.id].splice(0,1)
+      //   }else{
+      //     socket.emit("connectionType",connectionTypeList[ids.id][0]);
+      //   }
+      // }
+      if(patrolLists[ids.id] != undefined){
+        // console.log(patrolLists[ids.id]);
+        socket.emit("otherPatrols",patrolLists[ids.id])
+        patrolLists[ids.id][ids.socket]={}
+        // console.log(patrolLists);
+      }
 
-    }
-    else{
-      console.log("Connection Made");
-      socket.emit("connectionType",connectionTypes[0])
-      connectionTypes.splice(0,1)
-      console.log(connectionTypes[0]);
 
-    }
+    })
+
     socket.on('simId', function(id)
     {
+
       var client = new Client(socket, id);
+
       redisClient.getAsync(`sim:${id}:info`)
         .then(infoStr =>
         {
           const info = JSON.parse(infoStr);
+          let channels;
+          let options;
+          if(info != undefined && info!= null){
+            channels = info.channels;
+            options = info.options;
+            socket.emit('scenario',options.scenarioType)
+            socket.emit('simType',options.model);
+            socket.emit('patrolLocations',options.patrolLocations)
+            if(options.bait){
+              socket.emit('baitToggle', options.bait);
+            }
+            if(options.bomb){
+              socket.emit('bombToggle', options.bomb);
+            }
+            if(!options.hubController){
+              socket.emit('hubControllerToggle', {"type": "hubControllerToggle", "data": false});
+            } else{
+              socket.emit('hubControllerToggle', {"type": "hubControllerToggle", "data": true});
+            }
+          }
 
-          let channels = info.channels;
-          let options = info.options;
+
           // console.log(options.patrolLocations);
-          socket.emit('simType',options.model);
-          socket.emit('patrolLocations',options.patrolLocations)
-          if(options.bait){
-            socket.emit('baitToggle', options.bait);
-          }
-          if(options.bomb){
-            socket.emit('bombToggle', options.bomb);
-          }
-          if(!options.hubController){
-            socket.emit('hubControllerToggle', {"type": "hubControllerToggle", "data": false});
-          } else{
-            socket.emit('hubControllerToggle', {"type": "hubControllerToggle", "data": true});
-          }
+
 
 
           //info.options.

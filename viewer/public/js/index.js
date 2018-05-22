@@ -1,4 +1,7 @@
 let currentSort = [[0, 0]]; // first column, descending
+var attacks = {0:"Flank",1:"Delayed Flank",2:"Surround",3:"Split",4:"Penetration",5:"Penetration 2", 6:"Decoy"}
+
+
 
 $(document).ready(() =>
 {
@@ -47,28 +50,53 @@ function getSims()
 
     let keysSorted = Object.keys(json).sort();
     var i=1;
+    $('#simList tbody').empty()
     for (let key of keysSorted)
     {
       let [sim, info] = [key, json[key]];
       //<img src="${info.options.image}" class="simImage" width="350px"/>
-      var image;
+      var image = new Image();
       if(info.options.model=="Drone"){
-        image="showDrone"
+
+        image.src="./img/drone.png"
+        image.width=35
+        // image="showDrone"
+      }else if(info.options.model == "Bee"){
+        image.src="./img/bee-transparent-large.png"
+        image.width=30
+      }else if(info.options.model == "Ant"){
+        image.src="./img/ant-small.png"
+        image.width=30
+      }else{
+        image.src="./img/drone.png"
+        image.width=35
+        // image="showDrone"
       }
+
       // $('#activeSim').append(`
       //   <div class="${image}"></div>
       // `)
+      // console.log(image);
+
       $('#simList tbody').append(`
         <tr>
           <td>${i}</td>
-          <td>${info.options.model}</td>
-          <td>${info.options.worldType}</td>
+          <td></td>
+          <td>${info.options.scenarioType}</td>
+          <td>${attacks[info.options.attackType]} </td>
           <td>${info.connected} / ${info.options.maxUsers}</td>
           <td>${info.options.agentNum}</td>
           <td><b><a href='/sims/${sim}'>Join</a></b></td>
           <td><button class="deleteSim" id="sim${i}">X</button></td>
 
         </tr>`);
+        let curr=$('#simList tbody tr td')[(i-1)*8+1]
+        // console.log(curr);
+        // curr=curr.children()[1]
+        // console.log(curr);
+        curr.appendChild(image)
+        // console.log()
+        // $('#simList tbody').append(image);
         // $('#simList').append(`<img src="${info.options.image}" class="simImage" width="350px"/>
         //   `);
       $('#simList').trigger("update");

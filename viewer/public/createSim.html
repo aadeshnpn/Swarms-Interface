@@ -1,5 +1,6 @@
 <html>
 <head>
+  <title>Create Sim </title>
   <link rel="stylesheet" type="text/css" href="css/default.css" />
   <link rel="stylesheet" type="text/css" href="createWorld/index.css" />
   <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
@@ -29,8 +30,8 @@
     <br><br>
   </div>
 
-  <div class="panel" id="scenarioPanel">Scenario Type<br>
-      <select id="scenarioType">
+  <div class="panel" id="attackPanel">Attack Type<br>
+      <select id="attackType">
         <option value="0">Flank</option>
         <option value="1">Delayed Flank</option>
         <option value="2">Surround</option>
@@ -38,6 +39,16 @@
         <option value="4">Penetration</option>
         <option value="5">Penetration 2</option>
         <option value="6">Decoy</option>
+      </select>
+    <span id="attackToolTip" class="toolTip">Select the attack type you would like to simulate</span>
+    <br><br>
+  </div>
+
+  <div class="panel" id="scenarioPanel">Scenario Type<br>
+      <select id="scenarioType">
+        <option >No Communication</option>
+        <option >Messaged Communication</option>
+        <option >Groups</option>
       </select>
     <span id="scenarioToolTip" class="toolTip">Select the scenario type you would like to simulate</span>
     <br><br>
@@ -57,33 +68,15 @@
     <span id="worldTypeToolTip" class="toolTip">S = Pre-generated World<br> R = Randomly Generated World </span>
   </div>
 
-  <div class="panel modes" id="hubDivPanel" >Hub Controller<br>
+  <!-- <div class="panel modes" id="hubDivPanel" >Hub Controller<br>
     <label class="switch" >
       <input type="checkbox" id="hubController">
       <span class="slider round"></span>
     </label>
     <span id="hubToolTip" class="toolTip">Turn On/Off Hub Controller. The Hub Controller allows you to suggest directions for the agents</span>
-  </div>
-
-  <div class="panel modes" id="baitDivPanel" >Bait<br>
-    <label class="switch" >
-      <input type="checkbox" id="baitPanel">
-      <span class="slider round"></span>
-    </label>
-    <span id="baitToolTip" class="toolTip">Turn On/Off Bait. A bait placed on the map will affect the agents that cross its borders.
-      It will direct the agents to the center of the bait</span>
-  </div>
+  </div> -->
 
 
-  <div class="panel modes" id="bombDivPanel">Bomb<br>
-    <label class="switch" >
-      <input type="checkbox" id="bombPanel">
-      <span class="slider round"></span>
-    </label>
-    <span id="bombToolTip" class="toolTip">Turn On/Off Bomb. A bomb placed on the map will affect the agents that cross its borders.
-      It will direct the agents away from the bomb</span>
-
-    </div>
 
   <div class="panel"></div>
   <!-- <div class="panel modes" id="debug" >Debug mode:<br> <span id="debugText">Off</span><br><br></div> -->
@@ -122,9 +115,9 @@
   type="text/javascript"
   src="js/plugins/jquery.tablesorter.min.js">
 </script>
-<script
+<!-- <script
   src="./js/index.js">
-</script>
+</script> -->
 <script
   src="./js/createSim/agent.js">
 </script>

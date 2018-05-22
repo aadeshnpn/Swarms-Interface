@@ -54,7 +54,7 @@ class Bee(HubAgent):
         self.returnTimer=1500
         self.reporting=False;
         self.failedReporting=False;
-
+        self.moveToReturn = False;
         self.view=35
         self.returned=False;
         self.reportTime=300;
@@ -253,6 +253,7 @@ class Exploring(State):
                 agent.q_value=0
         if agent.q_value > 0 and not {site_id}.issubset(environment.sitesToIgnore):
             agent.potential_site = [agent.location[0], agent.location[1],site_id]
+
             if(agent.starting):
                 agent.starting=False;
                 environment.agentsPatrolling-=1
@@ -285,6 +286,7 @@ class Exploring(State):
 
         if agent.q_value > 0 and not agent.unfollowing:
             agent.following=True
+            agent.environment.agentsFollowSite[agent.potential_site[2]]["number"]+=1
 
             return input.nestFound
             #agent.potential_site = [agent.location[0], agent.location[1]]
@@ -372,13 +374,12 @@ class ReturnToSite(State):
 
     def getNextPheromone(self,agent,environment):
         site_id =agent.potential_site[2]
-        x_dif = agent.location[0] - agent.potential_site[0]
-        y_dif = agent.location[1] - agent.potential_site[1]
-        tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
-        # if environment.agentsFollowSite[site_id]["reporting"]:
-        #     environment.agentsFollowSite[site_id]["reportTime"]-=1
-        if tot_dif  <=agent.view:
-            agent.returned=True
+        if not agent.returned:
+            x_dif = agent.location[0] - agent.potential_site[0]
+            y_dif = agent.location[1] - agent.potential_site[1]
+            tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
+            if tot_dif  <=agent.view:
+                agent.returned=True
         if agent.returned:
             for pheromone in environment.pheromoneList:
 
@@ -390,8 +391,8 @@ class ReturnToSite(State):
                     if tot_dif <= agent.view:
                         if p.x ==agent.nextPheromone["x"]:
                             #if the agent's next pheromone is the current one
-                            agent.returnTimer=0
-                            environment.agentsFollowSite[site_id]["reportTime"]=0
+                            agent.failedReporting=True
+
                         else:
                             agent.nextPheromone["x"]=p.x
                             agent.nextPheromone["y"]=p.y
@@ -405,17 +406,18 @@ class ReturnToSite(State):
                 y_dif = agent.location[1] - site.y
                 tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
                 if tot_dif <=agent.view:
-                    environment.agentsFollowSite[agent.potential_site[2]]["reporting"]=False
-                    environment.agentsFollowSite[agent.potential_site[2]]["reportTimer"]=1500
+                    # eprint("Agent has refound site.")
                     agent.returnTimer=1500
                     agent.refound=True
 
     def sense(self, agent, environment):
-        agent.returnTimer-=1
-        if agent.returnTimer <=0:
-            agent.failedReporting=True;
-            environment.agentsFollowSite[agent.potential_site[2]]["reporting"] =False;
-            environment.agentsFollowSite[agent.potential_site[2]]["reportTime"] =1500;
+        agent.checkAgentLeave();
+        agent.returnTimer -= 1
+        if agent.returnTimer <= 0:
+            # eprint("Agents return timer is Depleted")
+            agent.failedReporting = True;
+            agent.reporting=False;
+
         self.getNextPheromone(agent,environment)
 
         self.checkIfAtSite(agent,environment)
@@ -439,17 +441,27 @@ class ReturnToSite(State):
     def update(self, agent):
 
         if agent.failedReporting:
+            agent.returned =False
+
             agent.failedReporting=False;
-            # eprint ("Agent unable to return to site "+str(agent.potential_site[2]))
-            agent.reporting=False;
+
             agent.returnTimer=1500
+            agent.refound=False;
+            agent.environment.agentsFollowSite[agent.potential_site[2]]["reporting "] = False;
+            agent.environment.agentsFollowSite[agent.potential_site[2]]["returnTime"] = 1500;
+            agent.environment.agentsFollowSite[agent.potential_site[2]]["number"]-=1
             return input.reportingFailed
         if agent.refound:
+            agent.returned =False
+            agent.environment.agentsFollowSite[agent.potential_site[2]]["reporting" ] = False
+            agent.environment.agentsFollowSite[agent.potential_site[2]]["returnTime"] = 1500
+
             # eprint(str(agent.id)+" refound site")
             # eprint ("Agent refound site "+str(agent.potential_site[2]))
             agent.returnedTimer=900;
             agent.velocity/=2
             agent.reporting=False
+            agent.refound=False;
             return input.nestFound
 
         #eprint("Follow Site update")
@@ -464,33 +476,32 @@ class ReportToHub(State):
         agent.returnTimer-=1
         if agent.returnTimer <=0:
             environment.agentsFollowSite[agent.potential_site[2]]["reporting"] =False;
-            environment.agentsFollowSite[agent.potential_site[2]]["reportTime"] =1500;
-
-        site_id =agent.potential_site[2]
-        # eprint(agent.state)
+            environment.agentsFollowSite[agent.potential_site[2]]["returnTime"] =1500;
+            environment.agentsFollowSite[agent.potential_site[2]]["number"]-=1
 
         agent.checkAgentReturn()
         return
 
     def act(self, agent):
         agent.wander(agent.hub, agent.hubRadius)
-
+        if agent.inHub:
+            agent.reportTime-=1;
+            if agent.reportTime <=0:
+                agent.moveToReturn=True;
         return
 
     def update(self, agent):
-        x_dif = agent.location[0] - agent.hub[0]
-        y_dif = agent.location[1] - agent.hub[1]
-        tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
 
-        # if tot_dif -agent.view <= agent.hubRadius:
-        agent.reportTime-=1;
-        # eprint(agent.reportTime)
+        if agent.moveToReturn:
+            agent.reportTime=300;
+            agent.moveToReturn = False;
 
-        if agent.reportTime <= 0:
             return input.finishedReporting;
         if agent.returnTimer <= 0:
             # eprint("Agent has failed to report site "+str(agent.potential_site[2])+"\nReturning to exploring" )
             agent.returnTimer=1500
+            agent.reportTime=300;
+            agent.reporting=False;
             return input.reportingFailed
 
 
@@ -521,17 +532,17 @@ class followSite(State):
             #Make sure the site they are following is the correct site
             if site_id == site.id:
                 dist=distance(agent.location[0],agent.location[1],site.x,site.y)
-                environment.agentsFollowSite[site_id]["number"]=environment.get_numberOfAgentsInState(site_id)
+                # environment.agentsFollowSite[site_id]["number"]=environment.get_numberOfAgentsInState(site_id)
                 #if there are 2 or more agents, have one report to hub
 
-                if (environment.agentsFollowSite[site_id]["number"] >= 2 and
-                 environment.agentsFollowSite[site_id]["reporting"] ==False and
-                 agent.returnedTimer <=0):
-                    # environment.agentsFollowSite[site_id]["reporting"]=True
-                    # eprint("Inside of follow " + str(agent.id))
+                if (environment.agentsFollowSite[site_id]["number"] >= 2 and environment.agentsFollowSite[site_id]["number"] <4 and
+                 environment.agentsFollowSite[site_id]["reporting"] ==False ):#and agent.returnedTimer <=0
+
                     agent.reporting=True;
+                    environment.agentsFollowSite[agent.potential_site[2]]["reporting"]=True
                     if agent.followSiteInfo["droppingPheromone"]:
                         environment.agentsFollowSite[site_id]["agentDropPheromone"]-=1
+                        agent.followSiteInfo["droppingPheromone"]=False;
                     # eprint("Agent is now returning to hub from site "+ str(agent.potential_site[2]))
 
                 if dist<50:
@@ -565,19 +576,13 @@ class followSite(State):
         if {site_id}.issubset(environment.sitesToIgnore):
             agent.following=False
         if environment.agentsFollowSite[site_id]["number"] >3:
+            # eprint("Site " +str(agent.potential_site[2])+ " has more than 3 agents")
             agent.following=False
-
-
-        if agent.reporting:
-            environment.agentsFollowSite[agent.potential_site[2]]["reporting"]=True
-
+            environment.agentsFollowSite[site_id]["number"]-=1
         return
-
-
 
     def act(self, agent):
         return
-
 
     def update(self, agent):
         agent.move(agent.potential_site)

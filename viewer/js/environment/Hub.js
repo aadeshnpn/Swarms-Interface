@@ -28,7 +28,7 @@ class Hub
         //3rd line copies agents last locations over to that new array
         this.paths[i][this.paths[i].length]=new Array()
         this.paths[i][this.paths[i].length] = agent.lastLocations.slice()
-        agent.lastLocations.splice(0,agent.lastLocations.length)
+        agent.lastLocations=[]
       }
       i++;
     }

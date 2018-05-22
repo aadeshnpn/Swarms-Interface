@@ -454,6 +454,55 @@ input{
   opacity: 1;
 }
 
+#attackType{
+  border-radius: 10px;
+  width:80%;
+  height:30%;
+  background-color: white;
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.36) inset;
+  padding-left: 10px;
+
+  -webkit-border-radius:1n0px;
+}
+#attackType:focus {
+  outline: none;
+}
+
+#attackPanel{
+  line-height: 50px;
+  height:calc(100%/10);
+}
+
+#attackPanel #attackToolTip{
+  visibility: hidden;
+  background-color: rgba(85, 85, 85, 0.86);
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 0 0;
+  position: absolute;
+  z-index: 1;
+  top: calc(45% - 25px);
+
+  margin-right: -60px;
+  opacity: 0;
+  transition: opacity .5s;
+}
+#attackPanel #attackToolTip::after {
+  content: "";
+  position: absolute;
+  top: 45%;
+  left: -10px;
+  margin-right: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color:  transparent #555 transparent transparent ;
+}
+#attackPanel:hover #attackToolTip {
+  visibility: visible;
+  opacity: 1;
+}
+
 #scenarioType{
   border-radius: 10px;
   width:80%;
@@ -482,7 +531,7 @@ input{
   padding: 0 0;
   position: absolute;
   z-index: 1;
-  top: calc(45% - 25px);
+  top: calc(55% - 25px);
 
   margin-right: -60px;
   opacity: 0;

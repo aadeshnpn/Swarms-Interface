@@ -38,7 +38,7 @@ parser.add_argument("-e", "--seed", type=int, help="Run the simulation with the 
 parser.add_argument("-p", "--pipe", type=str, help="Connect to the specified named pipe")
 parser.add_argument("-a", "--agentNum", type=int, help="specifies number of agents")
 parser.add_argument("-x", "--siteNum", type=int, help="specifies number of sites")
-parser.add_argument("-z", "--scenarioType", type=int, help="specifies enemy attack scenario")
+parser.add_argument("-z", "--attackType", type=int, help="specifies enemy attack scenario")
 parser.add_argument("-q", "--patrolLocations1",type=tuple, help="specifies locations for agents to start exploring")
 parser.add_argument("-u", "--createWorldSize",type=str, help="specifies locations for agents to start exploring")
 
@@ -230,10 +230,10 @@ class Environment(ABC):
         self.hub = data["hub"]
 
         # eprint('ScenarioType: ', args.scenarioType)
-
-        self.sites = Sites(args.siteNum, self.hub["x"], self.hub["y"], args.scenarioType)
+        # eprint(args.attackType)
+        self.sites = Sites(args.siteNum, self.hub["x"], self.hub["y"], args.attackType)
         for site in self.sites:
-            self.agentsFollowSite[site.id]={"number":0,"reporting":False,"agentDropPheromone":0,"reportTime":1500}
+            self.agentsFollowSite[site.id]={"number":0,"agentIds":[],"reporting":False,"agentDropPheromone":0,"returnTime":1500}
 
         self.obstacles = data["obstacles"]
         self.traps = data["traps"]
@@ -390,6 +390,7 @@ class Environment(ABC):
         i=0
         for pheromone in self.pheromoneList:
             if(pheromone["pheromone"].strength<=0):
+                del self.pheromoneList[i]
                 self.pheromoneList.pop(i)
             i+=1
 
@@ -398,20 +399,14 @@ class Environment(ABC):
         # eprint("Here")
 
         for i in range(0,len(self.agentsFollowSite)-1):
-            if self.agentsFollowSite[i]["reportTime"]<=0:
-                self.agentsFollowSite[i]["reportTime"]=1500
+            # eprint("Site " +str(i)+" Return Timer:"+str(self.agentsFollowSite[i]["returnTime"])+" Agents: " + str(self.agentsFollowSite[i]["number"]));
+            # eprint("Site "+ str(i) +" has "+str(self.agentsFollowSite[i]["number"]) +" agents")
+
+            if self.agentsFollowSite[i]["returnTime"]<=0:
+                self.agentsFollowSite[i]["returnTime"]=1500
                 self.agentsFollowSite[i]["reporting"]=False
             if self.agentsFollowSite[i]["reporting"]:
-                self.agentsFollowSite[i]["reportTime"]-=1
-            if self.agentsFollowSite[i]["reporting"]:
-                self.agentsFollowSite[i]["reportTime"]-=1
-
-                if self.agentsFollowSite[i]["reportTime"]<= 0:
-                    # if i == 2:
-                        # eprint("Agent failed to return to site "+str(i)+"\nSending backup")
-
-                    self.agentsFollowSite[i]["reportTime"]=1500
-                    self.agentsFollowSite[i]["reporting"]=False
+                self.agentsFollowSite[i]["returnTime"]-=1
 
     def processDeleted(self, deletePatrol):
         # eprint(deletePatrol["info"]["deleted"]["mode"])
@@ -421,7 +416,7 @@ class Environment(ABC):
             for patrol in self.patrolList:
                 # eprint(deletePatrol["info"]["deleted"]["x"])
                 if deletePatrol["info"]["deleted"]["x"] == patrol["x"] and -deletePatrol["info"]["deleted"]["y"] == patrol["y"]:
-                    eprint("DELETING FROM PATROL")
+                    # eprint("DELETING FROM PATROL")
                     del self.patrolList[i]
                 i+=1;
         if deletePatrol["info"]["deleted"]["mode"] == 1:
@@ -549,6 +544,7 @@ class Environment(ABC):
                         self.agents[agent_id].sense(self)
                         self.agents[agent_id].update(self)
                         self.suggest_new_direction(agent_id)
+
                     # if self.agentsPatrolling <= 0 and len(self.patrolList) > 0:
                         # eprint("Clearing Patrol List")
                         # self.patrolList.clear()
@@ -576,7 +572,6 @@ class Environment(ABC):
 
 
                     #measurer.compute_measurements(self.agents.values())
-
 
                 for event in self.inputEventManager.eventQueue:
                     if (self.logfile):
@@ -714,14 +709,7 @@ class Environment(ABC):
         return json.dumps(parameterJson)
 
     def denySite(self,json):
-        # eprint("HEAF")
         self.sitesToIgnore.add(json["id"])
-        # eprint(self.sitesToIgnore)
-
-
-        # eprint("HEREEEEE")
-        # eprint(self.sitesToIgnore)
-
 
 
     def updateParameters(self, json):

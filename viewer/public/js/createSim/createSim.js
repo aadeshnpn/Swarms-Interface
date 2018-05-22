@@ -335,8 +335,8 @@ $(document).keydown(function(e){
 
 })
 
-$( "#scenarioType" ).change(function(){
-    scenType = $("#scenarioType").val()
+$( "#attackType" ).change(function(){
+    scenType = $("#attackType").val()
 
 });
 
@@ -552,7 +552,7 @@ function toJson(){
     selected.push(loc.y)
     selected.push(loc.mode)
   }
-  console.log(selected);
+  // console.log(selected);
   // console.log(selected);
   return   (selected);
 
@@ -561,10 +561,12 @@ function toJson(){
 
 $("#startSim").click(function(){
   var siteNumber=$("#siteNumber").val()
-
-  //  var e = document.getElementById("#scenarioType")
+  var scenarioType=$("#scenarioType").val()
+  // console.log(scenarioType);
+  //  var e = document.getElementById("#attackType")
   //  scenType = e.options[e.selectedIndex].value
-  scenType = $("#scenarioType").val()
+  attackType = $("#attackType").val()
+  // console.log($("#attackType"));
   var name = simName
   if(name= "Sim Name"){
     name=""
@@ -572,11 +574,13 @@ $("#startSim").click(function(){
   // selectedCoordsToJson()
   // selectedCoordsToJson()
   // console.log(selectedCoordsToJson().length);
+  // console.log(attackType);
   var simInfo={
                 name:name,
                 agentNum:agentNumber.value,
                 siteNum:siteNumber,
-                scenarioType:scenType,
+                attackType:attackType,
+                scenarioType:scenarioType,
                 model:agentType.split(" ")[0],
                 worldType:worldType,
                 patrolLocations:selectedCoordsToJson(),
