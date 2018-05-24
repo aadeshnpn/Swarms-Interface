@@ -26,6 +26,7 @@
 
 ##### Windows Sim Setup #####
 > _Restart your bash session_
+
 > ** Same as Linux from here on **
 
 1. git clone `address`
