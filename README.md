@@ -6,6 +6,8 @@
 4. cd ../engine
 5. pip install -r requirement.txt
 
+#### `Setup for Windows` ####
+`Working on getting setup documented`
 
 # Swarm Viewer #
 
