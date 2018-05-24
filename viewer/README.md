@@ -1,3 +1,11 @@
+# Setup #
+## Setup for Linux ##
+cd viewer
+npm install --save
+cd ../engine
+pip install -r requirement.txt
+
+
 # Swarm Viewer #
 
 Server - server.js. Built on expressjs and socket.io. Responsible for monitoring
@@ -15,8 +23,7 @@ js script and sends it to the client with index.html
 ## Execution Flow Overview ##
 
 # Server #
-The entry point is server.js. Run it with `node server.js`. If it complains
-about missing dependencies, run `npm install`.
+The entry point is server.js. Run it with `node server.js` or `npm start`.
 
 From there, execution proceeds line by line from the top, mostly just getting
 references to dependencies, setting up some necessary variables, and defining
@@ -82,7 +89,7 @@ Finally, `draw()` sets a timeout to call `window.setAnimationFrame()` again in
 1/60th second with itself as an argument, ensuring the canvas is continually
 updated.
 
-As more socket `update` events are received, the world is re-instantiated with 
+As more socket `update` events are received, the world is updated with
 the new data, so when it's drawn next time, we essentially get a new frame of
 animation
 
