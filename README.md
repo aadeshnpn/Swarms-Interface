@@ -5,10 +5,10 @@
 3. npm install --save
 4. cd ../engine
 5. pip install -r requirement.txt
-
+----
 #### `Setup for Windows` ####
 `Working on getting setup documented`
-`If Node and npm are already installed on your computer, skip to step ---------`
+
 ##### Install Node and npm #####
 1. sudo apt-get --purge remove node
 2. sudo apt-get --purge remove nodejs
@@ -20,7 +20,14 @@
 ##### Install pip #####
 1. sudo apt-install python-pip
 
+##### Install redis #####
+
+1. sudo apt-install python-pip
+
 ##### Windows Sim Setup #####
+> _Restart your bash session_
+> ** Same as Linux from here on **
+
 1. git clone `address`
 2. cd viewer
 3. npm install --save
