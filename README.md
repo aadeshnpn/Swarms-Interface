@@ -8,6 +8,25 @@
 
 #### `Setup for Windows` ####
 `Working on getting setup documented`
+`If Node and npm are already installed on your computer, skip to step ---------`
+##### Install Node and npm #####
+1. sudo apt-get --purge remove node
+2. sudo apt-get --purge remove nodejs
+3. curl -sl https://deb.nodesource.com/setup-6.x | sudo -E bash -
+4. sudo apt-get install -y nodejs
+5. sudo apt-get install note
+6. sudo apt-get install -y build-essential
+
+##### Install pip #####
+1. sudo apt-install python-pip
+
+##### Windows Sim Setup #####
+1. git clone `address`
+2. cd viewer
+3. npm install --save
+4. cd ../engine
+5. pip install -r requirement.txt
+
 
 # Swarm Viewer #
 
@@ -95,6 +114,17 @@ updated.
 As more socket `update` events are received, the world is updated with
 the new data, so when it's drawn next time, we essentially get a new frame of
 animation
+
+# User Controls #
+
+There are a variety of user controls that have been implemented. The
+`create simulation` was created to ease the work of starting a new simulation.
+You can select how many agents the simulation uses. If you choose the drone
+agent, you can choose the number of sites and their attack pattern.
+
+#### `Yet to be Implemented / Reimplemented` ####
+`Agent Selection`
+`User Study Controls`
 
 # Events #
 
