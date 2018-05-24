@@ -1,9 +1,10 @@
 # Setup #
 #### Setup for Linux ####
-1. cd viewer
-2. npm install --save
-3. cd ../engine
-4. pip install -r requirement.txt
+1. git clone `address`
+2. cd viewer
+3. npm install --save
+4. cd ../engine
+5. pip install -r requirement.txt
 
 
 # Swarm Viewer #
