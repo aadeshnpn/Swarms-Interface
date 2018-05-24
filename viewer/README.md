@@ -1,5 +1,5 @@
 # Setup #
-## Setup for Linux ##
+#### Setup for Linux ####
 1. cd viewer
 2. npm install --save
 3. cd ../engine
