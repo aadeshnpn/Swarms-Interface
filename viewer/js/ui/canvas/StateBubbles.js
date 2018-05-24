@@ -28,7 +28,7 @@ class StateBubbles
     for (let [state, count] of Object.entries(json))
     {
       //console.log(json.states);
-      console.log(count);
+      // console.log(count);
       if (this.states[state])
       {
         this.states[state].count = count;

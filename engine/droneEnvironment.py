@@ -1,16 +1,16 @@
 from Environment import *
-from beeCode.beeHubController import BeeHubController
+from droneCode.droneHubController import DroneHubController
 from Measurements import *
-from beeCode.agent.beeAgent import *
+from droneCode.agent.droneAgent import *
 from Pheromone import *
 import time
 
 
 measurer = Measurements(5) # Agents are connected if they are in the same state and distance 5 away from each other
-class BeeEnvironment(Environment):
+class DroneEnvironment(Environment):
     def __init__(self, file_name):
-        eprint("\n \n \n \n \nStarting Bee Simulation \n \n \n \n")
-        # eprint("file_name = " + str(file_name))
+        eprint("\n \n \n \n \nStarting Drone Simulation \n \n \n \n")
+        #eprint("file_name = " + str(file_name))
         self.info_stations = []
         self.number_of_agents = 100
 
@@ -32,7 +32,7 @@ class BeeEnvironment(Environment):
         super().__init__(file_name)
 
     def init_hubController(self):
-        self.hubController = BeeHubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self,
+        self.hubController = DroneHubController([self.hub["x"], self.hub["y"], self.hub["radius"]], self.agents, self,
                                             self.parameters["ExploreTime"])
 
 
@@ -139,7 +139,7 @@ class BeeEnvironment(Environment):
     #agent_id could use improvement
     def create_explorer(self, agentId):
         agent_id = str(agentId)
-        agent = Bee(self, agent_id, Exploring(None), self.hub, self.parameters,
+        agent = Drone(self, agent_id, Exploring(None), self.hub, self.parameters,
           count = int(self.parameters["ExploreTime"]))
         self.agents[agent_id] = agent
 
@@ -147,7 +147,7 @@ class BeeEnvironment(Environment):
     def create_rester(self, agentId):
         agent_id = str(agentId)
         #eprint("rest_num = " + str(agent_id))
-        agent = Bee(self, agent_id, Resting(None), self.hub, self.parameters, count=int(self.parameters["RestTime"]))
+        agent = Drone(self, agent_id, Resting(None), self.hub, self.parameters, count=int(self.parameters["RestTime"]))
         self.agents[agent_id] = agent
 
     def clear_for_reset(self):
@@ -163,7 +163,7 @@ class BeeEnvironment(Environment):
             x_dif = agent.location[0] - site.x
             y_dif = agent.location[1] - site.y
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
-            if tot_dif <= site["radius"]:
+            if tot_dif <= site.radius:
                 return site.id
     def get_pheromone(self,agent):
         #x=int(int(agent.location[0]+self.x_limit)/3)
@@ -203,7 +203,7 @@ class BeeEnvironment(Environment):
             y_dif = agent.location[1] - site.y
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
 
-            if tot_dif -agent.view <= site["radius"]:
+            if tot_dif -agent.view <= site.radius:
                 ids.append(site.id)
         # eprint(ids)
         return ids
@@ -213,11 +213,11 @@ class BeeEnvironment(Environment):
         for info in self.info_stations:
             info.radius+=.1
         for i, site in enumerate(self.sites):
-            x_dif = agent.location[0] - site["x"]
-            y_dif = agent.location[1] - site["y"]
+            x_dif = agent.location[0] - site.x
+            y_dif = agent.location[1] - site.y
             tot_dif = (x_dif ** 2 + y_dif ** 2) ** .5
 
-            if tot_dif -agent.view <= site["radius"]:
+            if tot_dif -agent.view <= site.radius:
                 info = self.info_stations[i]
                 if not agent.atSite:
                     self.info_stations[i].bee_count += 1
@@ -231,10 +231,10 @@ class BeeEnvironment(Environment):
                 # the edge will return 75% of the q_value
                 # eprint(site.id)
                 return {
-                    "radius": site["radius"],
-                    "q": site["q_value"] - (tot_dif / site["radius"] * .25 * site["q_value"]),     #gradient!
-                    "id": site["id"],
-                    "site_q": site["q_value"]
+                    "radius": site.radius,
+                    "q": site.q_value - (tot_dif / site.radius * .25 * site.q_value),     #gradient!
+                    "id": site.id,
+                    "site_q": site.q_value
                 }
 
         return {"radius": -1, "q": 0, "site_q": 0}
@@ -251,7 +251,7 @@ class BeeEnvironment(Environment):
                             "x_limit": self.x_limit,
                             "y_limit": self.y_limit,
                             "hub": self.hub,
-                            "sites": self.sites,
+                            "sites": self.sites.to_json(),
                             "obstacles": self.obstacles,
                             "traps": self.traps,
                             "rough": self.rough,
@@ -270,9 +270,9 @@ class BeeEnvironment(Environment):
         self.create_infoStations()
 
 if __name__ == "__main__":
-    fileName = "world.json"
-    # eprint(fileName)
-    world = BeeEnvironment(os.path.join(ROOT_DIR,fileName));
+    file = "world.json"
+
+    world = DroneEnvironment(os.path.join(ROOT_DIR, file))
 
     world.run()
 

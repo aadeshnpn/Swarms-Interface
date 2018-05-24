@@ -12,6 +12,7 @@ class Fog
     this.opacity=this.maxOpacity;
 
     this.color='rgb(255, 255, 255)';
+    this.normalColor='rgb(255, 255, 255)';
     this.x =-world.x_limit+x;
     this.y=-world.y_limit+y;
     this.timeMax=100;
@@ -46,31 +47,7 @@ class Fog
     this.top=this.y-fogBlockSize
   }
 
-  checkAgent(agents,hub){
-    if(!this.init){
-      this.agentsInHub=new Array(agents.length)
-      this.agentsInHub.fill(false,0,agents.length)
-      this.init=true
-    }
-    for(var agent of agents)
-    {
-      //console.log(agent.x)
-      if(agent.x > this.x - (this.fogBlockSize-1)*this.view &&
-          agent.x < this.x+(this.fogBlockSize-1)*this.view &&
-            agent.y > this.y - (this.fogBlockSize-1)*this.view &&
-              agent.y <this.y+(this.fogBlockSize-1)*this.view)
-      {
-        if(!(Math.sqrt((hub.x - agent.x)*(hub.x - agent.x) +(hub.y - agent.y)*(hub.y - agent.y)) < hub.radius-5))
-        {
-          this.agentTime.set(agent.id.toString(),Date.now())
-          agent.lastLocations.push(this)
-          //console.log(this.agentsInHub);
-        }
 
-      }
-
-    }
-  }
 
   selecting(points,selectMode){
     // Will select points that are being selected by the mouse and highlight those selected
@@ -131,6 +108,7 @@ class Fog
     this.opacity+=.001
     if(this.opacity >this.maxOpacity){
       this.opacity = this.maxOpacity
+      this.color=this.normalColor;
     }
   }
 

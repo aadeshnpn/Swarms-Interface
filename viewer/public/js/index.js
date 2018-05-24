@@ -54,53 +54,67 @@ function getSims()
     for (let key of keysSorted)
     {
       let [sim, info] = [key, json[key]];
-      //<img src="${info.options.image}" class="simImage" width="350px"/>
-      var image = new Image();
-      if(info.options.model=="Drone"){
+      if(info.connected <1 || info.connected == null ){
+        var myobj= {simId:info.simId}
+        jobj = JSON.stringify(myobj);
+        $.ajax({
+          url:'simDel',
+          type: "POST",
+          data:jobj,
+          contentType: "application/json; charset=utf-8",
+          success: function(data,textStatus){
 
-        image.src="./img/drone.png"
-        image.width=35
-        // image="showDrone"
-      }else if(info.options.model == "Bee"){
-        image.src="./img/bee-transparent-large.png"
-        image.width=30
-      }else if(info.options.model == "Ant"){
-        image.src="./img/ant-small.png"
-        image.width=30
+          }
+        })
+        $(this).parents("tr").remove()
       }else{
-        image.src="./img/drone.png"
-        image.width=35
-        // image="showDrone"
+        var image = new Image();
+        if(info.options.model=="Drone"){
+
+          image.src="./img/drone.png"
+          image.width=35
+          // image="showDrone"
+        }else if(info.options.model == "Bee"){
+          image.src="./img/bee-transparent-large.png"
+          image.width=30
+        }else if(info.options.model == "Ant"){
+          image.src="./img/ant-small.png"
+          image.width=30
+        }else{
+          image.src="./img/drone.png"
+          image.width=35
+          // image="showDrone"
+        }
+
+
+
+        $('#simList tbody').append(`
+          <tr>
+            <td>${i}</td>
+            <td></td>
+            <td>${info.options.scenarioType}</td>
+            <td>${attacks[info.options.attackType]} </td>
+            <td>${info.connected} / ${info.options.maxUsers}</td>
+            <td>${info.options.agentNum}</td>
+            <td><b><a href='/sims/${sim}'>Join</a></b></td>
+            <td><button class="deleteSim" id="sim${i}">X</button></td>
+
+          </tr>`);
+          let curr=$('#simList tbody tr td')[(i-1)*8+1]
+          // console.log(curr);
+          // curr=curr.children()[1]
+          // console.log(curr);
+          curr.appendChild(image)
+
+          // console.log()
+          // $('#simList tbody').append(image);
+          // $('#simList').append(`<img src="${info.options.image}" class="simImage" width="350px"/>
+          //   `);
+        $('#simList').trigger("update");
+        i++;
       }
+      //<img src="${info.options.image}" class="simImage" width="350px"/>
 
-      // $('#activeSim').append(`
-      //   <div class="${image}"></div>
-      // `)
-      // console.log(image);
-
-      $('#simList tbody').append(`
-        <tr>
-          <td>${i}</td>
-          <td></td>
-          <td>${info.options.scenarioType}</td>
-          <td>${attacks[info.options.attackType]} </td>
-          <td>${info.connected} / ${info.options.maxUsers}</td>
-          <td>${info.options.agentNum}</td>
-          <td><b><a href='/sims/${sim}'>Join</a></b></td>
-          <td><button class="deleteSim" id="sim${i}">X</button></td>
-
-        </tr>`);
-        let curr=$('#simList tbody tr td')[(i-1)*8+1]
-        // console.log(curr);
-        // curr=curr.children()[1]
-        // console.log(curr);
-        curr.appendChild(image)
-        // console.log()
-        // $('#simList tbody').append(image);
-        // $('#simList').append(`<img src="${info.options.image}" class="simImage" width="350px"/>
-        //   `);
-      $('#simList').trigger("update");
-      i++;
     }
     $('.deleteSim').click(function(e){
       var id=(e.target.id).split('sim')[1]

@@ -13,48 +13,32 @@ class Hub
     }
   }
 
+  updateFog(agents){
+    for(var agent of agents){
+      if(Math.sqrt((this.x - agent.x)*(this.x - agent.x) +(this.y - agent.y)*(this.y - agent.y)) < this.radius-5){
+        let time=new Date()
+
+        for(let index in agent.path){
+          let totalEllapsed=time.getMinutes()*60+time.getSeconds()-agent.time
+
+          let fraction=(time.getMinutes()*60+time.getSeconds()-agent.path[index].time)/totalEllapsed
+
+          agent.path[index].fog.opacity=fraction*.5
+
+          delete agent.path[index]
+        }
+        agent.time=time.getMinutes()*60+time.getSeconds()
+        // console.log("next");
+
+      }
+
+    }
+  }
+
   draw(ctx, debug = false, agents)
   {
     ctx.save();
-    var i=0;
-    var k=0;
 
-    //This allows the fog to dissapate where the agent has been
-    // when an agent returns to the hub
-    for(var agent of agents){
-      if(Math.sqrt((this.x - agent.x)*(this.x - agent.x) +(this.y - agent.y)*(this.y - agent.y)) < this.radius-5){
-        //i is the agent id
-        //2nd parameter creates a new array for that agent
-        //3rd line copies agents last locations over to that new array
-        this.paths[i][this.paths[i].length]=new Array()
-        this.paths[i][this.paths[i].length] = agent.lastLocations.slice()
-        agent.lastLocations=[]
-      }
-      i++;
-    }
-    var t=0
-    for(var agentPaths of this.paths){
-      var i=0;
-
-      for(var agentPath of agentPaths){
-        var k=0;
-        if(agentPath.length == 0){
-          agentPaths.splice(i,1);
-        }
-        var j=0
-        for(var path of agentPath){
-          if(path.opacity<=0){
-            agentPath.splice(k,1);
-          }
-          path.opacity=0
-          //console.log(t);
-          path.agentsInHub[t]=true
-          j++
-        }
-        i++
-      }
-      t++
-    }
 
 
     ctx.fillStyle = "rgba(242, 179, 19, .5)";
@@ -74,18 +58,6 @@ class Hub
     ctx.fill();
     ctx.stroke();
 
-    // ctx.globalAlpha=1
-    // ctx.font = "20px Arial";
-    // ctx.fillStyle="white"
-    // ctx.shadowOffsetX = 2;
-    // ctx.shadowOffsetY = 2;
-    // ctx.shadowBlur=2
-    // ctx.shadowColor = 'black';
-    // // let imageNum=(this.currentImage+1).toString()
-    // ctx.fillText(this.agentsIn,this.x-15,this.y+35);
-    // ctx.shawdowBlur=0
-    // ctx.shadowOffsetX =0
-    // ctx.shadowOffsetY = 0;
 
 
     ctx.restore();

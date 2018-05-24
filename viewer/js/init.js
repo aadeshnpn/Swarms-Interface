@@ -2,36 +2,12 @@
 // Globals
 //*****************************************************************************
 
-// console.log('%c To Do List: ', 'font-size:15px;font-weight:900;color: rgb(0, 0, 0)');
-//
-// console.log("%c 1."+'%c Repulsors need to delete on backend when deleted on front end \n'+
-//              ' %c    Add ids to the coords\n'+
-//              '     You may also have to do a search for points in an area since the size of the worlds are different\n'+
-//              '     Actually, you can just send the list back with things deleted. If it cant find a repulsor hexagon in the area of a current repulsor, it is deleted',
-//              'font-size:12px;color: rgb(0, 0, 0);',
-//              'font-size:12px;font-weight:700;color: rgb(116, 24, 0); ',
-//              'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
-// console.log("%c 2."+`%c Interface the selection on the live simulation\n`+
-//                               ` %c    Use the "selectedCoords" map`,
-//                               'font-size:12px;color: rgb(0, 0, 0);',
-//                               'font-size:12px; font-weight:700;color: rgb(116, 24, 0); ',
-//                               'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
-// console.log("%c 3."+`%c Get rid of scrolling through images\n`+
-//                           ` %c    Partially Implemented. Arrows appear, but are not clickable`,
-//                           'font-size:12px;color: rgb(0, 0, 0);',
-//                           'font-size:12px; font-weight:700;color: rgb(116, 24, 0); ',
-//                           'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
-// console.log("%c 4."+`%c Visuals for Q-Value\n`+
-//                           ` %c    Think of a recycle symbol\n     Add more arrows around as the q Value goes up\n     In our case, put the arrows on the bottom of the image`,
-//                           'font-size:12px;color: rgb(0, 0, 0);',
-//                           'font-size:12px; font-weight:700;color: rgb(116, 24, 0); ',
-//                           'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
-
-
 // get a socket object from the socket.io script included above
 var socket = io();
 var world = null;
 var clientId;
+var localInfo = new Message()
+var tasks = new Task()
 
 //These are for the pre-planning and live-planning methods of selecting areas of the canvas
 var currentSelectMode=0
@@ -106,12 +82,10 @@ $("#agentStateDescriptionDiv").append(`<table id="statesInfo"><caption id="state
                                         <div id="statesInfoTextDiv">
                                         <p id="statesInfoText">`+defaultStateDescript+`</p>
                                         </div>`)
+
 var connection;
 
 
-
-var addPatrol=true;
-var addAvoid=true;
 // Get Image references and other presets
 var bee = document.getElementById("drone");
 var beeDead;
@@ -145,6 +119,7 @@ socket.on("scenario",function(type){
   scenarioType=type;
   if(scenarioType=="No Communication"){
     $("#messengerIcon").css("display","none")
+    localInfo.create(tasks.noCom)
   }
 })
 
@@ -154,23 +129,23 @@ var mouse = new Mouse();
 
 var ctx;
 var simId;
-
+// console.log(tasks.avoid);
 function setUserAbility(add,avoid){
-  addPatrol=add;
-  addAvoid=avoid
-  if(addPatrol && !addAvoid){
+  if(add && !avoid){
 
     selectModes.splice(1,1)
     $( "#selectType" ).html(selectModes[currentSelectMode])
     $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
+    localInfo.create(tasks.patrol)
   }
-  else if(!addPatrol && addAvoid){
+  else if(!add && avoid){
     selectModes.splice(0,1)
     currentSelectMode=1;
     $( "#selectType" ).html(selectModes[0])
     $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
+    localInfo.create(tasks.avoid)
 
-  }else if(!addPatrol && !addAvoid){
+  }else if(!add && !avoid){
     // selectMode
     $( "#selectMode" ).css("display","none")
     currentSelectMode=-1;
@@ -224,12 +199,17 @@ function getOthersPatrols(patrolMap){
 // server, it'll come through here.
 socket.on('update', function(worldUpdate){
    // New World
+  //  console.log("HERE");
    if (world === null){
       world = new World(worldUpdate.data);
-      console.table(world.agents)
+
+      // socket.emit('input', {type: 'pause'})
+      // isPaused=true;
+      // console.table(world.agents)
       canvas.setAttribute("width", world.width);
       canvas.setAttribute("height", world.height);
 
+      // localInfo.draw()
       // Resizes the canvas to the size determined in the Python code
       document.getElementById("canvasDiv").style.width = world.width + "px";
 
@@ -241,6 +221,7 @@ socket.on('update', function(worldUpdate){
       ctx.translate(world.x_limit, world.y_limit);
 
       //Start the drawing cycle
+
       draw()
    }
    else if (finishedDrawing){
@@ -252,6 +233,7 @@ socket.on('update', function(worldUpdate){
 
 function draw(environment){
 
+  // console.log("HERE");
   //The updates will not be let through unless the the current iteration of drawing is finished
   finishedDrawing = false;
   // clear canvas
@@ -261,7 +243,7 @@ function draw(environment){
   ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
 
 
-  if(simType=="Drone"){
+  if(simType == "Drone"){
     ctx.globalAlpha = sliderVal/100;
     ctx.drawImage(background, -world.x_limit, -world.y_limit,world.width, world.height);
     ctx.globalAlpha = 1;
@@ -276,7 +258,11 @@ function draw(environment){
   mouse.deltaX=0;
   // console.log(mouse);
 
-  window.requestAnimationFrame(draw);
+
+  // if(!isPaused){
+    window.requestAnimationFrame(draw);
+
+  // }
 
 }
 

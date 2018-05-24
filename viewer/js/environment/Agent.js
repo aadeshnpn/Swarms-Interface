@@ -10,7 +10,24 @@ class Agent
     this.isAlive       =  agentJson.live;
     this.qVal          =  agentJson.qVal;
     Agent.stateColors  = {};
+    this.path={}
     this.lastLocations = [];
+    this.view=2
+    let time=new Date()
+    this.time=time.getMinutes()*60+time.getSeconds();
+  }
+
+  checkFog(fogBlocks){
+    for(let fog of fogBlocks){
+      if(this.x > fog.x - (fog.fogBlockSize-1)*this.view &&
+          this.x < fog.x+(fog.fogBlockSize-1)*this.view &&
+            this.y > fog.y - (fog.fogBlockSize-1)*this.view &&
+              this.y <fog.y+(fog.fogBlockSize-1)*this.view){
+                let time=new Date()
+                this.path[fog.id]={fog:fog,time:(time.getMinutes()*60+time.getSeconds())};
+                // fog.opacity=0;
+              }
+    }
   }
 
   draw(ctx, debug = false,hub)

@@ -86,8 +86,16 @@ class World
   update(environment){
     //This will erase the current array of pheromones and replace it with the current ones (even if the previous ones arent finished)
     //This could possibly be replaced with an algorithm that wont delete ones that havent dissapated yet.
-    this.pheromones.splice(0,this.pheromones.length)
-    this.pheromones=environment.pheromones
+    // console.table(environment.pheromones);
+    this.pheromones=[]
+    if(environment.pheromones[0] !=undefined){
+      if(environment.pheromones.r == undefined){
+        this.pheromones=new Pheromone(environment.pheromones)
+      }else{
+        this.pheromones=environment.pheromones
+
+      }
+    }
 
     //This was part of an attempt to not draw agents that are inside the hub
     // this.hub.agentsIn=environment.hub["agentsIn"]
@@ -97,6 +105,7 @@ class World
 	  for (let i = 0; i < siteLength; i++) {
 		  this.sites[i].x = Math.round(environment.sites[i].x);
 		  this.sites[i].y = Math.round(-environment.sites[i]["y"]);
+      this.sites[i].radius = Math.round(environment.sites[i]["radius"]);
 	  }
 
     //In this current Iteration there is no way for an agent to die. When dead agents were implemented,
@@ -147,10 +156,10 @@ class World
     // for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
     // for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
     // for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
-
+    this.hub.updateFog(this.agents)
     this.hub.draw(ctx, debug, this.agents);
 
-    for (var agent      of this.agents     ) { agent     .draw(ctx, debug,this.hub); }
+    for (var agent      of this.agents     ) { agent     .draw(ctx, debug,this.hub); agent.checkFog(this.fogBlock) }
     for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
 
 
@@ -162,7 +171,6 @@ class World
                                                             fog.maxOpacity=.7
                                                                   }
                                               fog       .selecting(selectedArea,currentSelectMode);
-                                              fog       .checkAgent(this.agents,this.hub);
                                               if(showFog || fog.selected){
                                                 fog       .draw(ctx);
                                               }
@@ -174,42 +182,51 @@ class World
       this.drawPheromones()
 
     }
-    for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
+    // for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
 
 
 
   }
 
   drawPheromones(){
-    for(let pheromone of this.pheromones){
-      // console.log(i);
+    // console.log(this.pheromones.length);
+    if(this.pheromones.length == undefined && this.pheromones.pheromones != undefined){
 
-      // console.log(i%2);
-      // if(i%2==0 && this.pheromones.length >10){
-        // break;
-      // }
-      // i+=1
-      ctx.beginPath()
+      this.pheromones.draw(ctx,debug)
+      return
+    }else{
+      for(let pheromone of this.pheromones){
 
-      let x=255//(255-(pheromone.site*(255/this.sites.length))).toString();
-      if(x <=0){
-        x=0;
+        // console.log(i);
+
+        // console.log(i%2);
+        // if(i%2==0 && this.pheromones.length >10){
+          // break;
+        // }
+        // i+=1
+        ctx.beginPath()
+
+        let x=255//(255-(pheromone.site*(255/this.sites.length))).toString();
+        if(x <=0){
+          x=0;
+        }
+        ctx.fillStyle = "white";
+        if(pheromone.strength <=0){
+          ctx.globalAlpha = .00001
+
+        }else{
+          ctx.globalAlpha = (pheromone.strength)*.8
+
+        }
+        ctx.beginPath()
+        ctx.arc(Math.round(pheromone.x), Math.round(-pheromone.y), pheromone.r,0,Math.PI*2);
+        //}
+        ctx.fill();
+        ctx.globalAlpha = 1
+
       }
-      ctx.fillStyle = "white";
-      if(pheromone.strength <=0){
-        ctx.globalAlpha = .00001
-
-      }else{
-        ctx.globalAlpha = (pheromone.strength)*.8
-
-      }
-      ctx.beginPath()
-      ctx.arc(Math.round(pheromone.x), Math.round(-pheromone.y), pheromone.r,0,Math.PI*2);
-      //}
-      ctx.fill();
-      ctx.globalAlpha = 1
-
     }
+
   }
 
 }

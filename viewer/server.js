@@ -142,7 +142,8 @@ require('sticky-cluster')(function (callback)
             simEnv = '../engine/antEnvironment.py';
             break;
         case 'Drone':
-            this.options.model='Bee'
+            // this.options.model='Bee'
+            simEnv = '../engine/droneEnvironment.py';
             break;
         case 'Uav':
             simEnv = '../engine/uavEnvironment.py';
@@ -237,7 +238,7 @@ require('sticky-cluster')(function (callback)
 
         case this.killChannel:
           console.log(data);
-          this.stop();
+          // this.stop();
           break;
         default:
           console.err("Invalid input recieved in server")
@@ -343,6 +344,7 @@ require('sticky-cluster')(function (callback)
             this.channels = info.channels;
             this.options = info.options;
             this.engineOutputListener.subscribe(this.channels.output);
+            console.log(this.engineOutputListener.channels);
             redisClient.incrAsync(`sim:${this.simId}:connectedCount`)
               .then(newCount =>
               {
@@ -397,6 +399,7 @@ require('sticky-cluster')(function (callback)
 
     disconnect()
     {
+      console.log("DISCONNECTED");
       redisClient.decrAsync(`sim:${this.simId}:connectedCount`)
         .then(newCount =>
         {
@@ -429,9 +432,7 @@ require('sticky-cluster')(function (callback)
   app.use( bodyParser.urlencoded({extended: true}) );
 
   // Route for creating a new simulation
-  app.post('/sims/', function(req, res)
-  {
-
+  app.post('/sims/', function(req, res){
     const options = req.body;
     // console.log(req.body);
     let userLimit;
@@ -483,8 +484,6 @@ require('sticky-cluster')(function (callback)
   });
   // Route for deleting a simulation
   app.post('/simDel/', function(req, res){
-    //console.log("In Delete");
-
     redisClient.DEL("activeSims", req.body.simId);
     res.status(200)
   })
@@ -500,8 +499,7 @@ require('sticky-cluster')(function (callback)
 
   })
   // Route for connecting to a specific simulation
-  app.get('/sims/:id', function(req, res)
-  {
+  app.get('/sims/:id', function(req, res){
     // console.log(req.params.id);
     const simId = req.params.id;
     let simInfo;
@@ -543,8 +541,7 @@ require('sticky-cluster')(function (callback)
 
   // Route for getting the list of available sims
   // TODO: finish
-  app.get('/simlist', function(req, res)
-  {
+  app.get('/simlist', function(req, res){
     let simInfo = {};
 
     let countPromise = redisClient.smembersAsync('activeSims')
@@ -578,8 +575,7 @@ require('sticky-cluster')(function (callback)
 
   // On a request for 'client.js', minify and concat all the relevant scripts, then
   // serve it <--- Gives one centralized location for the client Javascript Code
-  app.get('/client.js', function(req, res)
-  {
+  app.get('/client.js', function(req, res){
     minifier.minify(
       {
         //compressor: 'babili',    //production

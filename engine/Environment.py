@@ -27,7 +27,7 @@ starttime=time.time()
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-m", "--model", choices=["Ant", "Bee", "Uav"], help="Run an 'ant', 'bee', or 'uav' simulation")
+parser.add_argument("-m", "--model", choices=["Ant", "Bee", "Uav" , "Drone"], help="Run an 'ant', 'bee', 'uav', or 'drone' simulation")
 parser.add_argument("-n", "--no-viewer", action="store_true", help="Don't output viewer world info")
 parser.add_argument("-s", "--stats", action="store_true", help="Output json stats after simulation")
 parser.add_argument("-c", "--commit-stop", action="store_true", help="Stop simulation after all agents have committed")
@@ -219,6 +219,7 @@ class Environment(ABC):
             js = generator.to_json()
             data = json.loads(js)
         else:
+            eprint(self.file_name)
             json_data = open(self.file_name).read()
             data = json.loads(json_data)
 
@@ -231,10 +232,12 @@ class Environment(ABC):
 
         # eprint('ScenarioType: ', args.scenarioType)
         # eprint(args.attackType)
-        self.sites = Sites(args.siteNum, self.hub["x"], self.hub["y"], args.attackType)
-        for site in self.sites:
-            self.agentsFollowSite[site.id]={"number":0,"agentIds":[],"reporting":False,"agentDropPheromone":0,"returnTime":1500}
-
+        if(args.model =="Drone"):
+            self.sites = Sites(args.siteNum, self.hub["x"], self.hub["y"], args.attackType)
+            for site in self.sites:
+                self.agentsFollowSite[site.id]={"number":0,"agentIds":[],"reporting":False,"agentDropPheromone":0,"returnTime":1500}
+        else:
+            self.sites = data["sites"]
         self.obstacles = data["obstacles"]
         self.traps = data["traps"]
         self.rough = data["rough terrain"]
@@ -376,8 +379,9 @@ class Environment(ABC):
 
     # Move all of the agents
     def moveSites(self):
-        for site in self.sites:
-            site.move()
+        if args.model == "Drone":
+            for site in self.sites:
+                site.move()
 
     def pheromones(self):
         for pheromone in self.pheromoneList:

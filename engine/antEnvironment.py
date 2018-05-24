@@ -7,7 +7,7 @@ import time
 #Json doesn't work with numpy type 64
 import numpy as np
 from utils.debug import *
-from InputEventManager import InputEventManager
+from utils.InputEventManager import InputEventManager
 #from beeCode.agent.agent import *
 from antCode.ant.agent import *
 from antCode.hubController import hubController
@@ -17,7 +17,7 @@ import utils.flowController as flowController
 import utils.geomUtil as geomUtil
 import sys, os
 import argparse
-from utils.debug import *
+
 # parser = argparse.ArgumentParser()
 # parser.add_argument("-m", "--model", choices=["ant", "bee"], help="Run an 'ant' or 'bee' simulation")
 # parser.add_argument("-n", "--no-viewer", action="store_true", help="Don't output viewer world info")
@@ -35,7 +35,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #class Site:
 #    def __init__(self,location,radius,q_value):
 parser = argparse.ArgumentParser()
-parser.add_argument("-m", "--model", choices=["Ant", "bee", "uav"], help="Run an 'ant' or 'bee' simulation")
+parser.add_argument("-m", "--model", choices=["Ant", "Bee", "Uav"], help="Run an 'ant' or 'bee' simulation")
 parser.add_argument("-n", "--no-viewer", action="store_true", help="Don't output viewer world info")
 parser.add_argument("-s", "--stats", action="store_true", help="Output json stats after simulation")
 parser.add_argument("-c", "--commit-stop", action="store_true", help="Stop simulation after all agents have committed")
@@ -45,6 +45,10 @@ parser.add_argument("-l", "--log_file", type=str, help="Log input events to LOG_
 parser.add_argument("-e", "--seed", type=int, help="Run the simulation with the specified random seed")
 parser.add_argument("-p", "--pipe", type=str, help="Connect to the specified named pipe")
 parser.add_argument("-a", "--agentNum", type=int, help="specifies number of agents")
+parser.add_argument("-x", "--siteNum", type=int, help="specifies number of sites")
+parser.add_argument("-z", "--attackType", type=int, help="specifies enemy attack scenario")
+parser.add_argument("-q", "--patrolLocations1",type=tuple, help="specifies locations for agents to start exploring")
+parser.add_argument("-u", "--createWorldSize",type=str, help="specifies locations for agents to start exploring")
 args = parser.parse_args()
 """
 Function to be used for parallel processing
@@ -191,7 +195,7 @@ class Environment:
             raise ValueError('flowControllers list must not be empty.')
         closest = flowControllers[0]
         for flowController in flowControllers:
-            if(geomUtil.point_distance(agent_location, flowController.point) < geomUtil.point_distance(agent_location, closest.point)):
+            if(geomUtil.distance(agent_location, flowController.point) < geomUtil.distance(agent_location, closest.point)):
                 closest = flowController
         return closest
 
@@ -224,8 +228,6 @@ class Environment:
             if(repulsor.time_ticks > 0):
                 new_repulsor_list.append(repulsor)
         self.repulsors = new_repulsor_list
-
-
 
     # Function to return the Q-value for given coordinates. Returns 0 if nothing is there and a value between 0 and 1
     # if it finds a site.
@@ -563,7 +565,7 @@ class Environment:
 
                     self.suggest_new_direction(agent_id)
 
-                self.hubController.hiveAdjust(self.agents)
+                self.hubController.hubUpdate(self.agents)
                 #evapRate = .02
                 #self.pheromoneList = np.maximum(0,self.pheromoneList - evapRate)
                 self.pheromoneList = np.maximum(0,self.pheromoneList - self.parameters["EvaporationRate"])
@@ -684,18 +686,18 @@ class Environment:
                 "type": "update",
                 "data":
                 {
-                    "x_limit"    : self.x_limit,
-                    "y_limit"    : self.y_limit,
-                    "hub"        : self.hub,
-                    "sites"      : self.sites,
-                    "obstacles"  : self.obstacles,
-                    "traps"      : self.traps,
-                    "rough"      : self.rough,
-                    "attractors" : list(map(lambda a: a.toJson(), self.attractors)),
-                    "repulsors"  : list(map(lambda r: r.toJson(), self.repulsors )),
-                    "agents"     : self.agents_to_json(),
+                    "x_limit"   : self.x_limit,
+                    "y_limit"   : self.y_limit,
+                    "hub"       : self.hub,
+                    "sites"     : self.sites,
+                    "obstacles" : self.obstacles,
+                    "traps"     : self.traps,
+                    "rough"     : self.rough,
+                    "attractors": list(map(lambda a: a.toJson(), self.attractors)),
+                    "repulsors" : list(map(lambda r: r.toJson(), self.repulsors )),
+                    "agents"    : self.agents_to_json(),
                     "dead_agents": self.dead_agents_to_json(),
-                    "pheromones" : self.pheromone_trails_to_json()
+                    "pheromones": self.pheromone_trails_to_json()
                 }
             })
         )
@@ -790,7 +792,5 @@ class Environment:
 
         return json.dumps(parameterJson)
 file = "world.json"
-
 world = Environment(os.path.join(ROOT_DIR, file))
-eprint (world.x_limit)
 world.run()

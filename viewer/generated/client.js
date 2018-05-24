@@ -100,6 +100,51 @@ class BaitBombGhost
   }
 }
 
+class Message{
+  constructor(){
+    this.x        =undefined;
+    this.y        =undefined;
+    this.message  =undefined;
+    this.width    =undefined;
+    this.height   =undefined;
+    this.fontSize =undefined;
+    this.fontColor=undefined;
+  }
+  create(message){
+    console.log(message);
+    this.message = message;
+    this.fontSize=48;
+    this.width = this.message.length*(this.fontSize);
+    this.height=this.fontSize; //With multiple lines of message, this will be multiplied by the number of lines
+    this.x = window.innerWidth/2 - this.width/2;
+    this.y = window.innerHeight/2 - this.height/2;
+    this.fontColor = "rgb(255, 0, 0)"
+
+  }
+  draw(){
+    $("#messageBox").css("width", (world.width-200).toString() + "px")
+    $("#messageBox").css("height", (world.height).toString() + "px")
+    $("#messageBox").css("position", "absolute")
+    $("#messageBox").css("top", "0")
+    $("#messageBox").css("bottom", "40px")
+    $("#messageBox").css("left", "0")
+    $("#messageBox").css("right", "0")
+    $("#messageBox").css("margin", "auto")
+    $("#messageBox").css("text-align", "center")
+    $("#messageBox").css("padding-left", "100px")
+    $("#messageBox").css("padding-right", "100px")
+    // $("#messageBox").css("line-height", (world.height*2/5).toString()+"px")
+    $("#messageBox").html("<br><br><h2 style='font-size:50px;'>Your Task</h2>")
+    console.log(this.message);
+    $("#messageBox").append("<h3>"+this.message+"</h3>")
+
+
+    $("#messageBox").css("z-index", "100 !important")
+    $("#messageBox").css("background-color", "rgba(125, 169, 193, 0.8)")
+  }
+
+}
+
 class MissionLayer {
 
 
@@ -1447,7 +1492,7 @@ class StateBubbles
     for (let [state, count] of Object.entries(json))
     {
       //console.log(json.states);
-      console.log(count);
+      // console.log(count);
       if (this.states[state])
       {
         this.states[state].count = count;
@@ -1520,6 +1565,25 @@ StateBubbles.MAX_RADIUS = 20;
 StateBubbles.MIN_RADIUS = 2;
 StateBubbles.BUBBLE_SPACING = 60; // in px
 StateBubbles.LABEL_SPACING = 30;
+
+class Task{
+  constructor(){
+    this.patrol = "Use the patrol-planning tool (the blue circle) to draw areas on the map for the agents to patrol."
+    this.patrol +=" The other person will be using a similar tool to tell agents to avoid areas of the map"
+
+    this.avoid = "Use the avoid tool (the red circle) to draw areas on the map for the agents to avoid."
+    this.avoid +=" The other person will be using a similar tool to tell agents to patrol areas of the map"
+
+    this.noCom = "Use all the tools at your disposal (planning tools, site images) to determine where the enemy combatants are."
+    this.noCom += " You will not be able to communicate with the other person."
+
+    this.com = "Use all the tools at your disposal (planning tools, site images) to determine where the enemy combatants are."
+    this.com += " You are allowed to communicate with the other person."
+
+    this.group = "You have been given charge of a set of drones. You will be able to give these drones commands to patrol certain areas"
+    this. group += " but you do not have outright control over their behaviour."
+  }
+}
 
 class Cursor
 {
@@ -2374,7 +2438,24 @@ class Agent
     this.isAlive       =  agentJson.live;
     this.qVal          =  agentJson.qVal;
     Agent.stateColors  = {};
+    this.path={}
     this.lastLocations = [];
+    this.view=2
+    let time=new Date()
+    this.time=time.getMinutes()*60+time.getSeconds();
+  }
+
+  checkFog(fogBlocks){
+    for(let fog of fogBlocks){
+      if(this.x > fog.x - (fog.fogBlockSize-1)*this.view &&
+          this.x < fog.x+(fog.fogBlockSize-1)*this.view &&
+            this.y > fog.y - (fog.fogBlockSize-1)*this.view &&
+              this.y <fog.y+(fog.fogBlockSize-1)*this.view){
+                let time=new Date()
+                this.path[fog.id]={fog:fog,time:(time.getMinutes()*60+time.getSeconds())};
+                // fog.opacity=0;
+              }
+    }
   }
 
   draw(ctx, debug = false,hub)
@@ -2499,6 +2580,7 @@ class Fog
     this.opacity=this.maxOpacity;
 
     this.color='rgb(255, 255, 255)';
+    this.normalColor='rgb(255, 255, 255)';
     this.x =-world.x_limit+x;
     this.y=-world.y_limit+y;
     this.timeMax=100;
@@ -2533,31 +2615,7 @@ class Fog
     this.top=this.y-fogBlockSize
   }
 
-  checkAgent(agents,hub){
-    if(!this.init){
-      this.agentsInHub=new Array(agents.length)
-      this.agentsInHub.fill(false,0,agents.length)
-      this.init=true
-    }
-    for(var agent of agents)
-    {
-      //console.log(agent.x)
-      if(agent.x > this.x - (this.fogBlockSize-1)*this.view &&
-          agent.x < this.x+(this.fogBlockSize-1)*this.view &&
-            agent.y > this.y - (this.fogBlockSize-1)*this.view &&
-              agent.y <this.y+(this.fogBlockSize-1)*this.view)
-      {
-        if(!(Math.sqrt((hub.x - agent.x)*(hub.x - agent.x) +(hub.y - agent.y)*(hub.y - agent.y)) < hub.radius-5))
-        {
-          this.agentTime.set(agent.id.toString(),Date.now())
-          agent.lastLocations.push(this)
-          //console.log(this.agentsInHub);
-        }
 
-      }
-
-    }
-  }
 
   selecting(points,selectMode){
     // Will select points that are being selected by the mouse and highlight those selected
@@ -2618,6 +2676,7 @@ class Fog
     this.opacity+=.001
     if(this.opacity >this.maxOpacity){
       this.opacity = this.maxOpacity
+      this.color=this.normalColor;
     }
   }
 
@@ -2645,48 +2704,32 @@ class Hub
     }
   }
 
+  updateFog(agents){
+    for(var agent of agents){
+      if(Math.sqrt((this.x - agent.x)*(this.x - agent.x) +(this.y - agent.y)*(this.y - agent.y)) < this.radius-5){
+        let time=new Date()
+
+        for(let index in agent.path){
+          let totalEllapsed=time.getMinutes()*60+time.getSeconds()-agent.time
+
+          let fraction=(time.getMinutes()*60+time.getSeconds()-agent.path[index].time)/totalEllapsed
+
+          agent.path[index].fog.opacity=fraction*.5
+
+          delete agent.path[index]
+        }
+        agent.time=time.getMinutes()*60+time.getSeconds()
+        // console.log("next");
+
+      }
+
+    }
+  }
+
   draw(ctx, debug = false, agents)
   {
     ctx.save();
-    var i=0;
-    var k=0;
 
-    //This allows the fog to dissapate where the agent has been
-    // when an agent returns to the hub
-    for(var agent of agents){
-      if(Math.sqrt((this.x - agent.x)*(this.x - agent.x) +(this.y - agent.y)*(this.y - agent.y)) < this.radius-5){
-        //i is the agent id
-        //2nd parameter creates a new array for that agent
-        //3rd line copies agents last locations over to that new array
-        this.paths[i][this.paths[i].length]=new Array()
-        this.paths[i][this.paths[i].length] = agent.lastLocations.slice()
-        agent.lastLocations=[]
-      }
-      i++;
-    }
-    var t=0
-    for(var agentPaths of this.paths){
-      var i=0;
-
-      for(var agentPath of agentPaths){
-        var k=0;
-        if(agentPath.length == 0){
-          agentPaths.splice(i,1);
-        }
-        var j=0
-        for(var path of agentPath){
-          if(path.opacity<=0){
-            agentPath.splice(k,1);
-          }
-          path.opacity=0
-          //console.log(t);
-          path.agentsInHub[t]=true
-          j++
-        }
-        i++
-      }
-      t++
-    }
 
 
     ctx.fillStyle = "rgba(242, 179, 19, .5)";
@@ -2706,18 +2749,6 @@ class Hub
     ctx.fill();
     ctx.stroke();
 
-    // ctx.globalAlpha=1
-    // ctx.font = "20px Arial";
-    // ctx.fillStyle="white"
-    // ctx.shadowOffsetX = 2;
-    // ctx.shadowOffsetY = 2;
-    // ctx.shadowBlur=2
-    // ctx.shadowColor = 'black';
-    // // let imageNum=(this.currentImage+1).toString()
-    // ctx.fillText(this.agentsIn,this.x-15,this.y+35);
-    // ctx.shawdowBlur=0
-    // ctx.shadowOffsetX =0
-    // ctx.shadowOffsetY = 0;
 
 
     ctx.restore();
@@ -2761,39 +2792,27 @@ class Pheromone
   constructor(pheromonesJson)
   {
     this.pheromones = pheromonesJson;
-    this.color=self.pickColor()
-  }
-
-  pickColor(){
-    let x=255-(this.pheromone.site_id*8);
-    if(x <=0){
-      x=0;
-    }
-    return "rgb("+x.toString()+","+x.toString()+","+x.toString()+")"
   }
 
   draw(ctx, debug = false)
   {
     if (!debug || !this.pheromones || this.pheromones.length == 0)
         return;
+
     ctx.save();
 
-    ctx.fillStyle = this.color;
+    ctx.fillStyle = Pheromone.FILL_STYLE;
 
-    //for (let pheromone of this.pheromones)
-    //{
-    //console.log(this.pheromones);
-    ctx.globalAlpha = this.pheromones.strength
-    ctx.beginPath()
-    ctx.arc(this.pheromones.x, -this.pheromones.y, this.pheromones.r,0,Math.PI*2);
-    //}
-    ctx.fill();
-    ctx.globalAlpha = 1
+    for (let pheromone of this.pheromones)
+    {
+        ctx.fillRect(pheromone.x - 3, -pheromone.y - 3, 9, 9);
+    }
+
     ctx.restore();
   }
 }
 
-Pheromone.FILL_STYLE = "rgb(255, 255, 0)";
+Pheromone.FILL_STYLE = "rgba(255, 255, 0, 0.75)";
 
 class Repulsor
 {
@@ -3162,8 +3181,16 @@ class World
   update(environment){
     //This will erase the current array of pheromones and replace it with the current ones (even if the previous ones arent finished)
     //This could possibly be replaced with an algorithm that wont delete ones that havent dissapated yet.
-    this.pheromones.splice(0,this.pheromones.length)
-    this.pheromones=environment.pheromones
+    // console.table(environment.pheromones);
+    this.pheromones=[]
+    if(environment.pheromones[0] !=undefined){
+      if(environment.pheromones.r == undefined){
+        this.pheromones=new Pheromone(environment.pheromones)
+      }else{
+        this.pheromones=environment.pheromones
+
+      }
+    }
 
     //This was part of an attempt to not draw agents that are inside the hub
     // this.hub.agentsIn=environment.hub["agentsIn"]
@@ -3173,6 +3200,7 @@ class World
 	  for (let i = 0; i < siteLength; i++) {
 		  this.sites[i].x = Math.round(environment.sites[i].x);
 		  this.sites[i].y = Math.round(-environment.sites[i]["y"]);
+      this.sites[i].radius = Math.round(environment.sites[i]["radius"]);
 	  }
 
     //In this current Iteration there is no way for an agent to die. When dead agents were implemented,
@@ -3223,10 +3251,10 @@ class World
     // for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
     // for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
     // for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
-
+    this.hub.updateFog(this.agents)
     this.hub.draw(ctx, debug, this.agents);
 
-    for (var agent      of this.agents     ) { agent     .draw(ctx, debug,this.hub); }
+    for (var agent      of this.agents     ) { agent     .draw(ctx, debug,this.hub); agent.checkFog(this.fogBlock) }
     for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
 
 
@@ -3238,7 +3266,6 @@ class World
                                                             fog.maxOpacity=.7
                                                                   }
                                               fog       .selecting(selectedArea,currentSelectMode);
-                                              fog       .checkAgent(this.agents,this.hub);
                                               if(showFog || fog.selected){
                                                 fog       .draw(ctx);
                                               }
@@ -3250,42 +3277,51 @@ class World
       this.drawPheromones()
 
     }
-    for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
+    // for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
 
 
 
   }
 
   drawPheromones(){
-    for(let pheromone of this.pheromones){
-      // console.log(i);
+    // console.log(this.pheromones.length);
+    if(this.pheromones.length == undefined && this.pheromones.pheromones != undefined){
 
-      // console.log(i%2);
-      // if(i%2==0 && this.pheromones.length >10){
-        // break;
-      // }
-      // i+=1
-      ctx.beginPath()
+      this.pheromones.draw(ctx,debug)
+      return
+    }else{
+      for(let pheromone of this.pheromones){
 
-      let x=255//(255-(pheromone.site*(255/this.sites.length))).toString();
-      if(x <=0){
-        x=0;
+        // console.log(i);
+
+        // console.log(i%2);
+        // if(i%2==0 && this.pheromones.length >10){
+          // break;
+        // }
+        // i+=1
+        ctx.beginPath()
+
+        let x=255//(255-(pheromone.site*(255/this.sites.length))).toString();
+        if(x <=0){
+          x=0;
+        }
+        ctx.fillStyle = "white";
+        if(pheromone.strength <=0){
+          ctx.globalAlpha = .00001
+
+        }else{
+          ctx.globalAlpha = (pheromone.strength)*.8
+
+        }
+        ctx.beginPath()
+        ctx.arc(Math.round(pheromone.x), Math.round(-pheromone.y), pheromone.r,0,Math.PI*2);
+        //}
+        ctx.fill();
+        ctx.globalAlpha = 1
+
       }
-      ctx.fillStyle = "white";
-      if(pheromone.strength <=0){
-        ctx.globalAlpha = .00001
-
-      }else{
-        ctx.globalAlpha = (pheromone.strength)*.8
-
-      }
-      ctx.beginPath()
-      ctx.arc(Math.round(pheromone.x), Math.round(-pheromone.y), pheromone.r,0,Math.PI*2);
-      //}
-      ctx.fill();
-      ctx.globalAlpha = 1
-
     }
+
   }
 
 }
@@ -3294,36 +3330,12 @@ class World
 // Globals
 //*****************************************************************************
 
-// console.log('%c To Do List: ', 'font-size:15px;font-weight:900;color: rgb(0, 0, 0)');
-//
-// console.log("%c 1."+'%c Repulsors need to delete on backend when deleted on front end \n'+
-//              ' %c    Add ids to the coords\n'+
-//              '     You may also have to do a search for points in an area since the size of the worlds are different\n'+
-//              '     Actually, you can just send the list back with things deleted. If it cant find a repulsor hexagon in the area of a current repulsor, it is deleted',
-//              'font-size:12px;color: rgb(0, 0, 0);',
-//              'font-size:12px;font-weight:700;color: rgb(116, 24, 0); ',
-//              'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
-// console.log("%c 2."+`%c Interface the selection on the live simulation\n`+
-//                               ` %c    Use the "selectedCoords" map`,
-//                               'font-size:12px;color: rgb(0, 0, 0);',
-//                               'font-size:12px; font-weight:700;color: rgb(116, 24, 0); ',
-//                               'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
-// console.log("%c 3."+`%c Get rid of scrolling through images\n`+
-//                           ` %c    Partially Implemented. Arrows appear, but are not clickable`,
-//                           'font-size:12px;color: rgb(0, 0, 0);',
-//                           'font-size:12px; font-weight:700;color: rgb(116, 24, 0); ',
-//                           'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
-// console.log("%c 4."+`%c Visuals for Q-Value\n`+
-//                           ` %c    Think of a recycle symbol\n     Add more arrows around as the q Value goes up\n     In our case, put the arrows on the bottom of the image`,
-//                           'font-size:12px;color: rgb(0, 0, 0);',
-//                           'font-size:12px; font-weight:700;color: rgb(116, 24, 0); ',
-//                           'font-size:10px; font-weight:700;color: rgb(0, 26, 116);');
-
-
 // get a socket object from the socket.io script included above
 var socket = io();
 var world = null;
 var clientId;
+var localInfo = new Message()
+var tasks = new Task()
 
 //These are for the pre-planning and live-planning methods of selecting areas of the canvas
 var currentSelectMode=0
@@ -3398,12 +3410,10 @@ $("#agentStateDescriptionDiv").append(`<table id="statesInfo"><caption id="state
                                         <div id="statesInfoTextDiv">
                                         <p id="statesInfoText">`+defaultStateDescript+`</p>
                                         </div>`)
+
 var connection;
 
 
-
-var addPatrol=true;
-var addAvoid=true;
 // Get Image references and other presets
 var bee = document.getElementById("drone");
 var beeDead;
@@ -3437,6 +3447,7 @@ socket.on("scenario",function(type){
   scenarioType=type;
   if(scenarioType=="No Communication"){
     $("#messengerIcon").css("display","none")
+    localInfo.create(tasks.noCom)
   }
 })
 
@@ -3446,23 +3457,23 @@ var mouse = new Mouse();
 
 var ctx;
 var simId;
-
+// console.log(tasks.avoid);
 function setUserAbility(add,avoid){
-  addPatrol=add;
-  addAvoid=avoid
-  if(addPatrol && !addAvoid){
+  if(add && !avoid){
 
     selectModes.splice(1,1)
     $( "#selectType" ).html(selectModes[currentSelectMode])
     $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
+    localInfo.create(tasks.patrol)
   }
-  else if(!addPatrol && addAvoid){
+  else if(!add && avoid){
     selectModes.splice(0,1)
     currentSelectMode=1;
     $( "#selectType" ).html(selectModes[0])
     $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
+    localInfo.create(tasks.avoid)
 
-  }else if(!addPatrol && !addAvoid){
+  }else if(!add && !avoid){
     // selectMode
     $( "#selectMode" ).css("display","none")
     currentSelectMode=-1;
@@ -3516,12 +3527,17 @@ function getOthersPatrols(patrolMap){
 // server, it'll come through here.
 socket.on('update', function(worldUpdate){
    // New World
+  //  console.log("HERE");
    if (world === null){
       world = new World(worldUpdate.data);
-      console.table(world.agents)
+
+      // socket.emit('input', {type: 'pause'})
+      // isPaused=true;
+      // console.table(world.agents)
       canvas.setAttribute("width", world.width);
       canvas.setAttribute("height", world.height);
 
+      // localInfo.draw()
       // Resizes the canvas to the size determined in the Python code
       document.getElementById("canvasDiv").style.width = world.width + "px";
 
@@ -3533,6 +3549,7 @@ socket.on('update', function(worldUpdate){
       ctx.translate(world.x_limit, world.y_limit);
 
       //Start the drawing cycle
+
       draw()
    }
    else if (finishedDrawing){
@@ -3544,6 +3561,7 @@ socket.on('update', function(worldUpdate){
 
 function draw(environment){
 
+  // console.log("HERE");
   //The updates will not be let through unless the the current iteration of drawing is finished
   finishedDrawing = false;
   // clear canvas
@@ -3553,7 +3571,7 @@ function draw(environment){
   ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
 
 
-  if(simType=="Drone"){
+  if(simType == "Drone"){
     ctx.globalAlpha = sliderVal/100;
     ctx.drawImage(background, -world.x_limit, -world.y_limit,world.width, world.height);
     ctx.globalAlpha = 1;
@@ -3568,7 +3586,11 @@ function draw(environment){
   mouse.deltaX=0;
   // console.log(mouse);
 
-  window.requestAnimationFrame(draw);
+
+  // if(!isPaused){
+    window.requestAnimationFrame(draw);
+
+  // }
 
 }
 
