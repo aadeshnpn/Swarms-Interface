@@ -1,9 +1,9 @@
 # Setup #
 ## Setup for Linux ##
-cd viewer
-npm install --save
-cd ../engine
-pip install -r requirement.txt
+1. cd viewer
+2. npm install --save
+3. cd ../engine
+4. pip install -r requirement.txt
 
 
 # Swarm Viewer #
