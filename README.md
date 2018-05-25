@@ -5,7 +5,7 @@
 3. npm install --save
 4. cd ../engine
 5. pip install -r requirement.txt
-----
+
 #### `Setup for Windows` ####
 `Working on getting setup documented`
 
@@ -27,7 +27,7 @@
 ##### Windows Sim Setup #####
 > _Restart your bash session_
 
-> ** Same as Linux from here on **
+> **Same as Linux from here on**
 
 1. git clone `address`
 2. cd viewer
