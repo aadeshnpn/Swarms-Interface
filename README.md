@@ -22,7 +22,8 @@
 
 ##### Install redis #####
 
-1. sudo apt-install python-pip
+1. Good Luck
+2. Just kidding, the documentation is coming. 
 
 ##### Windows Sim Setup #####
 > _Restart your bash session_
