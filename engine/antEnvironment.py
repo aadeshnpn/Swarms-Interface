@@ -11,7 +11,7 @@ from utils.InputEventManager import InputEventManager
 #from beeCode.agent.agent import *
 from antCode.ant.agent import *
 from antCode.hubController import hubController
-from antCode.infoStation import InfoStation
+from infoStation import InfoStation
 from utils.potentialField import PotentialField
 import utils.flowController as flowController
 import utils.geomUtil as geomUtil

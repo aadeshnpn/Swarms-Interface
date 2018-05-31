@@ -6,7 +6,7 @@ from .stateMachine.state import State
 from .debug import *
 from abc import abstractmethod
 
-uavInput = Enum('uavInput', 'targetFound targetLost reachedRallyPoint refueled')
+
 #safe_angle returns the angle needed to be added to a to get b
 def safe_angle(a, b):
     angle = np.arctan2(b[1], b[0]) - np.arctan2(a[1], a[0])

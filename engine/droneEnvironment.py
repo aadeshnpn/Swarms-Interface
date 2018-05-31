@@ -239,9 +239,17 @@ class DroneEnvironment(Environment):
 
         return {"radius": -1, "q": 0, "site_q": 0}
 
+    def checkIfEmpty(self,obj):
+        if len(obj) <=0 :
+            return "{}"
+        else:
+            return obj;
+
     def to_json(self):
         # eprint(len(self.hubController.agentsInHub))
         self.hub["agentsIn"]=len(self.hubController.agentsInHub)
+        # eprint(type(self.pheromones_to_json()))
+
         return(
             json.dumps(
                 {
@@ -251,15 +259,15 @@ class DroneEnvironment(Environment):
                             "x_limit": self.x_limit,
                             "y_limit": self.y_limit,
                             "hub": self.hub,
-                            "sites": self.sites.to_json(),
-                            "obstacles": self.obstacles,
-                            "traps": self.traps,
-                            "rough": self.rough,
-                            "attractors": list(map(lambda a: a.toJson(), self.flowController.attractors)),
-                            "repulsors": list(map(lambda r: r.toJson(), self.flowController.repulsors)),
-                            "agents": self.agents_to_json(),
-                            "dead_agents": self.dead_agents_to_json(),
-                            "pheromones": self.pheromones_to_json(),
+                            "sites": self.checkIfEmpty(self.sites.to_json()),
+                            "obstacles": self.checkIfEmpty(self.obstacles),
+                            "traps": self.checkIfEmpty(self.traps),
+                            "rough": self.checkIfEmpty(self.rough),
+                            "attractors": self.checkIfEmpty(list(map(lambda a: a.toJson(), self.flowController.attractors))),
+                            "repulsors": self.checkIfEmpty(list(map(lambda r: r.toJson(), self.flowController.repulsors))),
+                            "agents": self.checkIfEmpty(self.agents_to_json()),
+                            "dead_agents": self.checkIfEmpty(self.dead_agents_to_json()),
+                            "pheromones": self.checkIfEmpty(self.pheromones_to_json()),
                             "patrolUpdate": len(self.patrolList)
                         }
                 })

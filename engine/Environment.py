@@ -13,9 +13,9 @@ from utils.debug import *
 from InputEventManager import InputEventManager
 #from beeCode.agent.agent import *
 #from beeCode.hubController import hubController
-from beeCode.infoStation import InfoStation
+from infoStation import InfoStation
 
-from beeCode.worldGenerator import *
+from worldGenerator import *
 import utils.flowController as flowController
 import utils.geomUtil as geomUtil
 from utils.potentialField import PotentialField
@@ -219,7 +219,7 @@ class Environment(ABC):
             js = generator.to_json()
             data = json.loads(js)
         else:
-            eprint(self.file_name)
+            # eprint(self.file_name)
             json_data = open(self.file_name).read()
             data = json.loads(json_data)
 
@@ -233,11 +233,14 @@ class Environment(ABC):
         # eprint('ScenarioType: ', args.scenarioType)
         # eprint(args.attackType)
         if(args.model =="Drone"):
+
             self.sites = Sites(args.siteNum, self.hub["x"], self.hub["y"], args.attackType)
+
             for site in self.sites:
                 self.agentsFollowSite[site.id]={"number":0,"agentIds":[],"reporting":False,"agentDropPheromone":0,"returnTime":1500}
         else:
             self.sites = data["sites"]
+
         self.obstacles = data["obstacles"]
         self.traps = data["traps"]
         self.rough = data["rough terrain"]
@@ -515,9 +518,7 @@ class Environment(ABC):
 
         while True:
 
-            self.moveSites()
-            self.pheromones()
-            self.updateSiteInfo()
+
             try:
 
                 if args.tick_limit != None and self.stats["ticks"] >= args.tick_limit:
@@ -533,6 +534,9 @@ class Environment(ABC):
                 if not self.isPaused:
                     if not args.no_viewer:
                         print(self.to_json())
+                    self.moveSites()
+                    self.pheromones()
+                    self.updateSiteInfo()
 
                     self.stats["stateCounts"] = {}
 

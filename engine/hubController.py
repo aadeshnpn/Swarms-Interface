@@ -2,7 +2,7 @@ import json
 
 from randomdict import RandomDict
 import copy
-from .agent.droneAgent import *
+from droneCode.agent.droneAgent import *
 from utils.debug import *
 import time
 import numpy as np
@@ -124,9 +124,10 @@ class HubController:
             self.agentList[agent.id].dead = False
             self.deadBees -= 1
 
-
-        if (isinstance(agent.state, ReportToHub) and not self.no_viewer):
+        # eprint(type(agent.state))
+        if (isinstance(agent.state,ReportToHub) and not self.no_viewer):
             # eprint(str(bee.state) + " in the hub")
+            # eprint("HERE")
             print(json.dumps({"type": "updateMission",
                               "data": {"x": agent.potential_site[0], "y": agent.potential_site[1],"id":agent.potential_site[2], "q": agent.q_value, "site_q": agent.site_q}}))
 

@@ -1,5 +1,6 @@
 import json
-
+import sys
+sys.path.append("..")
 from randomdict import RandomDict
 import copy
 from .agent.droneAgent import *
@@ -7,7 +8,7 @@ from utils.debug import *
 import time
 import numpy as np
 from sympy.geometry import *
-from .hubController import HubController
+from engine.hubController import HubController
 
 class droneInfo:
     def __init__(self, direction, velocity, state, AtHub, ret,id):
@@ -181,6 +182,7 @@ class DroneHubController(HubController):
         #self.siteSizePriority = float(json_dict["sitePriorities"]["size"])
         self.siteDistancePriority = 0
         self.siteSizePriority = 0
+
         priorityJson = {
             "type": "updateSitePriorities",
             "data":
