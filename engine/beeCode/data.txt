@@ -1,0 +1,23 @@
+World Limits
+X   Y
+800 400
+
+Hub
+X   Y   Rad
+0   0   20
+
+Sites
+X   Y   Rad Q-value Ease_of_detection
+80  80  10  1       1
+-80 80  10  .75     1
+60  -60 10  .5      1
+-40 -40 10  .25     1
+
+Obstacles
+X   Y   Rad
+
+Traps
+X   Y   Rad
+
+Rough Terrain
+X   Y   Rad

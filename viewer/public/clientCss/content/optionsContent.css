@@ -1,0 +1,448 @@
+:root{
+  --buttonSize:60px;
+  --optionsContentSize:240px;
+}
+
+.optionsButton{
+  text-align: center;
+  line-height: var(--buttonSize);
+  font-size: 15px;
+  width: 100%;
+  height:25%;
+  border-radius: 50%;
+  background-color: rgb(116, 116, 116);
+}
+.optionsButton:hover{
+  margin:0 auto;
+  cursor:pointer;
+}
+
+.optionsContent{
+  display:none;
+  position: absolute;
+  bottom:190px;
+  right:5px;
+  width:var(--buttonSize);
+  height:var(--optionsContentSize);
+}
+
+#showPheromoneIcon{
+  width:var(--buttonSize);
+  height: var(--buttonSize);
+  margin: 0 auto;
+  position: relative;
+  background-image: url("../../img/pheromoneOn.png");
+  background-size: 40px 40px;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+#showPheromoneIcon:hover{
+  background-image: url("../../img/pheromoneOnHover.png");
+  background-size: 40px 40px;
+  background-repeat: no-repeat;
+}
+#dontShowPheromoneIcon{
+  width:var(--buttonSize);
+  height: var(--buttonSize);
+  margin: 0 auto;
+  position: relative;
+  background-image: url("../../img/pheromoneOff.png");
+  background-size: 40px 40px;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+#dontShowPheromoneIcon:hover{
+  background-image: url("../../img/pheromoneOffHover.png");
+  background-size: 40px 40px;
+  background-repeat: no-repeat;
+}
+
+#showPheromoneIcon #pheromoneToolTip, #dontShowPheromoneIcon #pheromoneToolTip{
+  visibility: hidden;
+  width: 150px;
+  background-color: rgba(85, 85, 85, 0.86);
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 0 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 0%;
+  left: -95px;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity .5s;
+}
+#showPheromoneIcon #pheromoneToolTip::after, #dontShowPheromoneIcon #pheromoneToolTip::after {
+  content: "";
+  position: absolute;
+  top: 45%;
+  right: -10px;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color:  transparent  transparent transparent #555;
+}
+#showPheromoneIcon:hover #pheromoneToolTip, #dontShowPheromoneIcon:hover #pheromoneToolTip {
+  visibility: visible;
+  opacity: 1;
+}
+
+#debugIcon{
+  width:var(--buttonSize);
+  height: var(--buttonSize);
+  margin: 0 auto;
+  position: relative;
+  background-image: url("../../img/param.png");
+  background-size: 40px 40px;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+#debugIcon:hover{
+  background-image: url("../../img/paramHover.png");
+  background-size: 40px 40px;
+  background-repeat: no-repeat;
+}
+#debugIcon #debugToolTip{
+  visibility: hidden;
+  width: 100px;
+  background-color: rgba(85, 85, 85, 0.86);
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 0 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 0%;
+  left: -45px;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity .5s;
+}
+#debugIcon #debugToolTip::after {
+  content: "";
+  position: absolute;
+  top: 45%;
+  right: -10px;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color:  transparent  transparent transparent #555;
+}
+#debugIcon:hover #debugToolTip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.debug{
+  display: block;
+  color:white;
+}
+.debugPane{
+  overflow-y: hidden;
+}
+#debugArea{
+  display: none;
+  float:left;
+  width: 50%;
+  overflow: hidden;
+}
+#debugParams input{
+  float: right;
+  width: 45px;
+}
+#debugParams label{
+  display: inline-block;
+  width: 200px;
+}
+#debugParams button{
+  display: block;
+}
+#debugTools{
+  z-index: 100 !important;
+  color:white;
+  text-shadow: 2px 2px black;
+  background-color: rgba(20,20,20,.7);
+  position: absolute;
+  bottom:5px;
+  right:200px;
+  float: left;
+  overflow-y:hidden;
+  padding-left: 15px;
+  box-shadow: 1px 1px 6px black;
+  border: 1px solid black;
+}
+
+#showAgents{
+  width:var(--buttonSize);
+  height: var(--buttonSize);
+  margin: 0 auto;
+  position: relative;
+  background-image: url("../../img/showDrones.png");
+  background-size: var(--buttonSize) var(--buttonSize);
+  background-repeat: no-repeat;
+}
+#showAgents:hover{
+  background-image: url("../../img/showDronesHover.png");
+  background-size: var(--buttonSize) var(--buttonSize);
+  background-repeat: no-repeat;
+}
+#dontShowAgents{
+  width:var(--buttonSize);
+  height: var(--buttonSize);
+  margin: 0 auto;
+  position: relative;
+  background-image: url("../../img/dontShowDrones.png");
+  background-size: var(--buttonSize) var(--buttonSize);
+  background-repeat: no-repeat;
+}
+#dontShowAgents:hover{
+  background-image: url("../../img/dontShowDronesHover.png");
+  background-size: var(--buttonSize) var(--buttonSize);
+  background-repeat: no-repeat;
+}
+
+#dontShowAgents #showToolTip, #showAgents #showToolTip{
+  visibility: hidden;
+  width: 100px;
+  background-color: rgba(85, 85, 85, 0.86);
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 0 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 0%;
+  left: -45px;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity .5s;
+}
+#dontShowAgents #showToolTip::after,#showAgents #showToolTip::after {
+  content: "";
+  position: absolute;
+  top: 45%;
+  right: -10px;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color:  transparent  transparent transparent #555;
+}
+#dontShowAgents:hover #showToolTip,#showAgents:hover #showToolTip {
+  visibility: visible;
+  opacity: 1;
+}
+
+#showFogIcon{
+  width:var(--buttonSize);
+  height: var(--buttonSize);
+  margin: 0 auto;
+  position: relative;
+  background-image: url("../../img/fogOn.png");
+  background-size: 40px 40px;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+#showFogIcon:hover{
+  background-image: url("../../img/fogOnHover.png");
+  background-size: 40px 40px;
+  background-repeat: no-repeat;
+}
+#dontShowFogIcon{
+  width:var(--buttonSize);
+  height: var(--buttonSize);
+  margin: 0 auto;
+  position: relative;
+  background-image: url("../../img/fogOff.png");
+  background-size: 40px 40px;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+#dontShowFogIcon:hover{
+  background-image: url("../../img/fogOffHover.png");
+  background-size: 40px 40px;
+  background-repeat: no-repeat;
+}
+#showFogIcon #fogToolTip, #dontShowFogIcon #fogToolTip{
+  visibility: hidden;
+  width: 100px;
+  background-color: rgba(85, 85, 85, 0.86);
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 0 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 0%;
+  left: -45px;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity .5s;
+}
+#showFogIcon #fogToolTip::after,#dontShowFogIcon #fogToolTip::after {
+  content: "";
+  position: absolute;
+  top: 45%;
+  right: -10px;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color:  transparent  transparent transparent #555;
+}
+#showFogIcon:hover #fogToolTip,#dontShowFogIcon:hover #fogToolTip {
+  visibility: visible;
+  opacity: 1;
+}
+
+#showAgentState{
+  width:var(--buttonSize);
+  height: var(--buttonSize);
+  margin: 0 auto;
+  position: relative;
+  background-image: url("../../img/stateOn.png");
+  background-size: 40px 40px;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+#showAgentState:hover{
+  background-image: url("../../img/stateOnHover.png");
+  background-size: 40px 40px;
+  background-repeat: no-repeat;
+}
+#dontShowAgentState{
+  width:var(--buttonSize);
+  height: var(--buttonSize);
+  margin: 0 auto;
+  position: relative;
+  background-image: url("../../img/stateOff.png");
+  background-size: 40px 40px;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+#dontShowAgentState:hover{
+  background-image: url("../../img/stateOffHover.png");
+  background-size: $0px 40px;
+  background-repeat: no-repeat;
+}
+#dontShowAgentState #stateToolTip, #showAgentState #stateToolTip{
+  visibility: hidden;
+  width: 100px;
+  background-color: rgba(85, 85, 85, 0.86);
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 0 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 0%;
+  left: -45px;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity .5s;
+}
+#dontShowAgentState #stateToolTip::after,#showAgentState #stateToolTip::after {
+  content: "";
+  position: absolute;
+  top: 45%;
+  right: -10px;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color:  transparent  transparent transparent #555;
+}
+#dontShowAgentState:hover #stateToolTip,#showAgentState:hover #stateToolTip {
+  visibility: visible;
+  opacity: 1;
+}
+
+#backgroundTransparency{
+  width:var(--buttonSize);
+  height: var(--buttonSize);
+  margin: 0 auto;
+  position: relative;
+  background-image: url("../../img/transparency.png");
+  background-size: var(--buttonSize) var(--buttonSize);
+  background-repeat: no-repeat;
+}
+#backgroundTransparency:hover{
+  background-image: url("../../img/transparencyHover.png");
+  background-size: var(--buttonSize) var(--buttonSize);
+  background-repeat: no-repeat;
+}
+#backgroundTransparency #transparentToolTip{
+  visibility: hidden;
+  width: 150px;
+  background-color: rgba(85, 85, 85, 0.86);
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 0 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 0%;
+  left: -95px;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity .5s;
+}
+#backgroundTransparency #transparentToolTip::after {
+  content: "";
+  position: absolute;
+  top: 45%;
+  right: -10px;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color:  transparent  transparent transparent #555;
+}
+#backgroundTransparency:hover #transparentToolTip {
+  visibility: visible;
+  opacity: 1;
+}
+.transparency{
+  display:block;
+  position: absolute;
+  bottom:50px;
+  background-color: red;
+  right:65px;
+  width:60px;
+  height:600px;
+}
+.slider {
+  display:none;
+  z-index: 100 !important;
+  position: absolute;
+  bottom:-90px;
+  right:-280px;
+  -webkit-appearance: none;
+  width:400px;
+  height: 25px;
+  background: rgb(100,100,100);
+  outline: none;
+  border:40px solid black;
+
+  transform: rotate(-90deg);
+  transform-origin: 0% 0%;
+
+}
+.slider:hover {
+  opacity: 1;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  background: rgb(120,120,120);
+  cursor: pointer;
+  border-style: solid black;
+  border-width: 1px;
+}
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  background: rgb(120,120,120);
+  cursor: pointer;
+  border-style: solid black;
+  border-width: 1px;
+}
