@@ -562,6 +562,8 @@ function toJson(){
 $("#startSim").click(function(){
   var siteNumber=$("#siteNumber").val()
   var scenarioType=$("#scenarioType").val()
+  var userStudy = $("#userStudyCheck").prop('checked')
+  console.log(userStudy);
   // console.log(scenarioType);
   //  var e = document.getElementById("#attackType")
   //  scenType = e.options[e.selectedIndex].value
@@ -581,6 +583,7 @@ $("#startSim").click(function(){
                 siteNum:siteNumber,
                 attackType:attackType,
                 scenarioType:scenarioType,
+                userStudy:userStudy,
                 model:agentType.split(" ")[0],
                 worldType:worldType,
                 patrolLocations:selectedCoordsToJson(),

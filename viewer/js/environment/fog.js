@@ -91,6 +91,9 @@ class Fog
       // console.log(this.selectMode);
       ctx.fillStyle = Object.entries(Fog.stateStyles)[this.selectMode][1];
     }
+    if(this.opacity <0){
+      this.opacity=0;
+    }
     ctx.globalAlpha=this.opacity
 
 

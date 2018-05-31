@@ -98,7 +98,7 @@ class MissionLayer {
 		if(this.worldHeight==undefined){
 			this.worldHeight=world.height
 		}
-		if(!this.hoveredPoint && currentSelectMode !=-1){
+		if(!this.hoveredPoint && currentSelectMode !=-1 && simType=="Drone"){
 			ctx.beginPath()
 			ctx.lineWidth=3
 			// console.log(Fog.stateStyles);
@@ -311,7 +311,7 @@ class MissionLayer {
 
 		this.mouse.x= worldRelative.x
 		this.mouse.y= worldRelative.y
-		if(this.canvasClicked && !this.hoveredPoint && currentSelectMode !=-1){
+		if(this.canvasClicked && !this.hoveredPoint && currentSelectMode !=-1 && simType == "Drone"){
 			let pX=this.mouse.x-this.worldWidth/2
 			let pY=this.mouse.y-this.worldHeight/2
 			// console.log(this.drawSize);
@@ -376,7 +376,7 @@ class MissionLayer {
 	}
 	onMouseDown(e){
 		// console.log(e.);
-		if(e.button==2 && currentSelectMode !=-1){
+		if(e.button==2 && currentSelectMode !=-1 && simType=="Drone" ){
 			deletingSelect=true;
 			this.canvasClicked=true;
 			let pX=this.mouse.x-this.worldWidth/2
@@ -384,7 +384,7 @@ class MissionLayer {
 			// console.log(this.drawSize);
 			selectedArea.push(new Select(pX,pY,this.drawSize))
 		}
-		if(e.button==0 && !this.hoveredPoint && currentSelectMode !=-1){
+		if(e.button==0 && !this.hoveredPoint && currentSelectMode !=-1&& simType=="Drone"){
 			this.canvasClicked=true;
 			let pX=this.mouse.x-this.worldWidth/2
 			let pY=this.mouse.y-this.worldHeight/2

@@ -9,10 +9,11 @@ var redis = require('redis');
 bluebird.promisifyAll(redis.RedisClient.prototype);
 bluebird.promisifyAll(redis.Multi.prototype);
 var s;
+var tasks;
+var canvasSize;
 // sticky-cluster is the faster sticky session module for making socket.io
 // work. It runs our setup when its ready.
-require('sticky-cluster')(function (callback)
-{
+require('sticky-cluster')(function (callback){
 
   // Express is the web server framework. It handles all the low level http
   // stuff. It initialises a server based off the basic node httpserver which
@@ -68,8 +69,8 @@ require('sticky-cluster')(function (callback)
   //this folder has the models for the mongoose stuff.
   const Models = require('./models');
 
-  app.use(bodyParser.json({limit:'50mb'}));
-  app.use(bodyParser.urlencoded({extended:true, limit:'50mb'}));
+  // app.use(bodyParser.json({limit:'50mb'}));
+  // app.use(bodyParser.urlencoded({extended:true, limit:'50mb'}));
 
 
   // The server's job should be essentially to grab world info from the simulation
@@ -78,8 +79,7 @@ require('sticky-cluster')(function (callback)
   var patrolLists={}
   //------------------------------------------------------------------------------
   // Simulation represents a sim that can be attached to and observed by clients
-  class Simulation
-  {
+  class Simulation{
     constructor(simId, options = {})
     {
       this.simId = simId;
@@ -237,8 +237,9 @@ require('sticky-cluster')(function (callback)
           break;
 
         case this.killChannel:
-          console.log(data);
-          // this.stop();
+          // console.log(data);
+          console.log("The kill order was sent");
+          this.stop();
           break;
         default:
           console.err("Invalid input recieved in server")
@@ -258,7 +259,7 @@ require('sticky-cluster')(function (callback)
         {
           if(this.options.model =="bee"){
             const info = JSON.parse(infoStr);
-
+            console.log(info);
             let options = info.options;
 
             data = data.data;
@@ -304,25 +305,26 @@ require('sticky-cluster')(function (callback)
 
     stop()
     {
-      this.world.engine.stdout.unpipe(this.jsonStreamParser);
-      this.jsonStreamParser = null;
-
-      // kill the subprocess
-      this.world.engine.kill();
-      this.inputListener.quit();
-      this.outputBroadcaster.quit();
-
-      // clean up our redis info
-      redisClient.delAsync(`sim:${this.simId}:info`)
-        .then( () => {
-          redisClient.srem("activeSims", this.simId);
-        });
+      // this.world.engine.stdout.unpipe(this.jsonStreamParser);
+      // this.jsonStreamParser = null;
+      //
+      // // kill the subprocess
+      // // this.world.engine.kill();
+      // // this.inputListener.quit();
+      // // this.outputBroadcaster.quit();
+      // // console.log("HERE");
+      //
+      // // clean up our redis info
+      // redisClient.delAsync(`sim:${this.simId}:info`)
+      //   .then( () => {
+      //     redisClient.srem("activeSims", this.simId);
+      //   });
     }
   }
 
   // A client represents a user with a websocket connection
-  class Client
-  {
+  var userCounter={};
+  class Client{
     constructor(webSocket, simId)
     {
       this.socket = webSocket;
@@ -337,14 +339,30 @@ require('sticky-cluster')(function (callback)
       redisClient.getAsync(`sim:${simId}:info`)
         .then(infoStr =>
         {
-          // console.log("Before Parse in r");
           const info = JSON.parse(infoStr);
-          // console.log("After Parse in r");
           if(info != undefined && info != null){
             this.channels = info.channels;
             this.options = info.options;
             this.engineOutputListener.subscribe(this.channels.output);
-            console.log(this.engineOutputListener.channels);
+            tasks=new Task()
+            // console.log(typeof this.options.scenarioType);
+            // console.log(tasks[this.options.scenarioType]);
+            var taskInfo;
+            // console.log(taskInfo);
+            // console.log(tasks[this.options.scenarioType]);
+            if(userCounter[simId] == undefined){
+              userCounter[simId]=0
+            }
+            userCounter[simId]+=1;
+            io.sockets.emit("userInc",userCounter[simId])
+            if(userCounter[simId] == 1){
+              taskInfo={type:this.options.scenarioType,task:"Master",size:canvasSize}
+            }else{
+              taskInfo={type:this.options.scenarioType,task:tasks[this.options.scenarioType],size:canvasSize}
+              this.socket.emit("scenario",taskInfo)
+            }
+            // console.log(taskInfo);
+
             redisClient.incrAsync(`sim:${this.simId}:connectedCount`)
               .then(newCount =>
               {
@@ -356,8 +374,10 @@ require('sticky-cluster')(function (callback)
                   //       run independently if we want
                   this.userInputBroadcaster.publish(this.channels.start, "first");
 
+                }else{
                 }
               });
+
           }
 
 
@@ -375,10 +395,11 @@ require('sticky-cluster')(function (callback)
     {
       //The start info and update info need to be seperated so that we can eliminate the need to recreate
       //a new world object every time through the init draw function.
-      // console.log("Before Parse in u");
 
       this.timer++;
+      // console.log(data);
       const obj = JSON.parse(data);
+
       // console.log("After Parse in u")
       // console.log(obj);
       //console.log(obj.type);
@@ -390,9 +411,13 @@ require('sticky-cluster')(function (callback)
       // console.log(data);
       // console.log(data);
       // console.log(data["info"]);
-      if(data.type=="patrolLocations"){
+      if(data.type=="patrolLocations" && patrolLists[this.simId] && patrolLists[this.simId][this.socket.id] ){
         patrolLists[this.simId][this.socket.id][(Math.floor(data.info.x)).toString() +" "+ (Math.floor(data.info.y)).toString()]= data.info.mode
         // console.log(patrolLists);
+      }
+      if(data.type == "play"){
+        console.log("PLAYING");
+        io.sockets.emit("play",null);
       }
       this.userInputBroadcaster.publish(this.channels.input, JSON.stringify(data) + '\n');
     }
@@ -428,8 +453,8 @@ require('sticky-cluster')(function (callback)
    ******************************************************************************/
 
   app.use(express.static(path.join(__dirname, "public")));
-  app.use( bodyParser.json() );
-  app.use( bodyParser.urlencoded({extended: true}) );
+  // app.use( bodyParser.json() );
+  // app.use( bodyParser.urlencoded({extended: true}) );
 
   // Route for creating a new simulation
   app.post('/sims/', function(req, res){
@@ -515,6 +540,7 @@ require('sticky-cluster')(function (callback)
 
 
         simInfo = JSON.parse(info);
+        // console.log(simInfo);
         return redisClient.getAsync(`sim:${simId}:connectedCount`);
       })
       .then((count) =>
@@ -540,7 +566,6 @@ require('sticky-cluster')(function (callback)
   });
 
   // Route for getting the list of available sims
-  // TODO: finish
   app.get('/simlist', function(req, res){
     let simInfo = {};
 
@@ -563,6 +588,7 @@ require('sticky-cluster')(function (callback)
             promises.push( redisClient.getAsync(`sim:${sim}:info`)
               .then(info => {
                 simInfo[thisSim] = JSON.parse(info);
+
                 return redisClient.getAsync(`sim:${sim}:connectedCount`);
               })
                .then(count => simInfo[thisSim].connected = count ) );
@@ -580,7 +606,7 @@ require('sticky-cluster')(function (callback)
       {
         //compressor: 'babili',    //production
         compressor: 'no-compress', //debug
-        input: ['js/ui/**/*.js', 'js/environment/**/*.js'],
+        input: ['js/ui/**/*.js', 'js/environment/**/*.js' ],
         output: 'generated/client.js'
       })
       .then(function()
@@ -588,7 +614,7 @@ require('sticky-cluster')(function (callback)
         return minifier.minify(
         {
           compressor: 'no-compress',
-          input: ['generated/client.js', 'js/init.js'],
+          input: ['generated/client.js','js/init.js', 'js/user/*.js'],
           output: 'generated/client.js'
         });
       })
@@ -617,35 +643,27 @@ require('sticky-cluster')(function (callback)
   // object, not the global io object
 
 
-  io.on('connection', function(socket)
-  {
+  io.on('connection', function(socket){
     // We only need to set up the client here; it will take care of other events,
     // disconnects, etc.
-    // console.log(socket.id);
 
     s=socket;
     socket.on("newConnection",function(ids){
-      // console.log(id);
-      // if(connectionTypeList[ids.id] != undefined){
-      //   if(connectionTypeList[ids.id].length >1){
-      //     socket.emit("connectionType",connectionTypeList[ids.id][0]);
-      //     connectionTypeList[ids.id].splice(0,1)
-      //   }else{
-      //     socket.emit("connectionType",connectionTypeList[ids.id][0]);
-      //   }
-      // }
+
       if(patrolLists[ids.id] != undefined){
         // console.log(patrolLists[ids.id]);
         socket.emit("otherPatrols",patrolLists[ids.id])
         patrolLists[ids.id][ids.socket]={}
         // console.log(patrolLists);
       }
+      socket.on("canvasSize",function(canvas){
+        canvasSize=canvas;
+      })
 
 
     })
 
-    socket.on('simId', function(id)
-    {
+    socket.on('simId', function(id) {
 
       var client = new Client(socket, id);
 
@@ -653,14 +671,17 @@ require('sticky-cluster')(function (callback)
         .then(infoStr =>
         {
           const info = JSON.parse(infoStr);
+
           let channels;
           let options;
           if(info != undefined && info!= null){
             channels = info.channels;
             options = info.options;
+            socket.emit('userStudy',options.userStudy)
             socket.emit('scenario',options.scenarioType)
             socket.emit('simType',options.model);
             socket.emit('patrolLocations',options.patrolLocations)
+
             if(options.bait){
               socket.emit('baitToggle', options.bait);
             }
@@ -717,7 +738,7 @@ require('sticky-cluster')(function (callback)
 
   }*/
 
-//this is called when the server exits
+  //this is called when the server exits
   process.on('exit', exitHandler.bind(null, {flush: false, clean: true}));
   // var children = [];
 
@@ -728,8 +749,7 @@ require('sticky-cluster')(function (callback)
   port: 3000
 });
 
-function exitHandler(opts, err)
-{
+function exitHandler(opts, err){
   if (opts.clean)
   {
     for (child of children)
@@ -762,6 +782,27 @@ function exitHandler(opts, err)
 
 const redisClient = redis.createClient();
 var children = [];
+
+class Task{
+  constructor(){
+
+    this["patrol"] = "Use the patrol-planning tool (the blue circle) to draw areas on the map for the agents to patrol."
+    this["patrol"] +=" The other person will be using a similar tool to tell agents to avoid areas of the map"
+
+    this["avoid"] = "Use the avoid tool (the red circle) to draw areas on the map for the agents to avoid."
+    this["avoid"] +=" The other person will be using a similar tool to tell agents to patrol areas of the map"
+
+    this["No Communication"] = "Use all the tools at your disposal (planning tools, site images) to determine where the enemy combatants are."
+    this["No Communication"] += " You will not be able to communicate with the other person."
+
+    this["Messaged Communication"] = "Use all the tools at your disposal (planning tools, site images) to determine where the enemy combatants are."
+    this["Messaged Communication"] += " You are allowed to communicate with the other person."
+
+    this["Groups"] = "You have been given charge of a set of drones. You will be able to give these drones commands to patrol certain areas"
+    this["Groups"] += " but you do not have outright control over their behaviour."
+  }
+}
+
 
 //other ways to kill it.
 process.on('SIGTERM', exitHandler.bind(null, {exit: true, flush: true}));

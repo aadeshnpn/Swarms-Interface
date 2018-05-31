@@ -109,11 +109,17 @@ class Message{
     this.height   =undefined;
     this.fontSize =undefined;
     this.fontColor=undefined;
+    this.number   =undefined;
   }
   create(message){
-    console.log(message);
+    // console.log(message);
     this.message = message;
+    if(message == undefined){
+      this.message = "Master"
+    }
+    this.number=0;
     this.fontSize=48;
+    // console.log(message);
     this.width = this.message.length*(this.fontSize);
     this.height=this.fontSize; //With multiple lines of message, this will be multiplied by the number of lines
     this.x = window.innerWidth/2 - this.width/2;
@@ -121,7 +127,13 @@ class Message{
     this.fontColor = "rgb(255, 0, 0)"
 
   }
-  draw(){
+  draw(size){
+    if(scenarios != 1){
+      return;
+    }
+    if(size != undefined){
+      var world = size;
+    }
     $("#messageBox").css("width", (world.width-200).toString() + "px")
     $("#messageBox").css("height", (world.height).toString() + "px")
     $("#messageBox").css("position", "absolute")
@@ -135,12 +147,15 @@ class Message{
     $("#messageBox").css("padding-right", "100px")
     // $("#messageBox").css("line-height", (world.height*2/5).toString()+"px")
     $("#messageBox").html("<br><br><h2 style='font-size:50px;'>Your Task</h2>")
-    console.log(this.message);
+    // console.log(this.message);
     $("#messageBox").append("<h3>"+this.message+"</h3>")
 
 
     $("#messageBox").css("z-index", "100 !important")
     $("#messageBox").css("background-color", "rgba(125, 169, 193, 0.8)")
+    if(this.message =="Master"){
+      $("#messageBox").append("<h3 id='userNumber' style='font-size:70px'>Waiting for "+(2-this.number)+" more people</h3>")
+    }
   }
 
 }
@@ -245,7 +260,7 @@ class MissionLayer {
 		if(this.worldHeight==undefined){
 			this.worldHeight=world.height
 		}
-		if(!this.hoveredPoint && currentSelectMode !=-1){
+		if(!this.hoveredPoint && currentSelectMode !=-1 && simType=="Drone"){
 			ctx.beginPath()
 			ctx.lineWidth=3
 			// console.log(Fog.stateStyles);
@@ -458,7 +473,7 @@ class MissionLayer {
 
 		this.mouse.x= worldRelative.x
 		this.mouse.y= worldRelative.y
-		if(this.canvasClicked && !this.hoveredPoint && currentSelectMode !=-1){
+		if(this.canvasClicked && !this.hoveredPoint && currentSelectMode !=-1 && simType == "Drone"){
 			let pX=this.mouse.x-this.worldWidth/2
 			let pY=this.mouse.y-this.worldHeight/2
 			// console.log(this.drawSize);
@@ -523,7 +538,7 @@ class MissionLayer {
 	}
 	onMouseDown(e){
 		// console.log(e.);
-		if(e.button==2 && currentSelectMode !=-1){
+		if(e.button==2 && currentSelectMode !=-1 && simType=="Drone" ){
 			deletingSelect=true;
 			this.canvasClicked=true;
 			let pX=this.mouse.x-this.worldWidth/2
@@ -531,7 +546,7 @@ class MissionLayer {
 			// console.log(this.drawSize);
 			selectedArea.push(new Select(pX,pY,this.drawSize))
 		}
-		if(e.button==0 && !this.hoveredPoint && currentSelectMode !=-1){
+		if(e.button==0 && !this.hoveredPoint && currentSelectMode !=-1&& simType=="Drone"){
 			this.canvasClicked=true;
 			let pX=this.mouse.x-this.worldWidth/2
 			let pY=this.mouse.y-this.worldHeight/2
@@ -1565,25 +1580,6 @@ StateBubbles.MAX_RADIUS = 20;
 StateBubbles.MIN_RADIUS = 2;
 StateBubbles.BUBBLE_SPACING = 60; // in px
 StateBubbles.LABEL_SPACING = 30;
-
-class Task{
-  constructor(){
-    this.patrol = "Use the patrol-planning tool (the blue circle) to draw areas on the map for the agents to patrol."
-    this.patrol +=" The other person will be using a similar tool to tell agents to avoid areas of the map"
-
-    this.avoid = "Use the avoid tool (the red circle) to draw areas on the map for the agents to avoid."
-    this.avoid +=" The other person will be using a similar tool to tell agents to patrol areas of the map"
-
-    this.noCom = "Use all the tools at your disposal (planning tools, site images) to determine where the enemy combatants are."
-    this.noCom += " You will not be able to communicate with the other person."
-
-    this.com = "Use all the tools at your disposal (planning tools, site images) to determine where the enemy combatants are."
-    this.com += " You are allowed to communicate with the other person."
-
-    this.group = "You have been given charge of a set of drones. You will be able to give these drones commands to patrol certain areas"
-    this. group += " but you do not have outright control over their behaviour."
-  }
-}
 
 class Cursor
 {
@@ -2659,6 +2655,9 @@ class Fog
       // console.log(this.selectMode);
       ctx.fillStyle = Object.entries(Fog.stateStyles)[this.selectMode][1];
     }
+    if(this.opacity <0){
+      this.opacity=0;
+    }
     ctx.globalAlpha=this.opacity
 
 
@@ -2905,10 +2904,10 @@ class Site
 
     if (debug == true)
     {
-      ctx.font = "14pt sans-serif";
-      ctx.fillStyle = "rgb(0, 0, 0)";
-      let width = ctx.measureText(`Site: ${this.id}`).width;
-      ctx.fillText(`Site: ${this.id}`, -width/2, 20 + this.radius);
+      // ctx.font = "14pt sans-serif";
+      // ctx.fillStyle = "rgb(0, 0, 0)";
+      // let width = ctx.measureText(`Site: ${this.id}`).width;
+      // ctx.fillText(`Site: ${this.id}`, -width/2, 20 + this.radius);
     }
 
     ctx.restore();
@@ -3184,7 +3183,7 @@ class World
     // console.table(environment.pheromones);
     this.pheromones=[]
     if(environment.pheromones[0] !=undefined){
-      if(environment.pheromones.r == undefined){
+      if(environment.pheromones[0].r == undefined){
         this.pheromones=new Pheromone(environment.pheromones)
       }else{
         this.pheromones=environment.pheromones
@@ -3284,42 +3283,55 @@ class World
   }
 
   drawPheromones(){
+    let idMap= {}
+
     // console.log(this.pheromones.length);
     if(this.pheromones.length == undefined && this.pheromones.pheromones != undefined){
 
       this.pheromones.draw(ctx,debug)
       return
     }else{
+      ctx.globalAlpha = .5
       for(let pheromone of this.pheromones){
 
+        // console.log(pheromone.id);
         // console.log(i);
 
         // console.log(i%2);
         // if(i%2==0 && this.pheromones.length >10){
           // break;
         // }
-        // i+=1
-        ctx.beginPath()
+        // console.log(idMap);
+        // if((idMap[pheromone.id] == undefined || idMap[pheromone.id] <5) && pheromone.strength>1){
+          ctx.beginPath()
 
-        let x=255//(255-(pheromone.site*(255/this.sites.length))).toString();
-        if(x <=0){
-          x=0;
-        }
-        ctx.fillStyle = "white";
-        if(pheromone.strength <=0){
-          ctx.globalAlpha = .00001
+          let x=255//(255-(pheromone.site*(255/this.sites.length))).toString();
+          if(x <=0){
+            x=0;
+          }
+          ctx.fillStyle = "white";
+          // if(pheromone.strength <=0){
 
-        }else{
-          ctx.globalAlpha = (pheromone.strength)*.8
 
-        }
-        ctx.beginPath()
-        ctx.arc(Math.round(pheromone.x), Math.round(-pheromone.y), pheromone.r,0,Math.PI*2);
-        //}
-        ctx.fill();
-        ctx.globalAlpha = 1
+          // }else{
+            // ctx.globalAlpha = (pheromone.strength)*.8
+
+          // }
+          ctx.beginPath()
+          ctx.arc(Math.round(pheromone.x), Math.round(-pheromone.y), pheromone.r,0,Math.PI*2);
+          //}
+          ctx.fill();
+          // if(idMap[pheromone.id] == undefined){
+          //   idMap[pheromone.id]=1
+          // }else{
+          //   idMap[pheromone.id]+=1
+          // }
+
+        // }
 
       }
+      ctx.globalAlpha = 1
+
     }
 
   }
@@ -3335,22 +3347,22 @@ var socket = io();
 var world = null;
 var clientId;
 var localInfo = new Message()
-var tasks = new Task()
+var scenarios=0;
+var scenarioType;
+
+// var tasks = new Task()
 
 //These are for the pre-planning and live-planning methods of selecting areas of the canvas
 var currentSelectMode=0
 var selectModes=["Patrol","Avoid"]
 var selectedArea=[]
-var deleteAll=false;
-var deletingSelect=false;
+
 var selectedCoords= {}
 // Gets the previous screens pre-planning
 var patrolLocations;
-socket.on('patrolLocations',function(loc){
-  patrolLocations=loc
-})
-
-
+var userStudy       = false;
+var deleteAll       = false;
+var deletingSelect  = false;
 var debug           = false;
 var showAgentStates = false;
 
@@ -3358,31 +3370,8 @@ var showAgentStates = false;
 var background = document.getElementById('source');
 var sliderVal =document.getElementById('myRange').value;
 // var date=new Date()
-$("#myRange").change(function(e){
-  sliderVal =document.getElementById('myRange').value;
-})
-$(document).keydown(function(e){
-  // console.log("here");
-  if((e.which==65 ||e.which==37) &&(addPatrol && addAvoid)){
-    currentSelectMode--;
-    if(currentSelectMode<0){
-      currentSelectMode=selectModes.length-1
-    }
-    $( "#selectType" ).html(selectModes[currentSelectMode])
-    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
 
-  }else if((e.which==68 ||e.which==39) &&(addPatrol && addAvoid)){
-    currentSelectMode++;
-    if(currentSelectMode>selectModes.length-1){
-      currentSelectMode=0
-    }
-    $( "#selectType" ).html(selectModes[currentSelectMode])
-    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
-  }
-})
-document.getElementById("canvasDiv").addEventListener("dblclick", function(e){
-  deleteAll=true
-})
+
 document.addEventListener('contextmenu', event => event.preventDefault());
 // get a reference to the canvas element
 var canvas = document.getElementById("canvas");
@@ -3412,9 +3401,10 @@ $("#agentStateDescriptionDiv").append(`<table id="statesInfo"><caption id="state
                                         </div>`)
 
 var connection;
-
+var paused=true;
 
 // Get Image references and other presets
+
 var bee = document.getElementById("drone");
 var beeDead;
 var obstacle;
@@ -3442,14 +3432,7 @@ socket.on('simType', function(type){
    obstacle = document.getElementById("obstacle");
 
 });
-var scenarioType;
-socket.on("scenario",function(type){
-  scenarioType=type;
-  if(scenarioType=="No Communication"){
-    $("#messengerIcon").css("display","none")
-    localInfo.create(tasks.noCom)
-  }
-})
+
 
 var finishedDrawing = false;
 var ui = new UI();
@@ -3458,65 +3441,10 @@ var mouse = new Mouse();
 var ctx;
 var simId;
 // console.log(tasks.avoid);
-function setUserAbility(add,avoid){
-  if(add && !avoid){
-
-    selectModes.splice(1,1)
-    $( "#selectType" ).html(selectModes[currentSelectMode])
-    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
-    localInfo.create(tasks.patrol)
-  }
-  else if(!add && avoid){
-    selectModes.splice(0,1)
-    currentSelectMode=1;
-    $( "#selectType" ).html(selectModes[0])
-    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
-    localInfo.create(tasks.avoid)
-
-  }else if(!add && !avoid){
-    // selectMode
-    $( "#selectMode" ).css("display","none")
-    currentSelectMode=-1;
-  }
-}
 
 
-// In order to associate a client with a specific engine process,
-// the server sends us a unique id to send back once socket.io has
-// established a connection
-socket.on('connect', function(){
 
-  var idx = document.cookie.indexOf("simId");
-  var endIdx = document.cookie.indexOf(";", idx);
 
-  if (endIdx == -1)
-  {
-    endIdx = undefined;
-  }
-
-  simId = document.cookie.slice(idx, endIdx).split("=").pop();
-  socket.emit("newConnection",{id:simId,socket:socket.id});
-  socket.emit('simId', simId);
-});
-socket.on("connectionType",setUserAbilities)
-socket.on("otherPatrols",getOthersPatrols)
-function setUserAbilities(type){
-  console.log(type);
-  if(type == "add"){
-    // console.log("Add Add");
-    setUserAbility(true,false)
-  }else if(type == "avoid"){
-    // console.log("Add Avoid");
-    setUserAbility(false,true)
-  }else if(type =="observe"){
-    setUserAbility(false,false)
-  }
-
-}
-
-function getOthersPatrols(patrolMap){
-  console.log(patrolMap);
-}
 // socket.on("connectionType",function(type){
 //   console.log("HEFRERERARFD");
 //   console.log(type);
@@ -3531,13 +3459,19 @@ socket.on('update', function(worldUpdate){
    if (world === null){
       world = new World(worldUpdate.data);
 
-      // socket.emit('input', {type: 'pause'})
-      // isPaused=true;
+
       // console.table(world.agents)
       canvas.setAttribute("width", world.width);
       canvas.setAttribute("height", world.height);
+      socket.emit("canvasSize",{width:world.width,height:world.height})
+      // console.log("HERE");
+      console.log(paused);
+      if(simType ==="Drone" && paused){
+        socket.emit('input', {type: 'pause'})
+        isPaused=true;
+        localInfo.draw({width:world.width,height:world.height})
+      }
 
-      // localInfo.draw()
       // Resizes the canvas to the size determined in the Python code
       document.getElementById("canvasDiv").style.width = world.width + "px";
 
@@ -3608,3 +3542,168 @@ socket.on('updateSitePriorities', function(data) { ui.on(data) });
 socket.on('setStates'           , function(data) { ui.on(data) });
 socket.on('stateCounts'         , function(data) { ui.on(data) });
 socket.on('updateChat'          , function(data) { ui.on(data) });
+
+function setUserAbility(add,avoid){
+  if(add && !avoid){
+
+    selectModes.splice(1,1)
+    $( "#selectType" ).html(selectModes[currentSelectMode])
+    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
+    // localInfo.create(tasks.patrol)
+  }
+  else if(!add && avoid){
+    selectModes.splice(0,1)
+    currentSelectMode=1;
+    $( "#selectType" ).html(selectModes[0])
+    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
+    // localInfo.create(tasks.avoid)
+
+  }else if(!add && !avoid){
+    // selectMode
+    $( "#selectMode" ).css("display","none")
+    currentSelectMode=-1;
+  }
+}
+
+
+
+socket.on("scenario",function(info){
+  // console.log(info);
+  scenarioType=info.type;
+  scenarios+=1
+  if(info != null && info != undefined && scenarios == 1){
+    if(info.size != undefined){
+      canvas.setAttribute("width", info.size.width);
+      canvas.setAttribute("height", info.size.height);
+      document.getElementById("canvasDiv").style.width = info.size.width + "px";
+
+    }
+    else{
+      // console.error("The size was not recieved");
+    }
+    if(info.task != undefined && info.task != null && info.size != undefined){
+      // console.log(info.task);
+      localInfo.create(info.task)
+      localInfo.draw(info.size)
+    }else{
+
+      localInfo.create("Master")
+      // console.error("The task was not recieved")
+    }
+
+
+    if(scenarioType=="No Communication"){
+      $("#messengerIcon").css("display","none")
+
+    }
+}
+})
+
+socket.on('patrolLocations',function(loc){
+  patrolLocations=loc
+})
+$("#myRange").change(function(e){
+  sliderVal =document.getElementById('myRange').value;
+})
+
+
+$(document).keydown(function(e){
+  // console.log("here");
+  if((e.which==65 ||e.which==37) &&(addPatrol && addAvoid)){
+    currentSelectMode--;
+    if(currentSelectMode<0){
+      currentSelectMode=selectModes.length-1
+    }
+    $( "#selectType" ).html(selectModes[currentSelectMode])
+    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
+
+  }else if((e.which==68 ||e.which==39) &&(addPatrol && addAvoid)){
+    currentSelectMode++;
+    if(currentSelectMode>selectModes.length-1){
+      currentSelectMode=0
+    }
+    $( "#selectType" ).html(selectModes[currentSelectMode])
+    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
+  }
+})
+document.getElementById("canvasDiv").addEventListener("dblclick", function(e){
+  deleteAll=true
+})
+
+socket.on("userInc",function(inc){
+
+  if(inc ==2){
+    $("#userNumber").html("<h3 id='userNumber' style='font-size:70px'>Waiting for "+(2-inc+1)+" more person</h3>")
+
+  }else if(2-inc+1 >0){
+    $("#userNumber").html("<h3 id='userNumber' style='font-size:70px'>Waiting for "+(2-inc+1)+" more people</h3>")
+
+  }else{
+    $("#userNumber").html("Click anywhere to start")
+    paused=false;
+  }
+
+
+})
+
+$("#document").mouseup(function(){
+  // console.log("HERE");
+  if(!paused && localInfo.message == "Master"){
+    socket.emit('input', {type: 'play'});
+    buttonPausePlay.innerHTML = "Pause";
+    isPaused = false;
+    $("#messageBox").css("display", "none")
+
+  }
+
+})
+socket.on("play",function(){
+  // console.log("HERE");
+  buttonPausePlay.innerHTML = "Pause";
+  isPaused = false;
+  $("#messageBox").css("display", "none")
+
+})
+
+// In order to associate a client with a specific engine process,
+// the server sends us a unique id to send back once socket.io has
+// established a connection
+socket.on('connect', function(){
+
+  var idx = document.cookie.indexOf("simId");
+  var endIdx = document.cookie.indexOf(";", idx);
+
+  if (endIdx == -1)
+  {
+    endIdx = undefined;
+  }
+
+  simId = document.cookie.slice(idx, endIdx).split("=").pop();
+  socket.emit("newConnection",{id:simId,socket:socket.id});
+  socket.emit('simId', simId);
+});
+socket.on("connectionType",setUserAbilities)
+socket.on("otherPatrols",getOthersPatrols)
+socket.on('userStudy',function(userstudy){
+
+  // userStudy=userstudy
+  paused=userStudy
+  // console.log(userstudy);
+})
+function setUserAbilities(type){
+  console.log(type);
+  if(type == "add"){
+    // console.log("Add Add");
+    setUserAbility(true,false)
+  }else if(type == "avoid"){
+    // console.log("Add Avoid");
+    setUserAbility(false,true)
+  }else if(type =="observe"){
+    setUserAbility(false,false)
+  }
+
+}
+
+function getOthersPatrols(patrolMap){
+  console.log(patrolMap);
+}

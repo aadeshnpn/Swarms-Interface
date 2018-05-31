@@ -7,22 +7,22 @@ var socket = io();
 var world = null;
 var clientId;
 var localInfo = new Message()
-var tasks = new Task()
+var scenarios=0;
+var scenarioType;
+
+// var tasks = new Task()
 
 //These are for the pre-planning and live-planning methods of selecting areas of the canvas
 var currentSelectMode=0
 var selectModes=["Patrol","Avoid"]
 var selectedArea=[]
-var deleteAll=false;
-var deletingSelect=false;
+
 var selectedCoords= {}
 // Gets the previous screens pre-planning
 var patrolLocations;
-socket.on('patrolLocations',function(loc){
-  patrolLocations=loc
-})
-
-
+var userStudy       = false;
+var deleteAll       = false;
+var deletingSelect  = false;
 var debug           = false;
 var showAgentStates = false;
 
@@ -30,31 +30,8 @@ var showAgentStates = false;
 var background = document.getElementById('source');
 var sliderVal =document.getElementById('myRange').value;
 // var date=new Date()
-$("#myRange").change(function(e){
-  sliderVal =document.getElementById('myRange').value;
-})
-$(document).keydown(function(e){
-  // console.log("here");
-  if((e.which==65 ||e.which==37) &&(addPatrol && addAvoid)){
-    currentSelectMode--;
-    if(currentSelectMode<0){
-      currentSelectMode=selectModes.length-1
-    }
-    $( "#selectType" ).html(selectModes[currentSelectMode])
-    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
 
-  }else if((e.which==68 ||e.which==39) &&(addPatrol && addAvoid)){
-    currentSelectMode++;
-    if(currentSelectMode>selectModes.length-1){
-      currentSelectMode=0
-    }
-    $( "#selectType" ).html(selectModes[currentSelectMode])
-    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
-  }
-})
-document.getElementById("canvasDiv").addEventListener("dblclick", function(e){
-  deleteAll=true
-})
+
 document.addEventListener('contextmenu', event => event.preventDefault());
 // get a reference to the canvas element
 var canvas = document.getElementById("canvas");
@@ -84,9 +61,10 @@ $("#agentStateDescriptionDiv").append(`<table id="statesInfo"><caption id="state
                                         </div>`)
 
 var connection;
-
+var paused=true;
 
 // Get Image references and other presets
+
 var bee = document.getElementById("drone");
 var beeDead;
 var obstacle;
@@ -114,14 +92,7 @@ socket.on('simType', function(type){
    obstacle = document.getElementById("obstacle");
 
 });
-var scenarioType;
-socket.on("scenario",function(type){
-  scenarioType=type;
-  if(scenarioType=="No Communication"){
-    $("#messengerIcon").css("display","none")
-    localInfo.create(tasks.noCom)
-  }
-})
+
 
 var finishedDrawing = false;
 var ui = new UI();
@@ -130,65 +101,10 @@ var mouse = new Mouse();
 var ctx;
 var simId;
 // console.log(tasks.avoid);
-function setUserAbility(add,avoid){
-  if(add && !avoid){
-
-    selectModes.splice(1,1)
-    $( "#selectType" ).html(selectModes[currentSelectMode])
-    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
-    localInfo.create(tasks.patrol)
-  }
-  else if(!add && avoid){
-    selectModes.splice(0,1)
-    currentSelectMode=1;
-    $( "#selectType" ).html(selectModes[0])
-    $( "#selectType" ).css("color",Object.entries(Fog.stateStyles)[currentSelectMode][1])
-    localInfo.create(tasks.avoid)
-
-  }else if(!add && !avoid){
-    // selectMode
-    $( "#selectMode" ).css("display","none")
-    currentSelectMode=-1;
-  }
-}
 
 
-// In order to associate a client with a specific engine process,
-// the server sends us a unique id to send back once socket.io has
-// established a connection
-socket.on('connect', function(){
 
-  var idx = document.cookie.indexOf("simId");
-  var endIdx = document.cookie.indexOf(";", idx);
 
-  if (endIdx == -1)
-  {
-    endIdx = undefined;
-  }
-
-  simId = document.cookie.slice(idx, endIdx).split("=").pop();
-  socket.emit("newConnection",{id:simId,socket:socket.id});
-  socket.emit('simId', simId);
-});
-socket.on("connectionType",setUserAbilities)
-socket.on("otherPatrols",getOthersPatrols)
-function setUserAbilities(type){
-  console.log(type);
-  if(type == "add"){
-    // console.log("Add Add");
-    setUserAbility(true,false)
-  }else if(type == "avoid"){
-    // console.log("Add Avoid");
-    setUserAbility(false,true)
-  }else if(type =="observe"){
-    setUserAbility(false,false)
-  }
-
-}
-
-function getOthersPatrols(patrolMap){
-  console.log(patrolMap);
-}
 // socket.on("connectionType",function(type){
 //   console.log("HEFRERERARFD");
 //   console.log(type);
@@ -203,13 +119,19 @@ socket.on('update', function(worldUpdate){
    if (world === null){
       world = new World(worldUpdate.data);
 
-      // socket.emit('input', {type: 'pause'})
-      // isPaused=true;
+
       // console.table(world.agents)
       canvas.setAttribute("width", world.width);
       canvas.setAttribute("height", world.height);
+      socket.emit("canvasSize",{width:world.width,height:world.height})
+      // console.log("HERE");
+      console.log(paused);
+      if(simType ==="Drone" && paused){
+        socket.emit('input', {type: 'pause'})
+        isPaused=true;
+        localInfo.draw({width:world.width,height:world.height})
+      }
 
-      // localInfo.draw()
       // Resizes the canvas to the size determined in the Python code
       document.getElementById("canvasDiv").style.width = world.width + "px";
 
