@@ -132,21 +132,21 @@ require('sticky-cluster')(function (callback){
 
       var args = [];
       //var simEnv = this.options.model === "ant" ? '../engine/uavEnvironment.py' : '../engine/beeEnvironment.py';
-      var simEnv = '../engine/beeEnvironment.py';
+      var simEnv = '../../run.py';
 
       switch (this.options.model)
       {
         case 'Bee':
             break;
         case 'Ant':
-            simEnv = '../engine/antEnvironment.py';
+            simEnv = '../../run.py';
             break;
         case 'Drone':
             // this.options.model='Bee'
-            simEnv = '../engine/droneEnvironment.py';
+            simEnv = '../../run.py';
             break;
         case 'Uav':
-            simEnv = '../engine/uavEnvironment.py';
+            simEnv = '../../run.py';
             break;
       }
       // TODO: consolidate environments

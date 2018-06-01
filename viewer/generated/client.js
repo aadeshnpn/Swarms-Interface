@@ -3245,11 +3245,11 @@ class World
   {
     for (var site       of this.sites      ) { site      .draw(ctx, debug); }
     //These aren't being used currently
-    // for (var obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
-    // for (var trap       of this.traps      ) { trap      .draw(ctx, debug); }
-    // for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
-    // for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
-    // for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
+    for (var obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
+    for (var trap       of this.traps      ) { trap      .draw(ctx, debug); }
+    for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
+    for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
+    for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
     this.hub.updateFog(this.agents)
     this.hub.draw(ctx, debug, this.agents);
 
@@ -3258,84 +3258,42 @@ class World
 
 
 
-    for (var fog        of this.fogBlock ) {  if(deleteAll){
-                                                            selectedCoords={}
-                                                            fog.selectMode=-1
-                                                            fog.selected=false;
-                                                            fog.maxOpacity=.7
-                                                                  }
-                                              fog       .selecting(selectedArea,currentSelectMode);
-                                              if(showFog || fog.selected){
-                                                fog       .draw(ctx);
-                                              }
-                                             }
+    for (var fog of this.fogBlock){
+      if(deleteAll){
+        selectedCoords={}
+        fog.selectMode=-1
+        fog.selected=false;
+        fog.maxOpacity=.7
+      }
+      fog.selecting(selectedArea,currentSelectMode);
+      if(showFog || fog.selected){
+        fog       .draw(ctx);
+      }
+    }
+
     deleteAll=false
-
-
     if(debug && showPheromone){
       this.drawPheromones()
-
     }
-    // for (let state      of this.swarmState ) { state.draw(ctx, this.agents); }
-
-
-
   }
 
   drawPheromones(){
-    let idMap= {}
-
-    // console.log(this.pheromones.length);
     if(this.pheromones.length == undefined && this.pheromones.pheromones != undefined){
-
       this.pheromones.draw(ctx,debug)
       return
-    }else{
+    }
+    else{
       ctx.globalAlpha = .5
       for(let pheromone of this.pheromones){
-
-        // console.log(pheromone.id);
-        // console.log(i);
-
-        // console.log(i%2);
-        // if(i%2==0 && this.pheromones.length >10){
-          // break;
-        // }
-        // console.log(idMap);
-        // if((idMap[pheromone.id] == undefined || idMap[pheromone.id] <5) && pheromone.strength>1){
-          ctx.beginPath()
-
-          let x=255//(255-(pheromone.site*(255/this.sites.length))).toString();
-          if(x <=0){
-            x=0;
-          }
-          ctx.fillStyle = "white";
-          // if(pheromone.strength <=0){
-
-
-          // }else{
-            // ctx.globalAlpha = (pheromone.strength)*.8
-
-          // }
-          ctx.beginPath()
-          ctx.arc(Math.round(pheromone.x), Math.round(-pheromone.y), pheromone.r,0,Math.PI*2);
-          //}
-          ctx.fill();
-          // if(idMap[pheromone.id] == undefined){
-          //   idMap[pheromone.id]=1
-          // }else{
-          //   idMap[pheromone.id]+=1
-          // }
-
-        // }
-
+        ctx.beginPath()
+        ctx.fillStyle = "white";
+        ctx.beginPath()
+        ctx.arc(Math.round(pheromone.x), Math.round(-pheromone.y), pheromone.r,0,Math.PI*2);
+        ctx.fill();
       }
       ctx.globalAlpha = 1
-
     }
-
   }
-
 }
 
 //*****************************************************************************
