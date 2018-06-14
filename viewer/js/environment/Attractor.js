@@ -5,10 +5,12 @@ class Attractor
     this.x     = attractorJson.x;
     this.y     = attractorJson.y;
     this.timer = attractorJson.timer;
-    this.radius= attractorJson.radius;
+    this.radius= attractorJson.radius; //add a new property here -done
   }
 
-  draw(ctx, debug = false){
+  draw(ctx, debug = false) //then swap out hard coded radius for the dynamic
+  //property you added above. Then consider working on adding user input for radius #done?
+  {
     ctx.save();
 
     ctx.translate(this.x, -this.y);

@@ -1,12 +1,12 @@
-class Site
+class Cue
 {
-  // site json format = [ x, y, radius, quality ]
-  constructor(siteJson)
+  // cue json format = [ x, y, radius]
+  constructor(cueJson)
   {
-    this.x      =  siteJson["x"];
-    this.y      = -siteJson["y"]; // drawing coordinates have down as positive y
-    this.radius =  siteJson["radius"];
-    this.q      =  siteJson["q_value"];
+    this.x      =  cueJson["x"];
+    this.y      = -cueJson["y"]; // drawing coordinates have down as positive y
+    this.radius =  cueJson["radius"];
+    //this.q      =  siteJson["q_value"];
   }
 
   draw(ctx, debug = false)
@@ -14,12 +14,12 @@ class Site
     if (!debug)
       return;
 
-    var rVal = (this.q > 0.5) ? (1.0 - this.q) * 2 : 1.0;
-    var gVal = (this.q > 0.5) ? 1.0 : this.q * 2;
+    //var rVal = (this.q > 0.5) ? (1.0 - this.q) * 2 : 1.0;
+    //var gVal = (this.q > 0.5) ? 1.0 : this.q * 2;
 
     ctx.save();
 
-    ctx.fillStyle   = `rgba(${Math.round(255 * rVal)}, ${Math.round(255 * gVal)}, 70, 0.8)`;
+    ctx.fillStyle   = `rgba(${Math.round(255 * 0.1)}, ${Math.round(255 * 0.9)}, 70, 0.8)`;
     ctx.strokeStyle = "rgb(20, 20, 20)";
     ctx.translate(this.x, this.y);
 

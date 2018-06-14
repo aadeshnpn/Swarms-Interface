@@ -6,194 +6,119 @@
 var socket = io();
 var world = null;
 var clientId;
-var localInfo = new Message()
-var scenarios=0;
-var scenarioType;
 
-// var tasks = new Task()
-
-//These are for the pre-planning and live-planning methods of selecting areas of the canvas
-var currentSelectMode=0
-var selectModes=["Patrol","Avoid"]
-var selectedArea=[]
-
-var selectedCoords= {}
-// Gets the previous screens pre-planning
-var patrolLocations;
-var userStudy       = false;
-var deleteAll       = false;
-var deletingSelect  = false;
-var debug           = false;
+var debug           = true;
 var showAgentStates = false;
 
-// Background image
-var background = document.getElementById('source');
-var sliderVal =document.getElementById('myRange').value;
-// var date=new Date()
-
-
-document.addEventListener('contextmenu', event => event.preventDefault());
 // get a reference to the canvas element
 var canvas = document.getElementById("canvas");
 
-const cursors ={
-                 default: new CursorDefault(),
-                 selecting: new CursorSelecting(),
-                 radialDrag: new CursorRadialDrag(),
-                 placeBaitBomb: new CursorPlaceBaitBomb()
-               };
+const cursors =
+{
+   default: new CursorDefault(),
+   selecting: new CursorSelecting(),
+   radialDrag: new CursorRadialDrag(),
+   placeBaitBomb: new CursorPlaceBaitBomb()
+};
 
-var stateInfoOn=new Map()
-stateInfoOn.set("Exploring", false)
-stateInfoOn.set("Observing", false)
-stateInfoOn.set("Following Site", false)
-var defaultStateDescript="<p id='defaultStateDescript'>Info on the different states of the Agents</p>"
+const ui = new UI();
 
-$("#agentStateDescriptionDiv").append(`<table id="statesInfo"><caption id="stateTitle">States</caption>
-                                        <tr>
-                                        <th class="statesHeader">Exploring</th>
-                                        <th class="statesHeader">Observing</th>
-                                        <th class="statesHeader">Following Site</th>
-                                        </tr>
-                                        </table>
-                                        <div id="statesInfoTextDiv">
-                                        <p id="statesInfoText">`+defaultStateDescript+`</p>
-                                        </div>`)
+// get image refs
+var bee      = document.getElementById("bee"     );
+var beeDead  = document.getElementById("bee-dead");
+var obstacle = document.getElementById("obstacle");
 
-var connection;
-var paused=true;
+var finishedDrawing = true;
 
-// Get Image references and other presets
+// In order to associate a client with a specific engine process,
+// the server sends us a unique id to send back once socket.io has
+// established a connection
+socket.on('connect', function()
+{
+   var idx = document.cookie.indexOf("clientId");
+   var endIdx = document.cookie.indexOf(";", idx);
 
-var bee = document.getElementById("drone");
-var beeDead;
-var obstacle;
-var simType;
-socket.on('simType', function(type){
-  simType=type;
+   if (endIdx == -1)
+   {
+      endIdx = undefined;
+   }
 
-  if(type=="Drone"){
-    bee      = document.getElementById("drone"     );
+   clientId = document.cookie.slice(idx, endIdx).split("=").pop();
 
-    beeDead  = document.getElementById("drone-dead");
-  }
-  else if(type=="Bee"){
-    bee      = document.getElementById("bee"     );
-    beeDead  = document.getElementById("bee-dead");
-  }
-  else if(type=="Ant"){
-    bee      = document.getElementById("ant"     );
-    beeDead  = document.getElementById("ant-dead");
-  }
-  else if(type=="Uav"){
-    bee      = document.getElementById("drone"     );
-    beeDead  = document.getElementById("drone-dead");
-  }
-   obstacle = document.getElementById("obstacle");
-
+   socket.emit('clientId', clientId);
 });
-
-
-var finishedDrawing = false;
-var ui = new UI();
-var mouse = new Mouse();
-
-var ctx;
-var simId;
-// console.log(tasks.avoid);
-
-
-
-
-// socket.on("connectionType",function(type){
-//   console.log("HEFRERERARFD");
-//   console.log(type);
-// })
-
 
 // This is where the magic happens. When we emit an "update" event from the
 // server, it'll come through here.
-socket.on('update', function(worldUpdate){
-   // New World
-  //  console.log("HERE");
-   if (world === null){
+socket.on('update', function(worldUpdate)
+{
+   // First update
+   if (world === null)
+   {
       world = new World(worldUpdate.data);
-
-
-      // console.table(world.agents)
       canvas.setAttribute("width", world.width);
       canvas.setAttribute("height", world.height);
-      socket.emit("canvasSize",{width:world.width,height:world.height})
-      // console.log("HERE");
-      console.log(paused);
-      if(simType ==="Drone" && paused){
-        socket.emit('input', {type: 'pause'})
-        isPaused=true;
-        localInfo.draw({width:world.width,height:world.height})
-      }
 
-      // Resizes the canvas to the size determined in the Python code
+      // make sure the canvas doesn't get cut off on the screen
       document.getElementById("canvasDiv").style.width = world.width + "px";
 
-      ctx = canvas.getContext("2d");
-      // Translate the origin from the top left corner to the center of the screen.
-      // Keep in mind that the canvas's y increases going down, whereas, the world's y
-      // increases going up. To overcome this, there is a function in World called canvasToWorldCoords
-      // that will convert any x-y coridinate to the world's coridinates
-      ctx.translate(world.x_limit, world.y_limit);
+      // move the coordinate system origin from top-left to the centre of the world
+      canvas.getContext("2d").translate(world.x_limit, world.y_limit);
 
-      //Start the drawing cycle
-
-      draw()
+      // request that the browser call the draw() function when its ready for
+      // the next animation frame
+      window.requestAnimationFrame(draw);
    }
-   else if (finishedDrawing){
-      world.update(worldUpdate.data)
+   else if (finishedDrawing)
+   {
+      world = new World(worldUpdate.data); //try implementing an array and stack
+      //you'd push worldupdate.data into array, and then pop it off the stack when you need it
+      // "need it" means you've finished a draw cycle, which is happening in browser
+      // if you want to keep everything in draw function like it is, make the array and stack
+      // if you want to split it up you need to move the world.draw function into this function
+      //the idea is to draw the world only when we're ready for it
+      //read through socket documentation, maybe there are options that say
+      //"don't register every single callback" or something
 
-      ui.on(worldUpdate);
+
+      // TODO: split this out into a separate update? worldMeta?
+      //ui.RadialControl.updateActual(world.hub.directions);
    }
+
+   ui.on(worldUpdate);
 });
 
-function draw(environment){
+function draw()
+{
+   finishedDrawing = false;
+   // we draw to the 2d context, not the canvas directly
+   var ctx = canvas.getContext("2d");
 
-  // console.log("HERE");
-  //The updates will not be let through unless the the current iteration of drawing is finished
-  finishedDrawing = false;
-  // clear canvas
-  ctx.clearRect(-world.x_limit, -world.y_limit, world.width, world.height);
-  ctx.save();
-  ctx.fillStyle = "rgb(160, 160, 160)";
-  ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
+   // clear everything
+   ctx.clearRect(-world.x_limit, -world.y_limit, world.width, world.height);
+   ctx.save();
+   ctx.fillStyle = "rgb(229, 229, 229)";
+   ctx.fillRect(-world.x_limit, -world.y_limit, world.width, world.height);
+   ctx.restore();
 
+   world.draw(ctx, debug, showAgentStates); // move to update path rather than 1/60
+   ui.draw(ctx, debug);
 
-  if(simType == "Drone"){
-    ctx.globalAlpha = sliderVal/100;
-    ctx.drawImage(background, -world.x_limit, -world.y_limit,world.width, world.height);
-    ctx.globalAlpha = 1;
-  }
+   finishedDrawing = true;
 
-  world.draw(ctx, debug, showAgentStates, environment);
-
-  ui.draw(ctx, debug);
-  //Updates will not be allowed
-  finishedDrawing = true;
-  mouse.deltaY=0;
-  mouse.deltaX=0;
-  // console.log(mouse);
-
-
-  // if(!isPaused){
-    window.requestAnimationFrame(draw);
-
-  // }
-
+   // maintain a maximum rate of 60fps
+   window.setTimeout(() => { window.requestAnimationFrame(draw)}, 1000 / 60);
+   //window.requestAnimationFrame(draw);
 }
 
 // TODO: I don't like where this is going, I should be able to make one subscription
 //       to the socket and let the UI class sort out all the details
-socket.on('baitToggle'          , function(data) { document.getElementById('buttonBugBait').style.display = 'block';});
-socket.on('bombToggle'          , function(data) { document.getElementById('buttonBugBomb').style.display = 'block';});
-socket.on('updateMission'       , function(data) { ui.on(data) });
-socket.on('hubControllerToggle' , function(data) { ui.on(data) });
+
+socket.on('updateMission', function(data)
+{
+  ui.on(data);
+});
+
 socket.on('restart'             , function(data) { ui.on(data) });
 socket.on('updateRadial'        , function(data) { ui.on(data) });
 socket.on('updateDebugParams'   , function(data) { ui.on(data) });
@@ -201,4 +126,3 @@ socket.on('updateUIParams'      , function(data) { ui.on(data) });
 socket.on('updateSitePriorities', function(data) { ui.on(data) });
 socket.on('setStates'           , function(data) { ui.on(data) });
 socket.on('stateCounts'         , function(data) { ui.on(data) });
-socket.on('updateChat'          , function(data) { ui.on(data) });

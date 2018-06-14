@@ -5,7 +5,7 @@ class DeadAgent
     this.id            =  agentJson.id;
     this.x             =  agentJson.x;
     this.y             = -agentJson.y;
-    this.rotation      =  Math.PI/2 - agentJson.direction;
+    this.rotation      =  Math.PI/2 - agentJson.direction; // convert from the engine's coordinate system into what the drawing routine expects
     this.state         =  agentJson.state;
     this.potentialSite =  agentJson.potential_site;
     this.isAlive       =  agentJson.live;
@@ -19,8 +19,10 @@ class DeadAgent
 
     ctx.save();
 
-    // Move the drawing context to the agent's x and y coords to rotate around center of image
+    // move the drawing context to the agent's x and y coords
     ctx.translate(this.x, this.y);
+
+    ctx.save();
 
     ctx.rotate(this.rotation);
     ctx.drawImage(beeDead, -bee.width/2, -bee.height/2);

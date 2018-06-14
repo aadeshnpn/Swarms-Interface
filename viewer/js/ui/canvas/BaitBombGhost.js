@@ -17,11 +17,10 @@ class BaitBombGhost
   {
     cursors.placeBaitBomb.addEventListener('mousemove', this.onMouseMove.bind(this));
     cursors.placeBaitBomb.addEventListener('mousedown', this.onMouseDown.bind(this)); //the this-this syntax is to help js be oo
-    // cursors.placeBaitBomb.addEventListener('wheel', this.onWheel.bind(this));
+    cursors.placeBaitBomb.addEventListener('wheel', this.onWheel.bind(this));
     this.cursorCoords = {x: null, y: null};
     this.radius = 40;
     this.active = false;
-    this.baitBombs=[]
 
     ui.register('restart', this.reset.bind(this));
   }
@@ -63,7 +62,6 @@ class BaitBombGhost
     ctx.stroke();
 
     ctx.restore();
-
   }
 
   onMouseMove(e)
@@ -80,9 +78,7 @@ class BaitBombGhost
   {
     let worldRelative = world.canvasToWorldCoords(e.offsetX, e.offsetY);
     var entityType = (cursors.placeBaitBomb.mode == CursorPlaceBaitBomb.MODE_BAIT) ? 'attractor' : 'repulsor';
-    var info={type: entityType, x: worldRelative.x, y: worldRelative.y, radius: this.radius}
-    socket.emit('input', info);
-    //this.baitBombs.push({type: entityType, x: worldRelative.x, y: worldRelative.y, radius: this.radius})
+    socket.emit('input', {type: entityType, x: worldRelative.x, y: worldRelative.y, radius: this.radius});
     this.active = false;
     ui.setActiveCursor(cursors.default);
   }

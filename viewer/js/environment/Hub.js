@@ -2,46 +2,16 @@ class Hub
 {
   constructor(hubJson)
   {
-    this.x      =  hubJson.hub["x"];
-    this.y      = -hubJson.hub["y"];
-    this.radius =  hubJson.hub["radius"];
-    this.agentsIn = hubJson.hub["agentsIn"]
-    // console.log(hubJson.hub);
-    this.paths=[]
-    for(var i=0;i <= hubJson.agents.length;i++){
-      this.paths[i]=new Array()
-    }
+    this.x      =  hubJson["x"];
+    this.y      = -hubJson["y"];
+    this.radius =  hubJson["radius"];
   }
 
-  updateFog(agents){
-    for(var agent of agents){
-      if(Math.sqrt((this.x - agent.x)*(this.x - agent.x) +(this.y - agent.y)*(this.y - agent.y)) < this.radius-5){
-        let time=new Date()
-
-        for(let index in agent.path){
-          let totalEllapsed=time.getMinutes()*60+time.getSeconds()-agent.time
-
-          let fraction=(time.getMinutes()*60+time.getSeconds()-agent.path[index].time)/totalEllapsed
-
-          agent.path[index].fog.opacity=fraction*.5
-
-          delete agent.path[index]
-        }
-        agent.time=time.getMinutes()*60+time.getSeconds()
-        // console.log("next");
-
-      }
-
-    }
-  }
-
-  draw(ctx, debug = false, agents)
+  draw(ctx, debug = false)
   {
     ctx.save();
 
-
-
-    ctx.fillStyle = "rgba(242, 179, 19, .5)";
+    ctx.fillStyle = "rgba(242, 179, 19, 0.4)";
     ctx.strokeStyle = "rgb(242, 179, 19)";
     ctx.lineWidth = 2;
     ctx.translate(this.x, this.y);
@@ -54,11 +24,8 @@ class Hub
 
     ctx.beginPath();
     ctx.arc(0, 0, radius, 0, Math.PI * 2, false);
-
     ctx.fill();
     ctx.stroke();
-
-
 
     ctx.restore();
   }

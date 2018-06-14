@@ -1,11 +1,10 @@
-
 class StateBubbles
 {
   constructor(ui)
   {
     this.states = {};
     this.totalAgentsInStates = 0;
-    this.initialised = false;
+    this.initialised = false
 
     ui.register("setStates", this.init.bind(this));
     ui.register("stateCounts", this.update.bind(this));
@@ -14,40 +13,40 @@ class StateBubbles
     socket.emit("input", {"type": "requestStates"});
   }
 
-  init(json){
-    for (let name of json.states){
+  init(json)
+  {
+    for (let name of json.states)
+    {
       this.states[name] = {count: 0, radius: 0};
     }
+
     this.initialised = true;
   }
 
-  update(json){
-    this.totalAgentsInStates = 0;
-    //console.log(json);
+  update(json)
+  {
+    this.totalAgentsInStates = 0
 
     for (let [state, count] of Object.entries(json))
     {
-      //console.log(json.states);
-      // console.log(count);
       if (this.states[state])
       {
         this.states[state].count = count;
         this.totalAgentsInStates += count;
-
       }
     }
 
     for (let [name, state] of Object.entries(this.states))
     {
-      //console.log(count);
       state.radius = state.count / this.totalAgentsInStates * StateBubbles.MAX_RADIUS;
-      //console.log(state.radius);
+
       if (state.radius < StateBubbles.MIN_RADIUS)
         state.radius = StateBubbles.MIN_RADIUS;
     }
   }
 
-  restart(){
+  restart()
+  {
     this.states = {};
     this.totalAgentsInStates = 0;
     this.initialised = false;
@@ -55,8 +54,8 @@ class StateBubbles
     socket.emit("input", {"type": "requestStates"});
   }
 
-  draw(ctx, debug = false){
-    return
+  draw(ctx, debug = false)
+  {
     if (!this.initialised)
       return;
 
@@ -75,13 +74,11 @@ class StateBubbles
 
     for (let [name, state] of Object.entries(this.states))
     {
-      //console.log(state.radius);
       x += state.radius;
 
       ctx.fillStyle = "rgb(108, 163, 252)";
       ctx.beginPath();
       ctx.arc(x, 0, state.radius, 0, Math.PI * 2, false);
-      //ctx.arc(100, 0, 50, 0, 2 * Math.PI);
       ctx.fill();
 
       ctx.font = "8pt sans-serif";
@@ -99,5 +96,5 @@ class StateBubbles
 
 StateBubbles.MAX_RADIUS = 20;
 StateBubbles.MIN_RADIUS = 2;
-StateBubbles.BUBBLE_SPACING = 60; // in px
+StateBubbles.BUBBLE_SPACING = 40; // in px
 StateBubbles.LABEL_SPACING = 30;

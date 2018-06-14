@@ -31,8 +31,7 @@ class Trap
 
       ctx.lineTo(pointRadius * Math.cos(i * Math.PI/180), -(pointRadius * Math.sin(i * Math.PI/180)));
     }
-    ctx.closePath();
-    
+
     ctx.fill();
     ctx.stroke();
 

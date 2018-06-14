@@ -8,7 +8,7 @@ class SelectionRect
       this.width = 0;
       this.height = 0;
 
-      // cursors.default  .addEventListener('mousedown', this.onMouseDown.bind(this));
+      cursors.default  .addEventListener('mousedown', this.onMouseDown.bind(this));
       cursors.selecting.addEventListener('mousemove', this.onMouseMove.bind(this));
       cursors.selecting.addEventListener('mouseup'  , this.onMouseUp  .bind(this));
 
@@ -27,8 +27,8 @@ class SelectionRect
 
       ctx.save();
 
-      ctx.fillStyle = "rgba(0,150,0,.3)";
-      ctx.strokeStyle = "rgba(0, 0, 0,.5)";
+      ctx.fillStyle = "rgba(60, 181, 249, 0.2)";
+      ctx.strokeStyle = "rgb(60, 181, 249)";
       ctx.lineWidth = 1;
 
       // Reset the context to canvas top-left because we have canvas-relative

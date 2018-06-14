@@ -12,7 +12,7 @@ class Cursor
    {
       if (this.events[event] == undefined)
          this.events[event] = [];
-      // console.log(event);
+
       this.events[event].push(listener);
 
       if (this.active)
