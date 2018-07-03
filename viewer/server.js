@@ -85,7 +85,7 @@ class Client
          // TODO: we shouldn't have to manage this here, consolidate environments
          //       and pass a flag into the python instead
          //
-         var typeDir = (process.argv[2] === "ants") ? ('../../run.py') : ('../../run.py');
+         var typeDir = (process.argv[2] === "ants") ? ('../../examples/explore/run.py') : ('../../examples/explore/run.py');
          var rules = process.argv[4];
          var evolution = process.argv[3];
         /*
