@@ -80,14 +80,16 @@ class Client
       }
       else
       {
-         var executable = config.has(`pythonExecutable.${os.platform()}`) ? config.get(`pythonExecutable.${os.platform()}`) : config.get("pythonExecutable.default");
-
+         //var executable = config.has(`pythonExecutable.${os.platform()}`) ? config.get(`pythonExecutable.${os.platform()}`) : config.get("pythonExecutable.default");
+          var executable = "python";
          // TODO: we shouldn't have to manage this here, consolidate environments
          //       and pass a flag into the python instead
          //
-         var typeDir = (process.argv[2] === "ants") ? ('../../examples/explore/run.py') : ('../../examples/explore/run.py');
-         var rules = process.argv[4];
-         var evolution = process.argv[3];
+         //var typeDir = (process.argv[2] === "ants") ? ('../../examples/explore/run.py') : ('../../examples/explore/run.py');
+         var typeDir = '../../examples/' + process.argv[2] + '/run.py'
+         //console.log('from '+process.argv[0]+process.argv[1])
+         //var rules = process.argv[4];
+         //var evolution = process.argv[3];
         /*
          if (rules == null)
          {
