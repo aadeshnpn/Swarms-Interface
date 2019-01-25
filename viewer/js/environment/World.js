@@ -25,13 +25,13 @@ class World
     for (var site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
     for (var obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
     for (var trap       of environmentJson.traps      ) { this.traps      .push( new Trap      (trap      ) ); }
-    for (var derbi       of environmentJson.derbis      ) { this.derbis      .push( new Derbi      (derbi      ) ); }
+    //for (var derbi       of environmentJson.derbis      ) { this.derbis      .push( new Derbi      (derbi      ) ); }
     //for (var rough      of environmentJson.rough      ) { this.rough      .push( new Rough     (rough     ) ); }
     //for (var attractor  of environmentJson.attractors ) { this.attractors .push( new Attractor (attractor ) ); }
     //for (var repulsor   of environmentJson.repulsors  ) { this.repulsors  .push( new Repulsor  (repulsor  ) ); }
     for (var agent      of environmentJson.agents     ) { this.agents     .push( new Agent     (agent     ) ); }
     //for (var cue      of environmentJson.cues     ) { this.cues     .push( new Cue     (cue     ) ); }
-    //for (var food      of environmentJson.food     ) { this.food     .push( new Food     (food     ) ); }
+    for (var food      of environmentJson.food     ) { this.food     .push( new Food     (food     ) ); }
     //for (var dead_agent of environmentJson.dead_agents) { this.dead_agents.push( new DeadAgent (dead_agent) ); }
     //for (var pheromone of environmentJson.pheromones)   { this.pheromones .push( new Pheromone (pheromone)  ); }
     //this.pheromones = new Pheromone(environmentJson.pheromones);
@@ -53,7 +53,7 @@ class World
     for (var site       of this.sites      ) { site      .draw(ctx, debug); }
     for (var obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
     for (var trap       of this.traps      ) { trap      .draw(ctx, debug); }
-    for (var derbi       of this.derbis      ) { derbi      .draw(ctx, debug); }
+    //for (var derbi       of this.derbis      ) { derbi      .draw(ctx, debug); }
     //for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
     //for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
     //for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
@@ -65,7 +65,7 @@ class World
 
     for (var agent      of this.agents     ) { agent     .draw(ctx, debug, showAgentStates); }
     //for (var cue      of this.cues    ) { cue    .draw(ctx, debug); }
-    //for (var food      of this.food    ) { food    .draw(ctx, debug); }
+    for (var food      of this.food    ) { food    .draw(ctx, debug); }
 
     //for (var dead_agent of this.dead_agents) { dead_agent.draw(ctx, debug); }
 
