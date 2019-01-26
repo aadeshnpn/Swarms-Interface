@@ -27,15 +27,6 @@ class Food
     ctx.arc(0, 0, this.radius, 0, Math.PI * 2, false);
     ctx.fill();
     ctx.stroke();
-
-    //if (debug == true)
-    //{
-      /*ctx.font = "14pt sans-serif";
-      ctx.fillStyle = "rgb(0, 0, 0)";
-      let width = ctx.measureText(`Site: ${this.q}`).width;
-      ctx.fillText(`Site: ${this.q}`, -width/2, 20 + this.radius);*/
-    //}
-
     ctx.restore();
   }
 }

@@ -18,14 +18,14 @@ class World
     this.dead_agents = [];
     this.cues        = [];
     this.food        = [];
-    this.derbis      = [];
+    this.debris      = [];
     this.pheromones;
 
     for (var hub       of environmentJson.hub      ) { this.hub      .push( new Hub      (hub      ) ); }
     for (var site       of environmentJson.sites      ) { this.sites      .push( new Site      (site      ) ); }
-    for (var obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
+    // for (var obstacle   of environmentJson.obstacles  ) { this.obstacles  .push( new Obstacle  (obstacle  ) ); }
     for (var trap       of environmentJson.traps      ) { this.traps      .push( new Trap      (trap      ) ); }
-    //for (var derbi       of environmentJson.derbis      ) { this.derbis      .push( new Derbi      (derbi      ) ); }
+    for (var debri       of environmentJson.debris      ) { this.debris      .push( new Debri      (debri      ) ); }
     //for (var rough      of environmentJson.rough      ) { this.rough      .push( new Rough     (rough     ) ); }
     //for (var attractor  of environmentJson.attractors ) { this.attractors .push( new Attractor (attractor ) ); }
     //for (var repulsor   of environmentJson.repulsors  ) { this.repulsors  .push( new Repulsor  (repulsor  ) ); }
@@ -51,9 +51,9 @@ class World
     // this drawn singly at a world level, it could go right here very nicely.
     for (var hub       of this.hub      ) { hub      .draw(ctx, debug); }
     for (var site       of this.sites      ) { site      .draw(ctx, debug); }
-    for (var obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
+    // for (var obstacle   of this.obstacles  ) { obstacle  .draw(ctx, debug); }
     for (var trap       of this.traps      ) { trap      .draw(ctx, debug); }
-    //for (var derbi       of this.derbis      ) { derbi      .draw(ctx, debug); }
+    for (var debri       of this.debris      ) { debri      .draw(ctx, debug); }
     //for (var rough      of this.rough      ) { rough     .draw(ctx, debug); }
     //for (var attractor  of this.attractors ) { attractor .draw(ctx, debug); }
     //for (var repulsor   of this.repulsors  ) { repulsor  .draw(ctx, debug); }
